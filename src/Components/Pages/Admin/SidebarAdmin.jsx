@@ -8,7 +8,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
   const navigationItems = [
     {
       name: "Lead",
-      path: "/LeadList",
+      path: "/Admin/LeadList",
       icon: (
         <svg
           className="w-5 h-5"

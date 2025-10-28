@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import TopBar from "../TopBar";
-import Sidebar from "../Sidebar";
+import TopBar from "../../Pages/Admin/TopBarAdmin";
+import Sidebar from "../../Pages/Admin/SidebarAdmin";
 import DealTableView from "./DealTableView";
 import DealKanbanView from "./DealKanbanView";
 import DealTileView from "./DealTileView";

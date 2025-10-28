@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../Sidebar";
-import TopBar from "../TopBar";
+import Sidebar from "../../Pages/Admin/SidebarAdmin";
+import TopBar from "../../Pages/Admin/TopBarAdmin";
 
 function CreateLead() {
   const navigate = useNavigate();

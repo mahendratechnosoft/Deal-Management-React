@@ -1,7 +1,5 @@
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../Sidebar";
-import TopBar from "../TopBar";
 
 function LeadList() {
   const navigate = useNavigate();
@@ -107,7 +105,7 @@ function LeadList() {
   }));
 
   const handleCreateLead = () => {
-    navigate("/CreateLead");
+    navigate("/Admin/CreateLead");
   };
 
   const toggleSidebar = () => {
@@ -171,7 +169,7 @@ function LeadList() {
   };
 
   const handleEdit = (leadId) => {
-    navigate(`/EditLead/${leadId}`);
+    navigate(`/Admin/EditLead/${leadId}`);
   };
 
   const visibleColumns = columns
@@ -217,13 +215,7 @@ function LeadList() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
-      <TopBar toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
-
-      <div className="flex flex-1">
-        <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
-
-        <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? "ml-0 lg:ml-5" : "ml-0"}`}>
+   
           <div className="p-6">
             {/* Header Section */}
             <div className="mb-8">
@@ -619,9 +611,7 @@ function LeadList() {
               </div>
             )}
           </div>
-        </div>
-      </div>
-    </div>
+    
   );
 }
 

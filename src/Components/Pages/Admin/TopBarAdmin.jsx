@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-function TopBar({ toggleSidebar, sidebarOpen }) {
+function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -177,7 +177,10 @@ function TopBar({ toggleSidebar, sidebarOpen }) {
                   ))}
                 </div>
                 <div className="border-t border-gray-100 pt-1">
-                  <button className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 transition-colors duration-200">
+                  <button
+                    className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 transition-colors duration-200"
+                    onClick={onSwitchToLogin}
+                  >
                     Sign Out
                   </button>
                 </div>
