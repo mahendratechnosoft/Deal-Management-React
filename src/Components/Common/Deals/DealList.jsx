@@ -37,7 +37,7 @@ function DealList() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
+    <div className="min-h-screen bg-gray-50 font-sans flex flex-col ">
       {/* Top Bar */}
       <TopBar toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
 
@@ -48,7 +48,7 @@ function DealList() {
 
         {/* Main Content */}
         <div
-          className={`flex-1 flex flex-col transition-all duration-300 overflow-x-auto ${
+          className={`flex-1 flex flex-col transition-all duration-300 overflow-x-auto w-[88vw] ${
             sidebarOpen ? "ml-0 lg:ml-5" : "ml-0"
           }`}
         >

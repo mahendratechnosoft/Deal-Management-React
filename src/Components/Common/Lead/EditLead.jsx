@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import Select from "react-select";
+import { Country, State, City } from "country-state-city";
 import Sidebar from "../../Pages/Admin/SidebarAdmin";
 import TopBar from "../../Pages/Admin/TopBarAdmin";
 
@@ -7,115 +9,275 @@ function EditLead() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fixed fields as per API
   const [formData, setFormData] = useState({
-    salutation: "",
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    mobile: "",
-    title: "",
-    company: "",
-    website: "",
-    industry: "",
-    role: "",
-    department: "",
-    reportsTo: "",
-    employeeSize: "",
-    status: "New",
+    employeeId: "",
+    assignTo: "",
+    status: "New Lead",
     source: "",
-    priority: "Medium",
-    budget: "",
-    expectedClose: "",
-    leadOwner: "",
+    clientName: "",
+    revenue: "",
+    street: "",
+    country: "",
+    state: "",
+    city: "",
+    zipCode: "",
     description: "",
-    tags: [],
+  });
+
+  const [dropdownData, setDropdownData] = useState({
+    countries: [],
+    states: [],
+    cities: [],
+    zipCodes: [],
   });
 
   const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentTag, setCurrentTag] = useState("");
 
-  // Mock data - in real app, this would come from API
-  const mockLeads = [
-    {
-      id: 1,
-      salutation: "Mr.",
-      firstName: "Lindsay",
-      lastName: "Walton",
-      email: "lindsay.walton@example.com",
-      phone: "+1-555-0101",
-      mobile: "+1-555-0101",
-      title: "Front-end Developer",
-      company: "ABC Corp",
-      website: "https://abccorp.com",
-      industry: "Technology",
-      role: "Developer",
-      department: "Engineering",
-      reportsTo: "Sarah Johnson",
-      employeeSize: "51-200",
-      status: "Contacted",
-      source: "Website",
-      priority: "High",
-      budget: "$50,000",
-      expectedClose: "2024-03-15",
-      leadOwner: "user1",
-      description: "Interested in product demo and pricing details.",
-      tags: ["Frontend", "React", "UI/UX"],
-    },
-    {
-      id: 2,
-      salutation: "Ms.",
-      firstName: "Courtney",
-      lastName: "Henry",
-      email: "courtney.henry@example.com",
-      phone: "+1-555-0102",
-      mobile: "+1-555-0102",
-      title: "Design Director",
-      company: "XYZ Inc",
-      website: "https://xyzinc.com",
-      industry: "Design",
-      role: "Director",
-      department: "Design",
-      reportsTo: "Marketing Director",
-      employeeSize: "11-50",
-      status: "Qualified",
-      source: "Referral",
-      priority: "Medium",
-      budget: "$75,000",
-      expectedClose: "2024-04-20",
-      leadOwner: "user2",
-      description: "Looking for enterprise design solutions.",
-      tags: ["Design", "Enterprise", "B2B"],
-    },
-  ];
+  // Get auth token from localStorage
+  const getAuthToken = () => {
+    return localStorage.getItem("authToken");
+  };
 
+  // Get auth headers for API calls
+  const getAuthHeaders = () => {
+    const token = getAuthToken();
+    return {
+      "Content-Type": "application/json",
+      Authorization: token ? `Bearer ${token}` : "",
+    };
+  };
+
+  // Initialize countries on component mount
   useEffect(() => {
-    const fetchLeadData = () => {
+    const countries = Country.getAllCountries().map((country) => ({
+      value: country.isoCode,
+      label: country.name,
+      phonecode: country.phonecode,
+      flag: country.flag,
+    }));
+
+    setDropdownData((prev) => ({
+      ...prev,
+      countries,
+    }));
+  }, []);
+
+  // Find country code by country name
+  const findCountryCodeByName = (countryName) => {
+    const country = Country.getAllCountries().find(
+      (c) => c.name === countryName
+    );
+    return country ? country.isoCode : "";
+  };
+
+  // Find state code by state name and country code
+  const findStateCodeByName = (stateName, countryCode) => {
+    const states = State.getStatesOfCountry(countryCode);
+    const state = states.find((s) => s.name === stateName);
+    return state ? state.isoCode : "";
+  };
+
+  // Fetch lead data when component mounts
+  useEffect(() => {
+    const fetchLeadData = async () => {
+      if (!id) {
+        alert("Lead ID not found!");
+        navigate("/Admin/LeadList");
+        return;
+      }
+
       setIsLoading(true);
-      setTimeout(() => {
-        const lead = mockLeads.find((lead) => lead.id === parseInt(id));
-        if (lead) {
-          setFormData(lead);
-        } else {
-          alert("Lead not found!");
-          navigate("/leads");
+      try {
+        const token = getAuthToken();
+
+        if (!token) {
+          alert("Please login first");
+          navigate("/login");
+          return;
         }
+
+        const response = await fetch(
+          `http://localhost:8080/lead/getLeadById/${id}`,
+          {
+            method: "GET",
+            headers: getAuthHeaders(),
+          }
+        );
+
+        if (response.status === 401) {
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("userData");
+          alert("Session expired. Please login again.");
+          navigate("/login");
+          return;
+        }
+
+        if (response.ok) {
+          const apiResponse = await response.json();
+          const leadData = apiResponse.lead; // Extract data from lead property
+
+          console.log("Fetched lead data:", leadData);
+
+          if (!leadData) {
+            alert("Lead data not found in response!");
+            navigate("/Admin/LeadList");
+            return;
+          }
+
+          // Map API response to form data
+          const mappedFormData = {
+            employeeId: leadData.employeeId || "",
+            assignTo: leadData.assignTo || "",
+            status: leadData.status || "New Lead",
+            source: leadData.source || "",
+            clientName: leadData.clientName || "",
+            revenue: leadData.revenue ? leadData.revenue.toString() : "",
+            street: leadData.street || "",
+            country: leadData.country || "",
+            state: leadData.state || "",
+            city: leadData.city || "",
+            zipCode: leadData.zipCode || "",
+            description: leadData.description || "",
+          };
+
+          setFormData(mappedFormData);
+
+          // Handle country-state-city dropdowns
+          if (leadData.country) {
+            const countryCode = findCountryCodeByName(leadData.country);
+
+            if (countryCode) {
+              const states = State.getStatesOfCountry(countryCode).map(
+                (state) => ({
+                  value: state.isoCode,
+                  label: state.name,
+                })
+              );
+
+              setDropdownData((prev) => ({
+                ...prev,
+                states,
+              }));
+
+              // Set country code in form data for dropdown selection
+              setFormData((prev) => ({
+                ...prev,
+                country: countryCode,
+              }));
+
+              // If state is set, load cities
+              if (leadData.state) {
+                const stateCode = findStateCodeByName(
+                  leadData.state,
+                  countryCode
+                );
+
+                if (stateCode) {
+                  const cities = City.getCitiesOfState(
+                    countryCode,
+                    stateCode
+                  ).map((city) => ({
+                    value: city.name,
+                    label: city.name,
+                  }));
+
+                  setDropdownData((prev) => ({
+                    ...prev,
+                    cities,
+                  }));
+
+                  // Set state code in form data for dropdown selection
+                  setFormData((prev) => ({
+                    ...prev,
+                    state: stateCode,
+                  }));
+                }
+              }
+            }
+          }
+        } else {
+          let errorMessage = "Failed to fetch lead data";
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch {
+            errorMessage = (await response.text()) || errorMessage;
+          }
+          alert(`Failed to fetch lead: ${errorMessage}`);
+          navigate("/Admin/LeadList");
+        }
+      } catch (error) {
+        console.error("Error fetching lead:", error);
+        if (
+          error.name === "TypeError" &&
+          error.message.includes("Failed to fetch")
+        ) {
+          alert(
+            "Cannot connect to server. Please check if the backend is running."
+          );
+        } else {
+          alert("Failed to fetch lead data. Please try again.");
+        }
+        navigate("/Admin/LeadList");
+      } finally {
         setIsLoading(false);
-      }, 500);
+      }
     };
 
-    if (id) {
-      fetchLeadData();
-    }
+    fetchLeadData();
   }, [id, navigate]);
+
+  // Update states when country changes
+  useEffect(() => {
+    if (formData.country) {
+      const states = State.getStatesOfCountry(formData.country).map(
+        (state) => ({
+          value: state.isoCode,
+          label: state.name,
+        })
+      );
+
+      setDropdownData((prev) => ({
+        ...prev,
+        states,
+        cities: [],
+      }));
+
+      // Don't reset state and city here as we want to preserve existing values
+    }
+  }, [formData.country]);
+
+  // Update cities when state changes
+  useEffect(() => {
+    if (formData.country && formData.state) {
+      const cities = City.getCitiesOfState(
+        formData.country,
+        formData.state
+      ).map((city) => ({
+        value: city.name,
+        label: city.name,
+      }));
+
+      setDropdownData((prev) => ({
+        ...prev,
+        cities,
+      }));
+    }
+  }, [formData.country, formData.state]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+
+    // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -124,52 +286,118 @@ function EditLead() {
     }
   };
 
-  const handleAddTag = () => {
-    if (currentTag.trim() && !formData.tags.includes(currentTag.trim())) {
-      setFormData((prev) => ({
-        ...prev,
-        tags: [...prev.tags, currentTag.trim()],
-      }));
-      setCurrentTag("");
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove) => {
+  const handleSelectChange = (selectedOption, { name }) => {
     setFormData((prev) => ({
       ...prev,
-      tags: prev.tags.filter((tag) => tag !== tagToRemove),
+      [name]: selectedOption ? selectedOption.value : "",
     }));
-  };
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddTag();
+    // Clear error when user selects an option
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.firstName.trim())
-      newErrors.firstName = "First name is required";
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid";
-    }
-    if (!formData.company.trim()) newErrors.company = "Company is required";
-    if (!formData.source) newErrors.source = "Lead source is required";
+
+    // Validate required fixed fields
+    if (!formData.clientName?.trim())
+      newErrors.clientName = "Client name is required";
+    if (!formData.source?.trim()) newErrors.source = "Lead source is required";
+    if (!formData.employeeId?.trim())
+      newErrors.employeeId = "Employee ID is required";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log("Lead updated:", formData);
-      alert("Lead updated successfully!");
-      navigate("/leads");
+    if (!validateForm()) return;
+
+    setLoading(true);
+    try {
+      const token = getAuthToken();
+
+      if (!token) {
+        alert("Please login first");
+        navigate("/login");
+        return;
+      }
+
+      // Prepare the data in API format with only fixed fields
+      const submitData = {
+        id: id, // Include the lead ID for update
+        employeeId: formData.employeeId,
+        assignTo: formData.assignTo,
+        status: formData.status,
+        source: formData.source,
+        clientName: formData.clientName,
+        revenue: formData.revenue ? parseFloat(formData.revenue) : 0,
+        street: formData.street,
+        country: formData.country
+          ? dropdownData.countries.find((c) => c.value === formData.country)
+              ?.label
+          : "",
+        state: formData.state
+          ? dropdownData.states.find((s) => s.value === formData.state)?.label
+          : "",
+        city: formData.city,
+        zipCode: formData.zipCode,
+        description: formData.description,
+      };
+
+      console.log("Updating lead with data:", submitData);
+
+      const response = await fetch(
+        `http://localhost:8080/lead/updateLead/${id}`,
+        {
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(submitData),
+        }
+      );
+
+      if (response.status === 401) {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("userData");
+        alert("Session expired. Please login again.");
+        navigate("/login");
+        return;
+      }
+
+      if (response.ok) {
+        const result = await response.json();
+        alert("Lead updated successfully!");
+        navigate("/Admin/LeadList");
+      } else {
+        let errorMessage = "Failed to update lead";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = (await response.text()) || errorMessage;
+        }
+        alert(`Failed to update lead: ${errorMessage}`);
+      }
+    } catch (error) {
+      console.error("Error updating lead:", error);
+      if (
+        error.name === "TypeError" &&
+        error.message.includes("Failed to fetch")
+      ) {
+        alert(
+          "Cannot connect to server. Please check if the backend is running."
+        );
+      } else {
+        alert("Failed to update lead. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -179,23 +407,37 @@ function EditLead() {
         "Are you sure you want to cancel? Any unsaved changes will be lost."
       )
     ) {
-      navigate("/leads");
+      navigate("/Admin/LeadList");
     }
   };
 
   const handleReset = () => {
-    const originalLead = mockLeads.find((lead) => lead.id === parseInt(id));
-    if (
-      originalLead &&
-      window.confirm("Are you sure you want to reset all changes?")
-    ) {
-      setFormData(originalLead);
-      setErrors({});
+    if (window.confirm("Are you sure you want to reset all changes?")) {
+      // Re-fetch the original data
+      window.location.reload();
     }
   };
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
+  };
+
+  // Custom styles for react-select
+  const customStyles = {
+    control: (base) => ({
+      ...base,
+      minHeight: "42px",
+      borderColor:
+        errors.country || errors.state || errors.city ? "#ef4444" : "#d1d5db",
+      "&:hover": {
+        borderColor:
+          errors.country || errors.state || errors.city ? "#ef4444" : "#3b82f6",
+      },
+    }),
+    menu: (base) => ({
+      ...base,
+      zIndex: 50,
+    }),
   };
 
   if (isLoading) {
@@ -223,39 +465,67 @@ function EditLead() {
             sidebarOpen ? "ml-0 lg:ml-5" : "ml-0"
           }`}
         >
-          {/* Main Content Area with Vertical Scrolling */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-4">
-              {/* Header - Compact */}
-              <div className="mb-4">
-                <div className="flex items-center gap-1 mb-2">
-                  <button
-                    onClick={() => navigate("/leads")}
-                    className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900 transition-colors"
+          <div className="p-4 bg-gray-50 border-b border-gray-200">
+            {/* Header */}
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <button
+                  onClick={() => navigate("/Admin/LeadList")}
+                  className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <svg
-                      className="w-3 h-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
-                      />
-                    </svg>
-                    Back to Leads
-                  </button>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  Back to Leads
+                </button>
+              </div>
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">Edit Lead</h1>
+                  <p className="text-gray-600 text-sm">
+                    Update lead information for {formData.clientName}
+                  </p>
                 </div>
-
-                <div className="bg-white rounded-lg border border-gray-200 p-3 mb-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <div className="flex items-center gap-2">
+                  <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                    ID: {id}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="px-4 py-2 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 text-sm font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    className="px-4 py-2 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 text-sm font-medium"
+                  >
+                    Reset
+                  </button>
+                  <button
+                    type="submit"
+                    form="editLeadForm"
+                    disabled={loading}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200 text-sm font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? (
+                      "Updating..."
+                    ) : (
+                      <>
                         <svg
-                          className="w-4 h-4 text-white"
+                          className="w-4 h-4"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -264,599 +534,385 @@ function EditLead() {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth={2}
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            d="M5 13l4 4L19 7"
                           />
                         </svg>
-                      </div>
-                      <div>
-                        <h1 className="text-lg font-semibold text-gray-900">
-                          Edit Lead
-                        </h1>
-                        <p className="text-gray-600 text-xs">
-                          {formData.firstName} {formData.lastName}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
-                      ID: #{id}
-                    </div>
-                  </div>
+                        Update Lead
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
+            </div>
 
-              {/* Form Container */}
-              <div className="grid grid-cols-1 xl:grid-cols-4 gap-3">
-                {/* Main Form */}
-                <div className="xl:col-span-3">
-                  <div className="bg-white rounded-lg border border-gray-200">
-                    <form onSubmit={handleSubmit} className="p-4">
-                      <div className="space-y-4">
-                        {/* Basic Information Section */}
-                        <section className="bg-blue-50 rounded-lg p-3 border border-blue-100">
-                          <div className="flex items-center gap-2 mb-3">
-                            <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
-                              <svg
-                                className="w-3 h-3 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                />
-                              </svg>
-                            </div>
-                            <div>
-                              <h2 className="text-sm font-semibold text-gray-900">
-                                Basic Information
-                              </h2>
-                            </div>
+            {/* Form Container */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-4">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                  <form
+                    id="editLeadForm"
+                    onSubmit={handleSubmit}
+                    className="p-6"
+                  >
+                    <div className="space-y-6">
+                      {/* Basic Information Section */}
+                      <section>
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                            <svg
+                              className="w-4 h-4 text-white"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <h2 className="text-xl font-semibold text-gray-900">
+                              Basic Information
+                            </h2>
+                            <p className="text-gray-600 text-sm">
+                              Primary lead details
+                            </p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Client Name *
+                            </label>
+                            <input
+                              type="text"
+                              name="clientName"
+                              value={formData.clientName}
+                              onChange={handleChange}
+                              className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                                errors.clientName
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              }`}
+                              placeholder="Enter client name"
+                            />
+                            {errors.clientName && (
+                              <p className="mt-1 text-xs text-red-600">
+                                {errors.clientName}
+                              </p>
+                            )}
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Salutation
-                              </label>
-                              <select
-                                name="salutation"
-                                value={formData.salutation}
-                                onChange={handleChange}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                              >
-                                <option value="">Select</option>
-                                <option value="Mr.">Mr.</option>
-                                <option value="Ms.">Ms.</option>
-                                <option value="Mrs.">Mrs.</option>
-                                <option value="Dr.">Dr.</option>
-                              </select>
-                            </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Employee ID *
+                            </label>
+                            <input
+                              type="text"
+                              name="employeeId"
+                              value={formData.employeeId}
+                              onChange={handleChange}
+                              className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                                errors.employeeId
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              }`}
+                              placeholder="Enter employee ID"
+                            />
+                            {errors.employeeId && (
+                              <p className="mt-1 text-xs text-red-600">
+                                {errors.employeeId}
+                              </p>
+                            )}
+                          </div>
 
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                First Name *
-                              </label>
-                              <input
-                                type="text"
-                                name="firstName"
-                                value={formData.firstName}
-                                onChange={handleChange}
-                                className={`w-full px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
-                                  errors.firstName
-                                    ? "border-red-500"
-                                    : "border-gray-300"
-                                }`}
-                                placeholder="First name"
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Assign To
+                            </label>
+                            <input
+                              type="text"
+                              name="assignTo"
+                              value={formData.assignTo}
+                              onChange={handleChange}
+                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                              placeholder="Enter assignee ID"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Revenue
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              name="revenue"
+                              value={formData.revenue}
+                              onChange={handleChange}
+                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                              placeholder="Enter revenue amount"
+                            />
+                          </div>
+                        </div>
+                      </section>
+
+                      {/* Lead Details Section */}
+                      <section>
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                            <svg
+                              className="w-4 h-4 text-white"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
                               />
-                              {errors.firstName && (
-                                <p className="mt-1 text-xs text-red-600">
-                                  {errors.firstName}
-                                </p>
+                            </svg>
+                          </div>
+                          <div>
+                            <h2 className="text-xl font-semibold text-gray-900">
+                              Lead Details
+                            </h2>
+                            <p className="text-gray-600 text-sm">
+                              Sales pipeline information
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Status
+                            </label>
+                            <select
+                              name="status"
+                              value={formData.status}
+                              onChange={handleChange}
+                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            >
+                              <option value="New Lead">New Lead</option>
+                              <option value="Contacted">Contacted</option>
+                              <option value="Qualified">Qualified</option>
+                              <option value="Proposal">Proposal</option>
+                              <option value="Negotiation">Negotiation</option>
+                              <option value="Closed Won">Closed Won</option>
+                              <option value="Closed Lost">Closed Lost</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Lead Source *
+                            </label>
+                            <select
+                              name="source"
+                              value={formData.source}
+                              onChange={handleChange}
+                              className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                                errors.source
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              }`}
+                            >
+                              <option value="">Select Source</option>
+                              <option value="Instagram">Instagram</option>
+                              <option value="Website">Website</option>
+                              <option value="Referral">Referral</option>
+                              <option value="Social Media">Social Media</option>
+                              <option value="Trade Show">Trade Show</option>
+                              <option value="Email Campaign">
+                                Email Campaign
+                              </option>
+                            </select>
+                            {errors.source && (
+                              <p className="mt-1 text-xs text-red-600">
+                                {errors.source}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </section>
+
+                      {/* Address Information Section */}
+                      <section>
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                            <svg
+                              className="w-4 h-4 text-white"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <h2 className="text-xl font-semibold text-gray-900">
+                              Address Information
+                            </h2>
+                            <p className="text-gray-600 text-sm">
+                              Client location details
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Street
+                            </label>
+                            <input
+                              type="text"
+                              name="street"
+                              value={formData.street}
+                              onChange={handleChange}
+                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                              placeholder="Enter street address"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Country *
+                            </label>
+                            <Select
+                              name="country"
+                              value={dropdownData.countries.find(
+                                (option) => option.value === formData.country
                               )}
-                            </div>
+                              onChange={(selectedOption) =>
+                                handleSelectChange(selectedOption, {
+                                  name: "country",
+                                })
+                              }
+                              options={dropdownData.countries}
+                              placeholder="Select Country"
+                              isSearchable
+                              styles={customStyles}
+                            />
+                          </div>
 
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Last Name *
-                              </label>
-                              <input
-                                type="text"
-                                name="lastName"
-                                value={formData.lastName}
-                                onChange={handleChange}
-                                className={`w-full px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
-                                  errors.lastName
-                                    ? "border-red-500"
-                                    : "border-gray-300"
-                                }`}
-                                placeholder="Last name"
-                              />
-                              {errors.lastName && (
-                                <p className="mt-1 text-xs text-red-600">
-                                  {errors.lastName}
-                                </p>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              State *
+                            </label>
+                            <Select
+                              name="state"
+                              value={dropdownData.states.find(
+                                (option) => option.value === formData.state
                               )}
-                            </div>
+                              onChange={(selectedOption) =>
+                                handleSelectChange(selectedOption, {
+                                  name: "state",
+                                })
+                              }
+                              options={dropdownData.states}
+                              placeholder="Select State"
+                              isSearchable
+                              isDisabled={!formData.country}
+                              styles={customStyles}
+                            />
+                          </div>
 
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Email Address *
-                              </label>
-                              <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                className={`w-full px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
-                                  errors.email
-                                    ? "border-red-500"
-                                    : "border-gray-300"
-                                }`}
-                                placeholder="Email address"
-                              />
-                              {errors.email && (
-                                <p className="mt-1 text-xs text-red-600">
-                                  {errors.email}
-                                </p>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              City *
+                            </label>
+                            <Select
+                              name="city"
+                              value={dropdownData.cities.find(
+                                (option) => option.value === formData.city
                               )}
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Phone
-                              </label>
-                              <input
-                                type="tel"
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleChange}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Phone number"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Mobile
-                              </label>
-                              <input
-                                type="tel"
-                                name="mobile"
-                                value={formData.mobile}
-                                onChange={handleChange}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Mobile number"
-                              />
-                            </div>
-                          </div>
-                        </section>
-
-                        {/* Company Information Section */}
-                        <section className="bg-green-50 rounded-lg p-3 border border-green-100">
-                          <div className="flex items-center gap-2 mb-3">
-                            <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center">
-                              <svg
-                                className="w-3 h-3 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                                />
-                              </svg>
-                            </div>
-                            <div>
-                              <h2 className="text-sm font-semibold text-gray-900">
-                                Company Information
-                              </h2>
-                            </div>
+                              onChange={(selectedOption) =>
+                                handleSelectChange(selectedOption, {
+                                  name: "city",
+                                })
+                              }
+                              options={dropdownData.cities}
+                              placeholder="Select City"
+                              isSearchable
+                              isDisabled={!formData.state}
+                              styles={customStyles}
+                            />
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Job Title
-                              </label>
-                              <input
-                                type="text"
-                                name="title"
-                                value={formData.title}
-                                onChange={handleChange}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Job title"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Company *
-                              </label>
-                              <input
-                                type="text"
-                                name="company"
-                                value={formData.company}
-                                onChange={handleChange}
-                                className={`w-full px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
-                                  errors.company
-                                    ? "border-red-500"
-                                    : "border-gray-300"
-                                }`}
-                                placeholder="Company name"
-                              />
-                              {errors.company && (
-                                <p className="mt-1 text-xs text-red-600">
-                                  {errors.company}
-                                </p>
-                              )}
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Website
-                              </label>
-                              <input
-                                type="url"
-                                name="website"
-                                value={formData.website}
-                                onChange={handleChange}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Website URL"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Industry
-                              </label>
-                              <select
-                                name="industry"
-                                value={formData.industry}
-                                onChange={handleChange}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                              >
-                                <option value="">Select Industry</option>
-                                <option value="Technology">Technology</option>
-                                <option value="Healthcare">Healthcare</option>
-                                <option value="Finance">Finance</option>
-                                <option value="Education">Education</option>
-                                <option value="Manufacturing">
-                                  Manufacturing
-                                </option>
-                                <option value="Retail">Retail</option>
-                              </select>
-                            </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              ZIP Code
+                            </label>
+                            <input
+                              type="text"
+                              name="zipCode"
+                              value={formData.zipCode}
+                              onChange={handleChange}
+                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                              placeholder="Enter ZIP code"
+                            />
                           </div>
-                        </section>
-
-                        {/* Lead Details Section */}
-                        <section className="bg-purple-50 rounded-lg p-3 border border-purple-100">
-                          <div className="flex items-center gap-2 mb-3">
-                            <div className="w-6 h-6 bg-purple-600 rounded flex items-center justify-center">
-                              <svg
-                                className="w-3 h-3 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                                />
-                              </svg>
-                            </div>
-                            <div>
-                              <h2 className="text-sm font-semibold text-gray-900">
-                                Lead Details
-                              </h2>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Status
-                              </label>
-                              <select
-                                name="status"
-                                value={formData.status}
-                                onChange={handleChange}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                              >
-                                <option value="New">New</option>
-                                <option value="Contacted">Contacted</option>
-                                <option value="Qualified">Qualified</option>
-                                <option value="Proposal">Proposal</option>
-                                <option value="Negotiation">Negotiation</option>
-                                <option value="Closed">Closed</option>
-                              </select>
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Lead Source *
-                              </label>
-                              <select
-                                name="source"
-                                value={formData.source}
-                                onChange={handleChange}
-                                className={`w-full px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
-                                  errors.source
-                                    ? "border-red-500"
-                                    : "border-gray-300"
-                                }`}
-                              >
-                                <option value="">Select Source</option>
-                                <option value="Website">Website</option>
-                                <option value="Referral">Referral</option>
-                                <option value="Social Media">
-                                  Social Media
-                                </option>
-                                <option value="Trade Show">Trade Show</option>
-                                <option value="Email Campaign">
-                                  Email Campaign
-                                </option>
-                              </select>
-                              {errors.source && (
-                                <p className="mt-1 text-xs text-red-600">
-                                  {errors.source}
-                                </p>
-                              )}
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Priority
-                              </label>
-                              <select
-                                name="priority"
-                                value={formData.priority}
-                                onChange={handleChange}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                              >
-                                <option value="Low">Low</option>
-                                <option value="Medium">Medium</option>
-                                <option value="High">High</option>
-                                <option value="Urgent">Urgent</option>
-                              </select>
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Budget
-                              </label>
-                              <input
-                                type="text"
-                                name="budget"
-                                value={formData.budget}
-                                onChange={handleChange}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Budget amount"
-                              />
-                            </div>
-                          </div>
-                        </section>
-
-                        {/* Additional Information */}
-                        <section className="bg-orange-50 rounded-lg p-3 border border-orange-100">
-                          <div className="flex items-center gap-2 mb-3">
-                            <div className="w-6 h-6 bg-orange-600 rounded flex items-center justify-center">
-                              <svg
-                                className="w-3 h-3 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                />
-                              </svg>
-                            </div>
-                            <div>
-                              <h2 className="text-sm font-semibold text-gray-900">
-                                Additional Information
-                              </h2>
-                            </div>
-                          </div>
-
-                          <div className="space-y-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Description
-                              </label>
-                              <textarea
-                                name="description"
-                                value={formData.description}
-                                onChange={handleChange}
-                                rows={2}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                                placeholder="Additional notes"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Tags
-                              </label>
-                              <div className="flex gap-1 mb-2">
-                                <input
-                                  type="text"
-                                  value={currentTag}
-                                  onChange={(e) =>
-                                    setCurrentTag(e.target.value)
-                                  }
-                                  onKeyPress={handleKeyPress}
-                                  className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                  placeholder="Enter a tag"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={handleAddTag}
-                                  className="px-2 py-1 bg-gray-600 text-white rounded text-xs font-medium hover:bg-gray-700"
-                                >
-                                  Add
-                                </button>
-                              </div>
-                              <div className="flex flex-wrap gap-1">
-                                {formData.tags.map((tag, index) => (
-                                  <span
-                                    key={index}
-                                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium"
-                                  >
-                                    {tag}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleRemoveTag(tag)}
-                                      className="text-blue-600 hover:text-blue-800 text-sm leading-none"
-                                    >
-                                      ×
-                                    </button>
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </section>
-                      </div>
-
-                      {/* Form Actions */}
-                      <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mt-4 pt-3 border-t border-gray-200">
-                        <div className="text-xs text-gray-500">
-                          Updated: {new Date().toLocaleDateString()}
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                          <button
-                            type="button"
-                            onClick={handleCancel}
-                            className="px-3 py-1 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 text-xs font-medium"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleReset}
-                            className="px-3 py-1 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 text-xs font-medium"
-                          >
-                            Reset
-                          </button>
-                          <button
-                            type="submit"
-                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-medium"
-                          >
-                            Update Lead
-                          </button>
-                        </div>
-                      </div>
-                    </form>
-                  </div>
-                </div>
+                      </section>
 
-                {/* Side Panel */}
-                <div className="xl:col-span-1">
-                  <div className="space-y-3">
-                    {/* Lead Summary */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-3">
-                      <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                        Lead Summary
-                      </h3>
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-gray-600">Status:</span>
-                          <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded text-xs font-medium">
-                            {formData.status}
-                          </span>
+                      {/* Description Section */}
+                      <section>
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center">
+                            <svg
+                              className="w-4 h-4 text-white"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <h2 className="text-xl font-semibold text-gray-900">
+                              Description
+                            </h2>
+                            <p className="text-gray-600 text-sm">
+                              Additional notes and information
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-gray-600">
-                            Priority:
-                          </span>
-                          <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium">
-                            {formData.priority}
-                          </span>
+
+                        <div>
+                          <textarea
+                            name="description"
+                            value={formData.description}
+                            onChange={handleChange}
+                            rows={4}
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                            placeholder="Enter additional notes or description"
+                          />
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-gray-600">Source:</span>
-                          <span className="text-xs text-gray-900 font-medium">
-                            {formData.source}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-gray-600">Budget:</span>
-                          <span className="text-xs text-gray-900 font-medium">
-                            {formData.budget}
-                          </span>
-                        </div>
-                      </div>
+                      </section>
                     </div>
-
-                    {/* Quick Actions */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-3">
-                      <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                        Quick Actions
-                      </h3>
-                      <div className="space-y-1">
-                        <button className="w-full flex items-center gap-2 px-2 py-1 text-left text-xs text-gray-700 hover:bg-gray-50 rounded transition-colors">
-                          <svg
-                            className="w-3 h-3 text-blue-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                            />
-                          </svg>
-                          <span>Send Message</span>
-                        </button>
-                        <button className="w-full flex items-center gap-2 px-2 py-1 text-left text-xs text-gray-700 hover:bg-gray-50 rounded transition-colors">
-                          <svg
-                            className="w-3 h-3 text-green-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                          </svg>
-                          <span>Schedule Meeting</span>
-                        </button>
-                        <button className="w-full flex items-center gap-2 px-2 py-1 text-left text-xs text-gray-700 hover:bg-gray-50 rounded transition-colors">
-                          <svg
-                            className="w-3 h-3 text-purple-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            />
-                          </svg>
-                          <span>Add Note</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  </form>
                 </div>
               </div>
             </div>
@@ -868,4 +924,3 @@ function EditLead() {
 }
 
 export default EditLead;
-  

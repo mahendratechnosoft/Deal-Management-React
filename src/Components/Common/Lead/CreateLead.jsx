@@ -1,45 +1,131 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Select from "react-select";
+import { Country, State, City } from "country-state-city";
 import Sidebar from "../../Pages/Admin/SidebarAdmin";
 import TopBar from "../../Pages/Admin/TopBarAdmin";
 
 function CreateLead() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  // Fixed fields as per API
   const [formData, setFormData] = useState({
-    salutation: "",
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    mobile: "",
-    title: "",
-    company: "",
-    website: "",
-    industry: "",
-    role: "",
-    department: "",
-    reportsTo: "",
-    employeeSize: "",
-    status: "New",
+    employeeId: "",
+    assignTo: "",
+    status: "New Lead",
     source: "",
-    priority: "Medium",
-    budget: "",
-    expectedClose: "",
-    leadOwner: "",
+    clientName: "",
+    revenue: "",
+    street: "",
+    country: "",
+    state: "",
+    city: "",
+    zipCode: "",
     description: "",
-    tags: [],
+  });
+
+  const [dropdownData, setDropdownData] = useState({
+    countries: [],
+    states: [],
+    cities: [],
+    zipCodes: [],
   });
 
   const [errors, setErrors] = useState({});
-  const [currentTag, setCurrentTag] = useState("");
+
+  // Get auth token from localStorage
+  const getAuthToken = () => {
+    return localStorage.getItem("authToken");
+  };
+
+  // Get auth headers for API calls
+  const getAuthHeaders = () => {
+    const token = getAuthToken();
+    return {
+      "Content-Type": "application/json",
+      Authorization: token ? `Bearer ${token}` : "",
+    };
+  };
+
+  // Initialize countries on component mount
+  useEffect(() => {
+    const countries = Country.getAllCountries().map((country) => ({
+      value: country.isoCode,
+      label: country.name,
+      phonecode: country.phonecode,
+      flag: country.flag,
+    }));
+
+    setDropdownData((prev) => ({
+      ...prev,
+      countries,
+    }));
+  }, []);
+
+  // Update states when country changes
+  useEffect(() => {
+    if (formData.country) {
+      const states = State.getStatesOfCountry(formData.country).map(
+        (state) => ({
+          value: state.isoCode,
+          label: state.name,
+        })
+      );
+
+      setDropdownData((prev) => ({
+        ...prev,
+        states,
+        cities: [],
+        zipCodes: [],
+      }));
+
+      // Reset state, city, and zipCode when country changes
+      setFormData((prev) => ({
+        ...prev,
+        state: "",
+        city: "",
+        zipCode: "",
+      }));
+    }
+  }, [formData.country]);
+
+  // Update cities when state changes
+  useEffect(() => {
+    if (formData.country && formData.state) {
+      const cities = City.getCitiesOfState(
+        formData.country,
+        formData.state
+      ).map((city) => ({
+        value: city.name,
+        label: city.name,
+      }));
+
+      setDropdownData((prev) => ({
+        ...prev,
+        cities,
+        zipCodes: [],
+      }));
+
+      // Reset city and zipCode when state changes
+      setFormData((prev) => ({
+        ...prev,
+        city: "",
+        zipCode: "",
+      }));
+    }
+  }, [formData.country, formData.state]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+
+    // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -48,62 +134,162 @@ function CreateLead() {
     }
   };
 
-  const handleAddTag = () => {
-    if (currentTag.trim() && !formData.tags.includes(currentTag.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, currentTag.trim()]
-      }));
-      setCurrentTag("");
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove) => {
-    setFormData(prev => ({
+  const handleSelectChange = (selectedOption, { name }) => {
+    setFormData((prev) => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      [name]: selectedOption ? selectedOption.value : "",
     }));
-  };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddTag();
+    // Clear error when user selects an option
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid";
-    }
-    if (!formData.company.trim()) newErrors.company = "Company is required";
-    if (!formData.source) newErrors.source = "Lead source is required";
+
+    // Validate required fixed fields
+    if (!formData.clientName?.trim())
+      newErrors.clientName = "Client name is required";
+    if (!formData.source?.trim()) newErrors.source = "Lead source is required";
+    if (!formData.employeeId?.trim())
+      newErrors.employeeId = "Employee ID is required";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log("Form submitted:", formData);
-      alert("Lead created successfully!");
-      setFormData({
-        salutation: "", firstName: "", lastName: "", email: "", phone: "", mobile: "",
-        title: "", company: "", website: "", industry: "", role: "", department: "",
-        reportsTo: "", employeeSize: "", status: "New", source: "", priority: "Medium",
-        budget: "", expectedClose: "", leadOwner: "", description: "", tags: [],
+    if (!validateForm()) return;
+
+    setLoading(true);
+    try {
+      const token = getAuthToken();
+
+      if (!token) {
+        alert("Please login first");
+        navigate("/login");
+        return;
+      }
+
+      // Prepare the data in API format with only fixed fields
+      const submitData = {
+        employeeId: formData.employeeId,
+        assignTo: formData.assignTo,
+        status: formData.status,
+        source: formData.source,
+        clientName: formData.clientName,
+        revenue: formData.revenue ? parseFloat(formData.revenue) : 0,
+        street: formData.street,
+        country: formData.country
+          ? dropdownData.countries.find((c) => c.value === formData.country)
+              ?.label
+          : "",
+        state: formData.state
+          ? dropdownData.states.find((s) => s.value === formData.state)?.label
+          : "",
+        city: formData.city,
+        zipCode: formData.zipCode,
+        description: formData.description,
+      };
+
+      console.log("Submitting data:", submitData);
+
+      const response = await fetch("http://localhost:8080/lead/createLead", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(submitData),
       });
-      navigate("/leads");
+
+      if (response.status === 401) {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("userData");
+        alert("Session expired. Please login again.");
+        navigate("/login");
+        return;
+      }
+
+      if (response.ok) {
+        const result = await response.json();
+        alert("Lead created successfully!");
+        resetForm();
+        navigate("/Admin/LeadList");
+      } else {
+        let errorMessage = "Failed to create lead";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = (await response.text()) || errorMessage;
+        }
+        alert(`Failed to create lead: ${errorMessage}`);
+      }
+    } catch (error) {
+      console.error("Error creating lead:", error);
+      if (
+        error.name === "TypeError" &&
+        error.message.includes("Failed to fetch")
+      ) {
+        alert(
+          "Cannot connect to server. Please check if the backend is running."
+        );
+      } else {
+        alert("Failed to create lead. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      employeeId: "",
+      assignTo: "",
+      status: "New Lead",
+      source: "",
+      clientName: "",
+      revenue: "",
+      street: "",
+      country: "",
+      state: "",
+      city: "",
+      zipCode: "",
+      description: "",
+    });
+
+    setDropdownData({
+      countries: dropdownData.countries, // Keep countries
+      states: [],
+      cities: [],
+      zipCodes: [],
+    });
   };
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
+  };
+
+  // Custom styles for react-select
+  const customStyles = {
+    control: (base) => ({
+      ...base,
+      minHeight: "42px",
+      borderColor:
+        errors.country || errors.state || errors.city ? "#ef4444" : "#d1d5db",
+      "&:hover": {
+        borderColor:
+          errors.country || errors.state || errors.city ? "#ef4444" : "#3b82f6",
+      },
+    }),
+    menu: (base) => ({
+      ...base,
+      zIndex: 50,
+    }),
   };
 
   return (
@@ -123,7 +309,7 @@ function CreateLead() {
             <div className="mb-4">
               <div className="flex items-center gap-2 mb-2">
                 <button
-                  onClick={() => navigate("/leads")}
+                  onClick={() => navigate("/Admin/LeadList")}
                   className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200"
                 >
                   <svg
@@ -154,7 +340,7 @@ function CreateLead() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => navigate("/leads")}
+                    onClick={() => navigate("/Admin/LeadList")}
                     className="px-4 py-2 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 text-sm font-medium"
                   >
                     Cancel
@@ -162,22 +348,29 @@ function CreateLead() {
                   <button
                     type="submit"
                     form="createLeadForm"
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200 text-sm font-medium flex items-center gap-1"
+                    disabled={loading}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200 text-sm font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    Create Lead
+                    {loading ? (
+                      "Creating..."
+                    ) : (
+                      <>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        Create Lead
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -185,7 +378,7 @@ function CreateLead() {
 
             {/* Form Container */}
             <div className="flex-1 overflow-y-auto">
-              <div className=" p-4">
+              <div className="p-4">
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                   <form
                     id="createLeadForm"
@@ -216,297 +409,84 @@ function CreateLead() {
                               Basic Information
                             </h2>
                             <p className="text-gray-600 text-sm">
-                              Primary contact details
+                              Primary lead details
                             </p>
                           </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {/* Row 1 */}
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Salutation
-                            </label>
-                            <select
-                              name="salutation"
-                              value={formData.salutation}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
-                              <option value="">Select</option>
-                              <option value="Mr.">Mr.</option>
-                              <option value="Ms.">Ms.</option>
-                              <option value="Mrs.">Mrs.</option>
-                              <option value="Dr.">Dr.</option>
-                            </select>
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              First Name *
+                              Client Name *
                             </label>
                             <input
                               type="text"
-                              name="firstName"
-                              value={formData.firstName}
+                              name="clientName"
+                              value={formData.clientName}
                               onChange={handleChange}
                               className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${
-                                errors.firstName
+                                errors.clientName
                                   ? "border-red-500"
                                   : "border-gray-300"
                               }`}
-                              placeholder="Enter first name"
+                              placeholder="Enter client name"
                             />
-                            {errors.firstName && (
+                            {errors.clientName && (
                               <p className="mt-1 text-xs text-red-600">
-                                {errors.firstName}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Row 2 */}
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Last Name *
-                            </label>
-                            <input
-                              type="text"
-                              name="lastName"
-                              value={formData.lastName}
-                              onChange={handleChange}
-                              className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${
-                                errors.lastName
-                                  ? "border-red-500"
-                                  : "border-gray-300"
-                              }`}
-                              placeholder="Enter last name"
-                            />
-                            {errors.lastName && (
-                              <p className="mt-1 text-xs text-red-600">
-                                {errors.lastName}
+                                {errors.clientName}
                               </p>
                             )}
                           </div>
 
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Email Address *
+                              Employee ID *
                             </label>
                             <input
-                              type="email"
-                              name="email"
-                              value={formData.email}
+                              type="text"
+                              name="employeeId"
+                              value={formData.employeeId}
                               onChange={handleChange}
                               className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${
-                                errors.email
+                                errors.employeeId
                                   ? "border-red-500"
                                   : "border-gray-300"
                               }`}
-                              placeholder="Enter email address"
+                              placeholder="Enter employee ID"
                             />
-                            {errors.email && (
+                            {errors.employeeId && (
                               <p className="mt-1 text-xs text-red-600">
-                                {errors.email}
+                                {errors.employeeId}
                               </p>
                             )}
                           </div>
 
-                          {/* Row 3 */}
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Phone
-                            </label>
-                            <input
-                              type="tel"
-                              name="phone"
-                              value={formData.phone}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Enter phone number"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Mobile
-                            </label>
-                            <input
-                              type="tel"
-                              name="mobile"
-                              value={formData.mobile}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Enter mobile number"
-                            />
-                          </div>
-
-                          {/* Row 4 */}
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Job Title
+                              Assign To
                             </label>
                             <input
                               type="text"
-                              name="title"
-                              value={formData.title}
+                              name="assignTo"
+                              value={formData.assignTo}
                               onChange={handleChange}
                               className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Enter job title"
+                              placeholder="Enter assignee ID"
                             />
                           </div>
 
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Company *
+                              Revenue
                             </label>
                             <input
-                              type="text"
-                              name="company"
-                              value={formData.company}
+                              type="number"
+                              step="0.01"
+                              name="revenue"
+                              value={formData.revenue}
                               onChange={handleChange}
-                              className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${
-                                errors.company
-                                  ? "border-red-500"
-                                  : "border-gray-300"
-                              }`}
-                              placeholder="Enter company name"
+                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                              placeholder="Enter revenue amount"
                             />
-                            {errors.company && (
-                              <p className="mt-1 text-xs text-red-600">
-                                {errors.company}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Row 5 */}
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Website
-                            </label>
-                            <input
-                              type="url"
-                              name="website"
-                              value={formData.website}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Enter website URL"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Industry
-                            </label>
-                            <select
-                              name="industry"
-                              value={formData.industry}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
-                              <option value="">Select Industry</option>
-                              <option value="Technology">Technology</option>
-                              <option value="Healthcare">Healthcare</option>
-                              <option value="Finance">Finance</option>
-                              <option value="Education">Education</option>
-                              <option value="Manufacturing">
-                                Manufacturing
-                              </option>
-                              <option value="Retail">Retail</option>
-                            </select>
-                          </div>
-                        </div>
-                      </section>
-
-                      {/* Professional Details Section */}
-                      <section>
-                        <div className="flex items-center gap-3 mb-6">
-                          <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                            <svg
-                              className="w-4 h-4 text-white"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <h2 className="text-xl font-semibold text-gray-900">
-                              Professional Details
-                            </h2>
-                            <p className="text-gray-600 text-sm">
-                              Work and organizational information
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Role
-                            </label>
-                            <select
-                              name="role"
-                              value={formData.role}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
-                              <option value="">Select Role</option>
-                              <option value="CEO">CEO</option>
-                              <option value="Manager">Manager</option>
-                              <option value="Director">Director</option>
-                              <option value="Executive">Executive</option>
-                            </select>
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Department
-                            </label>
-                            <input
-                              type="text"
-                              name="department"
-                              value={formData.department}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Enter department"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Reports To
-                            </label>
-                            <input
-                              type="text"
-                              name="reportsTo"
-                              value={formData.reportsTo}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Enter manager name"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Company Size
-                            </label>
-                            <select
-                              name="employeeSize"
-                              value={formData.employeeSize}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
-                              <option value="">Select Size</option>
-                              <option value="1-10">1-10 employees</option>
-                              <option value="11-50">11-50 employees</option>
-                              <option value="51-200">51-200 employees</option>
-                              <option value="201-500">201-500 employees</option>
-                            </select>
                           </div>
                         </div>
                       </section>
@@ -550,11 +530,13 @@ function CreateLead() {
                               onChange={handleChange}
                               className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
                             >
-                              <option value="New">New</option>
+                              <option value="New Lead">New Lead</option>
                               <option value="Contacted">Contacted</option>
                               <option value="Qualified">Qualified</option>
                               <option value="Proposal">Proposal</option>
                               <option value="Negotiation">Negotiation</option>
+                              <option value="Closed Won">Closed Won</option>
+                              <option value="Closed Lost">Closed Lost</option>
                             </select>
                           </div>
 
@@ -573,6 +555,7 @@ function CreateLead() {
                               }`}
                             >
                               <option value="">Select Source</option>
+                              <option value="Instagram">Instagram</option>
                               <option value="Website">Website</option>
                               <option value="Referral">Referral</option>
                               <option value="Social Media">Social Media</option>
@@ -587,74 +570,13 @@ function CreateLead() {
                               </p>
                             )}
                           </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Priority
-                            </label>
-                            <select
-                              name="priority"
-                              value={formData.priority}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
-                              <option value="Low">Low</option>
-                              <option value="Medium">Medium</option>
-                              <option value="High">High</option>
-                              <option value="Urgent">Urgent</option>
-                            </select>
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Budget
-                            </label>
-                            <input
-                              type="text"
-                              name="budget"
-                              value={formData.budget}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Enter budget amount"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Expected Close Date
-                            </label>
-                            <input
-                              type="date"
-                              name="expectedClose"
-                              value={formData.expectedClose}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Lead Owner
-                            </label>
-                            <select
-                              name="leadOwner"
-                              value={formData.leadOwner}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
-                              <option value="">Select Owner</option>
-                              <option value="user1">John Doe</option>
-                              <option value="user2">Jane Smith</option>
-                              <option value="user3">Mike Johnson</option>
-                            </select>
-                          </div>
                         </div>
                       </section>
 
-                      {/* Additional Information Section */}
+                      {/* Address Information Section */}
                       <section>
                         <div className="flex items-center gap-3 mb-6">
-                          <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
+                          <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
                             <svg
                               className="w-4 h-4 text-white"
                               fill="none"
@@ -665,74 +587,159 @@ function CreateLead() {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth={2}
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                               />
                             </svg>
                           </div>
                           <div>
                             <h2 className="text-xl font-semibold text-gray-900">
-                              Additional Information
+                              Address Information
                             </h2>
                             <p className="text-gray-600 text-sm">
-                              Additional notes and categorization
+                              Client location details
                             </p>
                           </div>
                         </div>
 
-                        <div className="space-y-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Description
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Street
                             </label>
-                            <textarea
-                              name="description"
-                              value={formData.description}
+                            <input
+                              type="text"
+                              name="street"
+                              value={formData.street}
                               onChange={handleChange}
-                              rows={3}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
-                              placeholder="Enter additional notes or description"
+                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                              placeholder="Enter street address"
                             />
                           </div>
 
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Tags
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Country *
                             </label>
-                            <div className="flex gap-2 mb-2">
-                              <input
-                                type="text"
-                                value={currentTag}
-                                onChange={(e) => setCurrentTag(e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                className="flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                placeholder="Enter a tag"
-                              />
-                              <button
-                                type="button"
-                                onClick={handleAddTag}
-                                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors duration-200 text-sm font-medium"
-                              >
-                                Add
-                              </button>
-                            </div>
-                            <div className="flex flex-wrap gap-1">
-                              {formData.tags.map((tag, index) => (
-                                <span
-                                  key={index}
-                                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium"
-                                >
-                                  {tag}
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveTag(tag)}
-                                    className="text-blue-600 hover:text-blue-800 text-sm leading-none"
-                                  >
-                                    ×
-                                  </button>
-                                </span>
-                              ))}
-                            </div>
+                            <Select
+                              name="country"
+                              value={dropdownData.countries.find(
+                                (option) => option.value === formData.country
+                              )}
+                              onChange={(selectedOption) =>
+                                handleSelectChange(selectedOption, {
+                                  name: "country",
+                                })
+                              }
+                              options={dropdownData.countries}
+                              placeholder="Select Country"
+                              isSearchable
+                              styles={customStyles}
+                            />
                           </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              State *
+                            </label>
+                            <Select
+                              name="state"
+                              value={dropdownData.states.find(
+                                (option) => option.value === formData.state
+                              )}
+                              onChange={(selectedOption) =>
+                                handleSelectChange(selectedOption, {
+                                  name: "state",
+                                })
+                              }
+                              options={dropdownData.states}
+                              placeholder="Select State"
+                              isSearchable
+                              isDisabled={!formData.country}
+                              styles={customStyles}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              City *
+                            </label>
+                            <Select
+                              name="city"
+                              value={dropdownData.cities.find(
+                                (option) => option.value === formData.city
+                              )}
+                              onChange={(selectedOption) =>
+                                handleSelectChange(selectedOption, {
+                                  name: "city",
+                                })
+                              }
+                              options={dropdownData.cities}
+                              placeholder="Select City"
+                              isSearchable
+                              isDisabled={!formData.state}
+                              styles={customStyles}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              ZIP Code
+                            </label>
+                            <input
+                              type="text"
+                              name="zipCode"
+                              value={formData.zipCode}
+                              onChange={handleChange}
+                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                              placeholder="Enter ZIP code"
+                            />
+                          </div>
+                        </div>
+                      </section>
+
+                      {/* Description Section */}
+                      <section>
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center">
+                            <svg
+                              className="w-4 h-4 text-white"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <h2 className="text-xl font-semibold text-gray-900">
+                              Description
+                            </h2>
+                            <p className="text-gray-600 text-sm">
+                              Additional notes and information
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <textarea
+                            name="description"
+                            value={formData.description}
+                            onChange={handleChange}
+                            rows={4}
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                            placeholder="Enter additional notes or description"
+                          />
                         </div>
                       </section>
                     </div>
