@@ -11,7 +11,7 @@ import PageNotFound from "./Components/Pages/PageNotFound";
 import LeadList from "./Components/Common/Lead/LeadList";
 import CreateLead from "./Components/Common/Lead/CreateLead";
 import EditLead from "./Components/Common/Lead/EditLead";
-
+import DealList from "./Components/Common/Deals/DealList.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState(""); // super-admin, admin, employee
@@ -123,6 +123,15 @@ function App() {
           element={
             <PublicRoute>
               <EditLead />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/DealList"
+          element={
+            <PublicRoute>
+              <DealList />
             </PublicRoute>
           }
         />

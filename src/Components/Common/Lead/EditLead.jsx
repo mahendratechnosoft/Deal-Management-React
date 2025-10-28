@@ -74,7 +74,7 @@ function EditLead() {
         } else {
           // If lead not found, show error and redirect
           alert("Lead not found!");
-          navigate("/leads");
+          navigate("/LeadList");
         }
         setIsLoading(false);
       }, 500);
@@ -128,7 +128,7 @@ function EditLead() {
       // Since we don't have API, just show success and redirect
       console.log("Form updated:", formData);
       alert("Lead updated successfully!");
-      navigate("/leads");
+      navigate("/LeadList");
     }
   };
 
@@ -138,7 +138,7 @@ function EditLead() {
         "Are you sure you want to cancel? Any unsaved changes will be lost."
       )
     ) {
-      navigate("/leads");
+      navigate("/LeadList");
     }
   };
 
