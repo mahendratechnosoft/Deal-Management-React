@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Mtech_logo from "../../../public/Images/Mtech_Logo.jpg";
 import { useNavigate } from "react-router-dom";
+import axiosInstance from "../BaseComponet/axiosInstance";
 function Login({ onSwitchToRegister, onLogin }) {
 
     const navigate = useNavigate();
@@ -65,33 +66,33 @@ function Login({ onSwitchToRegister, onLogin }) {
    setIsLoading(true);
 
    try {
-     const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
+        const response = await axiosInstance.post(
+  "/signin",
+  {
+    username: formData.username,
+    password: formData.password,
+  },
+  {
+    headers: {
+      "Content-Type": "application/json",
+    }
+  }
+);
 
-     const response = await fetch(`${API_BASE}/signin`, {
-       method: "POST",
-       headers: {
-         "Content-Type": "application/json",
-       },
-       body: JSON.stringify({
-         username: formData.username,
-         password: formData.password,
-       }),
-     });
+    //  if (!response.ok) {
+    //    let errorMessage = "Sign in failed";
 
-     if (!response.ok) {
-       let errorMessage = "Sign in failed";
+    //    try {
+    //      const errorData = await response.json();
+    //      errorMessage = errorData.message || errorMessage;
+    //    } catch (parseError) {
+    //      errorMessage = response.statusText || errorMessage;
+    //    }
 
-       try {
-         const errorData = await response.json();
-         errorMessage = errorData.message || errorMessage;
-       } catch (parseError) {
-         errorMessage = response.statusText || errorMessage;
-       }
+    //    throw new Error(errorMessage);
+    //  }
 
-       throw new Error(errorMessage);
-     }
-
-     const data = await response.json();
+     const data = await response.data;
 
      // Store the token and user data
      if (data.jwtToken) {
