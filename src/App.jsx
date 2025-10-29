@@ -13,6 +13,10 @@ import CreateLead from "./Components/Common/Lead/CreateLead";
 import EditLead from "./Components/Common/Lead/EditLead";
 import DealList from "./Components/Common/Deals/DealList.jsx";
 import LeadListAdmin from "../src/Components/Pages/Admin/Lead/LeadListAdmin.jsx";
+import EmployeeListAdmin from "./Components/Pages/Admin/Employee/EmployeeListAdmin.jsx";
+import CreateEmployee from "./Components/Common/Employee/CreateEmployee.jsx";
+import EditEmployee from "./Components/Common/Employee/EditEmployee.jsx";
+
 import CustomToaster from "./Components/Common/Toaster";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -168,6 +172,33 @@ function App() {
             element={
               <ProtectedRoute>
                 <DealList />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/Admin/EmployeeList"
+            element={
+              <ProtectedRoute>
+                <EmployeeListAdmin onLogout={handleLogout} />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/Admin/CreateEmployee"
+            element={
+              <ProtectedRoute>
+                <CreateEmployee />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/Admin/EditEmployee/:employeeId"
+            element={
+              <ProtectedRoute>
+                <EditEmployee />
               </ProtectedRoute>
             }
           />
