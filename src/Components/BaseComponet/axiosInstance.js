@@ -1,23 +1,37 @@
 import axios from "axios";
 import Swal from "sweetalert2";
-// Create an instance of Axios   baseURL: "http://147.93.19.18:9090",
+
+// Base configuration
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:8080", // Replace with your API base URL
+  baseURL: "http://localhost:8080",
 });
 
-// Add a request interceptor to attach the token
+// Add a request interceptor to attach the token and handle role-based endpoints
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token"); // Get the token from localStorage
+    const token = localStorage.getItem("authToken"); // FIXED: changed from "token" to "authToken"
+    const role = localStorage.getItem("role");
+
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`; // Add token to Authorization header
+      config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Automatically prepend role-based prefix to URLs that don't start with /
+    if (role && config.url && !config.url.startsWith("/")) {
+      if (role === "ROLE_ADMIN") {
+        config.url = `admin/${config.url}`;
+      } else if (role === "ROLE_EMPLOYEE") {
+        config.url = `employee/${config.url}`;
+      }
+    }
+
+    console.log("Axios Interceptor - Final URL:", config.url); // Debug log
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// 🚀 Response Interceptor → handle expired/invalid tokens
+// Response Interceptor → handle expired/invalid tokens
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -31,7 +45,9 @@ axiosInstance.interceptors.response.use(
       });
 
       if (result.isConfirmed) {
-        localStorage.removeItem("token");
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("userData");
+        localStorage.removeItem("role");
         window.location.href = "/login";
       }
     }

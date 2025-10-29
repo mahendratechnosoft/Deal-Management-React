@@ -3,8 +3,7 @@ import Mtech_logo from "../../../public/Images/Mtech_Logo.jpg";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../BaseComponet/axiosInstance";
 function Login({ onSwitchToRegister, onLogin }) {
-
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -56,102 +55,90 @@ function Login({ onSwitchToRegister, onLogin }) {
     return Object.keys(newErrors).length === 0;
   };
 
- const handleSubmit = async (e) => {
-   e.preventDefault();
+  // In your login component, update the success handler:
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-   if (!validateForm()) {
-     return;
-   }
-
-   setIsLoading(true);
-
-   try {
-        const response = await axiosInstance.post(
-  "/signin",
-  {
-    username: formData.username,
-    password: formData.password,
-  },
-  {
-    headers: {
-      "Content-Type": "application/json",
+    if (!validateForm()) {
+      return;
     }
-  }
-);
 
-    //  if (!response.ok) {
-    //    let errorMessage = "Sign in failed";
+    setIsLoading(true);
 
-    //    try {
-    //      const errorData = await response.json();
-    //      errorMessage = errorData.message || errorMessage;
-    //    } catch (parseError) {
-    //      errorMessage = response.statusText || errorMessage;
-    //    }
+    try {
+      const response = await axiosInstance.post(
+        "/signin",
+        {
+          username: formData.username,
+          password: formData.password,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-    //    throw new Error(errorMessage);
-    //  }
+      const data = await response.data;
 
-     const data = await response.data;
+      // Store the token and user data
+      if (data.jwtToken) {
+        localStorage.setItem("authToken", data.jwtToken);
+        localStorage.setItem("role", data.role); // FIXED: Store role separately
+        localStorage.setItem(
+          "userData",
+          JSON.stringify({
+            userId: data.userId,
+            loginEmail: data.loginEmail,
+            role: data.role,
+            expiryDate: data.expiryDate,
+          })
+        );
 
-     // Store the token and user data
-     if (data.jwtToken) {
-       localStorage.setItem("authToken", data.jwtToken);
-       localStorage.setItem(
-         "userData",
-         JSON.stringify({
-           userId: data.userId,
-           loginEmail: data.loginEmail,
-           role: data.role,
-           expiryDate: data.expiryDate,
-         })
-       );
+        if (rememberMe) {
+          localStorage.setItem("rememberMe", "true");
+        }
 
-       if (rememberMe) {
-         localStorage.setItem("rememberMe", "true");
-       }
+        showToaster("Sign in successful! Welcome back.", "success");
 
-       showToaster("Sign in successful! Welcome back.", "success");
+        // Call onLogin with the correct data structure
+        if (onLogin) {
+          onLogin({
+            user: {
+              userId: data.userId,
+              email: data.loginEmail,
+              role: data.role,
+              expiryDate: data.expiryDate,
+            },
+          });
+        }
+      } else {
+        throw new Error("No authentication token received");
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+      if (
+        error.name === "TypeError" &&
+        error.message.includes("Failed to fetch")
+      ) {
+        showToaster(
+          "Cannot connect to server. Please check if the backend is running.",
+          "error"
+        );
+      } else {
+        showToaster(
+          error.message || "Sign in failed. Please check your credentials.",
+          "error"
+        );
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-       // FIXED: Call onLogin with the correct data structure
-       if (onLogin) {
-         onLogin({
-           user: {
-             userId: data.userId,
-             email: data.loginEmail,
-             role: data.role,
-             expiryDate: data.expiryDate,
-           },
-         });
-       }
-     } else {
-       throw new Error("No authentication token received");
-     }
-   } catch (error) {
-     console.error("Sign in error:", error);
-
-     if (
-       error.name === "TypeError" &&
-       error.message.includes("Failed to fetch")
-     ) {
-       showToaster(
-         "Cannot connect to server. Please check if the backend is running.",
-         "error"
-       );
-     } else {
-       showToaster(
-         error.message || "Sign in failed. Please check your credentials.",
-         "error"
-       );
-     }
-   } finally {
-     setIsLoading(false);
-   }
- };
-
-   const handleCreateAccount = (e) => {
-     navigate("/register");
-   };
+  const handleCreateAccount = (e) => {
+    navigate("/register");
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 relative overflow-hidden">
       {/* Animated Background Elements */}
@@ -483,9 +470,13 @@ function Login({ onSwitchToRegister, onLogin }) {
               <div className="mt-8 pt-6 border-t border-gray-200 text-center">
                 <p className="text-sm text-gray-600">
                   Don't have an account?{" "}
-                  <button onClick={handleCreateAccount}
+                  <button
+                    onClick={handleCreateAccount}
                     className="text-blue-600 hover:text-blue-500 font-semibold
-                    transition duration-200 hover:underline" > Create account
+                    transition duration-200 hover:underline"
+                  >
+                    {" "}
+                    Create account
                   </button>
                 </p>
               </div>

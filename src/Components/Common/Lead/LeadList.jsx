@@ -1,8 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
+import axiosInstance from "../../BaseComponet/axiosInstance";
 function LeadList() {
   const navigate = useNavigate();
+  // Get user role from localStorage
+  const getUserRole = () => {
+    return localStorage.getItem("role");
+  };
+
   const [showColumnPopup, setShowColumnPopup] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [viewMode, setViewMode] = useState("table");
@@ -72,41 +77,25 @@ function LeadList() {
   ];
 
   // Fetch statistics (total counts)
+  // Fetch statistics (total counts) - Updated to use axiosInstance
   const fetchStatistics = async () => {
     try {
       setStatsLoading(true);
-      const token = getAuthToken();
+      const role = getUserRole();
 
-      if (!token) {
+      if (!role) {
+        setError("Please login first");
+        navigate("/login");
         return;
       }
 
-      // We need to get all leads to calculate proper statistics
-      // Since your API doesn't have a separate stats endpoint, we'll fetch first page with large size
-      const response = await fetch(
-        "http://localhost:8080/lead/getAllLeads/0/1000",
-        {
-          method: "GET",
-          headers: getAuthHeaders(),
-        }
-      );
+      // Use axiosInstance with the correct endpoint
+      const response = await axiosInstance.get("getAllLeads/0/1000");
 
-      if (response.status === 401) {
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("userData");
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch statistics: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const allLeads = data.leadList || [];
+      const allLeads = response.data.leadList || [];
 
       // Calculate statistics from all leads
       const totalLeads = allLeads.length;
-
       const newThisWeek = allLeads.filter((lead) => {
         const created = new Date(lead.createdDate);
         const oneWeekAgo = new Date();
@@ -134,49 +123,31 @@ function LeadList() {
     }
   };
 
-  // Fetch leads for current page
   const fetchLeads = async (page = 0) => {
     try {
       setLoading(true);
-      const token = getAuthToken();
 
-      if (!token) {
-        setError("Please login first");
-        navigate("/login");
-        return;
-      }
+      // Debug logs to check what's happening
+      console.log("Current role:", getUserRole());
+      console.log("Auth token:", localStorage.getItem("authToken"));
 
-      const response = await fetch(
-        `http://localhost:8080/lead/getAllLeads/${page}/${pageSize}`,
-        {
-          method: "GET",
-          headers: getAuthHeaders(),
-        }
+      const response = await axiosInstance.get(
+        `getAllLeads/${page}/${pageSize}`
       );
 
-      if (response.status === 401) {
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("userData");
-        setError("Session expired. Please login again.");
-        navigate("/login");
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch leads: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = response.data;
       setLeads(data.leadList || []);
       setTotalPages(data.totalPages || 1);
       setCurrentPage(data.currentPage || 0);
+      setError(null);
     } catch (err) {
-      setError(err.message);
       console.error("Error fetching leads:", err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
+
 
   // Load data on component mount
   useEffect(() => {

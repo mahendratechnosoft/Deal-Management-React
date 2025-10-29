@@ -5,6 +5,7 @@ import { Country, State, City } from "country-state-city";
 import Sidebar from "../../Pages/Admin/SidebarAdmin";
 import TopBar from "../../Pages/Admin/TopBarAdmin";
 import { toast } from "react-hot-toast";
+import axiosInstance from "../../BaseComponet/axiosInstance";
 function CreateLead() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -25,6 +26,11 @@ function CreateLead() {
     zipCode: "",
     description: "",
   });
+
+  // Get user role from localStorage
+  const getUserRole = () => {
+    return localStorage.getItem("role");
+  };
 
   const [dropdownData, setDropdownData] = useState({
     countries: [],
@@ -163,92 +169,79 @@ function CreateLead() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
+ const handleSubmit = async (e) => {
+   e.preventDefault();
+   if (!validateForm()) return;
 
-    setLoading(true);
-    try {
-      const token = getAuthToken();
+   setLoading(true);
+   try {
+     const role = getUserRole();
 
-      if (!token) {
+     if (!role) {
+       toast.error("Please login first");
+       navigate("/login");
+       return;
+     }
 
-        toast.error("Please login first");
-        navigate("/login");
-        return;
-      }
+     // Prepare the data in API format with only fixed fields
+     const submitData = {
+       employeeId: formData.employeeId,
+       assignTo: formData.assignTo,
+       status: formData.status,
+       source: formData.source,
+       clientName: formData.clientName,
+       revenue: formData.revenue ? parseFloat(formData.revenue) : 0,
+       street: formData.street,
+       country: formData.country
+         ? dropdownData.countries.find((c) => c.value === formData.country)
+             ?.label
+         : "",
+       state: formData.state
+         ? dropdownData.states.find((s) => s.value === formData.state)?.label
+         : "",
+       city: formData.city,
+       zipCode: formData.zipCode,
+       description: formData.description,
+     };
 
-      // Prepare the data in API format with only fixed fields
-      const submitData = {
-        employeeId: formData.employeeId,
-        assignTo: formData.assignTo,
-        status: formData.status,
-        source: formData.source,
-        clientName: formData.clientName,
-        revenue: formData.revenue ? parseFloat(formData.revenue) : 0,
-        street: formData.street,
-        country: formData.country
-          ? dropdownData.countries.find((c) => c.value === formData.country)
-              ?.label
-          : "",
-        state: formData.state
-          ? dropdownData.states.find((s) => s.value === formData.state)?.label
-          : "",
-        city: formData.city,
-        zipCode: formData.zipCode,
-        description: formData.description,
-      };
+     console.log("Submitting data:", submitData);
 
-      console.log("Submitting data:", submitData);
+     // Use axiosInstance for API call - it will automatically handle:
+     // - Role-based URL prefix (admin/ or employee/)
+     // - Authorization header with Bearer token
+     // - Error handling for 401/403
+     const response = await axiosInstance.post("createLead", submitData);
 
-      const response = await fetch("http://localhost:8080/lead/createLead", {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(submitData),
-      });
+     toast.success("Lead created successfully!");
+     resetForm();
 
-      if (response.status === 401) {
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("userData");
-       
-        toast.error("Session expired. Please login again.");
-        navigate("/login");
-        return;
-      }
+     // Navigate based on role
+     if (role === "ROLE_ADMIN") {
+       navigate("/Admin/LeadList");
+     } else {
+       navigate("/Employee/LeadList");
+     }
+   } catch (error) {
+     console.error("Error creating lead:", error);
 
-      if (response.ok) {
-        const result = await response.json();
-
-        toast.success("Lead created successfully!");
-        resetForm();
-        navigate("/Admin/LeadList");
-      } else {
-        let errorMessage = "Failed to create lead";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch {
-          errorMessage = (await response.text()) || errorMessage;
-        }
-        alert(`Failed to create lead: ${errorMessage}`);
-      }
-    } catch (error) {
-      console.error("Error creating lead:", error);
-      if (
-        error.name === "TypeError" &&
-        error.message.includes("Failed to fetch")
-      ) {
-        alert(
-          "Cannot connect to server. Please check if the backend is running."
-        );
-      } else {
-
-        toast.error("Failed to create lead. Please try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+     // The axios interceptor will handle 401/403 errors automatically
+     // For other errors, show appropriate message
+     if (error.response?.data?.message) {
+       toast.error(`Failed to create lead: ${error.response.data.message}`);
+     } else if (
+       error.name === "TypeError" &&
+       error.message.includes("Failed to fetch")
+     ) {
+       toast.error(
+         "Cannot connect to server. Please check if the backend is running."
+       );
+     } else {
+       toast.error("Failed to create lead. Please try again.");
+     }
+   } finally {
+     setLoading(false);
+   }
+ };
 
   const resetForm = () => {
     setFormData({
