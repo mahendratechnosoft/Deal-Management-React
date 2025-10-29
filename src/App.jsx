@@ -13,7 +13,7 @@ import CreateLead from "./Components/Common/Lead/CreateLead";
 import EditLead from "./Components/Common/Lead/EditLead";
 import DealList from "./Components/Common/Deals/DealList.jsx";
 import LeadListAdmin from "../src/Components/Pages/Admin/Lead/LeadListAdmin.jsx";
-
+import CustomToaster from "./Components/Common/Toaster";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -102,82 +102,85 @@ function App() {
   };
 
   return (
-    <Router>
-      <Routes>
-        {/* Public Routes */}
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <Login onLogin={handleLogin} />
-            </PublicRoute>
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            <PublicRoute>
-              <Register
-                onSwitchToLogin={() => (window.location.href = "/login")}
-              />
-            </PublicRoute>
-          }
-        />
+    <>
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login onLogin={handleLogin} />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <Register
+                  onSwitchToLogin={() => (window.location.href = "/login")}
+                />
+              </PublicRoute>
+            }
+          />
 
-        {/* Protected Routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+          {/* Protected Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/Admin/LeadList"
-          element={
-            <ProtectedRoute>
-              <LeadListAdmin onLogout={handleLogout} />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/Admin/LeadList"
+            element={
+              <ProtectedRoute>
+                <LeadListAdmin onLogout={handleLogout} />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Fixed: These should be ProtectedRoute, not PublicRoute */}
-        <Route
-          path="/Admin/CreateLead"
-          element={
-            <ProtectedRoute>
-              <CreateLead />
-            </ProtectedRoute>
-          }
-        />
+          {/* Fixed: These should be ProtectedRoute, not PublicRoute */}
+          <Route
+            path="/Admin/CreateLead"
+            element={
+              <ProtectedRoute>
+                <CreateLead />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/Admin/EditLead/:id"
-          element={
-            <ProtectedRoute>
-              <EditLead />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/Admin/EditLead/:id"
+            element={
+              <ProtectedRoute>
+                <EditLead />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/DealList"
-          element={
-            <ProtectedRoute>
-              <DealList />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/DealList"
+            element={
+              <ProtectedRoute>
+                <DealList />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Default redirect */}
-        <Route path="/" element={<Navigate to="/login" />} />
+          {/* Default redirect */}
+          <Route path="/" element={<Navigate to="/login" />} />
 
-        {/* 404 Page - Catch all route */}
-        <Route path="*" element={<PageNotFound />} />
-      </Routes>
-    </Router>
+          {/* 404 Page - Catch all route */}
+          <Route path="*" element={<PageNotFound />} />
+        </Routes>
+      </Router>
+      <CustomToaster />
+    </>
   );
 }
 

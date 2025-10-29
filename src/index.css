@@ -1,3 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.CRM-scroll-width-none{
+        scrollbar-width: none;
+}

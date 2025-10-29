@@ -31,10 +31,9 @@ function LeadListAdmin({ onLogout }) {
 
       <div className="flex flex-1">
         <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
-
         <div
-          className={`flex-1 transition-all duration-300 ${
-            sidebarOpen ? "ml-0" : "ml-0"
+          className={`flex-1 flex flex-col transition-all duration-300 overflow-x-auto w-[88vw] ${
+            sidebarOpen ? "ml-0 lg:ml-5" : "ml-0"
           }`}
         >
           <LeadList />

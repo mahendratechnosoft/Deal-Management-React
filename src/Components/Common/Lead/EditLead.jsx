@@ -4,7 +4,7 @@ import Select from "react-select";
 import { Country, State, City } from "country-state-city";
 import Sidebar from "../../Pages/Admin/SidebarAdmin";
 import TopBar from "../../Pages/Admin/TopBarAdmin";
-
+import { toast } from "react-hot-toast";
 function EditLead() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -85,7 +85,8 @@ function EditLead() {
   useEffect(() => {
     const fetchLeadData = async () => {
       if (!id) {
-        alert("Lead ID not found!");
+      
+        toast.error("Lead ID not found!");
         navigate("/Admin/LeadList");
         return;
       }
@@ -95,7 +96,8 @@ function EditLead() {
         const token = getAuthToken();
 
         if (!token) {
-          alert("Please login first");
+
+          toast.error("Please login first");
           navigate("/login");
           return;
         }
@@ -111,7 +113,8 @@ function EditLead() {
         if (response.status === 401) {
           localStorage.removeItem("authToken");
           localStorage.removeItem("userData");
-          alert("Session expired. Please login again.");
+         
+          toast.error("Session expired. Please login again.");
           navigate("/login");
           return;
         }
@@ -123,7 +126,8 @@ function EditLead() {
           console.log("Fetched lead data:", leadData);
 
           if (!leadData) {
-            alert("Lead data not found in response!");
+            
+            toast.error("Lead data not found in response!");
             navigate("/Admin/LeadList");
             return;
           }
@@ -216,11 +220,11 @@ function EditLead() {
           error.name === "TypeError" &&
           error.message.includes("Failed to fetch")
         ) {
-          alert(
-            "Cannot connect to server. Please check if the backend is running."
-          );
+      
+          toast.error("Cannot connect to server. Please check if the backend is running.");
         } else {
-          alert("Failed to fetch lead data. Please try again.");
+        
+          toast.error("Failed to fetch lead data. Please try again.");
         }
         navigate("/Admin/LeadList");
       } finally {
@@ -461,7 +465,7 @@ function EditLead() {
         <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
 
         <div
-          className={`flex-1 flex flex-col transition-all duration-300 ${
+          className={`flex-1 flex flex-col h-[90vh] overflow-y-auto transition-all duration-300 CRM-scroll-width-none ${
             sidebarOpen ? "ml-0 lg:ml-5" : "ml-0"
           }`}
         >
@@ -489,7 +493,7 @@ function EditLead() {
                   Back to Leads
                 </button>
               </div>
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 ">
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">Edit Lead</h1>
                   <p className="text-gray-600 text-sm">

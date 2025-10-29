@@ -4,7 +4,7 @@ import Select from "react-select";
 import { Country, State, City } from "country-state-city";
 import Sidebar from "../../Pages/Admin/SidebarAdmin";
 import TopBar from "../../Pages/Admin/TopBarAdmin";
-
+import { toast } from "react-hot-toast";
 function CreateLead() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -172,7 +172,8 @@ function CreateLead() {
       const token = getAuthToken();
 
       if (!token) {
-        alert("Please login first");
+
+        toast.error("Please login first");
         navigate("/login");
         return;
       }
@@ -209,14 +210,16 @@ function CreateLead() {
       if (response.status === 401) {
         localStorage.removeItem("authToken");
         localStorage.removeItem("userData");
-        alert("Session expired. Please login again.");
+       
+        toast.error("Session expired. Please login again.");
         navigate("/login");
         return;
       }
 
       if (response.ok) {
         const result = await response.json();
-        alert("Lead created successfully!");
+
+        toast.success("Lead created successfully!");
         resetForm();
         navigate("/Admin/LeadList");
       } else {
@@ -239,7 +242,8 @@ function CreateLead() {
           "Cannot connect to server. Please check if the backend is running."
         );
       } else {
-        alert("Failed to create lead. Please try again.");
+
+        toast.error("Failed to create lead. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -298,15 +302,14 @@ function CreateLead() {
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
-
         <div
-          className={`flex-1 flex flex-col transition-all duration-300 ${
+          className={`flex-1 flex flex-col h-[90vh] overflow-y-auto transition-all duration-300 CRM-scroll-width-none ${
             sidebarOpen ? "ml-0 lg:ml-5" : "ml-0"
-          }`}
+          } scrollbar-hide`}
         >
           <div className="p-4 bg-gray-50 border-b border-gray-200">
             {/* Header */}
-            <div className="mb-4">
+            <div className="">
               <div className="flex items-center gap-2 mb-2">
                 <button
                   onClick={() => navigate("/Admin/LeadList")}
