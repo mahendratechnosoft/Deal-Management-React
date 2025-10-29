@@ -1,33 +1,27 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../BaseComponet/axiosInstance";
+
 function LeadList() {
   const navigate = useNavigate();
+
   // Get user role from localStorage
   const getUserRole = () => {
     return localStorage.getItem("role");
   };
 
   const [showColumnPopup, setShowColumnPopup] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [viewMode, setViewMode] = useState("table");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statsLoading, setStatsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalLeads, setTotalLeads] = useState(0);
+  const [statusAndCount, setStatusAndCount] = useState([]);
   const [pageSize] = useState(10);
-
-  // Statistics state
-  const [stats, setStats] = useState({
-    totalLeads: 0,
-    newThisWeek: 0,
-    totalRevenue: 0,
-    activeSources: 0,
-  });
 
   // Default columns based on API response structure
   const [columns, setColumns] = useState([
@@ -47,20 +41,6 @@ function LeadList() {
   const dragItem = useRef();
   const dragOverItem = useRef();
 
-  // Get auth token from localStorage
-  const getAuthToken = () => {
-    return localStorage.getItem("authToken");
-  };
-
-  // Get auth headers for API calls
-  const getAuthHeaders = () => {
-    const token = getAuthToken();
-    return {
-      "Content-Type": "application/json",
-      Authorization: token ? `Bearer ${token}` : "",
-    };
-  };
-
   const kanbanColumns = [
     { id: "new lead", title: "New Lead", color: "bg-blue-500", leads: [] },
     { id: "contacted", title: "Contacted", color: "bg-purple-500", leads: [] },
@@ -72,73 +52,28 @@ function LeadList() {
       color: "bg-orange-500",
       leads: [],
     },
-    { id: "closed won", title: "Closed Won", color: "bg-green-600", leads: [] },
-    { id: "closed lost", title: "Closed Lost", color: "bg-red-500", leads: [] },
+    { id: "won", title: "Won", color: "bg-green-600", leads: [] },
+    { id: "lost", title: "Lost", color: "bg-red-500", leads: [] },
   ];
 
-  // Fetch statistics (total counts)
-  // Fetch statistics (total counts) - Updated to use axiosInstance
-  const fetchStatistics = async () => {
-    try {
-      setStatsLoading(true);
-      const role = getUserRole();
-
-      if (!role) {
-        setError("Please login first");
-        navigate("/login");
-        return;
-      }
-
-      // Use axiosInstance with the correct endpoint
-      const response = await axiosInstance.get("getAllLeads/0/1000");
-
-      const allLeads = response.data.leadList || [];
-
-      // Calculate statistics from all leads
-      const totalLeads = allLeads.length;
-      const newThisWeek = allLeads.filter((lead) => {
-        const created = new Date(lead.createdDate);
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        return created > oneWeekAgo;
-      }).length;
-
-      const totalRevenue = allLeads.reduce(
-        (sum, lead) => sum + (lead.revenue || 0),
-        0
-      );
-
-      const activeSources = new Set(allLeads.map((lead) => lead.source)).size;
-
-      setStats({
-        totalLeads,
-        newThisWeek,
-        totalRevenue,
-        activeSources,
-      });
-    } catch (err) {
-      console.error("Error fetching statistics:", err);
-    } finally {
-      setStatsLoading(false);
-    }
-  };
-
-  const fetchLeads = async (page = 0) => {
+  // Fetch leads with search functionality
+  const fetchLeads = async (page = 0, search = "") => {
     try {
       setLoading(true);
 
-      // Debug logs to check what's happening
-      console.log("Current role:", getUserRole());
-      console.log("Auth token:", localStorage.getItem("authToken"));
+      let url = `getAllLeads/${page}/${pageSize}`;
+      if (search.trim()) {
+        url += `?search=${encodeURIComponent(search)}`;
+      }
 
-      const response = await axiosInstance.get(
-        `getAllLeads/${page}/${pageSize}`
-      );
-
+      const response = await axiosInstance.get(url);
       const data = response.data;
+
       setLeads(data.leadList || []);
       setTotalPages(data.totalPages || 1);
       setCurrentPage(data.currentPage || 0);
+      setTotalLeads(data.totalLeads || 0);
+      setStatusAndCount(data.statusAndCount || []);
       setError(null);
     } catch (err) {
       console.error("Error fetching leads:", err);
@@ -148,33 +83,34 @@ function LeadList() {
     }
   };
 
+  // Handle search with debouncing
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchLeads(0, searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   // Load data on component mount
   useEffect(() => {
-    fetchStatistics();
     fetchLeads(0);
   }, [navigate]);
 
   // Handle page change
   const handlePageChange = (newPage) => {
     if (newPage >= 0 && newPage < totalPages) {
-      fetchLeads(newPage);
+      fetchLeads(newPage, searchTerm);
     }
   };
 
-  // Filter leads based on search and status (for current page only)
+  // Filter leads based on status (for current page only)
   const filteredLeads = leads.filter((lead) => {
-    const matchesSearch =
-      lead.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.employeeId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.assignTo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.city?.toLowerCase().includes(searchTerm.toLowerCase());
-
     const matchesStatus =
       statusFilter === "all" ||
       lead.status?.toLowerCase() === statusFilter.toLowerCase();
 
-    return matchesSearch && matchesStatus;
+    return matchesStatus;
   });
 
   // Organize leads for kanban view (current page only)
@@ -187,10 +123,6 @@ function LeadList() {
 
   const handleCreateLead = () => {
     navigate("/Admin/CreateLead");
-  };
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
   };
 
   const handleOpenPopup = () => {
@@ -254,8 +186,7 @@ function LeadList() {
   };
 
   const handleRefresh = () => {
-    fetchStatistics();
-    fetchLeads(currentPage);
+    fetchLeads(currentPage, searchTerm);
   };
 
   const visibleColumns = columns
@@ -276,9 +207,9 @@ function LeadList() {
         return "bg-yellow-100 text-yellow-800";
       case "negotiation":
         return "bg-orange-100 text-orange-800";
-      case "closed won":
+      case "won":
         return "bg-green-500 text-white";
-      case "closed lost":
+      case "lost":
         return "bg-red-500 text-white";
       default:
         return "bg-gray-100 text-gray-800";
@@ -408,205 +339,248 @@ function LeadList() {
   }
 
   return (
-    <div className="p-6 overflow-x-auto  h-[90vh] overflow-y-auto CRM-scroll-width-none">
-      {/* Header Section */}
-      <div className="mb-3">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-2">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Leads Management
-            </h1>
-            <p className="text-gray-600 text-sm mt-1">
-              Manage and track all your leads in one place
-            </p>
+    <div className="p-6 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
+      {/* First Row - Header with Create Button */}
+      <div className="mb-6">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Leads
+                </h1>
+             
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search leads..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-60 text-sm"
-              />
-              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-                <svg
-                  className="w-4 h-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+            {/* Search and Filters Row */}
+            <div className="flex flex-col sm:flex-row gap-3 flex-1">
+              {/* Search Input */}
+              <div className="relative flex-1 sm:max-w-64">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg
+                    className="w-4 h-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search leads..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white transition-colors duration-200"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <div className="flex-1 sm:flex-none">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full sm:w-40 px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white transition-colors duration-200"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                  <option value="all">All Status</option>
+                  <option value="new lead">New Lead</option>
+                  <option value="contacted">Contacted</option>
+                  <option value="qualified">Qualified</option>
+                  <option value="proposal">Proposal</option>
+                  <option value="negotiation">Negotiation</option>
+                  <option value="won">Won</option>
+                  <option value="lost">Lost</option>
+                </select>
               </div>
             </div>
 
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            {/* Create Button */}
+            <button
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
+              onClick={handleCreateLead}
             >
-              <option value="all">All Status</option>
-              <option value="new lead">New Lead</option>
-              <option value="contacted">Contacted</option>
-              <option value="qualified">Qualified</option>
-              <option value="proposal">Proposal</option>
-              <option value="negotiation">Negotiation</option>
-              <option value="closed won">Closed Won</option>
-              <option value="closed lost">Closed Lost</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-2">
-          <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-600">Total Leads</p>
-                <p className="text-xl font-bold text-gray-900">
-                  {statsLoading ? (
-                    <div className="animate-pulse bg-gray-200 h-6 w-12 rounded"></div>
-                  ) : (
-                    stats.totalLeads.toLocaleString()
-                  )}
-                </p>
-              </div>
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-600">
-                  New This Week
-                </p>
-                <p className="text-xl font-bold text-gray-900">
-                  {statsLoading ? (
-                    <div className="animate-pulse bg-gray-200 h-6 w-12 rounded"></div>
-                  ) : (
-                    stats.newThisWeek.toLocaleString()
-                  )}
-                </p>
-              </div>
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-600">
-                  Total Revenue
-                </p>
-                <p className="text-xl font-bold text-gray-900">
-                  {statsLoading ? (
-                    <div className="animate-pulse bg-gray-200 h-6 w-16 rounded"></div>
-                  ) : (
-                    formatCurrency(stats.totalRevenue)
-                  )}
-                </p>
-              </div>
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-purple-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-600">
-                  Active Sources
-                </p>
-                <p className="text-xl font-bold text-gray-900">
-                  {statsLoading ? (
-                    <div className="animate-pulse bg-gray-200 h-6 w-12 rounded"></div>
-                  ) : (
-                    stats.activeSources.toLocaleString()
-                  )}
-                </p>
-              </div>
-              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-orange-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                  />
-                </svg>
-              </div>
-            </div>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Create Lead
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Controls Bar */}
-      <div className="bg-white rounded-lg shadow-sm p-3 mb-4 border border-gray-200">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Leads</h2>
-            <p className="text-gray-600 text-xs mt-0.5">
-              Showing {filteredLeads.length} of {leads.length} leads on this
-              page
-              {stats.totalLeads > 0 &&
-                ` (${stats.totalLeads.toLocaleString()} total leads)`}
-            </p>
+      {/* Second Row - Better Responsive Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8 gap-2 mb-4">
+        {/* Total Leads Card */}
+        <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
+              <svg
+                className="w-3 h-3 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-gray-500 text-[12px] font-medium truncate">
+                Total
+              </p>
+              <p className="text-gray-900 text-sm font-bold truncate">
+                {totalLeads.toLocaleString()}
+              </p>
+            </div>
           </div>
+        </div>
 
+        {/* Total Revenue Card */}
+        <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-green-100 rounded flex items-center justify-center flex-shrink-0">
+              <svg
+                className="w-3 h-3 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-gray-500 text-[12px] font-medium truncate">
+                Revenue
+              </p>
+              <p className="text-gray-900 text-sm font-bold truncate">
+                {formatCurrency(
+                  leads.reduce((sum, lead) => sum + (lead.revenue || 0), 0)
+                ).replace("₹", "₹")}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Status Cards */}
+        {statusAndCount.map((statusCount, index) => {
+          const statusConfig = {
+            "New Lead": {
+              bgColor: "bg-blue-100",
+              iconColor: "text-blue-600",
+              borderColor: "border-blue-200",
+              icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.0 015 0z",
+            },
+            Contacted: {
+              bgColor: "bg-purple-100",
+              iconColor: "text-purple-600",
+              borderColor: "border-purple-200",
+              icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
+            },
+            Qualified: {
+              bgColor: "bg-green-100",
+              iconColor: "text-green-600",
+              borderColor: "border-green-200",
+              icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+            },
+            Proposal: {
+              bgColor: "bg-yellow-100",
+              iconColor: "text-yellow-600",
+              borderColor: "border-yellow-200",
+              icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+            },
+            Negotiation: {
+              bgColor: "bg-orange-100",
+              iconColor: "text-orange-600",
+              borderColor: "border-orange-200",
+              icon: "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4",
+            },
+            Won: {
+              bgColor: "bg-emerald-100",
+              iconColor: "text-emerald-600",
+              borderColor: "border-emerald-200",
+              icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
+            },
+            Lost: {
+              bgColor: "bg-red-100",
+              iconColor: "text-red-600",
+              borderColor: "border-red-200",
+              icon: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z",
+            },
+          };
+
+          const config =
+            statusConfig[statusCount.status] || statusConfig["New Lead"];
+
+          return (
+            <div
+              key={statusCount.status}
+              className={`bg-white rounded-lg p-2 shadow-sm border hover:shadow-md transition-all duration-200 ${config.borderColor}`}
+            >
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-6 h-6 ${config.bgColor} rounded flex items-center justify-center flex-shrink-0`}
+                >
+                  <svg
+                    className={`w-3 h-3 ${config.iconColor}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d={config.icon}
+                    />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-gray-500 text-[11px] font-medium truncate">
+                    {statusCount.status.split(" ")[0]}
+                  </p>
+                  <p className="text-gray-900 text-sm font-bold">
+                    {statusCount.count}
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {/* Controls Bar */}
+      <div
+        className="bg-white rounded-lg shadow-sm p-3 mb-4 border border-gray-200"
+        hidden
+      >
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="flex items-center gap-2">
             {/* View Mode Toggle */}
             <div className="flex bg-gray-100 rounded-lg p-0.5">
@@ -681,28 +655,10 @@ function LeadList() {
               </svg>
               Customize Columns
             </button>
-            <button
-              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors duration-200 font-medium flex items-center gap-1.5 text-sm"
-              onClick={handleCreateLead}
-            >
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              Create Lead
-            </button>
           </div>
         </div>
       </div>
+
       {/* Content Area */}
       {viewMode === "table" ? (
         /* Table View */
