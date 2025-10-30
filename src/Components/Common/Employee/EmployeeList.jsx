@@ -188,7 +188,7 @@ function EmployeeList() {
 
   // Main content - rendered after initial load
   return (
-    <div className="p-6 overflow-x-auto w-[88vw]">
+    <div className="p-6 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
       {/* Controls Bar */}
       <div className="bg-white rounded-xl shadow-sm p-4 mb-6 border border-gray-200">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
