@@ -771,6 +771,85 @@ function LeadList() {
         /* Table View */
         <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
           <div className="overflow-x-auto">
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex-shrink-0">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-gray-700">
+                    {totalPages > 1
+                      ? `Showing page ${currentPage + 1} of ${totalPages}`
+                      : `Showing all ${totalLeads} leads`}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-700">
+                      Rows per page:
+                    </span>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => {
+                        const newSize = parseInt(e.target.value);
+                        setPageSize(newSize);
+                      }}
+                      className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Show pagination only if there are multiple pages */}
+                {totalPages > 1 && (
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handlePageChange(0)}
+                      disabled={currentPage === 0}
+                      className="px-3 py-1 rounded border border-gray-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      First
+                    </button>
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 0}
+                      className="px-3 py-1 rounded border border-gray-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      Previous
+                    </button>
+
+                    {getPageNumbers().map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3 py-1 rounded text-sm font-medium ${
+                          currentPage === page
+                            ? "bg-blue-600 text-white"
+                            : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {page + 1}
+                      </button>
+                    ))}
+
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages - 1}
+                      className="px-3 py-1 rounded border border-gray-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      Next
+                    </button>
+                    <button
+                      onClick={() => handlePageChange(totalPages - 1)}
+                      disabled={currentPage === totalPages - 1}
+                      className="px-3 py-1 rounded border border-gray-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      Last
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -790,14 +869,7 @@ function LeadList() {
             </table>
 
             {/* Scrollable table body */}
-            <div
-              className="overflow-y-auto"
-              style={{
-                height: `calc(100vh - 300px)`,
-                maxHeight: "60vh",
-                minHeight: "200px",
-              }}
-            >
+            <div className="overflow-y-auto" style={{ height: "50vh" }}>
               <table className="min-w-full divide-y divide-gray-200">
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredLeads.map((lead) => (
@@ -947,84 +1019,6 @@ function LeadList() {
           )}
 
           {/* Pagination */}
-          {/* Pagination & Rows Per Page */}
-          <div className="bg-white px-6 py-4 border-t border-gray-200">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="text-sm text-gray-700">
-                  {totalPages > 1
-                    ? `Showing page ${currentPage + 1} of ${totalPages}`
-                    : `Showing all ${totalLeads} leads`}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-700">Rows per page:</span>
-                  <select
-                    value={pageSize}
-                    onChange={(e) => {
-                      const newSize = parseInt(e.target.value);
-                      setPageSize(newSize);
-                    }}
-                    className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value={5}>5</option>
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Show pagination only if there are multiple pages */}
-              {totalPages > 1 && (
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => handlePageChange(0)}
-                    disabled={currentPage === 0}
-                    className="px-3 py-1 rounded border border-gray-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                  >
-                    First
-                  </button>
-                  <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 0}
-                    className="px-3 py-1 rounded border border-gray-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                  >
-                    Previous
-                  </button>
-
-                  {getPageNumbers().map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`px-3 py-1 rounded text-sm font-medium ${
-                        currentPage === page
-                          ? "bg-blue-600 text-white"
-                          : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      {page + 1}
-                    </button>
-                  ))}
-
-                  <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages - 1}
-                    className="px-3 py-1 rounded border border-gray-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                  >
-                    Next
-                  </button>
-                  <button
-                    onClick={() => handlePageChange(totalPages - 1)}
-                    disabled={currentPage === totalPages - 1}
-                    className="px-3 py-1 rounded border border-gray-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                  >
-                    Last
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       ) : (
         /* Kanban View */
