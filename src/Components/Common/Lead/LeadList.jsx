@@ -476,7 +476,7 @@ function LeadList() {
   return (
     <div className="p-6 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
       {/* First Row - Header with Create Button */}
-      <div className="mb-6">
+      <div className="mb-4">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
@@ -787,116 +787,129 @@ function LeadList() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredLeads.map((lead) => (
-                  <tr
-                    key={lead.id}
-                    className="hover:bg-gray-50 transition-colors duration-150"
-                  >
-                    {visibleColumns.map((column) => (
-                      <td
-                        key={column.id}
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                      >
-                        {column.id === "clientName" ? (
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                              {getInitials(lead.clientName)}
+            </table>
+
+            {/* Scrollable table body */}
+            <div
+              className="overflow-y-auto"
+              style={{
+                height: `calc(100vh - 300px)`,
+                maxHeight: "60vh",
+                minHeight: "200px",
+              }}
+            >
+              <table className="min-w-full divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredLeads.map((lead) => (
+                    <tr
+                      key={lead.id}
+                      className="hover:bg-gray-50 transition-colors duration-150"
+                    >
+                      {visibleColumns.map((column) => (
+                        <td
+                          key={column.id}
+                          className="px-6 py-1 whitespace-nowrap text-sm text-gray-900"
+                        >
+                          {column.id === "clientName" ? (
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                {getInitials(lead.clientName)}
+                              </div>
+                              <span className="font-semibold">
+                                {lead[column.id] || "N/A"}
+                              </span>
                             </div>
-                            <span className="font-semibold">
-                              {lead[column.id] || "N/A"}
-                            </span>
-                          </div>
-                        ) : column.id === "status" ? (
-                          <div className="status-dropdown relative">
-                            <button
-                              onClick={() => toggleStatusDropdown(lead.id)}
-                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                          ) : column.id === "status" ? (
+                            <div className="status-dropdown relative">
+                              <button
+                                onClick={() => toggleStatusDropdown(lead.id)}
+                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                                  lead[column.id]
+                                )} hover:opacity-80 transition-opacity`}
+                              >
+                                {lead[column.id] || "Unknown"}
+                                <svg
+                                  className="w-3 h-3 ml-1"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                  />
+                                </svg>
+                              </button>
+
+                              {activeStatusDropdown === lead.id && (
+                                <div className="absolute left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                                  <div className="py-1">
+                                    {statusOptions.map((status) => (
+                                      <button
+                                        key={status}
+                                        onClick={() =>
+                                          updateLeadStatus(lead.id, status)
+                                        }
+                                        className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
+                                          lead.status === status
+                                            ? "bg-blue-50 text-blue-600"
+                                            : "text-gray-700"
+                                        }`}
+                                      >
+                                        {status}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ) : column.id === "source" ? (
+                            <span
+                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(
                                 lead[column.id]
-                              )} hover:opacity-80 transition-opacity`}
+                              )}`}
                             >
                               {lead[column.id] || "Unknown"}
-                              <svg
-                                className="w-3 h-3 ml-1"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 9l-7 7-7-7"
-                                />
-                              </svg>
-                            </button>
-
-                            {activeStatusDropdown === lead.id && (
-                              <div className="absolute left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                                <div className="py-1">
-                                  {statusOptions.map((status) => (
-                                    <button
-                                      key={status}
-                                      onClick={() =>
-                                        updateLeadStatus(lead.id, status)
-                                      }
-                                      className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
-                                        lead.status === status
-                                          ? "bg-blue-50 text-blue-600"
-                                          : "text-gray-700"
-                                      }`}
-                                    >
-                                      {status}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ) : column.id === "source" ? (
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(
-                              lead[column.id]
-                            )}`}
-                          >
-                            {lead[column.id] || "Unknown"}
-                          </span>
-                        ) : column.id === "revenue" ? (
-                          <span className="font-semibold">
-                            {formatCurrency(lead[column.id])}
-                          </span>
-                        ) : column.id === "createdDate" ? (
-                          formatDate(lead[column.id])
-                        ) : (
-                          lead[column.id] || "N/A"
-                        )}
-                      </td>
-                    ))}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleEdit(lead.id)}
-                        className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                            </span>
+                          ) : column.id === "revenue" ? (
+                            <span className="font-semibold">
+                              {formatCurrency(lead[column.id])}
+                            </span>
+                          ) : column.id === "createdDate" ? (
+                            formatDate(lead[column.id])
+                          ) : (
+                            lead[column.id] || "N/A"
+                          )}
+                        </td>
+                      ))}
+                      <td className="px-6 py-1 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => handleEdit(lead.id)}
+                          className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                          />
-                        </svg>
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {filteredLeads.length === 0 && (
