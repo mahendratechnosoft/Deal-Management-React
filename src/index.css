@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-.CRM-scroll-width-none{
-        scrollbar-width: none;
+.CRM-scroll-width-none {
+  scrollbar-width: none;
+}
+
+.crm-Leadlist-kanbadn-col-list {
+  scrollbar-width: thin;
 }

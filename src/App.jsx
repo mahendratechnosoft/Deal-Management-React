@@ -6,6 +6,7 @@ import {
   Navigate,
   useNavigate,
 } from "react-router-dom";
+
 import Login from "./Components/Pages/Login";
 import Register from "./Components/Pages/Register";
 import PageNotFound from "./Components/Pages/PageNotFound";
@@ -16,13 +17,13 @@ import LeadListAdmin from "../src/Components/Pages/Admin/Lead/LeadListAdmin.jsx"
 import EmployeeListAdmin from "./Components/Pages/Admin/Employee/EmployeeListAdmin.jsx";
 import CreateEmployee from "./Components/Common/Employee/CreateEmployee.jsx";
 import EditEmployee from "./Components/Common/Employee/EditEmployee.jsx";
-
 import CustomToaster from "./Components/Common/Toaster";
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
 
-  // Check if user is logged in on app start
+  // On app load, check token and userData just once
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const userData = localStorage.getItem("userData");
@@ -36,6 +37,9 @@ function App() {
         console.error("Error parsing user data:", error);
         handleLogout();
       }
+    } else {
+      setIsLoggedIn(false);
+      setUserRole("");
     }
   }, []);
 
@@ -45,19 +49,15 @@ function App() {
   };
 
   const handleLogout = () => {
-    // Clear all auth-related data
     localStorage.removeItem("authToken");
     localStorage.removeItem("userData");
     localStorage.removeItem("rememberMe");
-
     setIsLoggedIn(false);
     setUserRole("");
   };
 
-  // Dashboard Component
   const Dashboard = () => {
     const navigate = useNavigate();
-
     const handleLogoutClick = () => {
       handleLogout();
       navigate("/login");
@@ -95,14 +95,13 @@ function App() {
     );
   };
 
-  // Protected Route component
+  // New ProtectedRoute - checks token in localStorage
   const ProtectedRoute = ({ children }) => {
-    return isLoggedIn ? children : <Navigate to="/login" />;
-  };
-
-  // Public Route component (redirect to dashboard if already logged in)
-  const PublicRoute = ({ children }) => {
-    return !isLoggedIn ? children : <Navigate to="/Admin/LeadList" />;
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      return <Navigate to="/login" replace />;
+    }
+    return children;
   };
 
   return (
@@ -110,26 +109,17 @@ function App() {
       <Router>
         <Routes>
           {/* Public Routes */}
-          <Route
-            path="/login"
-            element={
-              <PublicRoute>
-                <Login onLogin={handleLogin} />
-              </PublicRoute>
-            }
-          />
+          <Route path="/login" element={<Login onLogin={handleLogin} />} />
           <Route
             path="/register"
             element={
-              <PublicRoute>
-                <Register
-                  onSwitchToLogin={() => (window.location.href = "/login")}
-                />
-              </PublicRoute>
+              <Register
+                onSwitchToLogin={() => (window.location.href = "/login")}
+              />
             }
           />
 
-          {/* Protected Routes */}
+          {/* Protected Routes (use ProtectedRoute for each) */}
           <Route
             path="/dashboard"
             element={
@@ -138,7 +128,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/Admin/LeadList"
             element={
@@ -147,8 +136,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
-          {/* Fixed: These should be ProtectedRoute, not PublicRoute */}
           <Route
             path="/Admin/CreateLead"
             element={
@@ -157,7 +144,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/Admin/EditLead/:id"
             element={
@@ -166,7 +152,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/DealList"
             element={
@@ -175,7 +160,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/Admin/EmployeeList"
             element={
@@ -184,7 +168,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/Admin/CreateEmployee"
             element={
@@ -193,7 +176,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/Admin/EditEmployee/:employeeId"
             element={
