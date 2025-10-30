@@ -21,7 +21,7 @@ function LeadList() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalLeads, setTotalLeads] = useState(0);
   const [statusAndCount, setStatusAndCount] = useState([]);
-  const [pageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(10);
   const [activeStatusDropdown, setActiveStatusDropdown] = useState(null);
 
   // Add these state variables near other state declarations
@@ -122,7 +122,7 @@ function LeadList() {
 
       setLeads(data.leadList || []);
       setTotalPages(data.totalPages || 1);
-      setCurrentPage(data.currentPage || 0);
+      setCurrentPage(page); // Use the page parameter, not data.currentPage
       setTotalLeads(data.totalLeads || 0);
       setStatusAndCount(data.statusAndCount || []);
       setError(null);
@@ -132,6 +132,15 @@ function LeadList() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Refresh data when pageSize changes
+  useEffect(() => {
+    fetchLeads(0, searchTerm);
+  }, [pageSize]);
+  // Handle card click to filter by status
+  const handleCardFilter = (status) => {
+    setStatusFilter(status);
   };
 
   // Handle search with debouncing
@@ -155,7 +164,6 @@ function LeadList() {
     }
   };
 
-  // Update lead status
   const updateLeadStatus = async (leadId, newStatus) => {
     try {
       const response = await axiosInstance.put("updateLeadStatus", {
@@ -164,15 +172,44 @@ function LeadList() {
       });
 
       if (response.data) {
-        // Update local state
+        // Update local state immediately for better UX
         setLeads((prevLeads) =>
           prevLeads.map((lead) =>
             lead.id === leadId ? { ...lead, status: newStatus } : lead
           )
         );
 
-        // Refresh the data to get updated counts
-        fetchLeads(currentPage, searchTerm);
+        // Update status counts in real-time
+        setStatusAndCount((prevStatusCounts) => {
+          const updatedCounts = [...prevStatusCounts];
+
+          // Decrease count for old status
+          const oldLead = leads.find((lead) => lead.id === leadId);
+          if (oldLead && oldLead.status) {
+            const oldStatusIndex = updatedCounts.findIndex(
+              (sc) => sc.status === oldLead.status
+            );
+            if (oldStatusIndex !== -1) {
+              updatedCounts[oldStatusIndex] = {
+                ...updatedCounts[oldStatusIndex],
+                count: Math.max(0, updatedCounts[oldStatusIndex].count - 1),
+              };
+            }
+          }
+
+          // Increase count for new status
+          const newStatusIndex = updatedCounts.findIndex(
+            (sc) => sc.status === newStatus
+          );
+          if (newStatusIndex !== -1) {
+            updatedCounts[newStatusIndex] = {
+              ...updatedCounts[newStatusIndex],
+              count: updatedCounts[newStatusIndex].count + 1,
+            };
+          }
+
+          return updatedCounts;
+        });
 
         // Close dropdown
         setActiveStatusDropdown(null);
@@ -532,7 +569,7 @@ function LeadList() {
               </div>
 
               {/* Status Filter */}
-              <div className="flex-1 sm:flex-none">
+              <div className="flex-1 sm:flex-none" hidden>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
@@ -577,11 +614,20 @@ function LeadList() {
       {/* Second Row - Better Responsive Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8 gap-2 mb-4">
         {/* Total Leads Card */}
-        <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+        <div
+          className={`bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer ${
+            statusFilter === "all" ? "ring-2 ring-blue-500" : ""
+          }`}
+          onClick={() => handleCardFilter("all")}
+        >
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
+            <div
+              className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
+                statusFilter === "all" ? "bg-gray-200" : "bg-gray-100"
+              }`}
+            >
               <svg
-                className="w-3 h-3 text-blue-600"
+                className="w-3 h-3 text-gray-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -605,95 +651,92 @@ function LeadList() {
           </div>
         </div>
 
-        {/* Total Revenue Card */}
-        <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-green-100 rounded flex items-center justify-center flex-shrink-0">
-              <svg
-                className="w-3 h-3 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                />
-              </svg>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-gray-500 text-[12px] font-medium truncate">
-                Revenue
-              </p>
-              <p className="text-gray-900 text-sm font-bold truncate">
-                {formatCurrency(
-                  leads.reduce((sum, lead) => sum + (lead.revenue || 0), 0)
-                ).replace("₹", "₹")}
-              </p>
-            </div>
-          </div>
-        </div>
-
+        {/* Status Cards */}
         {/* Status Cards */}
         {statusAndCount.map((statusCount, index) => {
           const statusConfig = {
             "New Lead": {
               bgColor: "bg-blue-100",
+              activeBgColor: "bg-blue-200",
               iconColor: "text-blue-600",
               borderColor: "border-blue-200",
+              activeBorderColor: "border-blue-400",
+              ringColor: "ring-blue-500",
               icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.0 015 0z",
             },
             Contacted: {
               bgColor: "bg-purple-100",
+              activeBgColor: "bg-purple-200",
               iconColor: "text-purple-600",
               borderColor: "border-purple-200",
+              activeBorderColor: "border-purple-400",
+              ringColor: "ring-purple-500",
               icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
             },
             Qualified: {
               bgColor: "bg-green-100",
+              activeBgColor: "bg-green-200",
               iconColor: "text-green-600",
               borderColor: "border-green-200",
+              activeBorderColor: "border-green-400",
+              ringColor: "ring-green-500",
               icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
             },
             Proposal: {
               bgColor: "bg-yellow-100",
+              activeBgColor: "bg-yellow-200",
               iconColor: "text-yellow-600",
               borderColor: "border-yellow-200",
+              activeBorderColor: "border-yellow-400",
+              ringColor: "ring-yellow-500",
               icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
             },
             Negotiation: {
               bgColor: "bg-orange-100",
+              activeBgColor: "bg-orange-200",
               iconColor: "text-orange-600",
               borderColor: "border-orange-200",
+              activeBorderColor: "border-orange-400",
+              ringColor: "ring-orange-500",
               icon: "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4",
             },
             Won: {
               bgColor: "bg-emerald-100",
+              activeBgColor: "bg-emerald-200",
               iconColor: "text-emerald-600",
               borderColor: "border-emerald-200",
+              activeBorderColor: "border-emerald-400",
+              ringColor: "ring-emerald-500",
               icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
             },
             Lost: {
               bgColor: "bg-red-100",
+              activeBgColor: "bg-red-200",
               iconColor: "text-red-600",
               borderColor: "border-red-200",
+              activeBorderColor: "border-red-400",
+              ringColor: "ring-red-500",
               icon: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z",
             },
           };
 
           const config =
             statusConfig[statusCount.status] || statusConfig["New Lead"];
+          const isActive = statusFilter === statusCount.status.toLowerCase();
 
           return (
             <div
               key={statusCount.status}
-              className={`bg-white rounded-lg p-2 shadow-sm border hover:shadow-md transition-all duration-200 ${config.borderColor}`}
+              className={`bg-white rounded-lg p-2 shadow-sm border hover:shadow-md transition-all duration-200 cursor-pointer ${
+                isActive ? config.activeBorderColor : config.borderColor
+              } ${isActive ? `ring-2 ${config.ringColor}` : ""}`}
+              onClick={() => handleCardFilter(statusCount.status.toLowerCase())}
             >
               <div className="flex items-center gap-2">
                 <div
-                  className={`w-6 h-6 ${config.bgColor} rounded flex items-center justify-center flex-shrink-0`}
+                  className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
+                    isActive ? config.activeBgColor : config.bgColor
+                  }`}
                 >
                   <svg
                     className={`w-3 h-3 ${config.iconColor}`}
@@ -891,12 +934,36 @@ function LeadList() {
           )}
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="bg-white px-6 py-4 border-t border-gray-200 ">
-              <div className="flex items-center justify-between">
+          {/* Pagination & Rows Per Page */}
+          <div className="bg-white px-6 py-4 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-4">
                 <div className="text-sm text-gray-700">
-                  Showing page {currentPage + 1} of {totalPages}
+                  {totalPages > 1
+                    ? `Showing page ${currentPage + 1} of ${totalPages}`
+                    : `Showing all ${totalLeads} leads`}
                 </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-700">Rows per page:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      const newSize = parseInt(e.target.value);
+                      setPageSize(newSize);
+                    }}
+                    className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Show pagination only if there are multiple pages */}
+              {totalPages > 1 && (
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => handlePageChange(0)}
@@ -942,140 +1009,223 @@ function LeadList() {
                     Last
                   </button>
                 </div>
-              </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       ) : (
         /* Kanban View */
-        /* Kanban View */
-        <div className="overflow-x-auto pb-4 crm-Leadlist-kanbadn-col-list">
-          <div
-            className="flex gap-4 min-w-max"
-            style={{ minWidth: "max-content" }}
-          >
-            {organizedKanbanColumns.map((column) => (
-              <div
-                key={column.id}
-                className="w-80 flex-shrink-0"
-                onDragOver={(e) => handleKanbanDragOver(e, column.id)}
-                onDragLeave={handleKanbanDragLeave}
-                onDrop={(e) => handleKanbanDrop(e, column.id)}
-              >
+        <div className="space-y-4">
+          <div className="overflow-x-auto pb-4 crm-Leadlist-kanbadn-col-list">
+            <div
+              className="flex gap-4 min-w-max"
+              style={{ minWidth: "max-content" }}
+            >
+              {organizedKanbanColumns.map((column) => (
                 <div
-                  className={`bg-white rounded-xl shadow-sm border border-gray-200 h-full ${
-                    dragOverColumn === column.id
-                      ? "border-2 border-blue-400 bg-blue-50"
-                      : ""
-                  }`}
+                  key={column.id}
+                  className="w-80 flex-shrink-0"
+                  onDragOver={(e) => handleKanbanDragOver(e, column.id)}
+                  onDragLeave={handleKanbanDragLeave}
+                  onDrop={(e) => handleKanbanDrop(e, column.id)}
                 >
-                  <div className="p-4 border-b border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`w-3 h-3 rounded-full ${column.color}`}
-                        ></div>
-                        <h3 className="font-semibold text-gray-900">
-                          {column.title}
-                        </h3>
-                        <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
-                          {column.leads.length}
-                        </span>
-                      </div>
-                      <button className="text-gray-400 hover:text-gray-600">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4v16m8-8H4"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="p-4 space-y-3 min-h-[200px] h-[54vh] overflow-y-auto crm-Leadlist-kanbadn-col-list">
-                    {column.leads.map((lead) => (
-                      <div
-                        key={lead.id}
-                        className={`bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-colors duration-200 cursor-grab ${
-                          draggedLead?.id === lead.id ? "opacity-50" : ""
-                        } ${
-                          dragOverColumn === column.id
-                            ? "border-2 border-blue-400 bg-blue-50"
-                            : ""
-                        }`}
-                        draggable
-                        onDragStart={(e) =>
-                          handleKanbanDragStart(e, lead, column.id)
-                        }
-                        onDragEnd={() => {
-                          setDraggedLead(null);
-                          setDragOverColumn(null);
-                        }}
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                              {getInitials(lead.clientName)}
-                            </div>
-                            <span className="font-medium text-sm text-gray-900">
-                              {lead.clientName}
-                            </span>
-                          </div>
-                          <span
-                            className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(
-                              lead.status
-                            )}`}
-                          >
-                            {lead.status}
+                  <div
+                    className={`bg-white rounded-xl shadow-sm border border-gray-200 h-full ${
+                      dragOverColumn === column.id
+                        ? "border-2 border-blue-400 bg-blue-50"
+                        : ""
+                    }`}
+                  >
+                    <div className="p-4 border-b border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-3 h-3 rounded-full ${column.color}`}
+                          ></div>
+                          <h3 className="font-semibold text-gray-900">
+                            {column.title}
+                          </h3>
+                          <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                            {column.leads.length}
                           </span>
                         </div>
-
-                        <p className="text-xs text-gray-600 mb-2">
-                          {lead.employeeId} • {formatCurrency(lead.revenue)}
-                        </p>
-
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                          <span>{formatDate(lead.createdDate)}</span>
-                          <button
-                            onClick={() => handleEdit(lead.id)}
-                            className="text-blue-600 hover:text-blue-800 font-medium"
+                        <button className="text-gray-400 hover:text-gray-600">
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                           >
-                            Edit
-                          </button>
-                        </div>
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4v16m8-8H4"
+                            />
+                          </svg>
+                        </button>
                       </div>
-                    ))}
+                    </div>
 
-                    {column.leads.length === 0 && (
-                      <div className="text-center py-8 text-gray-400">
-                        <svg
-                          className="w-8 h-8 mx-auto mb-2"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                    <div className="p-4 space-y-3 min-h-[200px] h-[54vh] overflow-y-auto crm-Leadlist-kanbadn-col-list">
+                      {column.leads.map((lead) => (
+                        <div
+                          key={lead.id}
+                          className={`bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-colors duration-200 cursor-grab ${
+                            draggedLead?.id === lead.id ? "opacity-50" : ""
+                          } ${
+                            dragOverColumn === column.id
+                              ? "border-2 border-blue-400 bg-blue-50"
+                              : ""
+                          }`}
+                          draggable
+                          onDragStart={(e) =>
+                            handleKanbanDragStart(e, lead, column.id)
+                          }
+                          onDragEnd={() => {
+                            setDraggedLead(null);
+                            setDragOverColumn(null);
+                          }}
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                        <p className="text-sm">No leads</p>
-                      </div>
-                    )}
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                {getInitials(lead.clientName)}
+                              </div>
+                              <span className="font-medium text-sm text-gray-900">
+                                {lead.clientName}
+                              </span>
+                            </div>
+                            <span
+                              className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(
+                                lead.status
+                              )}`}
+                            >
+                              {lead.status}
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-gray-600 mb-2">
+                            {lead.employeeId} • {formatCurrency(lead.revenue)}
+                          </p>
+
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span>{formatDate(lead.createdDate)}</span>
+                            <button
+                              onClick={() => handleEdit(lead.id)}
+                              className="text-blue-600 hover:text-blue-800 font-medium"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {column.leads.length === 0 && (
+                        <div className="text-center py-8 text-gray-400">
+                          <svg
+                            className="w-8 h-8 mx-auto mb-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+                          <p className="text-sm">No leads</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Pagination for Kanban View */}
+
+          <div className="bg-white rounded-lg border border-gray-200">
+            <div className="px-4 py-3 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="text-xs text-gray-600">
+                    {totalPages > 1
+                      ? `Page ${currentPage + 1} of ${totalPages}`
+                      : `All ${totalLeads} leads`}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-600">Rows:</span>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => {
+                        const newSize = parseInt(e.target.value);
+                        setPageSize(newSize);
+                      }}
+                      className="px-1.5 py-0.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Show pagination buttons only if there are multiple pages */}
+                {totalPages > 1 && (
+                  <div className="flex items-center space-x-1">
+                    <button
+                      onClick={() => handlePageChange(0)}
+                      disabled={currentPage === 0}
+                      className="px-2 py-0.5 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      First
+                    </button>
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 0}
+                      className="px-2 py-0.5 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      Prev
+                    </button>
+
+                    {getPageNumbers().map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-2 py-0.5 rounded text-xs font-medium ${
+                          currentPage === page
+                            ? "bg-blue-600 text-white"
+                            : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {page + 1}
+                      </button>
+                    ))}
+
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages - 1}
+                      className="px-2 py-0.5 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      Next
+                    </button>
+                    <button
+                      onClick={() => handlePageChange(totalPages - 1)}
+                      disabled={currentPage === totalPages - 1}
+                      className="px-2 py-0.5 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      Last
+                    </button>
+                  </div>
+                )}
               </div>
-            ))}
+            </div>
           </div>
         </div>
       )}

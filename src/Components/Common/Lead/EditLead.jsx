@@ -652,9 +652,7 @@ function EditLead() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                    ID: {id}
-                  </div>
+              
                   <button
                     type="button"
                     onClick={handleCancel}
@@ -738,22 +736,23 @@ function EditLead() {
                           </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Client Name *
-                            </label>
+                          {/* Client Name Field with Floating Label */}
+                          <div className="relative">
                             <input
                               type="text"
                               name="clientName"
                               value={formData.clientName}
                               onChange={handleChange}
-                              className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                              className={`w-full px-3 py-3 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
                                 errors.clientName
                                   ? "border-red-500"
                                   : "border-gray-300"
                               }`}
-                              placeholder="Enter client name"
+                              placeholder=" "
                             />
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                              Client Name *
+                            </label>
                             {errors.clientName && (
                               <p className="mt-1 text-xs text-red-600">
                                 {errors.clientName}
@@ -761,22 +760,23 @@ function EditLead() {
                             )}
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Company Name *
-                            </label>
+                          {/* Company Name Field with Floating Label */}
+                          <div className="relative">
                             <input
                               type="text"
                               name="companyName"
                               value={formData.companyName}
                               onChange={handleChange}
-                              className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                              className={`w-full px-3 py-3 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
                                 errors.companyName
                                   ? "border-red-500"
                                   : "border-gray-300"
                               }`}
-                              placeholder="Enter company name"
+                              placeholder=" "
                             />
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                              Company Name *
+                            </label>
                             {errors.companyName && (
                               <p className="mt-1 text-xs text-red-600">
                                 {errors.companyName}
@@ -784,33 +784,35 @@ function EditLead() {
                             )}
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Assign To
-                            </label>
+                          {/* Assign To Field with Floating Label */}
+                          <div className="relative">
                             <input
                               type="text"
                               name="assignTo"
                               value={formData.assignTo}
                               onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Enter assignee ID"
+                              className="w-full px-3 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
+                              placeholder=" "
                             />
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                              Assign To
+                            </label>
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Revenue
-                            </label>
+                          {/* Revenue Field with Floating Label */}
+                          <div className="relative">
                             <input
                               type="number"
                               step="0.01"
                               name="revenue"
                               value={formData.revenue}
                               onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Enter revenue amount"
+                              className="w-full px-3 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
+                              placeholder=" "
                             />
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                              Revenue
+                            </label>
                           </div>
                         </div>
                       </section>
@@ -844,22 +846,23 @@ function EditLead() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Mobile Number
-                            </label>
+                          {/* Mobile Number Field with Floating Label */}
+                          <div className="relative">
                             <input
                               type="text"
                               name="mobileNumber"
                               value={formData.mobileNumber}
                               onChange={handleChange}
-                              className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                              className={`w-full px-3 py-3 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
                                 errors.mobileNumber
                                   ? "border-red-500"
                                   : "border-gray-300"
                               }`}
-                              placeholder="Enter mobile number"
+                              placeholder=" "
                             />
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                              Mobile Number
+                            </label>
                             {errors.mobileNumber && (
                               <p className="mt-1 text-xs text-red-600">
                                 {errors.mobileNumber}
@@ -867,36 +870,38 @@ function EditLead() {
                             )}
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Phone Number
-                            </label>
+                          {/* Phone Number Field with Floating Label */}
+                          <div className="relative">
                             <input
                               type="text"
                               name="phoneNumber"
                               value={formData.phoneNumber}
                               onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Enter phone number"
+                              className="w-full px-3 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
+                              placeholder=" "
                             />
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                              Phone Number
+                            </label>
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Email
-                            </label>
+                          {/* Email Field with Floating Label */}
+                          <div className="relative">
                             <input
                               type="email"
                               name="email"
                               value={formData.email}
                               onChange={handleChange}
-                              className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                              className={`w-full px-3 py-3 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
                                 errors.email
                                   ? "border-red-500"
                                   : "border-gray-300"
                               }`}
-                              placeholder="Enter email address"
+                              placeholder=" "
                             />
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                              Email
+                            </label>
                             {errors.email && (
                               <p className="mt-1 text-xs text-red-600">
                                 {errors.email}
@@ -904,18 +909,19 @@ function EditLead() {
                             )}
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Website
-                            </label>
+                          {/* Website Field with Floating Label */}
+                          <div className="relative">
                             <input
                               type="url"
                               name="website"
                               value={formData.website}
                               onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Enter website URL"
+                              className="w-full px-3 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
+                              placeholder=" "
                             />
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                              Website
+                            </label>
                           </div>
                         </div>
                       </section>
@@ -948,16 +954,14 @@ function EditLead() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Status
-                            </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          {/* Status Field with Floating Label */}
+                          <div className="relative">
                             <select
                               name="status"
                               value={formData.status}
                               onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                              className="w-full px-3 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer appearance-none bg-white"
                             >
                               <option value="New Lead">New Lead</option>
                               <option value="Contacted">Contacted</option>
@@ -967,17 +971,34 @@ function EditLead() {
                               <option value="Won">Won</option>
                               <option value="Lost">Lost</option>
                             </select>
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600">
+                              Status
+                            </label>
+                            {/* Dropdown arrow icon */}
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                              <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 9l-7 7-7-7"
+                                />
+                              </svg>
+                            </div>
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Lead Source *
-                            </label>
+                          {/* Lead Source Field with Floating Label */}
+                          <div className="relative">
                             <select
                               name="source"
                               value={formData.source}
                               onChange={handleChange}
-                              className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                              className={`w-full px-3 py-3 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer appearance-none bg-white ${
                                 errors.source
                                   ? "border-red-500"
                                   : "border-gray-300"
@@ -993,6 +1014,25 @@ function EditLead() {
                                 Email Campaign
                               </option>
                             </select>
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600">
+                              Lead Source *
+                            </label>
+                            {/* Dropdown arrow icon */}
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                              <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 9l-7 7-7-7"
+                                />
+                              </svg>
+                            </div>
                             {errors.source && (
                               <p className="mt-1 text-xs text-red-600">
                                 {errors.source}
@@ -1002,15 +1042,13 @@ function EditLead() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Industry
-                            </label>
+                          {/* Industry Field with Floating Label */}
+                          <div className="relative">
                             <select
                               name="industry"
                               value={formData.industry}
                               onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                              className="w-full px-3 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer appearance-none bg-white"
                             >
                               <option value="">Select Industry</option>
                               <option value="Technology">Technology</option>
@@ -1024,17 +1062,34 @@ function EditLead() {
                               <option value="Real Estate">Real Estate</option>
                               <option value="Other">Other</option>
                             </select>
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600">
+                              Industry
+                            </label>
+                            {/* Dropdown arrow icon */}
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                              <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 9l-7 7-7-7"
+                                />
+                              </svg>
+                            </div>
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Priority
-                            </label>
+                          {/* Priority Field with Floating Label */}
+                          <div className="relative">
                             <select
                               name="priority"
                               value={formData.priority}
                               onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                              className="w-full px-3 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer appearance-none bg-white"
                             >
                               <option value="">Select Priority</option>
                               <option value="Low">Low</option>
@@ -1042,6 +1097,25 @@ function EditLead() {
                               <option value="High">High</option>
                               <option value="Urgent">Urgent</option>
                             </select>
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600">
+                              Priority
+                            </label>
+                            {/* Dropdown arrow icon */}
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                              <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 9l-7 7-7-7"
+                                />
+                              </svg>
+                            </div>
                           </div>
                         </div>
                       </section>
@@ -1079,26 +1153,24 @@ function EditLead() {
                             </p>
                           </div>
                         </div>
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Street
-                            </label>
+                          {/* Street Field with Floating Label */}
+                          <div className="md:col-span-2 relative">
                             <input
                               type="text"
                               name="street"
                               value={formData.street}
                               onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Enter street address"
+                              className="w-full px-3 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
+                              placeholder=" "
                             />
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                              Street
+                            </label>
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Country *
-                            </label>
+                          {/* Country Field with Floating Label */}
+                          <div className="relative">
                             <Select
                               name="country"
                               value={dropdownData.countries.find(
@@ -1106,10 +1178,13 @@ function EditLead() {
                               )}
                               onChange={handleCountryChange}
                               options={dropdownData.countries}
-                              placeholder="Select Country"
+                              placeholder=" "
                               isSearchable
                               styles={customStyles}
                             />
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10">
+                              Country *
+                            </label>
                             {errors.country && (
                               <p className="mt-1 text-xs text-red-600">
                                 {errors.country}
@@ -1117,10 +1192,8 @@ function EditLead() {
                             )}
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              State *
-                            </label>
+                          {/* State Field with Floating Label */}
+                          <div className="relative">
                             <Select
                               key={`state-${formData.country}`}
                               name="state"
@@ -1129,11 +1202,14 @@ function EditLead() {
                               )}
                               onChange={handleStateChange}
                               options={dropdownData.states}
-                              placeholder="Select State"
+                              placeholder=" "
                               isSearchable
                               isDisabled={!formData.country}
                               styles={customStyles}
                             />
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10">
+                              State *
+                            </label>
                             {errors.state && (
                               <p className="mt-1 text-xs text-red-600">
                                 {errors.state}
@@ -1141,10 +1217,8 @@ function EditLead() {
                             )}
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              City *
-                            </label>
+                          {/* City Field with Floating Label */}
+                          <div className="relative">
                             <Select
                               key={`city-${formData.state}`}
                               name="city"
@@ -1153,11 +1227,14 @@ function EditLead() {
                               )}
                               onChange={handleCityChange}
                               options={dropdownData.cities}
-                              placeholder="Select City"
+                              placeholder=" "
                               isSearchable
                               isDisabled={!formData.state}
                               styles={customStyles}
                             />
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10">
+                              City *
+                            </label>
                             {errors.city && (
                               <p className="mt-1 text-xs text-red-600">
                                 {errors.city}
@@ -1165,18 +1242,19 @@ function EditLead() {
                             )}
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              ZIP Code
-                            </label>
+                          {/* ZIP Code Field with Floating Label */}
+                          <div className="relative">
                             <input
                               type="text"
                               name="zipCode"
                               value={formData.zipCode}
                               onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Enter ZIP code"
+                              className="w-full px-3 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
+                              placeholder=" "
                             />
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                              ZIP Code
+                            </label>
                           </div>
                         </div>
                       </section>
