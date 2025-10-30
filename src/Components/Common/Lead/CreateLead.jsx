@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Select from "react-select";
 import { Country, State, City } from "country-state-city";
 import Sidebar from "../../Pages/Admin/SidebarAdmin";
 import TopBar from "../../Pages/Admin/TopBarAdmin";
 import { toast } from "react-hot-toast";
-import axiosInstance from "../../BaseComponet/axiosInstance"; // Import axiosInstance
+import axiosInstance from "../../BaseComponet/axiosInstance";
 
-function EditLead() {
-  const { id } = useParams();
+function CreateLead() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Fixed fields as per API
   const [formData, setFormData] = useState({
     companyName: "",
     assignTo: "",
@@ -40,12 +37,10 @@ function EditLead() {
     countries: [],
     states: [],
     cities: [],
-    zipCodes: [],
   });
 
   const [errors, setErrors] = useState({});
 
-  // Initialize countries on component mount
   useEffect(() => {
     const countries = Country.getAllCountries().map((country) => ({
       value: country.isoCode,
@@ -60,146 +55,6 @@ function EditLead() {
     }));
   }, []);
 
-  // Find country code by country name
-  const findCountryCodeByName = (countryName) => {
-    const country = Country.getAllCountries().find(
-      (c) => c.name === countryName
-    );
-    return country ? country.isoCode : "";
-  };
-
-  // Find state code by state name and country code
-  const findStateCodeByName = (stateName, countryCode) => {
-    const states = State.getStatesOfCountry(countryCode);
-    const state = states.find((s) => s.name === stateName);
-    return state ? state.isoCode : "";
-  };
-
-  // Fetch lead data when component mounts
-  useEffect(() => {
-    const fetchLeadData = async () => {
-      if (!id) {
-        toast.error("Lead ID not found!");
-        navigate("/Admin/LeadList");
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        const response = await axiosInstance.get(`getLeadById/${id}`);
-
-        const apiResponse = await response.data;
-        const leadData = apiResponse.lead; // Extract data from lead property
-
-        console.log("Fetched lead data:", leadData);
-
-        if (!leadData) {
-          toast.error("Lead data not found in response!");
-          navigate("/Admin/LeadList");
-          return;
-        }
-
-        // Map API response to form data
-        const mappedFormData = {
-          companyName: leadData.companyName || "",
-          assignTo: leadData.assignTo || "",
-          status: leadData.status || "New Lead",
-          source: leadData.source || "",
-          clientName: leadData.clientName || "",
-          revenue: leadData.revenue ? leadData.revenue.toString() : "",
-          mobileNumber: leadData.mobileNumber || "",
-          phoneNumber: leadData.phoneNumber || "",
-          email: leadData.email || "",
-          website: leadData.website || "",
-          industry: leadData.industry || "",
-          priority: leadData.priority || "",
-          street: leadData.street || "",
-          country: leadData.country || "",
-          state: leadData.state || "",
-          city: leadData.city || "",
-          zipCode: leadData.zipCode || "",
-          description: leadData.description || "",
-        };
-
-        setFormData(mappedFormData);
-
-        // Handle country-state-city dropdowns
-        if (leadData.country) {
-          const countryCode = findCountryCodeByName(leadData.country);
-
-          if (countryCode) {
-            const states = State.getStatesOfCountry(countryCode).map(
-              (state) => ({
-                value: state.isoCode,
-                label: state.name,
-              })
-            );
-
-            setDropdownData((prev) => ({
-              ...prev,
-              states,
-            }));
-
-            // Set country code in form data for dropdown selection
-            setFormData((prev) => ({
-              ...prev,
-              country: countryCode,
-            }));
-
-            // If state is set, load cities
-            if (leadData.state) {
-              const stateCode = findStateCodeByName(
-                leadData.state,
-                countryCode
-              );
-
-              if (stateCode) {
-                const cities = City.getCitiesOfState(
-                  countryCode,
-                  stateCode
-                ).map((city) => ({
-                  value: city.name,
-                  label: city.name,
-                }));
-
-                setDropdownData((prev) => ({
-                  ...prev,
-                  cities,
-                }));
-
-                // Set state code in form data for dropdown selection
-                setFormData((prev) => ({
-                  ...prev,
-                  state: stateCode,
-                }));
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching lead:", error);
-        if (error.response?.data?.message) {
-          toast.error(`Failed to fetch lead: ${error.response.data.message}`);
-        } else if (
-          error.name === "TypeError" &&
-          error.message.includes("Failed to fetch")
-        ) {
-          toast.error(
-            "Cannot connect to server. Please check if the backend is running."
-          );
-        } else {
-          toast.error("Failed to fetch lead data. Please try again.");
-        }
-        navigate("/Admin/LeadList");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchLeadData();
-  }, [id, navigate]);
-
-  // Update states when country changes
   useEffect(() => {
     if (formData.country) {
       const states = State.getStatesOfCountry(formData.country).map(
@@ -217,7 +72,6 @@ function EditLead() {
     }
   }, [formData.country]);
 
-  // Update cities when state changes
   useEffect(() => {
     if (formData.country && formData.state) {
       const cities = City.getCitiesOfState(
@@ -243,7 +97,6 @@ function EditLead() {
       [name]: value,
     }));
 
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -258,7 +111,6 @@ function EditLead() {
       [name]: selectedOption ? selectedOption.value : "",
     }));
 
-    // Clear error when user selects an option
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -270,13 +122,11 @@ function EditLead() {
   const validateForm = () => {
     const newErrors = {};
 
-    // Validate required fields
     if (!formData.clientName?.trim())
       newErrors.clientName = "Client name is required";
     if (!formData.companyName?.trim())
       newErrors.companyName = "Company name is required";
 
-    // Validate country, state, city dependencies
     if (formData.state && !formData.country) {
       newErrors.country = "Country is required when state is selected";
     }
@@ -287,7 +137,6 @@ function EditLead() {
       newErrors.country = "Country is required when city is selected";
     }
 
-    // If any address field is filled, validate the hierarchy
     if (formData.street || formData.zipCode) {
       if (formData.city && !formData.state) {
         newErrors.state = "State is required when city is provided";
@@ -297,12 +146,10 @@ function EditLead() {
       }
     }
 
-    // Email validation if provided
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Please enter a valid email address";
     }
 
-    // Phone number validation if provided
     if (
       formData.mobileNumber &&
       !/^[0-9+\-\s()]{10,}$/.test(formData.mobileNumber)
@@ -320,9 +167,7 @@ function EditLead() {
 
     setLoading(true);
     try {
-      // Prepare the data in API format with all fields
       const submitData = {
-        id: id, // Include the lead ID for update
         companyName: formData.companyName,
         assignTo: formData.assignTo,
         status: formData.status,
@@ -348,16 +193,14 @@ function EditLead() {
         description: formData.description,
       };
 
-      console.log("Updating lead with data:", submitData);
+      await axiosInstance.post("createLead", submitData);
 
-      const response = await axiosInstance.put("updateLead", submitData);
-
-      toast.success("Lead updated successfully!");
+      toast.success("Lead created successfully!");
       navigate("/Admin/LeadList");
     } catch (error) {
-      console.error("Error updating lead:", error);
+      console.error("Error creating lead:", error);
       if (error.response?.data?.message) {
-        toast.error(`Failed to update lead: ${error.response.data.message}`);
+        toast.error(`Failed to create lead: ${error.response.data.message}`);
       } else if (
         error.name === "TypeError" &&
         error.message.includes("Failed to fetch")
@@ -366,7 +209,7 @@ function EditLead() {
           "Cannot connect to server. Please check if the backend is running."
         );
       } else {
-        toast.error("Failed to update lead. Please try again.");
+        toast.error("Failed to create lead. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -383,18 +226,10 @@ function EditLead() {
     }
   };
 
-  const handleReset = () => {
-    if (window.confirm("Are you sure you want to reset all changes?")) {
-      // Re-fetch the original data
-      window.location.reload();
-    }
-  };
-
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  // Custom styles for react-select
   const customStyles = {
     control: (base) => ({
       ...base,
@@ -412,19 +247,17 @@ function EditLead() {
     }),
   };
 
-  // Handle country change - reset state and city
   const handleCountryChange = (selectedOption) => {
     const countryCode = selectedOption ? selectedOption.value : "";
 
     setFormData((prev) => ({
       ...prev,
       country: countryCode,
-      state: "", // Reset state
-      city: "", // Reset city
-      zipCode: "", // Reset zip code
+      state: "",
+      city: "",
+      zipCode: "",
     }));
 
-    // Update states based on selected country
     if (countryCode) {
       const states = State.getStatesOfCountry(countryCode).map((state) => ({
         value: state.isoCode,
@@ -434,7 +267,7 @@ function EditLead() {
       setDropdownData((prev) => ({
         ...prev,
         states,
-        cities: [], // Reset cities
+        cities: [],
       }));
     } else {
       setDropdownData((prev) => ({
@@ -444,7 +277,6 @@ function EditLead() {
       }));
     }
 
-    // Clear error when user selects an option
     if (errors.country || errors.state || errors.city) {
       setErrors((prev) => ({
         ...prev,
@@ -455,18 +287,16 @@ function EditLead() {
     }
   };
 
-  // Handle state change - reset city
   const handleStateChange = (selectedOption) => {
     const stateCode = selectedOption ? selectedOption.value : "";
 
     setFormData((prev) => ({
       ...prev,
       state: stateCode,
-      city: "", // Reset city
-      zipCode: "", // Reset zip code
+      city: "",
+      zipCode: "",
     }));
 
-    // Update cities based on selected state and country
     if (stateCode && formData.country) {
       const cities = City.getCitiesOfState(formData.country, stateCode).map(
         (city) => ({
@@ -486,7 +316,6 @@ function EditLead() {
       }));
     }
 
-    // Clear error when user selects an option
     if (errors.state || errors.city) {
       setErrors((prev) => ({
         ...prev,
@@ -496,7 +325,6 @@ function EditLead() {
     }
   };
 
-  // Handle city change
   const handleCityChange = (selectedOption) => {
     const cityName = selectedOption ? selectedOption.value : "";
 
@@ -505,7 +333,6 @@ function EditLead() {
       city: cityName,
     }));
 
-    // Clear error when user selects an option
     if (errors.city) {
       setErrors((prev) => ({
         ...prev,
@@ -514,20 +341,6 @@ function EditLead() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600 text-sm">
-            Loading lead information...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Your JSX return statement remains the same...
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
       <TopBar toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
@@ -540,7 +353,6 @@ function EditLead() {
           } scrollbar-hide`}
         >
           <div className="p-4 bg-gray-50 border-b border-gray-200">
-            {/* Header */}
             <div className="">
               <div className="flex items-center gap-2 mb-2">
                 <button
@@ -575,7 +387,7 @@ function EditLead() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => navigate("/Admin/LeadList")}
+                    onClick={handleCancel}
                     className="px-4 py-2 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 text-sm font-medium"
                   >
                     Cancel
@@ -611,7 +423,6 @@ function EditLead() {
               </div>
             </div>
 
-            {/* Form Container */}
             <div className="flex-1 overflow-y-auto">
               <div className="p-4">
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -621,7 +432,6 @@ function EditLead() {
                     className="p-6"
                   >
                     <div className="space-y-6">
-                      {/* Basic Information Section */}
                       <section>
                         <div className="flex items-center gap-3 mb-6">
                           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -726,7 +536,6 @@ function EditLead() {
                         </div>
                       </section>
 
-                      {/* Contact Information Section */}
                       <section>
                         <div className="flex items-center gap-3 mb-6">
                           <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
@@ -831,7 +640,6 @@ function EditLead() {
                         </div>
                       </section>
 
-                      {/* Lead Details Section */}
                       <section>
                         <div className="flex items-center gap-3 mb-6">
                           <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
@@ -955,7 +763,6 @@ function EditLead() {
                         </div>
                       </section>
 
-                      {/* Address Information Section */}
                       <section>
                         <div className="flex items-center gap-3 mb-6">
                           <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
@@ -1031,7 +838,7 @@ function EditLead() {
                               State
                             </label>
                             <Select
-                              key={`state-${formData.country}`} // Add this line
+                              key={`state-${formData.country}`}
                               name="state"
                               value={dropdownData.states.find(
                                 (option) => option.value === formData.state
@@ -1055,7 +862,7 @@ function EditLead() {
                               City
                             </label>
                             <Select
-                              key={`city-${formData.state}`} // Add this line
+                              key={`city-${formData.state}`}
                               name="city"
                               value={dropdownData.cities.find(
                                 (option) => option.value === formData.city
@@ -1090,7 +897,6 @@ function EditLead() {
                         </div>
                       </section>
 
-                      {/* Description Section */}
                       <section>
                         <div className="flex items-center gap-3 mb-6">
                           <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center">

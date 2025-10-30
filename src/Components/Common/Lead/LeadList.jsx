@@ -347,15 +347,64 @@ function LeadList() {
             <div className="flex items-center gap-3 mb-2">
               <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Leads
-                </h1>
-             
+                <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
               </div>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+            <div className="flex bg-gray-100 rounded-lg p-0.5">
+              <button
+                onClick={() => setViewMode("table")}
+                className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-200 ${
+                  viewMode === "table"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
+                  </svg>
+                  Table
+                </div>
+              </button>
+              <button
+                onClick={() => setViewMode("kanban")}
+                className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-200 ${
+                  viewMode === "kanban"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
+                    />
+                  </svg>
+                  Kanban
+                </div>
+              </button>
+            </div>
             {/* Search and Filters Row */}
             <div className="flex flex-col sm:flex-row gap-3 flex-1">
               {/* Search Input */}
