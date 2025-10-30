@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-
+import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
 function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -31,35 +31,13 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
               />
             </svg>
           </button>
+
+          <img src={Mtech_logo} alt="" className="w-20"/>
         </div>
 
         {/* Right Section */}
         <div className="flex items-center space-x-3">
-          {/* Search Bar */}
-          <div className="relative hidden xl:block">
-            <div className="relative group">
-              <input
-                type="text"
-                placeholder="Search leads, contacts..."
-                className="pl-10 pr-3 py-1.5 bg-white/10 border border-white/20 rounded-lg focus:ring-1 focus:ring-white/30 focus:border-white/30 outline-none transition-all duration-300 text-white placeholder-blue-200 w-64 backdrop-blur-sm text-sm"
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg
-                  className="w-4 h-4 text-blue-200 group-focus-within:text-white transition-colors duration-300"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
+     
 
           {/* Quick Actions */}
           <div className="flex items-center space-x-1">
