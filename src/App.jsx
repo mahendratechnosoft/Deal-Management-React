@@ -18,7 +18,10 @@ import EmployeeListAdmin from "./Components/Pages/Admin/Employee/EmployeeListAdm
 import CreateEmployee from "./Components/Common/Employee/CreateEmployee.jsx";
 import EditEmployee from "./Components/Common/Employee/EditEmployee.jsx";
 import CustomToaster from "./Components/Common/Toaster";
-
+import SettingsLayout from "./Components/Pages/Admin/Settings/SettingsLayout.jsx";
+import Department from "./Components/Common/Settings/RoleAndDepartment/Department.jsx";
+import General from "./Components/Common/Settings/General.jsx";
+import RoleList from "./Components/Common/Settings/RoleAndDepartment/RoleList.JSX";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -184,6 +187,42 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/Admin/Settings"
+            element={
+              <ProtectedRoute>
+                <SettingsLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route
+              index
+              element={
+                <ProtectedRoute>
+                  <General />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="Department"
+              element={
+                <ProtectedRoute>
+                  <Department />
+                </ProtectedRoute>
+              }
+            ></Route>
+
+            <Route
+              path="Department/:departmentId/Roles"
+              element={
+                <ProtectedRoute>
+                  <RoleList />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
 
           {/* Default redirect */}
           <Route path="/" element={<Navigate to="/login" />} />
