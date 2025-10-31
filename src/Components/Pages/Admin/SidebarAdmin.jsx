@@ -24,7 +24,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      count: 24,
       color: "from-blue-500 to-cyan-500",
     },
     {
@@ -45,7 +44,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      count: 12,
       color: "from-green-500 to-emerald-500",
     },
     {
@@ -66,7 +64,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      count: 8,
       color: "from-purple-500 to-pink-500",
     },
     {
@@ -87,7 +84,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      count: 45,
       color: "from-orange-500 to-red-500",
     },
     {
@@ -98,19 +94,18 @@ function Sidebar({ isOpen, toggleSidebar }) {
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
-          stroke-width="1.5"
+          strokeWidth="1.5"
           stroke="currentColor"
-          class="size-6"
+          className="size-6"
         >
           <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"
           />
         </svg>
       ),
-      count: 45,
-      color: "from-orange-500 to-red-500",
+      color: "from-indigo-500 to-purple-600",
     },
     {
       name: "Settings",
@@ -120,28 +115,36 @@ function Sidebar({ isOpen, toggleSidebar }) {
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
-          stroke-width="1.5"
+          strokeWidth="1.5"
           stroke="currentColor"
-          class="size-6"
+          className="size-6"
         >
           <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.398.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z"
           />
           <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
           />
         </svg>
       ),
-      color: "from-orange-500 to-red-500",
+      color: "from-amber-500 to-orange-500",
     },
   ];
 
   const isActive = (path) => {
     return location.pathname.startsWith(path);
+  };
+
+  const handleLogout = () => {
+    // Add your logout logic here
+    console.log("Logging out...");
+    // Example: clear localStorage, redirect to login, etc.
+    // localStorage.removeItem('token');
+    // navigate('/login');
   };
 
   return (
@@ -285,30 +288,17 @@ function Sidebar({ isOpen, toggleSidebar }) {
                     </div>
 
                     {isOpen && (
-                      <>
-                        <div className="ml-3 flex-1 text-left">
-                          <span
-                            className={`font-medium block text-xs transition-colors duration-300 ${
-                              isActive(item.path)
-                                ? "text-white"
-                                : "text-gray-300 group-hover:text-white"
-                            }`}
-                          >
-                            {item.name}
-                          </span>
-                        </div>
-
-                        {/* Notification Badge */}
-                        <div
-                          className={`px-1.5 py-0.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                      <div className="ml-3 flex-1 text-left">
+                        <span
+                          className={`font-medium block text-xs transition-colors duration-300 ${
                             isActive(item.path)
-                              ? "bg-white/20 text-white"
-                              : "bg-gray-700 text-gray-300 group-hover:bg-gray-600 group-hover:text-white"
+                              ? "text-white"
+                              : "text-gray-300 group-hover:text-white"
                           }`}
                         >
-                          {item.count}
-                        </div>
-                      </>
+                          {item.name}
+                        </span>
+                      </div>
                     )}
                   </div>
 
@@ -321,50 +311,34 @@ function Sidebar({ isOpen, toggleSidebar }) {
                 </button>
               ))}
             </div>
-
-            {/* Quick Stats Section - Only show when expanded */}
-            {isOpen && (
-              <div className="mt-6 p-3 bg-gray-800/30 rounded-xl border border-gray-700/50">
-                <h3 className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-2">
-                  Quick Stats
-                </h3>
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-300 text-xs">Total Leads</span>
-                    <span className="text-white font-medium text-xs">156</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-300 text-xs">Conversion</span>
-                    <span className="text-green-400 font-medium text-xs">
-                      24%
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-300 text-xs">This Month</span>
-                    <span className="text-blue-400 font-medium text-xs">
-                      +12%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
           </nav>
 
-          {/* Sidebar Footer */}
+          {/* Sidebar Footer - Logout Button */}
           <div
             className={`p-4 border-t border-gray-700/50 ${
               !isOpen && "lg:flex lg:justify-center"
             }`}
           >
-            <div
-              className={`flex items-center ${
-                isOpen ? "space-x-2" : "justify-center"
+            <button
+              onClick={handleLogout}
+              className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden bg-gray-800/50 hover:bg-red-500/20 hover:transform hover:scale-105 ${
+                isOpen
+                  ? "px-3 py-2.5 justify-start"
+                  : "px-2 py-2.5 justify-center"
               }`}
+              title={!isOpen ? "Logout" : ""}
             >
-              <div className="relative">
-                <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center text-white font-medium shadow">
+              {/* Background Glow Effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+
+              <div
+                className={`relative z-10 flex items-center ${
+                  isOpen ? "w-full" : "justify-center"
+                }`}
+              >
+                <div className="text-gray-400 group-hover:text-red-400 transition-all duration-300 group-hover:scale-105">
                   <svg
-                    className="w-4 h-4"
+                    className="w-5 h-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -373,28 +347,20 @@ function Sidebar({ isOpen, toggleSidebar }) {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                     />
                   </svg>
                 </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full border border-gray-900"></div>
-              </div>
 
-              {isOpen && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-medium text-xs truncate">
-                    User Name
-                  </p>
-                  <p className="text-gray-400 text-xs truncate">
-                    Administrator
-                  </p>
-                  <div className="flex items-center mt-0.5">
-                    <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1"></div>
-                    <span className="text-gray-400 text-xs">Online</span>
+                {isOpen && (
+                  <div className="ml-3 flex-1 text-left">
+                    <span className="font-medium block text-xs text-gray-300 group-hover:text-red-400 transition-colors duration-300">
+                      Logout
+                    </span>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            </button>
           </div>
         </div>
       </div>
