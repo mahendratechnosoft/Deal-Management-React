@@ -795,7 +795,7 @@ function LeadList() {
                   {/* Table header */}
                   <thead
                     className="bg-gray-50 sticky top-0"
-                    style={{ zIndex: "100" }}
+
                   >
                     <tr>
                       {visibleColumns.map((column) => (
@@ -964,7 +964,7 @@ function LeadList() {
           {/* Pagination - Outside table card, above the table */}
           <div
             className="bg-white rounded-lg border border-gray-200 shadow-xs p-3 mt-4 sticky bottom-0 "
-            style={{ zIndex: "100" }}
+            style={{ zIndex: "39" }}
           >
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-4 text-xs">
