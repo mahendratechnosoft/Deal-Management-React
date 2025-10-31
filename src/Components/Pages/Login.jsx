@@ -56,85 +56,87 @@ function Login({ onSwitchToRegister, onLogin }) {
   };
 
   // In your login component, update the success handler:
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+   e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+   if (!validateForm()) {
+     return;
+   }
 
-    setIsLoading(true);
+   setIsLoading(true);
 
-    try {
-      const response = await axiosInstance.post(
-        "/signin",
-        {
-          username: formData.username,
-          password: formData.password,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+   try {
+     const response = await axiosInstance.post(
+       "/signin",
+       {
+         username: formData.username,
+         password: formData.password,
+       },
+       {
+         headers: {
+           "Content-Type": "application/json",
+         },
+       }
+     );
 
-      const data = await response.data;
+     const data = await response.data;
 
-      // Store the token and user data
-      if (data.jwtToken) {
-        localStorage.setItem("authToken", data.jwtToken);
-        localStorage.setItem("role", data.role); // FIXED: Store role separately
-        localStorage.setItem(
-          "userData",
-          JSON.stringify({
-            userId: data.userId,
-            loginEmail: data.loginEmail,
-            role: data.role,
-            expiryDate: data.expiryDate,
-          })
-        );
+     // Store the token and user data
+     if (data.jwtToken) {
+       localStorage.setItem("authToken", data.jwtToken);
+       localStorage.setItem(
+         "userData",
+         JSON.stringify({
+           userId: data.userId,
+           loginEmail: data.loginEmail,
+           role: data.role,
+           expiryDate: data.expiryDate,
+         })
+       );
 
-        if (rememberMe) {
-          localStorage.setItem("rememberMe", "true");
-        }
+       if (rememberMe) {
+         localStorage.setItem("rememberMe", "true");
+       }
 
-        showToaster("Sign in successful! Welcome back.", "success");
+       showToaster("Sign in successful! Welcome back.", "success");
 
-        // Call onLogin with the correct data structure
-        if (onLogin) {
-          onLogin({
-            user: {
-              userId: data.userId,
-              email: data.loginEmail,
-              role: data.role,
-              expiryDate: data.expiryDate,
-            },
-          });
-        }
-      } else {
-        throw new Error("No authentication token received");
-      }
-    } catch (error) {
-      console.error("Sign in error:", error);
-      if (
-        error.name === "TypeError" &&
-        error.message.includes("Failed to fetch")
-      ) {
-        showToaster(
-          "Cannot connect to server. Please check if the backend is running.",
-          "error"
-        );
-      } else {
-        showToaster(
-          error.message || "Sign in failed. Please check your credentials.",
-          "error"
-        );
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+       // Call onLogin with the correct data structure
+       if (onLogin) {
+         onLogin({
+           user: {
+             userId: data.userId,
+             email: data.loginEmail,
+             role: data.role,
+             expiryDate: data.expiryDate,
+           },
+         });
+       }
+
+    
+       navigate("/Admin/LeadList");
+     } else {
+       throw new Error("No authentication token received");
+     }
+   } catch (error) {
+     console.error("Sign in error:", error);
+     if (
+       error.name === "TypeError" &&
+       error.message.includes("Failed to fetch")
+     ) {
+       showToaster(
+         "Cannot connect to server. Please check if the backend is running.",
+         "error"
+       );
+     } else {
+       showToaster(
+         error.message || "Sign in failed. Please check your credentials.",
+         "error"
+       );
+     }
+   } finally {
+     setIsLoading(false);
+   }
+ };
 
   const handleCreateAccount = (e) => {
     navigate("/register");
