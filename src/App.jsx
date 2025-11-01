@@ -1,10 +1,10 @@
+// App.jsx
 import { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-  useNavigate,
 } from "react-router-dom";
 
 import Login from "./Components/Pages/Login";
@@ -13,7 +13,6 @@ import PageNotFound from "./Components/Pages/PageNotFound";
 import CreateLead from "./Components/Common/Lead/CreateLead";
 import EditLead from "./Components/Common/Lead/EditLead";
 import DealList from "./Components/Common/Deals/DealList.jsx";
-import LeadListAdmin from "../src/Components/Pages/Admin/Lead/LeadListAdmin.jsx";
 import EmployeeListAdmin from "./Components/Pages/Admin/Employee/EmployeeListAdmin.jsx";
 import CreateEmployee from "./Components/Common/Employee/CreateEmployee.jsx";
 import EditEmployee from "./Components/Common/Employee/EditEmployee.jsx";
@@ -22,12 +21,19 @@ import SettingsLayout from "./Components/Pages/Admin/Settings/SettingsLayout.jsx
 import Department from "./Components/Common/Settings/RoleAndDepartment/Department.jsx";
 import General from "./Components/Common/Settings/General.jsx";
 import RoleList from "./Components/Common/Settings/RoleAndDepartment/RoleList.JSX";
-import LeadListEmployee from "./Components/Pages/Employee/Lead/LeadListEmployee.jsx";
+
+// Layout Components
+import AdminLayout from "./Components/Layout/AdminLayout";
+import EmployeeLayout from "./Components/Layout/EmployeeLayout";
+import RoleBasedRoute from "./Components/BaseComponet/RoleBasedRoute.jsx";
+
+// Common Components (without layout)
+import LeadList from "./Components/Common/Lead/LeadList";
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
 
-  // On app load, check token and userData just once
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const userData = localStorage.getItem("userData");
@@ -36,7 +42,7 @@ function App() {
       try {
         const user = JSON.parse(userData);
         setIsLoggedIn(true);
-        setUserRole(user.role || "admin");
+        setUserRole(user.role || "");
       } catch (error) {
         console.error("Error parsing user data:", error);
         handleLogout();
@@ -49,63 +55,16 @@ function App() {
 
   const handleLogin = (userData) => {
     setIsLoggedIn(true);
-    setUserRole(userData.user.role || "admin");
+    setUserRole(userData.user.role || "");
   };
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("userData");
+    localStorage.removeItem("role");
     localStorage.removeItem("rememberMe");
     setIsLoggedIn(false);
     setUserRole("");
-  };
-
-  const Dashboard = () => {
-    const navigate = useNavigate();
-    const handleLogoutClick = () => {
-      handleLogout();
-      navigate("/login");
-    };
-
-    return (
-      <div className="min-h-screen bg-gray-100 p-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800">
-              Mtech CRM - {userRole.toUpperCase()} Dashboard
-            </h1>
-            <button
-              onClick={handleLogoutClick}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-300"
-            >
-              Logout
-            </button>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">
-              Welcome to your dashboard!
-            </h2>
-            <p className="text-gray-600">
-              You are logged in as{" "}
-              <span className="font-medium">{userRole}</span>.
-            </p>
-            <p className="text-gray-600 mt-2">
-              This is where your {userRole} panel will be displayed.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // New ProtectedRoute - checks token in localStorage
-  const ProtectedRoute = ({ children }) => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      return <Navigate to="/login" replace />;
-    }
-    return children;
   };
 
   return (
@@ -114,129 +73,72 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
-          <Route
-            path="/register"
-            element={
-              <Register
-                onSwitchToLogin={() => (window.location.href = "/login")}
-              />
-            }
-          />
+          <Route path="/register" element={<Register />} />
 
-          {/* Protected Routes (use ProtectedRoute for each) */}
+          {/* Admin Routes */}
           <Route
-            path="/dashboard"
+            path="/Admin/*"
             element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <AdminLayout onLogout={handleLogout} />
+              </RoleBasedRoute>
             }
-          />
+          >
+            <Route path="LeadList" element={<LeadList />} />
+            <Route path="EmployeeList" element={<EmployeeListAdmin />} />
+            <Route path="CreateEmployee" element={<CreateEmployee />} />
+            <Route path="EditEmployee/:employeeId" element={<EditEmployee />} />
+            <Route path="EditLead/:id" element={<EditLead />} />
+            <Route path="Settings" element={<SettingsLayout />}>
+              <Route index element={<General />} />
+              <Route path="Department" element={<Department />} />
+              <Route
+                path="Department/:departmentId/Roles"
+                element={<RoleList />}
+              />
+            </Route>
+          </Route>
+
+          {/* Employee Routes */}
           <Route
-            path="/Admin/LeadList"
+            path="/Employee/*"
             element={
-              <ProtectedRoute>
-                <LeadListAdmin onLogout={handleLogout} />
-              </ProtectedRoute>
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                <EmployeeLayout onLogout={handleLogout} />
+              </RoleBasedRoute>
             }
-          />
-          <Route
-            path="/Employee/LeadList"
-            element={
-              <ProtectedRoute>
-                <LeadListEmployee onLogout={handleLogout} />
-              </ProtectedRoute>
-            }
-          />
+          >
+            <Route path="LeadList" element={<LeadList />} />
+            <Route path="CreateLead" element={<CreateLead />} />
+          </Route>
+
+          {/* Common Routes with layout detection */}
           <Route
             path="/CreateLead"
             element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
                 <CreateLead />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/Admin/EditLead/:id"
-            element={
-              <ProtectedRoute>
-                <EditLead />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/DealList"
-            element={
-              <ProtectedRoute>
-                <DealList />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/Admin/EmployeeList"
-            element={
-              <ProtectedRoute>
-                <EmployeeListAdmin onLogout={handleLogout} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/Admin/CreateEmployee"
-            element={
-              <ProtectedRoute>
-                <CreateEmployee />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/Admin/EditEmployee/:employeeId"
-            element={
-              <ProtectedRoute>
-                <EditEmployee />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             }
           />
 
+          {/* Default redirect based on role */}
           <Route
-            path="/Admin/Settings"
+            path="/"
             element={
-              <ProtectedRoute>
-                <SettingsLayout />
-              </ProtectedRoute>
+              <RoleBasedRoute>
+                {userRole === "ROLE_ADMIN" ? (
+                  <Navigate to="/Admin/LeadList" replace />
+                ) : userRole === "ROLE_EMPLOYEE" ? (
+                  <Navigate to="/Employee/LeadList" replace />
+                ) : (
+                  <Navigate to="/login" replace />
+                )}
+              </RoleBasedRoute>
             }
-          >
-            <Route
-              index
-              element={
-                <ProtectedRoute>
-                  <General />
-                </ProtectedRoute>
-              }
-            />
+          />
 
-            <Route
-              path="Department"
-              element={
-                <ProtectedRoute>
-                  <Department />
-                </ProtectedRoute>
-              }
-            ></Route>
-
-            <Route
-              path="Department/:departmentId/Roles"
-              element={
-                <ProtectedRoute>
-                  <RoleList />
-                </ProtectedRoute>
-              }
-            />
-          </Route>
-
-          {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/login" />} />
-
-          {/* 404 Page - Catch all route */}
+          {/* 404 Page */}
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </Router>

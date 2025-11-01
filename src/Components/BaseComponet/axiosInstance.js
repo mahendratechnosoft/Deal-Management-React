@@ -1,55 +1,70 @@
+// Components/BaseComponent/axiosInstance.js
 import axios from "axios";
 import Swal from "sweetalert2";
 
-// Base configuration
 const axiosInstance = axios.create({
   baseURL: "http://localhost:8080",
 });
 
-// Add a request interceptor to attach the token and handle role-based endpoints
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("authToken"); // FIXED: changed from "token" to "authToken"
-    const role = localStorage.getItem("role");
+    const token = localStorage.getItem("authToken");
+    const userData = localStorage.getItem("userData");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Automatically prepend role-based prefix to URLs that don't start with /
-    if (role && config.url && !config.url.startsWith("/")) {
-      if (role === "ROLE_ADMIN") {
-        config.url = `admin/${config.url}`;
-      } else if (role === "ROLE_EMPLOYEE") {
-        config.url = `employee/${config.url}`;
+    // Add role validation for sensitive endpoints
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        const url = config.url.toLowerCase();
+
+        // Prevent employee from accessing admin endpoints
+        if (user.role === "ROLE_EMPLOYEE" && url.includes("admin/")) {
+          throw new Error("Access denied: Insufficient permissions");
+        }
+
+        // Auto-prefix based on role for non-prefixed endpoints
+        if (
+          !url.startsWith("/") &&
+          !url.includes("admin/") &&
+          !url.includes("employee/")
+        ) {
+          if (user.role === "ROLE_ADMIN") {
+            config.url = `admin/${config.url}`;
+          } else if (user.role === "ROLE_EMPLOYEE") {
+            config.url = `employee/${config.url}`;
+          }
+        }
+      } catch (error) {
+        console.error("Role validation error:", error);
+        return Promise.reject(error);
       }
     }
 
-    console.log("Axios Interceptor - Final URL:", config.url); // Debug log
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor → handle expired/invalid tokens
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401 || error.response?.status === 403) {
-      const result = await Swal.fire({
-        title: "Your session has expired or is invalid.",
+      await Swal.fire({
+        title: "Session Expired",
         text: "Please log in again to continue.",
         icon: "warning",
         confirmButtonText: "OK",
         confirmButtonColor: "#386bc0",
       });
 
-      if (result.isConfirmed) {
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("userData");
-        localStorage.removeItem("role");
-        window.location.href = "/login";
-      }
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("userData");
+      localStorage.removeItem("role");
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   }
