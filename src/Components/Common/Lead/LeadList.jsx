@@ -257,9 +257,8 @@ function LeadList() {
   }));
 
   const handleCreateLead = () => {
-    navigate("/Admin/CreateLead");
+    navigate("/CreateLead"); // Changed from "/Employee/LeadList"
   };
-
   const handleOpenPopup = () => {
     setTempColumns([...columns]);
     setShowColumnPopup(true);
@@ -771,7 +770,7 @@ function LeadList() {
         <>
           {/* Table View */}
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-            <div className="overflow-x-auto">
+            <div className="">
               {/* Single table container */}
               <div className="relative">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -793,10 +792,7 @@ function LeadList() {
                   </colgroup>
 
                   {/* Table header */}
-                  <thead
-                    className="bg-gray-50 sticky top-0"
-
-                  >
+                  <thead className="bg-gray-50 sticky top-0">
                     <tr>
                       {visibleColumns.map((column) => (
                         <th

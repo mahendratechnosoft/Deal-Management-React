@@ -22,6 +22,7 @@ import SettingsLayout from "./Components/Pages/Admin/Settings/SettingsLayout.jsx
 import Department from "./Components/Common/Settings/RoleAndDepartment/Department.jsx";
 import General from "./Components/Common/Settings/General.jsx";
 import RoleList from "./Components/Common/Settings/RoleAndDepartment/RoleList.JSX";
+import LeadListEmployee from "./Components/Pages/Employee/Lead/LeadListEmployee.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -140,7 +141,15 @@ function App() {
             }
           />
           <Route
-            path="/Admin/CreateLead"
+            path="/Employee/LeadList"
+            element={
+              <ProtectedRoute>
+                <LeadListEmployee onLogout={handleLogout} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/CreateLead"
             element={
               <ProtectedRoute>
                 <CreateLead />

@@ -2,10 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Select from "react-select";
 import { Country, State, City } from "country-state-city";
-import Sidebar from "../../Pages/Admin/SidebarAdmin";
-import TopBar from "../../Pages/Admin/TopBarAdmin";
+
 import { toast } from "react-hot-toast";
 import axiosInstance from "../../BaseComponet/axiosInstance";
+import SidebarEmployee from "../../Pages/Employee/SidebarEmployee";
+import TopBarEmployee from "../../Pages/Employee/TopBarEmployee";
+import TopBar from "../../Pages/Admin/TopBarAdmin";
+import Sidebar from "../../Pages/Admin/SidebarAdmin";
 
 function CreateLead() {
   const navigate = useNavigate();
@@ -33,6 +36,20 @@ function CreateLead() {
     description: "",
   });
 
+  const [role, setRole] = useState("");
+
+  useEffect(() => {
+    // Get user role from localStorage using the exact variable name
+    const userDataString = localStorage.getItem("userData");
+    if (userDataString) {
+      try {
+        const userData = JSON.parse(userDataString);
+        setRole(userData.role); // Use the exact property name from your localStorage
+      } catch (error) {
+        console.error("Error parsing userData:", error);
+      }
+    }
+  }, []);
   const [dropdownData, setDropdownData] = useState({
     countries: [],
     states: [],
@@ -196,7 +213,11 @@ function CreateLead() {
       await axiosInstance.post("createLead", submitData);
 
       toast.success("Lead created successfully!");
-      navigate("/Admin/LeadList");
+      if (role === "ROLE_ADMIN") {
+        navigate("/Admin/LeadList");
+      } else if (role === "ROLE_EMPLOYEE") {
+        navigate("/Employee/LeadList");
+      }
     } catch (error) {
       console.error("Error creating lead:", error);
       if (error.response?.data?.message) {
@@ -222,7 +243,14 @@ function CreateLead() {
         "Are you sure you want to cancel? Any unsaved changes will be lost."
       )
     ) {
-      navigate("/Admin/LeadList");
+      // Navigate based on user role
+      if (role === "ROLE_ADMIN") {
+        navigate("/Admin/LeadList");
+      } else if (role === "ROLE_EMPLOYEE") {
+        navigate("/Employee/LeadList");
+      } else {
+        navigate("/login"); // Fallback to login
+      }
     }
   };
 
@@ -343,10 +371,23 @@ function CreateLead() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
-      <TopBar toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
+      {/* TopBar based on role */}
+      {role === "ROLE_ADMIN" ? (
+        <TopBar toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
+      ) : role === "ROLE_EMPLOYEE" ? (
+        <TopBarEmployee
+          toggleSidebar={toggleSidebar}
+          sidebarOpen={sidebarOpen}
+        />
+      ) : null}
 
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+        {role === "ROLE_ADMIN" ? (
+          <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+        ) : role === "ROLE_EMPLOYEE" ? (
+          <SidebarEmployee isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+        ) : null}
+
         <div
           className={`flex-1 flex flex-col h-[90vh] overflow-y-auto transition-all duration-300 CRM-scroll-width-none ${
             sidebarOpen ? "ml-0 lg:ml-5" : "ml-0"

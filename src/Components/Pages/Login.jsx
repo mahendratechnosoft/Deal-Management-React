@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axiosInstance from "../BaseComponet/axiosInstance";
 function Login({ onSwitchToRegister, onLogin }) {
   const navigate = useNavigate();
+  
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -94,6 +95,9 @@ function Login({ onSwitchToRegister, onLogin }) {
          })
        );
 
+       // Store role separately for easy access
+       localStorage.setItem("role", data.role);
+
        if (rememberMe) {
          localStorage.setItem("rememberMe", "true");
        }
@@ -112,8 +116,15 @@ function Login({ onSwitchToRegister, onLogin }) {
          });
        }
 
-    
-       navigate("/Admin/LeadList");
+       // Navigate based on the role from API response (not from localStorage)
+       if (data.role === "ROLE_ADMIN") {
+         navigate("/Admin/LeadList");
+       } else if (data.role === "ROLE_EMPLOYEE") {
+         navigate("/Employee/LeadList");
+       } else {
+         // Default fallback route
+         navigate("/");
+       }
      } else {
        throw new Error("No authentication token received");
      }
