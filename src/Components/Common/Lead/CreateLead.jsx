@@ -350,11 +350,11 @@ function CreateLead() {
 
   return (
     <LayoutComponent>
-      <div className="p-4 bg-gray-50 border-b border-gray-200">
+      <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
         <div className="">
           <div className="flex items-center gap-2 mb-2">
             <button
-                onClick={() => {
+              onClick={() => {
                 if (role === "ROLE_ADMIN") {
                   navigate("/Admin/LeadList");
                 } else if (role === "ROLE_EMPLOYEE") {

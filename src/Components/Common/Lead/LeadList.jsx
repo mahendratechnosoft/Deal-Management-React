@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../BaseComponet/axiosInstance";
-
+import { useLayout } from "../../Layout/useLayout";
+import toast from "react-hot-toast";
 function LeadList() {
   const navigate = useNavigate();
 
@@ -9,7 +10,7 @@ function LeadList() {
   const getUserRole = () => {
     return localStorage.getItem("role");
   };
-
+  const { LayoutComponent, role } = useLayout();
   const [showColumnPopup, setShowColumnPopup] = useState(false);
   const [viewMode, setViewMode] = useState("table");
   const [searchTerm, setSearchTerm] = useState("");
@@ -171,6 +172,7 @@ function LeadList() {
         status: newStatus,
       });
 
+      toast.success("Status Update successfully!");
       if (response.data) {
         // Update local state immediately for better UX
         setLeads((prevLeads) =>
@@ -473,459 +475,127 @@ function LeadList() {
   }
 
   return (
-    <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
-      {/* First Row - Header with Create Button */}
-      <div className="mb-4">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-            <div className="flex bg-gray-100 rounded-lg p-0.5">
-              <button
-                onClick={() => setViewMode("table")}
-                className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-200 ${
-                  viewMode === "table"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                <div className="flex items-center gap-1.5">
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                    />
-                  </svg>
-                  Table
+    <LayoutComponent>
+      <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
+        {/* First Row - Header with Create Button */}
+        <div className="mb-4">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
                 </div>
-              </button>
-              <button
-                onClick={() => setViewMode("kanban")}
-                className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-200 ${
-                  viewMode === "kanban"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                <div className="flex items-center gap-1.5">
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
-                    />
-                  </svg>
-                  Kanban
-                </div>
-              </button>
-            </div>
-            {/* Search and Filters Row */}
-            <div className="flex flex-col sm:flex-row gap-3 flex-1">
-              {/* Search Input */}
-              <div className="relative flex-1 sm:max-w-64">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg
-                    className="w-4 h-4 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search leads..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white transition-colors duration-200"
-                />
-              </div>
-
-              {/* Status Filter */}
-              <div className="flex-1 sm:flex-none" hidden>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full sm:w-40 px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white transition-colors duration-200"
-                >
-                  <option value="all">All Status</option>
-                  <option value="new lead">New Lead</option>
-                  <option value="contacted">Contacted</option>
-                  <option value="qualified">Qualified</option>
-                  <option value="proposal">Proposal</option>
-                  <option value="negotiation">Negotiation</option>
-                  <option value="won">Won</option>
-                  <option value="lost">Lost</option>
-                </select>
               </div>
             </div>
 
-            {/* Create Button */}
-            <button
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
-              onClick={handleCreateLead}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              Create Lead
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Second Row - Better Responsive Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8 gap-2 mb-4">
-        {/* Total Leads Card */}
-        <div
-          className={`bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer ${
-            statusFilter === "all" ? "ring-2 ring-blue-500" : ""
-          }`}
-          onClick={() => handleCardFilter("all")}
-        >
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
-                statusFilter === "all" ? "bg-gray-200" : "bg-gray-100"
-              }`}
-            >
-              <svg
-                className="w-3 h-3 text-gray-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-gray-500 text-[12px] font-medium truncate">
-                Total
-              </p>
-              <p className="text-gray-900 text-sm font-bold truncate">
-                {totalLeads.toLocaleString()}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Status Cards */}
-        {/* Status Cards */}
-        {statusAndCount.map((statusCount, index) => {
-          const statusConfig = {
-            "New Lead": {
-              bgColor: "bg-blue-100",
-              activeBgColor: "bg-blue-200",
-              iconColor: "text-blue-600",
-              borderColor: "border-blue-200",
-              activeBorderColor: "border-blue-400",
-              ringColor: "ring-blue-500",
-              icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.0 015 0z",
-            },
-            Contacted: {
-              bgColor: "bg-purple-100",
-              activeBgColor: "bg-purple-200",
-              iconColor: "text-purple-600",
-              borderColor: "border-purple-200",
-              activeBorderColor: "border-purple-400",
-              ringColor: "ring-purple-500",
-              icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
-            },
-            Qualified: {
-              bgColor: "bg-green-100",
-              activeBgColor: "bg-green-200",
-              iconColor: "text-green-600",
-              borderColor: "border-green-200",
-              activeBorderColor: "border-green-400",
-              ringColor: "ring-green-500",
-              icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
-            },
-            Proposal: {
-              bgColor: "bg-yellow-100",
-              activeBgColor: "bg-yellow-200",
-              iconColor: "text-yellow-600",
-              borderColor: "border-yellow-200",
-              activeBorderColor: "border-yellow-400",
-              ringColor: "ring-yellow-500",
-              icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
-            },
-            Negotiation: {
-              bgColor: "bg-orange-100",
-              activeBgColor: "bg-orange-200",
-              iconColor: "text-orange-600",
-              borderColor: "border-orange-200",
-              activeBorderColor: "border-orange-400",
-              ringColor: "ring-orange-500",
-              icon: "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4",
-            },
-            Won: {
-              bgColor: "bg-emerald-100",
-              activeBgColor: "bg-emerald-200",
-              iconColor: "text-emerald-600",
-              borderColor: "border-emerald-200",
-              activeBorderColor: "border-emerald-400",
-              ringColor: "ring-emerald-500",
-              icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
-            },
-            Lost: {
-              bgColor: "bg-red-100",
-              activeBgColor: "bg-red-200",
-              iconColor: "text-red-600",
-              borderColor: "border-red-200",
-              activeBorderColor: "border-red-400",
-              ringColor: "ring-red-500",
-              icon: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z",
-            },
-          };
-
-          const config =
-            statusConfig[statusCount.status] || statusConfig["New Lead"];
-          const isActive = statusFilter === statusCount.status.toLowerCase();
-
-          return (
-            <div
-              key={statusCount.status}
-              className={`bg-white rounded-lg p-2 shadow-sm border hover:shadow-md transition-all duration-200 cursor-pointer ${
-                isActive ? config.activeBorderColor : config.borderColor
-              } ${isActive ? `ring-2 ${config.ringColor}` : ""}`}
-              onClick={() => handleCardFilter(statusCount.status.toLowerCase())}
-            >
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
-                    isActive ? config.activeBgColor : config.bgColor
+            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+              <div className="flex bg-gray-100 rounded-lg p-0.5">
+                <button
+                  onClick={() => setViewMode("table")}
+                  className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-200 ${
+                    viewMode === "table"
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
-                  <svg
-                    className={`w-3 h-3 ${config.iconColor}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d={config.icon}
-                    />
-                  </svg>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-gray-500 text-[11px] font-medium truncate">
-                    {statusCount.status.split(" ")[0]}
-                  </p>
-                  <p className="text-gray-900 text-sm font-bold">
-                    {statusCount.count}
-                  </p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Content Area */}
-      {viewMode === "table" ? (
-        <>
-          {/* Table View */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-            <div className="">
-              {/* Single table container */}
-              <div className="relative">
-                <table className="min-w-full divide-y divide-gray-200">
-                  {/* Colgroup for consistent column widths */}
-                  <colgroup>
-                    {visibleColumns.map((column) => (
-                      <col
-                        key={column.id}
-                        style={{
-                          width: `${100 / (visibleColumns.length + 1)}%`,
-                        }}
+                  <div className="flex items-center gap-1.5">
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
                       />
-                    ))}
-                    <col
-                      style={{
-                        width: `${100 / (visibleColumns.length + 1)}%`,
-                      }}
-                    />
-                  </colgroup>
-
-                  {/* Table header */}
-                  <thead className="bg-gray-50 sticky top-0">
-                    <tr>
-                      {visibleColumns.map((column) => (
-                        <th
-                          key={column.id}
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                          {column.name}
-                        </th>
-                      ))}
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        ACTIONS
-                      </th>
-                    </tr>
-                  </thead>
-
-                  {/* Table body */}
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredLeads.map((lead) => (
-                      <tr
-                        key={lead.id}
-                        className="hover:bg-gray-50 transition-colors duration-150"
-                      >
-                        {visibleColumns.map((column) => (
-                          <td
-                            key={column.id}
-                            className="px-6 py-1 whitespace-nowrap text-sm text-gray-900"
-                          >
-                            {column.id === "clientName" ? (
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                  {getInitials(lead.clientName)}
-                                </div>
-                                <span className="font-semibold">
-                                  {lead[column.id] || "N/A"}
-                                </span>
-                              </div>
-                            ) : column.id === "status" ? (
-                              <div className="status-dropdown relative">
-                                <button
-                                  onClick={() => toggleStatusDropdown(lead.id)}
-                                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                                    lead[column.id]
-                                  )} hover:opacity-80 transition-opacity`}
-                                >
-                                  {lead[column.id] || "Unknown"}
-                                  <svg
-                                    className="w-3 h-3 ml-1"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M19 9l-7 7-7-7"
-                                    />
-                                  </svg>
-                                </button>
-
-                                {activeStatusDropdown === lead.id && (
-                                  <div className="absolute left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                                    <div className="py-1">
-                                      {statusOptions.map((status) => (
-                                        <button
-                                          key={status}
-                                          onClick={() =>
-                                            updateLeadStatus(lead.id, status)
-                                          }
-                                          className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
-                                            lead.status === status
-                                              ? "bg-blue-50 text-blue-600"
-                                              : "text-gray-700"
-                                          }`}
-                                        >
-                                          {status}
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            ) : column.id === "source" ? (
-                              <span
-                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(
-                                  lead[column.id]
-                                )}`}
-                              >
-                                {lead[column.id] || "Unknown"}
-                              </span>
-                            ) : column.id === "revenue" ? (
-                              <span className="font-semibold">
-                                {formatCurrency(lead[column.id])}
-                              </span>
-                            ) : column.id === "createdDate" ? (
-                              formatDate(lead[column.id])
-                            ) : (
-                              lead[column.id] || "N/A"
-                            )}
-                          </td>
-                        ))}
-                        <td className="px-6 py-1 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={() => handleEdit(lead.id)}
-                            className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                            Edit
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </svg>
+                    Table
+                  </div>
+                </button>
+                <button
+                  onClick={() => setViewMode("kanban")}
+                  className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-200 ${
+                    viewMode === "kanban"
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
+                      />
+                    </svg>
+                    Kanban
+                  </div>
+                </button>
               </div>
-            </div>
+              {/* Search and Filters Row */}
+              <div className="flex flex-col sm:flex-row gap-3 flex-1">
+                {/* Search Input */}
+                <div className="relative flex-1 sm:max-w-64">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg
+                      className="w-4 h-4 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search leads..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white transition-colors duration-200"
+                  />
+                </div>
 
-            {filteredLeads.length === 0 && (
-              <div className="text-center py-12">
+                {/* Status Filter */}
+                <div className="flex-1 sm:flex-none" hidden>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="w-full sm:w-40 px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white transition-colors duration-200"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="new lead">New Lead</option>
+                    <option value="contacted">Contacted</option>
+                    <option value="qualified">Qualified</option>
+                    <option value="proposal">Proposal</option>
+                    <option value="negotiation">Negotiation</option>
+                    <option value="won">Won</option>
+                    <option value="lost">Lost</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Create Button */}
+              <button
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
+                onClick={handleCreateLead}
+              >
                 <svg
-                  className="w-16 h-16 mx-auto text-gray-400 mb-4"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -934,264 +604,387 @@ function LeadList() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    d="M12 4v16m8-8H4"
                   />
                 </svg>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  No leads found
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  {searchTerm || statusFilter !== "all"
-                    ? "Try adjusting your search or filter criteria."
-                    : "Get started by creating your first lead."}
-                </p>
-                {!searchTerm && statusFilter === "all" && (
-                  <button
-                    onClick={handleCreateLead}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
-                  >
-                    Create Your First Lead
-                  </button>
-                )}
+                Create Lead
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Second Row - Better Responsive Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8 gap-2 mb-4">
+          {/* Total Leads Card */}
+          <div
+            className={`bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer ${
+              statusFilter === "all" ? "ring-2 ring-blue-500" : ""
+            }`}
+            onClick={() => handleCardFilter("all")}
+          >
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
+                  statusFilter === "all" ? "bg-gray-200" : "bg-gray-100"
+                }`}
+              >
+                <svg
+                  className="w-3 h-3 text-gray-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
               </div>
-            )}
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-500 text-[12px] font-medium truncate">
+                  Total
+                </p>
+                <p className="text-gray-900 text-sm font-bold truncate">
+                  {totalLeads.toLocaleString()}
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* Pagination - Outside table card, above the table */}
-          <div
-            className="bg-white rounded-lg border border-gray-200 shadow-xs p-3 mt-4 sticky bottom-0 "
-            style={{ zIndex: "39" }}
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex items-center gap-4 text-xs">
-                <div className="text-gray-600">
-                  {totalPages > 1
-                    ? `Page ${currentPage + 1} of ${totalPages}`
-                    : `${totalLeads} leads`}
-                </div>
+          {/* Status Cards */}
+          {/* Status Cards */}
+          {statusAndCount.map((statusCount, index) => {
+            const statusConfig = {
+              "New Lead": {
+                bgColor: "bg-blue-100",
+                activeBgColor: "bg-blue-200",
+                iconColor: "text-blue-600",
+                borderColor: "border-blue-200",
+                activeBorderColor: "border-blue-400",
+                ringColor: "ring-blue-500",
+                icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.0 015 0z",
+              },
+              Contacted: {
+                bgColor: "bg-purple-100",
+                activeBgColor: "bg-purple-200",
+                iconColor: "text-purple-600",
+                borderColor: "border-purple-200",
+                activeBorderColor: "border-purple-400",
+                ringColor: "ring-purple-500",
+                icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
+              },
+              Qualified: {
+                bgColor: "bg-green-100",
+                activeBgColor: "bg-green-200",
+                iconColor: "text-green-600",
+                borderColor: "border-green-200",
+                activeBorderColor: "border-green-400",
+                ringColor: "ring-green-500",
+                icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+              },
+              Proposal: {
+                bgColor: "bg-yellow-100",
+                activeBgColor: "bg-yellow-200",
+                iconColor: "text-yellow-600",
+                borderColor: "border-yellow-200",
+                activeBorderColor: "border-yellow-400",
+                ringColor: "ring-yellow-500",
+                icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+              },
+              Negotiation: {
+                bgColor: "bg-orange-100",
+                activeBgColor: "bg-orange-200",
+                iconColor: "text-orange-600",
+                borderColor: "border-orange-200",
+                activeBorderColor: "border-orange-400",
+                ringColor: "ring-orange-500",
+                icon: "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4",
+              },
+              Won: {
+                bgColor: "bg-emerald-100",
+                activeBgColor: "bg-emerald-200",
+                iconColor: "text-emerald-600",
+                borderColor: "border-emerald-200",
+                activeBorderColor: "border-emerald-400",
+                ringColor: "ring-emerald-500",
+                icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
+              },
+              Lost: {
+                bgColor: "bg-red-100",
+                activeBgColor: "bg-red-200",
+                iconColor: "text-red-600",
+                borderColor: "border-red-200",
+                activeBorderColor: "border-red-400",
+                ringColor: "ring-red-500",
+                icon: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z",
+              },
+            };
+
+            const config =
+              statusConfig[statusCount.status] || statusConfig["New Lead"];
+            const isActive = statusFilter === statusCount.status.toLowerCase();
+
+            return (
+              <div
+                key={statusCount.status}
+                className={`bg-white rounded-lg p-2 shadow-sm border hover:shadow-md transition-all duration-200 cursor-pointer ${
+                  isActive ? config.activeBorderColor : config.borderColor
+                } ${isActive ? `ring-2 ${config.ringColor}` : ""}`}
+                onClick={() =>
+                  handleCardFilter(statusCount.status.toLowerCase())
+                }
+              >
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-600">Rows:</span>
-                  <select
-                    value={pageSize}
-                    onChange={(e) => {
-                      const newSize = parseInt(e.target.value);
-                      setPageSize(newSize);
-                    }}
-                    className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  <div
+                    className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
+                      isActive ? config.activeBgColor : config.bgColor
+                    }`}
                   >
-                    <option value={5}>5</option>
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                  </select>
+                    <svg
+                      className={`w-3 h-3 ${config.iconColor}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d={config.icon}
+                      />
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-gray-500 text-[11px] font-medium truncate">
+                      {statusCount.status.split(" ")[0]}
+                    </p>
+                    <p className="text-gray-900 text-sm font-bold">
+                      {statusCount.count}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Content Area */}
+        {viewMode === "table" ? (
+          <>
+            {/* Table View */}
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+              <div className="">
+                {/* Single table container */}
+                <div className="relative">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    {/* Colgroup for consistent column widths */}
+                    <colgroup>
+                      {visibleColumns.map((column) => (
+                        <col
+                          key={column.id}
+                          style={{
+                            width: `${100 / (visibleColumns.length + 1)}%`,
+                          }}
+                        />
+                      ))}
+                      <col
+                        style={{
+                          width: `${100 / (visibleColumns.length + 1)}%`,
+                        }}
+                      />
+                    </colgroup>
+
+                    {/* Table header */}
+                    <thead className="bg-gray-50 sticky top-0">
+                      <tr>
+                        {visibleColumns.map((column) => (
+                          <th
+                            key={column.id}
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            {column.name}
+                          </th>
+                        ))}
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          ACTIONS
+                        </th>
+                      </tr>
+                    </thead>
+
+                    {/* Table body */}
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredLeads.map((lead) => (
+                        <tr
+                          key={lead.id}
+                          className="hover:bg-gray-50 transition-colors duration-150"
+                        >
+                          {visibleColumns.map((column) => (
+                            <td
+                              key={column.id}
+                              className="px-6 py-1 whitespace-nowrap text-sm text-gray-900"
+                            >
+                              {column.id === "clientName" ? (
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                    {getInitials(lead.clientName)}
+                                  </div>
+                                  <span className="font-semibold">
+                                    {lead[column.id] || "N/A"}
+                                  </span>
+                                </div>
+                              ) : column.id === "status" ? (
+                                <div className="status-dropdown relative">
+                                  <button
+                                    onClick={() =>
+                                      toggleStatusDropdown(lead.id)
+                                    }
+                                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                                      lead[column.id]
+                                    )} hover:opacity-80 transition-opacity`}
+                                  >
+                                    {lead[column.id] || "Unknown"}
+                                    <svg
+                                      className="w-3 h-3 ml-1"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 9l-7 7-7-7"
+                                      />
+                                    </svg>
+                                  </button>
+
+                                  {activeStatusDropdown === lead.id && (
+                                    <div className="absolute left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                                      <div className="py-1">
+                                        {statusOptions.map((status) => (
+                                          <button
+                                            key={status}
+                                            onClick={() =>
+                                              updateLeadStatus(lead.id, status)
+                                            }
+                                            className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
+                                              lead.status === status
+                                                ? "bg-blue-50 text-blue-600"
+                                                : "text-gray-700"
+                                            }`}
+                                          >
+                                            {status}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : column.id === "source" ? (
+                                <span
+                                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(
+                                    lead[column.id]
+                                  )}`}
+                                >
+                                  {lead[column.id] || "Unknown"}
+                                </span>
+                              ) : column.id === "revenue" ? (
+                                <span className="font-semibold">
+                                  {formatCurrency(lead[column.id])}
+                                </span>
+                              ) : column.id === "createdDate" ? (
+                                formatDate(lead[column.id])
+                              ) : (
+                                lead[column.id] || "N/A"
+                              )}
+                            </td>
+                          ))}
+                          <td className="px-6 py-1 whitespace-nowrap text-sm font-medium">
+                            <button
+                              onClick={() => handleEdit(lead.id)}
+                              className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                              </svg>
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
-              {/* Show pagination only if there are multiple pages */}
-              {totalPages > 1 && (
-                <div className="flex items-center space-x-1">
-                  <button
-                    onClick={() => handlePageChange(0)}
-                    disabled={currentPage === 0}
-                    className="px-2 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-w-8"
+              {filteredLeads.length === 0 && (
+                <div className="text-center py-12">
+                  <svg
+                    className="w-16 h-16 mx-auto text-gray-400 mb-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    First
-                  </button>
-                  <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 0}
-                    className="px-2 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-w-8"
-                  >
-                    ‹
-                  </button>
-
-                  {getPageNumbers().map((page) => (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    No leads found
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    {searchTerm || statusFilter !== "all"
+                      ? "Try adjusting your search or filter criteria."
+                      : "Get started by creating your first lead."}
+                  </p>
+                  {!searchTerm && statusFilter === "all" && (
                     <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`px-2 py-1 rounded text-xs font-medium min-w-8 ${
-                        currentPage === page
-                          ? "bg-blue-600 text-white"
-                          : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                      }`}
+                      onClick={handleCreateLead}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
                     >
-                      {page + 1}
+                      Create Your First Lead
                     </button>
-                  ))}
-
-                  <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages - 1}
-                    className="px-2 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-w-8"
-                  >
-                    ›
-                  </button>
-                  <button
-                    onClick={() => handlePageChange(totalPages - 1)}
-                    disabled={currentPage === totalPages - 1}
-                    className="px-2 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-w-8"
-                  >
-                    Last
-                  </button>
+                  )}
                 </div>
               )}
             </div>
-          </div>
-        </>
-      ) : (
-        /* Kanban View */
-        <div className="space-y-4">
-          <div className="overflow-x-auto pb-4 crm-Leadlist-kanbadn-col-list">
+
+            {/* Pagination - Outside table card, above the table */}
             <div
-              className="flex gap-4 min-w-max"
-              style={{ minWidth: "max-content" }}
+              className="bg-white rounded-lg border border-gray-200 shadow-xs p-3 mt-4 sticky bottom-0 "
+              style={{ zIndex: "39" }}
             >
-              {organizedKanbanColumns.map((column) => (
-                <div
-                  key={column.id}
-                  className="w-80 flex-shrink-0"
-                  onDragOver={(e) => handleKanbanDragOver(e, column.id)}
-                  onDragLeave={handleKanbanDragLeave}
-                  onDrop={(e) => handleKanbanDrop(e, column.id)}
-                >
-                  <div
-                    className={`bg-white rounded-xl shadow-sm border border-gray-200 h-full ${
-                      dragOverColumn === column.id
-                        ? "border-2 border-blue-400 bg-blue-50"
-                        : ""
-                    }`}
-                  >
-                    <div className="p-4 border-b border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-3 h-3 rounded-full ${column.color}`}
-                          ></div>
-                          <h3 className="font-semibold text-gray-900">
-                            {column.title}
-                          </h3>
-                          <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
-                            {column.leads.length}
-                          </span>
-                        </div>
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 4v16m8-8H4"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="p-4 space-y-3 min-h-[200px] h-[54vh] overflow-y-auto crm-Leadlist-kanbadn-col-list">
-                      {column.leads.map((lead) => (
-                        <div
-                          key={lead.id}
-                          className={`bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-colors duration-200 cursor-grab ${
-                            draggedLead?.id === lead.id ? "opacity-50" : ""
-                          } ${
-                            dragOverColumn === column.id
-                              ? "border-2 border-blue-400 bg-blue-50"
-                              : ""
-                          }`}
-                          draggable
-                          onDragStart={(e) =>
-                            handleKanbanDragStart(e, lead, column.id)
-                          }
-                          onDragEnd={() => {
-                            setDraggedLead(null);
-                            setDragOverColumn(null);
-                          }}
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                {getInitials(lead.clientName)}
-                              </div>
-                              <span className="font-medium text-sm text-gray-900">
-                                {lead.clientName}
-                              </span>
-                            </div>
-                            <span
-                              className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(
-                                lead.status
-                              )}`}
-                            >
-                              {lead.status}
-                            </span>
-                          </div>
-
-                          <p className="text-xs text-gray-600 mb-2">
-                            {lead.employeeId} • {formatCurrency(lead.revenue)}
-                          </p>
-
-                          <div className="flex items-center justify-between text-xs text-gray-500">
-                            <span>{formatDate(lead.createdDate)}</span>
-                            <button
-                              onClick={() => handleEdit(lead.id)}
-                              className="text-blue-600 hover:text-blue-800 font-medium"
-                            >
-                              Edit
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-
-                      {column.leads.length === 0 && (
-                        <div className="text-center py-8 text-gray-400">
-                          <svg
-                            className="w-8 h-8 mx-auto mb-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            />
-                          </svg>
-                          <p className="text-sm">No leads</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Pagination for Kanban View */}
-
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="px-4 py-3 border-t border-gray-200">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="text-xs text-gray-600">
+                <div className="flex items-center gap-4 text-xs">
+                  <div className="text-gray-600">
                     {totalPages > 1
                       ? `Page ${currentPage + 1} of ${totalPages}`
-                      : `All ${totalLeads} leads`}
+                      : `${totalLeads} leads`}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-gray-600">Rows:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600">Rows:</span>
                     <select
                       value={pageSize}
                       onChange={(e) => {
                         const newSize = parseInt(e.target.value);
                         setPageSize(newSize);
                       }}
-                      className="px-1.5 py-0.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value={5}>5</option>
                       <option value={10}>10</option>
@@ -1202,29 +995,29 @@ function LeadList() {
                   </div>
                 </div>
 
-                {/* Show pagination buttons only if there are multiple pages */}
+                {/* Show pagination only if there are multiple pages */}
                 {totalPages > 1 && (
                   <div className="flex items-center space-x-1">
                     <button
                       onClick={() => handlePageChange(0)}
                       disabled={currentPage === 0}
-                      className="px-2 py-0.5 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      className="px-2 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-w-8"
                     >
                       First
                     </button>
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 0}
-                      className="px-2 py-0.5 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      className="px-2 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-w-8"
                     >
-                      Prev
+                      ‹
                     </button>
 
                     {getPageNumbers().map((page) => (
                       <button
                         key={page}
                         onClick={() => handlePageChange(page)}
-                        className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        className={`px-2 py-1 rounded text-xs font-medium min-w-8 ${
                           currentPage === page
                             ? "bg-blue-600 text-white"
                             : "border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -1237,14 +1030,14 @@ function LeadList() {
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages - 1}
-                      className="px-2 py-0.5 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      className="px-2 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-w-8"
                     >
-                      Next
+                      ›
                     </button>
                     <button
                       onClick={() => handlePageChange(totalPages - 1)}
                       disabled={currentPage === totalPages - 1}
-                      className="px-2 py-0.5 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      className="px-2 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-w-8"
                     >
                       Last
                     </button>
@@ -1252,83 +1045,298 @@ function LeadList() {
                 )}
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Column Customization Popup */}
-      {showColumnPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col">
-            <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Customize Columns
-              </h3>
-              <button
-                className="text-gray-400 hover:text-gray-600 text-2xl font-light transition-colors duration-200"
-                onClick={handleClosePopup}
+          </>
+        ) : (
+          /* Kanban View */
+          <div className="space-y-4">
+            <div className="overflow-x-auto pb-4 crm-Leadlist-kanbadn-col-list">
+              <div
+                className="flex gap-4 min-w-max"
+                style={{ minWidth: "max-content" }}
               >
-                ×
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto flex-1">
-              <p className="text-gray-600 text-sm mb-4">
-                Drag and drop to rearrange columns. Check/uncheck to show/hide
-                columns.
-              </p>
-
-              <div className="space-y-2">
-                {tempColumns
-                  .sort((a, b) => a.order - b.order)
-                  .map((column, index) => (
+                {organizedKanbanColumns.map((column) => (
+                  <div
+                    key={column.id}
+                    className="w-80 flex-shrink-0"
+                    onDragOver={(e) => handleKanbanDragOver(e, column.id)}
+                    onDragLeave={handleKanbanDragLeave}
+                    onDrop={(e) => handleKanbanDrop(e, column.id)}
+                  >
                     <div
-                      key={column.id}
-                      className="flex items-center p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 cursor-grab"
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, index)}
-                      onDragOver={(e) => handleDragOver(e, index)}
-                      onDrop={handleDrop}
-                      onDragEnd={() => {
-                        dragItem.current = null;
-                        dragOverItem.current = null;
-                      }}
+                      className={`bg-white rounded-xl shadow-sm border border-gray-200 h-full ${
+                        dragOverColumn === column.id
+                          ? "border-2 border-blue-400 bg-blue-50"
+                          : ""
+                      }`}
                     >
-                      <div className="text-gray-400 mr-3 cursor-grab">⋮⋮</div>
-                      <label className="flex items-center space-x-3 cursor-pointer flex-1 m-0">
-                        <input
-                          type="checkbox"
-                          checked={column.visible}
-                          onChange={() => handleColumnToggle(column.id)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <span className="text-gray-700 font-medium">
-                          {column.name}
-                        </span>
-                      </label>
+                      <div className="p-4 border-b border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-3 h-3 rounded-full ${column.color}`}
+                            ></div>
+                            <h3 className="font-semibold text-gray-900">
+                              {column.title}
+                            </h3>
+                            <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                              {column.leads.length}
+                            </span>
+                          </div>
+                          <button className="text-gray-400 hover:text-gray-600">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 4v16m8-8H4"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="p-4 space-y-3 min-h-[200px] h-[54vh] overflow-y-auto crm-Leadlist-kanbadn-col-list">
+                        {column.leads.map((lead) => (
+                          <div
+                            key={lead.id}
+                            className={`bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-colors duration-200 cursor-grab ${
+                              draggedLead?.id === lead.id ? "opacity-50" : ""
+                            } ${
+                              dragOverColumn === column.id
+                                ? "border-2 border-blue-400 bg-blue-50"
+                                : ""
+                            }`}
+                            draggable
+                            onDragStart={(e) =>
+                              handleKanbanDragStart(e, lead, column.id)
+                            }
+                            onDragEnd={() => {
+                              setDraggedLead(null);
+                              setDragOverColumn(null);
+                            }}
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                  {getInitials(lead.clientName)}
+                                </div>
+                                <span className="font-medium text-sm text-gray-900">
+                                  {lead.clientName}
+                                </span>
+                              </div>
+                              <span
+                                className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(
+                                  lead.status
+                                )}`}
+                              >
+                                {lead.status}
+                              </span>
+                            </div>
+
+                            <p className="text-xs text-gray-600 mb-2">
+                              {lead.employeeId} • {formatCurrency(lead.revenue)}
+                            </p>
+
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span>{formatDate(lead.createdDate)}</span>
+                              <button
+                                onClick={() => handleEdit(lead.id)}
+                                className="text-blue-600 hover:text-blue-800 font-medium"
+                              >
+                                Edit
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+
+                        {column.leads.length === 0 && (
+                          <div className="text-center py-8 text-gray-400">
+                            <svg
+                              className="w-8 h-8 mx-auto mb-2"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              />
+                            </svg>
+                            <p className="text-sm">No leads</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  ))}
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="flex gap-3 p-6 border-t border-gray-200">
-              <button
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors duration-200 font-medium"
-                onClick={handleApplyChanges}
-              >
-                Apply Changes
-              </button>
-              <button
-                className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 font-medium"
-                onClick={handleClosePopup}
-              >
-                Cancel
-              </button>
+            {/* Pagination for Kanban View */}
+
+            <div className="bg-white rounded-lg border border-gray-200">
+              <div className="px-4 py-3 border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="text-xs text-gray-600">
+                      {totalPages > 1
+                        ? `Page ${currentPage + 1} of ${totalPages}`
+                        : `All ${totalLeads} leads`}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-gray-600">Rows:</span>
+                      <select
+                        value={pageSize}
+                        onChange={(e) => {
+                          const newSize = parseInt(e.target.value);
+                          setPageSize(newSize);
+                        }}
+                        className="px-1.5 py-0.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Show pagination buttons only if there are multiple pages */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={() => handlePageChange(0)}
+                        disabled={currentPage === 0}
+                        className="px-2 py-0.5 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        First
+                      </button>
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 0}
+                        className="px-2 py-0.5 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        Prev
+                      </button>
+
+                      {getPageNumbers().map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          className={`px-2 py-0.5 rounded text-xs font-medium ${
+                            currentPage === page
+                              ? "bg-blue-600 text-white"
+                              : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          {page + 1}
+                        </button>
+                      ))}
+
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages - 1}
+                        className="px-2 py-0.5 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        Next
+                      </button>
+                      <button
+                        onClick={() => handlePageChange(totalPages - 1)}
+                        disabled={currentPage === totalPages - 1}
+                        className="px-2 py-0.5 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        Last
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+
+        {/* Column Customization Popup */}
+        {showColumnPopup && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col">
+              <div className="flex justify-between items-center p-6 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Customize Columns
+                </h3>
+                <button
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-light transition-colors duration-200"
+                  onClick={handleClosePopup}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="p-6 overflow-y-auto flex-1">
+                <p className="text-gray-600 text-sm mb-4">
+                  Drag and drop to rearrange columns. Check/uncheck to show/hide
+                  columns.
+                </p>
+
+                <div className="space-y-2">
+                  {tempColumns
+                    .sort((a, b) => a.order - b.order)
+                    .map((column, index) => (
+                      <div
+                        key={column.id}
+                        className="flex items-center p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 cursor-grab"
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDrop={handleDrop}
+                        onDragEnd={() => {
+                          dragItem.current = null;
+                          dragOverItem.current = null;
+                        }}
+                      >
+                        <div className="text-gray-400 mr-3 cursor-grab">⋮⋮</div>
+                        <label className="flex items-center space-x-3 cursor-pointer flex-1 m-0">
+                          <input
+                            type="checkbox"
+                            checked={column.visible}
+                            onChange={() => handleColumnToggle(column.id)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <span className="text-gray-700 font-medium">
+                            {column.name}
+                          </span>
+                        </label>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 p-6 border-t border-gray-200">
+                <button
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors duration-200 font-medium"
+                  onClick={handleApplyChanges}
+                >
+                  Apply Changes
+                </button>
+                <button
+                  className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 font-medium"
+                  onClick={handleClosePopup}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </LayoutComponent>
   );
 }
 
