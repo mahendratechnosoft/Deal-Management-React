@@ -71,7 +71,7 @@ const SettingsLayout = () => {
 
   return (
     // UPDATED: Page background is dark
-    <div className="min-h-screen bg-gray-900 font-sans flex flex-col">
+    <div className="min-h-screen font-sans flex flex-col">
       <TopBar
         toggleSidebar={toggleSidebar}
         sidebarOpen={sidebarOpen}
@@ -81,45 +81,47 @@ const SettingsLayout = () => {
       <div className="flex flex-1">
         <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
         <div
-          className={`flex-1 flex flex-col transition-all duration-300 ${
-            sidebarOpen ? "ml-0 lg:ml-0" : "ml-0"
+          className={`flex-1 flex flex-col transition-all duration-300 overflow-x-auto w-[88vw] ${
+            sidebarOpen ? "ml-0" : "ml-0"
           }`}
         >
-          {/* UPDATED: This is now the main "light card" wrapper */}
-          <div className="flex flex-row flex-1 bg-white shadow-lg overflow-hidden border border-gray-700/50">
-            {/* UPDATED: Settings Nav is now light */}
-            <nav className="w-64 p-4 bg-white border-r border-gray-200">
-              {/* UPDATED: Text color for light bg */}
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 px-2">
-                Settings
-              </h2>
+          <div className="p-6 pb-0 overflow-x-auto CRM-scroll-width-none">
+            {/* UPDATED: This is now the main "light card" wrapper */}
+            <div className="flex flex-row flex-1 bg-white shadow-lg h-[90vh] overflow-y-auto CRM-scroll-width-none">
+              {/* UPDATED: Settings Nav is now light */}
+              <nav className="w-64 p-4 bg-white border-r border-gray-200 CRM-scroll-width-none">
+                {/* UPDATED: Text color for light bg */}
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 px-2">
+                  Settings
+                </h2>
 
-              <div className="flex flex-col space-y-1">
-                <NavLink to="/Admin/Settings" className={getNavLinkClass} end>
-                  {/* UPDATED: Removed wrapper div, icon color is inherited */}
-                  <GeneralIcon />
-                  <span className="ml-3 font-medium block text-xs">
-                    General
-                  </span>
-                </NavLink>
+                <div className="flex flex-col space-y-1">
+                  <NavLink to="/Admin/Settings" className={getNavLinkClass} end>
+                    {/* UPDATED: Removed wrapper div, icon color is inherited */}
+                    <GeneralIcon />
+                    <span className="ml-3 font-medium block text-xs">
+                      General
+                    </span>
+                  </NavLink>
 
-                <NavLink
-                  to="/Admin/Settings/Department"
-                  className={getNavLinkClass}
-                >
-                  {/* UPDATED: Removed wrapper div, icon color is inherited */}
-                  <DepartmentIcon />
-                  <span className="ml-3 font-medium block text-xs">
-                    Department and Roles
-                  </span>
-                </NavLink>
-              </div>
-            </nav>
+                  <NavLink
+                    to="/Admin/Settings/Department"
+                    className={getNavLinkClass}
+                  >
+                    {/* UPDATED: Removed wrapper div, icon color is inherited */}
+                    <DepartmentIcon />
+                    <span className="ml-3 font-medium block text-xs">
+                      Department and Roles
+                    </span>
+                  </NavLink>
+                </div>
+              </nav>
 
-            {/* UPDATED: Main Content Area is also light */}
-            <main className="flex-1 p-6 overflow-y-auto bg-white">
-              <Outlet />
-            </main>
+              {/* UPDATED: Main Content Area is also light */}
+              <main className="flex-1 p-6 overflow-y-auto bg-white CRM-scroll-width-none">
+                <Outlet />
+              </main>
+            </div>
           </div>
         </div>
       </div>
