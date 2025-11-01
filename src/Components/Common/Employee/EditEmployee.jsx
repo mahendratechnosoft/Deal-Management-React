@@ -74,7 +74,6 @@ function EditEmployee() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
-  // --- NEW STATE ---
   const [isGenderFocused, setIsGenderFocused] = useState(false);
   const [isDeptFocused, setIsDeptFocused] = useState(false);
   const [isRoleFocused, setIsRoleFocused] = useState(false);
@@ -84,7 +83,8 @@ function EditEmployee() {
 
   const [isDeptLoading, setIsDeptLoading] = useState(false);
   const [isRoleLoading, setIsRoleLoading] = useState(false);
-  // --- END NEW STATE ---
+
+  const [moduleAccess, setModuleAccess] = useState(null);
 
   const [formData, setFormData] = useState({
     loginEmail: "",
@@ -94,12 +94,10 @@ function EditEmployee() {
     gender: "",
     description: "",
     profileImageBase64: "",
-    // --- NEW FIELDS ---
     departmentId: "",
     roleId: "",
     departmentName: "",
     roleName: "",
-    // --- END NEW FIELDS ---
   });
 
   const [errors, setErrors] = useState({});
@@ -127,14 +125,12 @@ function EditEmployee() {
           gender: employeeData.gender || "",
           description: employeeData.description || "",
           profileImageBase64: employeeData.profileImage || "",
-          // --- POPULATE NEW FIELDS ---
           departmentId: employeeData.departmentId || "",
           roleId: employeeData.roleId || "",
           departmentName: employeeData.departmentName || "",
           roleName: employeeData.roleName || "",
-          // --- END ---
         });
-
+        setModuleAccess(employeeData.moduleAccess || null);
         // --- PRE-POPULATE DROPDOWNS ---
         // Pre-fill department options with the current value
         if (employeeData.departmentId && employeeData.departmentName) {
@@ -293,7 +289,39 @@ function EditEmployee() {
       setErrors((prev) => ({ ...prev, roleId: "" }));
     }
   };
-  // --- END NEW HANDLERS ---
+
+  const handleAccessChange = (field, value) => {
+    setModuleAccess((prev) => {
+      // If moduleAccess is null, initialize it
+      if (!prev) {
+        return {
+          moduleAccessId: null,
+          leadViewAll: false,
+          leadCreate: false,
+          leadDelete: false,
+          leadEdit: false,
+          accountViewAll: false,
+          accountCreate: false,
+          accountDelete: false,
+          accountEdit: false,
+          dealViewAll: false,
+          dealCreate: false,
+          dealDelete: false,
+          dealEdit: false,
+          contactViewAll: false,
+          contactCreate: false,
+          contactDelete: false,
+          contactEdit: false,
+          [field]: value, // Set the one that was just toggled
+        };
+      }
+      // Otherwise, just update the existing object
+      return {
+        ...prev,
+        [field]: value,
+      };
+    });
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -316,23 +344,13 @@ function EditEmployee() {
 
     setLoading(true);
 
-    // --- UPDATED PAYLOAD ---
     const payload = {
-      loginEmail: formData.loginEmail,
-      name: formData.name,
-      phone: formData.phone,
-      address: formData.address,
-      gender: formData.gender,
-      description: formData.description,
-      profileImage: formData.profileImageBase64, // API expects 'profileImage'
+      ...formData,
+      profileImage: formData.profileImageBase64,
       employeeId: employeeId,
-      departmentId: formData.departmentId,
-      roleId: formData.roleId,
-      departmentName: formData.departmentName,
-      roleName: formData.roleName,
+      moduleAccess: moduleAccess,
     };
-    // --- END ---
-
+    delete payload.profileImageBase64;
     try {
       const response = await axiosInstance.put(
         "/admin/updateEmployee",
@@ -367,6 +385,10 @@ function EditEmployee() {
       </div>
     );
   }
+
+  const getAccess = (field) => {
+    return moduleAccess ? moduleAccess[field] : false;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
@@ -852,6 +874,88 @@ function EditEmployee() {
                           </div>
                         </div>
                       </section>
+
+                      <section>
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="w-8 h-8 bg-cyan-600 rounded-lg flex items-center justify-center">
+                            <svg
+                              className="w-4 h-4 text-white"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                              ></path>
+                            </svg>
+                          </div>
+                          <div>
+                            <h2 className="text-xl font-semibold text-gray-900">
+                              Module Access
+                            </h2>
+                            <p className="text-gray-600 text-sm">
+                              Set permissions for CRM modules
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          {/* Leads Access */}
+                          <ModuleAccessGroup
+                            title="Leads"
+                            permissions={[
+                              { label: "View All", field: "leadViewAll" },
+                              { label: "Create", field: "leadCreate" },
+                              { label: "Edit", field: "leadEdit" },
+                              { label: "Delete", field: "leadDelete" },
+                            ]}
+                            getAccess={getAccess}
+                            handleAccessChange={handleAccessChange}
+                          />
+
+                          {/* Accounts Access */}
+                          <ModuleAccessGroup
+                            title="Accounts"
+                            permissions={[
+                              { label: "View All", field: "accountViewAll" },
+                              { label: "Create", field: "accountCreate" },
+                              { label: "Edit", field: "accountEdit" },
+                              { label: "Delete", field: "accountDelete" },
+                            ]}
+                            getAccess={getAccess}
+                            handleAccessChange={handleAccessChange}
+                          />
+
+                          {/* Deals Access */}
+                          <ModuleAccessGroup
+                            title="Deals"
+                            permissions={[
+                              { label: "View All", field: "dealViewAll" },
+                              { label: "Create", field: "dealCreate" },
+                              { label: "Edit", field: "dealEdit" },
+                              { label: "Delete", field: "dealDelete" },
+                            ]}
+                            getAccess={getAccess}
+                            handleAccessChange={handleAccessChange}
+                          />
+
+                          {/* Contacts Access */}
+                          <ModuleAccessGroup
+                            title="Contacts"
+                            permissions={[
+                              { label: "View All", field: "contactViewAll" },
+                              { label: "Create", field: "contactCreate" },
+                              { label: "Edit", field: "contactEdit" },
+                              { label: "Delete", field: "contactDelete" },
+                            ]}
+                            getAccess={getAccess}
+                            handleAccessChange={handleAccessChange}
+                          />
+                        </div>
+                      </section>
                     </div>
                   </form>
                 </div>
@@ -863,5 +967,61 @@ function EditEmployee() {
     </div>
   );
 }
+function ModuleAccessGroup({
+  title,
+  permissions,
+  getAccess,
+  handleAccessChange,
+}) {
+  return (
+    <div className="p-4 border border-gray-200 rounded-lg">
+      <h3 className="text-lg font-medium text-gray-800 mb-3">{title}</h3>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {permissions.map((perm) => (
+          <AccessToggle
+            key={perm.field}
+            field={perm.field} // <-- **FIX**: Pass the unique field
+            label={perm.label}
+            isChecked={getAccess(perm.field)}
+            onChange={(isChecked) => handleAccessChange(perm.field, isChecked)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
+function AccessToggle({ field, label, isChecked, onChange }) {
+  const handleToggle = () => {
+    onChange(!isChecked);
+  };
+
+  return (
+    <label
+      htmlFor={field}
+      className="flex items-center cursor-pointer select-none"
+    >
+      <div className="relative">
+        <input
+          type="checkbox"
+          id={field}
+          checked={isChecked}
+          onChange={handleToggle}
+          className="sr-only"
+        />
+        <div
+          className={`block w-10 h-6 rounded-full transition-colors ${
+            isChecked ? "bg-blue-600" : "bg-gray-300"
+          }`}
+        ></div>
+        <div
+          className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${
+            isChecked ? "translate-x-4" : "translate-x-0"
+          }`}
+        ></div>
+      </div>
+      <span className="ml-2 text-sm text-gray-700">{label}</span>
+    </label>
+  );
+}
 export default EditEmployee;
