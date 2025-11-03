@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
 import toast from "react-hot-toast";
+import PreviewLead from "./PreviewLead";
 function LeadList() {
   const navigate = useNavigate();
 
@@ -28,6 +29,25 @@ function LeadList() {
   // Add these state variables near other state declarations
   const [draggedLead, setDraggedLead] = useState(null);
   const [dragOverColumn, setDragOverColumn] = useState(null);
+
+  const [previewLeadId, setPreviewLeadId] = useState(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+
+
+const handlePreview = (leadId) => {
+  setPreviewLeadId(leadId);
+  setShowPreviewModal(true);
+};
+
+const handleClosePreview = () => {
+  setShowPreviewModal(false);
+  setPreviewLeadId(null);
+};
+
+const handleEditFromPreview = (leadId) => {
+  setShowPreviewModal(false);
+  handleEdit(leadId); // Use existing edit function
+};
 
   // Default columns based on API response structure
   const [columns, setColumns] = useState([
@@ -912,25 +932,55 @@ function LeadList() {
                             </td>
                           ))}
                           <td className="px-6 py-1 whitespace-nowrap text-sm font-medium">
-                            <button
-                              onClick={() => handleEdit(lead.id)}
-                              className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
-                            >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                            <div className="flex items-center gap-3">
+                              {/* Preview Button */}
+                              <button
+                                onClick={() => handlePreview(lead.id)}
+                                className="text-gray-400 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1"
+                                title="Preview Lead"
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
-                              </svg>
-                              Edit
-                            </button>
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                  />
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                  />
+                                </svg>
+                              </button>
+
+                              {/* Edit Button */}
+                              <button
+                                onClick={() => handleEdit(lead.id)}
+                                className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
+                                title="Edit Lead"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -1154,12 +1204,39 @@ function LeadList() {
 
                             <div className="flex items-center justify-between text-xs text-gray-500">
                               <span>{formatDate(lead.createdDate)}</span>
-                              <button
-                                onClick={() => handleEdit(lead.id)}
-                                className="text-blue-600 hover:text-blue-800 font-medium"
-                              >
-                                Edit
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handlePreview(lead.id)}
+                                  className="text-gray-400 hover:text-blue-600 transition-colors duration-200"
+                                  title="Preview Lead"
+                                >
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                    />
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                    />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() => handleEdit(lead.id)}
+                                  className="text-blue-600 hover:text-blue-800 font-medium"
+                                >
+                                  Edit
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -1346,6 +1423,14 @@ function LeadList() {
           </div>
         )}
       </div>
+      {/* Preview Modal */}
+      {showPreviewModal && (
+        <PreviewLead
+          leadId={previewLeadId}
+          onClose={handleClosePreview}
+          onEdit={handleEditFromPreview}
+        />
+      )}
     </LayoutComponent>
   );
 }
