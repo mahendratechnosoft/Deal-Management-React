@@ -163,42 +163,46 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
     );
   }
 
+
+
   return (
     <div className="space-y-6">
-      {/* Header with Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="bg-blue-50 rounded-lg p-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg
-                className="w-4 h-4 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </div>
-            <div>
-              <p className="text-blue-600 text-xs font-medium">
-                Total Contacts
-              </p>
-              <p className="text-xl font-bold text-blue-900">
-                {contacts.length}
-              </p>
+      {/* Header Section with Title, Stats and Add Button */}
+      <div className="flex justify-between items-center border-b pb-2">
+        <div className="flex items-center gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Manage Contacts</h2>
+            <p className="text-sm text-gray-600 mt-1">{customerName}</p>
+          </div>
+          <div className="bg-blue-50 rounded-lg p-3">
+            <div className="flex items-center gap-2">
+              {/* <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <svg
+                  className="w-4 h-4 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+              </div> */}
+              <div>
+                <p className="text-blue-600 text-xs font-medium">
+                  Total Contacts
+                </p>
+                <p className="text-xl font-bold text-blue-900">
+                  {contacts.length}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Action Buttons */}
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-900">Contact List</h3>
         <button
           onClick={() => setShowCreateForm(true)}
           className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm"
@@ -220,6 +224,7 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
         </button>
       </div>
 
+      {/* Rest of the component remains the same */}
       {/* Create/Edit Form */}
       {(showCreateForm || editingContact) && (
         <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">

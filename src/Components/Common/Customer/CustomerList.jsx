@@ -631,14 +631,9 @@ const TableSkeleton = ({ rows = 5, cols = 8 }) => {
       {showContactModal && selectedCustomer && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between pr-2  border-gray-200">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  Manage Contacts
-                </h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  {selectedCustomer.companyName}
-                </p>
+            
               </div>
               <button
                 onClick={handleCloseContactModal}
@@ -660,7 +655,7 @@ const TableSkeleton = ({ rows = 5, cols = 8 }) => {
               </button>
             </div>
 
-            <div className="p-6 max-h-[calc(90vh-140px)] overflow-y-auto">
+            <div className="p-5 pt-0 max-h-[calc(90vh-140px)] overflow-y-auto">
               <ContactByCustomer
                 customerId={selectedCustomer.customerId}
                 customerName={selectedCustomer.companyName}
