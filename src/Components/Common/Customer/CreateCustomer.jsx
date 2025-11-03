@@ -18,6 +18,8 @@ function CreateCustomer() {
     website: "",
     industry: "",
     revenue: "",
+    gstin: "",
+    panNumber: "",
     billingStreet: "",
     billingCity: "",
     billingState: "",
@@ -362,6 +364,8 @@ function CreateCustomer() {
         website: formData.website || null,
         industry: formData.industry,
         revenue: formData.revenue ? parseFloat(formData.revenue) : 0,
+        gstin: formData.gstin || null,
+        panNumber: formData.panNumber || null,
         billingStreet: formData.billingStreet || null,
         billingCity: formData.billingCity || null,
         billingState: formData.billingState
@@ -422,7 +426,7 @@ function CreateCustomer() {
   const customStyles = {
     control: (base) => ({
       ...base,
-      minHeight: "42px",
+      minHeight: "36px",
       borderColor: "#d1d5db",
       "&:hover": {
         borderColor: "#3b82f6",
@@ -516,7 +520,7 @@ function CreateCustomer() {
                 className="p-6"
               >
                 <div className="space-y-6">
-                  {/* Basic Information Section */}
+                  {/* Company Information Section */}
                   <section>
                     <div className="flex items-center gap-3 mb-6">
                       <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -538,9 +542,6 @@ function CreateCustomer() {
                         <h2 className="text-xl font-semibold text-gray-900">
                           Company Information
                         </h2>
-                        <p className="text-gray-600 text-sm">
-                          Basic customer details
-                        </p>
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -550,14 +551,14 @@ function CreateCustomer() {
                           name="companyName"
                           value={formData.companyName}
                           onChange={handleChange}
-                          className={`w-full px-3 py-3 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
                             errors.companyName
                               ? "border-red-500"
                               : "border-gray-300"
                           }`}
                           placeholder=" "
                         />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
                           Company Name *
                         </label>
                         {errors.companyName && (
@@ -572,7 +573,7 @@ function CreateCustomer() {
                           name="industry"
                           value={formData.industry}
                           onChange={handleChange}
-                          className={`w-full px-3 py-3 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer appearance-none bg-white ${
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer appearance-none bg-white ${
                             errors.industry
                               ? "border-red-500"
                               : "border-gray-300"
@@ -622,10 +623,10 @@ function CreateCustomer() {
                           name="revenue"
                           value={formData.revenue}
                           onChange={handleChange}
-                          className="w-full px-3 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
                           placeholder=" "
                         />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
                           Annual Revenue (₹)
                         </label>
                       </div>
@@ -636,14 +637,14 @@ function CreateCustomer() {
                           name="website"
                           value={formData.website}
                           onChange={handleChange}
-                          className={`w-full px-3 py-3 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
                             errors.website
                               ? "border-red-500"
                               : "border-gray-300"
                           }`}
                           placeholder=" "
                         />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
                           Website
                         </label>
                         {errors.website && (
@@ -652,50 +653,47 @@ function CreateCustomer() {
                           </p>
                         )}
                       </div>
-                    </div>
-                  </section>
 
-                  {/* Contact Information Section */}
-                  <section>
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                        <svg
-                          className="w-4 h-4 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                          />
-                        </svg>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          name="gstin"
+                          value={formData.gstin}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
+                          placeholder=" "
+                        />
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                          GSTIN
+                        </label>
                       </div>
-                      <div>
-                        <h2 className="text-xl font-semibold text-gray-900">
-                          Contact Information
-                        </h2>
-                        <p className="text-gray-600 text-sm">
-                          Customer contact details
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          name="panNumber"
+                          value={formData.panNumber}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
+                          placeholder=" "
+                        />
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                          PAN Number
+                        </label>
+                      </div>
+
                       <div className="relative">
                         <input
                           type="text"
                           name="phone"
                           value={formData.phone}
                           onChange={handleChange}
-                          className={`w-full px-3 py-3 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
                             errors.phone ? "border-red-500" : "border-gray-300"
                           }`}
                           placeholder=" "
                         />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
                           Phone Number
                         </label>
                         {errors.phone && (
@@ -711,12 +709,12 @@ function CreateCustomer() {
                           name="mobile"
                           value={formData.mobile}
                           onChange={handleChange}
-                          className={`w-full px-3 py-3 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
                             errors.mobile ? "border-red-500" : "border-gray-300"
                           }`}
                           placeholder=" "
                         />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
                           Mobile Number
                         </label>
                         {errors.mobile && (
@@ -728,7 +726,7 @@ function CreateCustomer() {
                     </div>
                   </section>
 
-                  {/* Billing Address Section */}
+                  {/* Address Section - Side by Side */}
                   <section>
                     <div className="flex items-center gap-3 mb-6">
                       <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
@@ -748,233 +746,225 @@ function CreateCustomer() {
                       </div>
                       <div>
                         <h2 className="text-xl font-semibold text-gray-900">
-                          Billing Address
+                          Address Information
                         </h2>
-                        <p className="text-gray-600 text-sm">
-                          Primary business address
-                        </p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-2 relative">
-                        <input
-                          type="text"
-                          name="billingStreet"
-                          value={formData.billingStreet}
-                          onChange={handleChange}
-                          className="w-full px-3 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
-                          placeholder=" "
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                          Street Address
-                        </label>
-                      </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Billing Address - Left Side */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
+                          Billing Address
+                        </h3>
 
-                      <div className="relative">
-                        <Select
-                          name="billingCountry"
-                          value={dropdownData.countries.find(
-                            (option) => option.value === formData.billingCountry
-                          )}
-                          onChange={handleBillingCountryChange}
-                          options={dropdownData.countries}
-                          placeholder=" "
-                          isSearchable
-                          styles={customStyles}
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
-                          Country
-                        </label>
-                      </div>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            name="billingStreet"
+                            value={formData.billingStreet}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
+                            placeholder=" "
+                          />
+                          <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                            Street Address
+                          </label>
+                        </div>
 
-                      <div className="relative">
-                        <Select
-                          key={`billing-state-${formData.billingCountry}`}
-                          name="billingState"
-                          value={dropdownData.billingStates.find(
-                            (option) => option.value === formData.billingState
-                          )}
-                          onChange={handleBillingStateChange}
-                          options={dropdownData.billingStates}
-                          placeholder=" "
-                          isSearchable
-                          isDisabled={!formData.billingCountry}
-                          styles={customStyles}
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
-                          State
-                        </label>
-                      </div>
+                        <div className="relative">
+                          <Select
+                            name="billingCountry"
+                            value={dropdownData.countries.find(
+                              (option) =>
+                                option.value === formData.billingCountry
+                            )}
+                            onChange={handleBillingCountryChange}
+                            options={dropdownData.countries}
+                            placeholder=" "
+                            isSearchable
+                            styles={customStyles}
+                          />
+                          <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
+                            Country
+                          </label>
+                        </div>
 
-                      <div className="relative">
-                        <Select
-                          key={`billing-city-${formData.billingState}`}
-                          name="billingCity"
-                          value={dropdownData.billingCities.find(
-                            (option) => option.value === formData.billingCity
-                          )}
-                          onChange={handleBillingCityChange}
-                          options={dropdownData.billingCities}
-                          placeholder=" "
-                          isSearchable
-                          isDisabled={!formData.billingState}
-                          styles={customStyles}
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
-                          City
-                        </label>
-                      </div>
+                        <div className="relative">
+                          <Select
+                            key={`billing-state-${formData.billingCountry}`}
+                            name="billingState"
+                            value={dropdownData.billingStates.find(
+                              (option) => option.value === formData.billingState
+                            )}
+                            onChange={handleBillingStateChange}
+                            options={dropdownData.billingStates}
+                            placeholder=" "
+                            isSearchable
+                            isDisabled={!formData.billingCountry}
+                            styles={customStyles}
+                          />
+                          <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
+                            State
+                          </label>
+                        </div>
 
-                      <div className="relative">
-                        <input
-                          type="text"
-                          name="billingZipCode"
-                          value={formData.billingZipCode}
-                          onChange={handleChange}
-                          className="w-full px-3 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
-                          placeholder=" "
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                          ZIP Code
-                        </label>
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Shipping Address Section */}
-                  <section>
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
-                          <svg
-                            className="w-4 h-4 text-white"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="relative">
+                            <Select
+                              key={`billing-city-${formData.billingState}`}
+                              name="billingCity"
+                              value={dropdownData.billingCities.find(
+                                (option) =>
+                                  option.value === formData.billingCity
+                              )}
+                              onChange={handleBillingCityChange}
+                              options={dropdownData.billingCities}
+                              placeholder=" "
+                              isSearchable
+                              isDisabled={!formData.billingState}
+                              styles={customStyles}
                             />
-                          </svg>
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
+                              City
+                            </label>
+                          </div>
+
+                          <div className="relative">
+                            <input
+                              type="text"
+                              name="billingZipCode"
+                              value={formData.billingZipCode}
+                              onChange={handleChange}
+                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
+                              placeholder=" "
+                            />
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                              ZIP Code
+                            </label>
+                          </div>
                         </div>
-                        <div>
-                          <h2 className="text-xl font-semibold text-gray-900">
+                      </div>
+
+                      {/* Shipping Address - Right Side */}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
                             Shipping Address
-                          </h2>
-                          <p className="text-gray-600 text-sm">
-                            Delivery and shipping address
-                          </p>
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="sameAsBilling"
+                              checked={sameAsBilling}
+                              onChange={(e) =>
+                                setSameAsBilling(e.target.checked)
+                              }
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <label
+                              htmlFor="sameAsBilling"
+                              className="text-sm text-gray-700"
+                            >
+                              Same as billing
+                            </label>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="sameAsBilling"
-                          checked={sameAsBilling}
-                          onChange={(e) => setSameAsBilling(e.target.checked)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <label
-                          htmlFor="sameAsBilling"
-                          className="text-sm text-gray-700"
-                        >
-                          Same as billing address
-                        </label>
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-2 relative">
-                        <input
-                          type="text"
-                          name="shippingStreet"
-                          value={formData.shippingStreet}
-                          onChange={handleChange}
-                          disabled={sameAsBilling}
-                          className="w-full px-3 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer disabled:bg-gray-100 disabled:cursor-not-allowed"
-                          placeholder=" "
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                          Street Address
-                        </label>
-                      </div>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            name="shippingStreet"
+                            value={formData.shippingStreet}
+                            onChange={handleChange}
+                            disabled={sameAsBilling}
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            placeholder=" "
+                          />
+                          <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                            Street Address
+                          </label>
+                        </div>
 
-                      <div className="relative">
-                        <Select
-                          name="shippingCountry"
-                          value={dropdownData.countries.find(
-                            (option) =>
-                              option.value === formData.shippingCountry
-                          )}
-                          onChange={handleShippingCountryChange}
-                          options={dropdownData.countries}
-                          placeholder=" "
-                          isSearchable
-                          isDisabled={sameAsBilling}
-                          styles={customStyles}
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
-                          Country
-                        </label>
-                      </div>
+                        <div className="relative">
+                          <Select
+                            name="shippingCountry"
+                            value={dropdownData.countries.find(
+                              (option) =>
+                                option.value === formData.shippingCountry
+                            )}
+                            onChange={handleShippingCountryChange}
+                            options={dropdownData.countries}
+                            placeholder=" "
+                            isSearchable
+                            isDisabled={sameAsBilling}
+                            styles={customStyles}
+                          />
+                          <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
+                            Country
+                          </label>
+                        </div>
 
-                      <div className="relative">
-                        <Select
-                          key={`shipping-state-${formData.shippingCountry}`}
-                          name="shippingState"
-                          value={dropdownData.shippingStates.find(
-                            (option) => option.value === formData.shippingState
-                          )}
-                          onChange={handleShippingStateChange}
-                          options={dropdownData.shippingStates}
-                          placeholder=" "
-                          isSearchable
-                          isDisabled={
-                            !formData.shippingCountry || sameAsBilling
-                          }
-                          styles={customStyles}
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
-                          State
-                        </label>
-                      </div>
+                        <div className="relative">
+                          <Select
+                            key={`shipping-state-${formData.shippingCountry}`}
+                            name="shippingState"
+                            value={dropdownData.shippingStates.find(
+                              (option) =>
+                                option.value === formData.shippingState
+                            )}
+                            onChange={handleShippingStateChange}
+                            options={dropdownData.shippingStates}
+                            placeholder=" "
+                            isSearchable
+                            isDisabled={
+                              !formData.shippingCountry || sameAsBilling
+                            }
+                            styles={customStyles}
+                          />
+                          <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
+                            State
+                          </label>
+                        </div>
 
-                      <div className="relative">
-                        <Select
-                          key={`shipping-city-${formData.shippingState}`}
-                          name="shippingCity"
-                          value={dropdownData.shippingCities.find(
-                            (option) => option.value === formData.shippingCity
-                          )}
-                          onChange={handleShippingCityChange}
-                          options={dropdownData.shippingCities}
-                          placeholder=" "
-                          isSearchable
-                          isDisabled={!formData.shippingState || sameAsBilling}
-                          styles={customStyles}
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
-                          City
-                        </label>
-                      </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="relative">
+                            <Select
+                              key={`shipping-city-${formData.shippingState}`}
+                              name="shippingCity"
+                              value={dropdownData.shippingCities.find(
+                                (option) =>
+                                  option.value === formData.shippingCity
+                              )}
+                              onChange={handleShippingCityChange}
+                              options={dropdownData.shippingCities}
+                              placeholder=" "
+                              isSearchable
+                              isDisabled={
+                                !formData.shippingState || sameAsBilling
+                              }
+                              styles={customStyles}
+                            />
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
+                              City
+                            </label>
+                          </div>
 
-                      <div className="relative">
-                        <input
-                          type="text"
-                          name="shippingZipCode"
-                          value={formData.shippingZipCode}
-                          onChange={handleChange}
-                          disabled={sameAsBilling}
-                          className="w-full px-3 py-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer disabled:bg-gray-100 disabled:cursor-not-allowed"
-                          placeholder=" "
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                          ZIP Code
-                        </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              name="shippingZipCode"
+                              value={formData.shippingZipCode}
+                              onChange={handleChange}
+                              disabled={sameAsBilling}
+                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer disabled:bg-gray-100 disabled:cursor-not-allowed"
+                              placeholder=" "
+                            />
+                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                              ZIP Code
+                            </label>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </section>
@@ -1001,9 +991,6 @@ function CreateCustomer() {
                         <h2 className="text-xl font-semibold text-gray-900">
                           Description
                         </h2>
-                        <p className="text-gray-600 text-sm">
-                          Additional notes and information
-                        </p>
                       </div>
                     </div>
 
@@ -1012,7 +999,7 @@ function CreateCustomer() {
                         name="description"
                         value={formData.description}
                         onChange={handleChange}
-                        rows={4}
+                        rows={3}
                         className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
                         placeholder="Enter additional notes or description about the customer"
                       />
