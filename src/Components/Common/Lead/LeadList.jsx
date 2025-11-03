@@ -32,15 +32,14 @@ function LeadList() {
   // Default columns based on API response structure
   const [columns, setColumns] = useState([
     { id: "clientName", name: "CLIENT NAME", visible: true, order: 0 },
-    { id: "employeeId", name: "EMPLOYEE ID", visible: true, order: 1 },
-    { id: "assignTo", name: "ASSIGNED TO", visible: true, order: 2 },
-    { id: "status", name: "STATUS", visible: true, order: 3 },
-    { id: "source", name: "SOURCE", visible: true, order: 4 },
-    { id: "revenue", name: "REVENUE", visible: true, order: 5 },
-    { id: "city", name: "CITY", visible: true, order: 6 },
-    { id: "state", name: "STATE", visible: true, order: 7 },
-    { id: "country", name: "COUNTRY", visible: true, order: 8 },
-    { id: "createdDate", name: "CREATED DATE", visible: true, order: 9 },
+
+    { id: "status", name: "STATUS", visible: true, order: 1 },
+    { id: "source", name: "SOURCE", visible: true, order: 2 },
+
+    { id: "city", name: "CITY", visible: true, order: 3 },
+    { id: "state", name: "STATE", visible: true, order: 4 },
+    { id: "country", name: "COUNTRY", visible: true, order: 5 },
+    { id: "createdDate", name: "CREATED DATE", visible: true, order: 6 },
   ]);
 
   const [tempColumns, setTempColumns] = useState(columns);
