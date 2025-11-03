@@ -23,6 +23,9 @@ import General from "./Components/Common/Settings/General.jsx";
 import RoleList from "./Components/Common/Settings/RoleAndDepartment/RoleList.JSX";
 import RoleBasedRoute from "./Components/BaseComponet/RoleBasedRoute.jsx";
 import LeadList from "./Components/Common/Lead/LeadList";
+import ProposalList from "./Components/Common/Proposal/ProposalList.jsx";
+import CreateProposal from "./Components/Common/Proposal/CreateProposal.jsx";
+import EditProposal from "./Components/Common/Proposal/EditProposal.jsx";
 import CustomerList from "./Components/Common/Customer/CustomerList.jsx";
 import CreateCustomer from "./Components/Common/Customer/CreateCustomer.jsx";
 import EditCustomer from "./Components/Common/Customer/EditCustomer.jsx";
@@ -193,6 +196,32 @@ function App() {
           />
 
           {/* Settings Routes */}
+          <Route
+            path="/Admin/Proposal"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <ProposalList />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/Admin/Proposal/Create"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <CreateProposal />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Admin/Proposal/Edit/:proposalId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <EditProposal />
+              </RoleBasedRoute>
+            }
+          />
+
           <Route
             path="/Admin/Settings"
             element={
