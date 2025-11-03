@@ -23,7 +23,9 @@ import General from "./Components/Common/Settings/General.jsx";
 import RoleList from "./Components/Common/Settings/RoleAndDepartment/RoleList.JSX";
 import RoleBasedRoute from "./Components/BaseComponet/RoleBasedRoute.jsx";
 import LeadList from "./Components/Common/Lead/LeadList";
-
+import CustomerList from "./Components/Common/Customer/CustomerList.jsx";
+import CreateCustomer from "./Components/Common/Customer/CreateCustomer.jsx";
+import EditCustomer from "./Components/Common/Customer/EditCustomer.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -110,6 +112,31 @@ function App() {
               </RoleBasedRoute>
             }
           />
+          <Route
+            path="/Admin/CustomerList"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <CustomerList />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/Admin/CreateCustomer"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <CreateCustomer />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Admin/EditCustomer/:customerId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <EditCustomer />
+              </RoleBasedRoute>
+            }
+          />
 
           {/* Employee Routes - Individual routes with layout */}
           <Route
@@ -135,6 +162,32 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
                 <CreateLead />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Employee/CustomerList"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                <CustomerList />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/Employee/CreateCustomer"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <CreateCustomer />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Employee/EditCustomer/:customerId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                <EditCustomer />
               </RoleBasedRoute>
             }
           />
