@@ -109,13 +109,24 @@ function LeadList() {
   ];
 
   // Fetch leads with search functionality
-  const fetchLeads = async (page = 0, search = "") => {
+  // Update the fetchLeads function to handle status filtering
+  const fetchLeads = async (page = 0, search = "", status = "all") => {
     try {
       setLoading(true);
 
       let url = `getAllLeads/${page}/${pageSize}`;
+      const params = [];
+
       if (search.trim()) {
-        url += `?search=${encodeURIComponent(search)}`;
+        params.push(`search=${encodeURIComponent(search)}`);
+      }
+
+      if (status !== "all") {
+        params.push(`leadStatus=${encodeURIComponent(status)}`);
+      }
+
+      if (params.length > 0) {
+        url += `?${params.join("&")}`;
       }
 
       const response = await axiosInstance.get(url);
@@ -123,7 +134,7 @@ function LeadList() {
 
       setLeads(data.leadList || []);
       setTotalPages(data.totalPages || 1);
-      setCurrentPage(page); // Use the page parameter, not data.currentPage
+      setCurrentPage(page);
       setTotalLeads(data.totalLeads || 0);
       setStatusAndCount(data.statusAndCount || []);
       setError(null);
@@ -136,32 +147,34 @@ function LeadList() {
   };
 
   // Refresh data when pageSize changes
+
   useEffect(() => {
-    fetchLeads(0, searchTerm);
+    fetchLeads(0, searchTerm, statusFilter);
   }, [pageSize]);
-  // Handle card click to filter by status
+
+  // Update the handleCardFilter function to call API with status filter
   const handleCardFilter = (status) => {
     setStatusFilter(status);
+    fetchLeads(0, searchTerm, status); // Reset to page 0 when filtering
   };
 
-  // Handle search with debouncing
+  // Update the search useEffect to include status filter
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchLeads(0, searchTerm);
+      fetchLeads(0, searchTerm, statusFilter);
     }, 500);
 
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
-  // Load data on component mount
-  useEffect(() => {
-    fetchLeads(0);
-  }, [navigate]);
+  // Update the pageSize useEffect to include status filter
 
   // Handle page change
+
+  // Update the handlePageChange function to include status filter
   const handlePageChange = (newPage) => {
     if (newPage >= 0 && newPage < totalPages) {
-      fetchLeads(newPage, searchTerm);
+      fetchLeads(newPage, searchTerm, statusFilter);
     }
   };
 
@@ -213,6 +226,11 @@ function LeadList() {
           return updatedCounts;
         });
 
+        // Only if we're viewing a filtered status (not "all")
+        if (statusFilter !== "all") {
+          fetchLeads(currentPage, searchTerm, statusFilter);
+        }
+
         // Close dropdown
         setActiveStatusDropdown(null);
       }
@@ -241,21 +259,15 @@ function LeadList() {
     };
   }, []);
 
-  // Filter leads based on status (for current page only)
-  const filteredLeads = leads.filter((lead) => {
-    const matchesStatus =
-      statusFilter === "all" ||
-      lead.status?.toLowerCase() === statusFilter.toLowerCase();
-
-    return matchesStatus;
-  });
+  // Load data on component mount
+  useEffect(() => {
+    fetchLeads(0, searchTerm, statusFilter);
+  }, [navigate]);
 
   // Organize leads for kanban view (current page only)
   const organizedKanbanColumns = kanbanColumns.map((column) => ({
     ...column,
-    leads: filteredLeads.filter(
-      (lead) => lead.status?.toLowerCase() === column.id
-    ),
+    leads: leads.filter((lead) => lead.status?.toLowerCase() === column.id),
   }));
 
   const handleCreateLead = () => {
@@ -322,9 +334,8 @@ function LeadList() {
   };
 
   const handleRefresh = () => {
-    fetchLeads(currentPage, searchTerm);
+    fetchLeads(currentPage, searchTerm, statusFilter); // Added statusFilter parameter
   };
-
   const visibleColumns = columns
     .filter((col) => col.visible)
     .sort((a, b) => a.order - b.order);
@@ -777,7 +788,7 @@ function LeadList() {
             <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
               <div className="">
                 {/* Single table container */}
-                <div className="relative">
+                <div className="relative overflow-x-auto crm-Leadlist-kanbadn-col-list">
                   <table className="min-w-full divide-y divide-gray-200">
                     {/* Colgroup for consistent column widths */}
                     <colgroup>
@@ -815,7 +826,7 @@ function LeadList() {
 
                     {/* Table body */}
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredLeads.map((lead) => (
+                      {leads.map((lead) => (
                         <tr
                           key={lead.id}
                           className="hover:bg-gray-50 transition-colors duration-150"
@@ -929,7 +940,7 @@ function LeadList() {
                 </div>
               </div>
 
-              {filteredLeads.length === 0 && (
+              {leads.length === 0 && (
                 <div className="text-center py-12">
                   <svg
                     className="w-16 h-16 mx-auto text-gray-400 mb-4"
