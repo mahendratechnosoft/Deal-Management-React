@@ -29,6 +29,7 @@ import EditProposal from "./Components/Common/Proposal/EditProposal.jsx";
 import CustomerList from "./Components/Common/Customer/CustomerList.jsx";
 import CreateCustomer from "./Components/Common/Customer/CreateCustomer.jsx";
 import EditCustomer from "./Components/Common/Customer/EditCustomer.jsx";
+import ProposalPreview from "./Components/Common/Proposal/ProposalPreview.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -214,7 +215,7 @@ function App() {
 
           {/* Settings Routes */}
           <Route
-            path="/Admin/Proposal"
+            path="/Proposal"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                 <ProposalList />
@@ -222,19 +223,37 @@ function App() {
             }
           />
           <Route
-            path="/Admin/Proposal/Create"
+            path="/Proposal/Create"
             element={
-              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
                 <CreateProposal />
               </RoleBasedRoute>
             }
           />
 
           <Route
-            path="/Admin/Proposal/Edit/:proposalId"
+            path="/Proposal/Edit/:proposalId"
             element={
-              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
                 <EditProposal />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Proposal/Preview/:proposalId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
+                <ProposalPreview />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Employee/Proposal"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                <ProposalList />
               </RoleBasedRoute>
             }
           />

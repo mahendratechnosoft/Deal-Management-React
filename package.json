@@ -17,7 +17,8 @@
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.9.4",
     "react-select": "^5.10.2",
-    "sweetalert2": "^11.26.3"
+    "sweetalert2": "^11.26.3",
+    "to-words": "^4.8.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

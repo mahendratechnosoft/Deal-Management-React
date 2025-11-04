@@ -10,12 +10,21 @@ const formatCurrency = (amount, currencyCode) => {
   const code = currencyCode || "INR";
 
   try {
-    return new Intl.NumberFormat("default", {
+    const formatter = new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: code,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(value);
+    });
+
+    const parts = formatter.formatToParts(value);
+    const symbol = parts.find((part) => part.type === "currency")?.value || "";
+    const number = parts
+      .filter((part) => part.type !== "currency")
+      .map((part) => part.value)
+      .join("");
+
+    return `${symbol} ${number}`;
   } catch (e) {
     return `${code} ${value.toFixed(2)}`;
   }
@@ -41,7 +50,7 @@ function ProposalList() {
     setListLoading(true);
 
     try {
-      let url = `/admin/getAllProposal/${page}/${pageSize}`;
+      let url = `getAllProposal/${page}/${pageSize}`;
       if (search.trim()) {
         url += `?search=${encodeURIComponent(search)}`;
       }
@@ -55,7 +64,7 @@ function ProposalList() {
 
       // console.log("Fetched proposals:", data);
     } catch (err) {
-      console.error("Error fetching employees:", err);
+      console.error("Error fetching proposals:", err);
       toast.error("Failed to fetch proposals. Please try again.");
     } finally {
       setListLoading(false);
@@ -63,11 +72,15 @@ function ProposalList() {
   }
 
   const handleCreateProposal = () => {
-    navigate("/Admin/Proposal/Create");
+    navigate("/Proposal/Create");
   };
 
   const handleEdit = (proposalId) => {
-    navigate(`/Admin/Proposal/Edit/${proposalId}`);
+    navigate(`/Proposal/Edit/${proposalId}`);
+  };
+
+  const handlePreview = (proposalId) => {
+    navigate(`/Proposal/Preview/${proposalId}`);
   };
 
   const handlePageSizeChange = (newSize) => {
@@ -207,25 +220,53 @@ function ProposalList() {
                         {proposal.status}
                       </td>
                       <td className="px-6 py-1 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => handleEdit(proposal.proposalId)}
-                          className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                        <div className="flex items-center gap-3">
+                          <button
+                            title="Edit"
+                            onClick={() => handleEdit(proposal.proposalId)}
+                            className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                            />
-                          </svg>
-                          Edit
-                        </button>
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          </button>
+
+                          <button
+                            title="Preview"
+                            onClick={() => handlePreview(proposal.proposalId)}
+                            className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                              />
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -275,7 +316,7 @@ function ProposalList() {
           pageSize={pageSize}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
-          itemsName="employees"
+          itemsName="proposals"
         />
       </div>
     </LayoutComponent>

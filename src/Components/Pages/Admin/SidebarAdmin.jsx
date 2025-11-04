@@ -89,7 +89,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
     },
     {
       name: "Proposal",
-      path: "/Admin/Proposal",
+      path: "/Proposal",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"

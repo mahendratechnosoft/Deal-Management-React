@@ -5,213 +5,11 @@ import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import Select from "react-select";
 import { City, Country, State } from "country-state-city";
-
-const customReactSelectStyles = (hasError) => ({
-  control: (provided, state) => ({
-    ...provided,
-    minHeight: "38px",
-    backgroundColor: state.isDisabled ? "#f3f4f6" : "transparent",
-    cursor: state.isDisabled ? "not-allowed" : "default",
-    borderColor: state.isDisabled
-      ? "#d1d5db"
-      : hasError
-      ? "#ef4444"
-      : state.isFocused
-      ? "#3b82f6"
-      : "#d1d5db",
-    borderRadius: "0.5rem",
-    borderWidth: state.isFocused ? "2px" : "1px",
-    boxShadow: "none",
-    "&:hover": {
-      borderColor: state.isDisabled
-        ? "#d1d5db"
-        : hasError
-        ? "#ef4444"
-        : state.isFocused
-        ? "#3b82f6"
-        : "#9ca3af",
-    },
-  }),
-  valueContainer: (provided) => ({
-    ...provided,
-    padding: "2px 8px",
-  }),
-  placeholder: (provided) => ({
-    ...provided,
-    color: "transparent",
-  }),
-  menu: (provided) => ({
-    ...provided,
-    zIndex: 50,
-  }),
-  input: (provided) => ({
-    ...provided,
-    margin: 0,
-    padding: 0,
-  }),
-  singleValue: (provided, state) => ({
-    ...provided,
-    color: state.isDisabled ? "#9ca3af" : "hsl(0, 0%, 20%)",
-  }),
-  indicatorsContainer: (provided, state) => ({
-    ...provided,
-    color: state.isDisabled ? "#9ca3af" : provided.color,
-  }),
-});
-
-const FormInput = ({
-  label,
-  name,
-  value,
-  onChange,
-  type = "text",
-  required = false,
-  error,
-  disabled = false, // <-- ADDED disabled prop
-  className = "",
-}) => (
-  <div className={`relative ${className}`}>
-    <input
-      type={type}
-      id={name}
-      name={name}
-      value={value}
-      onChange={onChange}
-      placeholder=" "
-      disabled={disabled} // <-- ADDED
-      className={`block w-full px-3 py-2 bg-transparent border rounded-lg appearance-none focus:outline-none focus:ring-2 peer text-sm ${
-        error
-          ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-          : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-      }
-      ${disabled ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""} 
-      `} // <-- ADDED disabled styles
-    />
-    <label
-      htmlFor={name}
-      className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none ${
-        error ? "text-red-600" : "text-gray-500 peer-focus:text-blue-600"
-      }
-      ${disabled ? "text-gray-400" : ""}
-      `} // <-- ADDED disabled styles
-    >
-      {label} {required && <span className="text-red-500">*</span>}
-    </label>
-    {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-  </div>
-);
-
-// --- NEW COMPONENT FOR PROPOSAL NUMBER ---
-const FormInputWithPrefix = ({
-  label,
-  name,
-  value,
-  onChange,
-  prefix,
-  type = "text",
-  required = false,
-  error,
-  className = "",
-}) => (
-  <div className={`relative ${className}`}>
-    {/* This div gets the focus-within styling */}
-    <div
-      className={`flex rounded-lg border
-      ${error ? "border-red-500" : "border-gray-300"}
-      ${
-        !error &&
-        "focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500"
-      }
-      ${
-        error &&
-        "focus-within:ring-2 focus-within:ring-red-500 focus-within:border-red-500"
-      }
-    `}
-    >
-      <span className="flex items-center px-3 text-sm text-gray-500 bg-gray-50 border-r border-gray-300 rounded-l-lg">
-        {prefix}
-      </span>
-
-      {/* Inner container for input + label, so label is positioned correctly */}
-      <div className="relative w-full">
-        <input
-          type={type}
-          id={name}
-          name={name}
-          value={value}
-          onChange={onChange}
-          placeholder=" " // This is the peer
-          className="block w-full px-3 py-2 bg-transparent appearance-none focus:outline-none peer text-sm rounded-r-lg border-none" // Input has no border
-        />
-        <label
-          htmlFor={name}
-          className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none ${
-            error ? "text-red-600" : "text-gray-500 peer-focus:text-blue-600"
-          }`}
-        >
-          {label} {required && <span className="text-red-500">*</span>}
-        </label>
-      </div>
-    </div>
-    {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-  </div>
-);
-// --- END NEW COMPONENT ---
-
-const FormSelect = ({
-  label,
-  name,
-  value,
-  onChange,
-  options,
-  required = false,
-  error,
-  isDisabled = false,
-  className = "",
-  ...props
-}) => {
-  const [isFocused, setIsFocused] = useState(false);
-
-  const hasValue = !!value;
-
-  return (
-    <div className={`relative ${className}`}>
-      <label
-        htmlFor={name}
-        className={`absolute text-sm duration-300 transform z-10 origin-[0] px-2 left-1 pointer-events-none
-        ${
-          isFocused || hasValue
-            ? "scale-75 -translate-y-4 top-2"
-            : "scale-100 translate-y-0 top-1.5"
-        }
-        ${
-          error ? "text-red-600" : isFocused ? "text-blue-600" : "text-gray-500"
-        }
-        ${isDisabled ? "text-gray-400 bg-gray-50" : "bg-white"}
-      `}
-      >
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <Select
-        id={name}
-        name={name}
-        value={value}
-        onChange={onChange}
-        options={options}
-        placeholder=" "
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        styles={customReactSelectStyles(!!error)}
-        isDisabled={isDisabled}
-        classNamePrefix="select"
-        menuPlacement="auto"
-        maxMenuHeight={200}
-        {...props}
-      />
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-    </div>
-  );
-};
+import {
+  FormInput,
+  FormInputWithPrefix,
+  FormSelect,
+} from "../../BaseComponet/CustomeFormComponents";
 
 function CreateProposal() {
   const navigate = useNavigate();
@@ -226,6 +24,7 @@ function CreateProposal() {
     currencyType: "INR",
     discount: 0,
     taxType: "GST",
+    taxPercentage: 18,
     dueDate: "",
     proposalDate: new Date().toISOString().split("T")[0],
     totalAmmount: 0,
@@ -352,7 +151,7 @@ function CreateProposal() {
 
   const handleCancel = () => {
     if (role === "ROLE_ADMIN") {
-      navigate("/Admin/Proposal");
+      navigate("/Proposal");
     } else if (role === "ROLE_EMPLOYEE") {
       navigate("/Employee/Proposal");
     } else {
@@ -461,7 +260,7 @@ function CreateProposal() {
     }
     setIsAssignToLoading(true);
     try {
-      const response = await axiosInstance.get("/admin/getEmployeeNameAndId");
+      const response = await axiosInstance.get("getEmployeeNameAndId");
       const mappedOptions = response.data.map((emp) => ({
         label: emp.name,
         value: emp.employeeId,
@@ -486,7 +285,7 @@ function CreateProposal() {
 
     try {
       if (proposalInfo.relatedTo === "lead") {
-        endpoint = "/admin/getLeadNameAndId";
+        endpoint = "getLeadNameAndId";
         const response = await axiosInstance.get(endpoint);
         // Map API response (clientName, leadId) to (label, value)
         mappedOptions = response.data.map((lead) => ({
@@ -494,7 +293,7 @@ function CreateProposal() {
           value: lead.leadId,
         }));
       } else if (proposalInfo.relatedTo === "customer") {
-        endpoint = "/admin/getCustomerListWithNameAndId";
+        endpoint = "getCustomerListWithNameAndId";
         const response = await axiosInstance.get(endpoint);
         // Map API response (companyName, id) to (label, value)
         mappedOptions = response.data.map((customer) => ({
@@ -554,15 +353,12 @@ function CreateProposal() {
     setErrors({});
     setLoading(true);
 
-    const effectiveTaxRate = Number(taxRateInput) || 0;
-
     const payload = {
       proposalInfo: {
         ...proposalInfo,
         proposalNumber: `PROP-${proposalInfo.proposalNumber}`,
         discount: Number(proposalInfo.discount),
         totalAmmount: Number(proposalInfo.totalAmmount),
-        taxRate: effectiveTaxRate,
       },
       proposalContent: proposalContent.map((item) => ({
         ...item,
@@ -572,13 +368,13 @@ function CreateProposal() {
     };
 
     try {
-      await axiosInstance.post("/admin/createProposal", payload);
+      await axiosInstance.post("createProposal", payload);
       console.log("Form Submitted:", payload);
       toast.success("Proposal created successfully!");
       setLoading(false);
 
       if (role === "ROLE_ADMIN") {
-        navigate("/Admin/Proposal");
+        navigate("/Proposal");
       } else if (role === "ROLE_EMPLOYEE") {
         navigate("/Employee/Proposal");
       }
@@ -600,7 +396,7 @@ function CreateProposal() {
             <button
               onClick={() => {
                 if (role === "ROLE_ADMIN") {
-                  navigate("/Admin/Proposal");
+                  navigate("/Proposal");
                 } else if (role === "ROLE_EMPLOYEE") {
                   navigate("/Employee/Proposal");
                 }
@@ -1045,14 +841,22 @@ function CreateProposal() {
                         value={taxOptions.find(
                           (o) => o.value === proposalInfo.taxType
                         )}
-                        // --- MODIFIED --- onChange logic
                         onChange={(opt) => {
                           if (opt) {
                             handleSelectChange("taxType", opt);
                             setTaxRateInput(opt.defaultRate);
+                            setProposalInfo((prev) => ({
+                              ...prev,
+                              taxPercentage: Number(opt.defaultRate) || 0,
+                            }));
                           } else {
                             handleSelectChange("taxType", null);
                             setTaxRateInput("");
+                            // ADD THIS LINE:
+                            setProposalInfo((prev) => ({
+                              ...prev,
+                              taxPercentage: 0,
+                            }));
                           }
                         }}
                         options={taxOptions}
@@ -1062,11 +866,18 @@ function CreateProposal() {
                       />
                       <FormInput
                         label="Tax %"
-                        name="taxRateInput" // --- MODIFIED ---
+                        name="taxRateInput"
                         type="number"
-                        value={taxRateInput} // --- MODIFIED ---
-                        onChange={(e) => setTaxRateInput(e.target.value)} // --- MODIFIED ---
-                        disabled={proposalInfo.taxType === "No Tax"} // --- MODIFIED ---
+                        value={taxRateInput}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setTaxRateInput(value);
+                          setProposalInfo((prev) => ({
+                            ...prev,
+                            taxPercentage: Number(value) || 0,
+                          }));
+                        }}
+                        disabled={proposalInfo.taxType === "No Tax"}
                         className="w-full"
                       />
                     </div>

@@ -5,235 +5,20 @@ import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import Select from "react-select";
 import { City, Country, State } from "country-state-city";
-
-// --- STYLES AND FORM COMPONENTS (Copied from CreateProposal) ---
-
-const customReactSelectStyles = (hasError) => ({
-  control: (provided, state) => ({
-    ...provided,
-    minHeight: "38px",
-    backgroundColor: state.isDisabled ? "#f3f4f6" : "transparent",
-    cursor: state.isDisabled ? "not-allowed" : "default",
-    borderColor: state.isDisabled
-      ? "#d1d5db"
-      : hasError
-      ? "#ef4444"
-      : state.isFocused
-      ? "#3b82f6"
-      : "#d1d5db",
-    borderRadius: "0.5rem",
-    borderWidth: state.isFocused ? "2px" : "1px",
-    boxShadow: "none",
-    "&:hover": {
-      borderColor: state.isDisabled
-        ? "#d1d5db"
-        : hasError
-        ? "#ef4444"
-        : state.isFocused
-        ? "#3b82f6"
-        : "#9ca3af",
-    },
-  }),
-  valueContainer: (provided) => ({
-    ...provided,
-    padding: "2px 8px",
-  }),
-  placeholder: (provided) => ({
-    ...provided,
-    color: "transparent",
-  }),
-  menu: (provided) => ({
-    ...provided,
-    zIndex: 50,
-  }),
-  input: (provided) => ({
-    ...provided,
-    margin: 0,
-    padding: 0,
-  }),
-  singleValue: (provided, state) => ({
-    ...provided,
-    color: state.isDisabled ? "#9ca3af" : "hsl(0, 0%, 20%)",
-  }),
-  indicatorsContainer: (provided, state) => ({
-    ...provided,
-    color: state.isDisabled ? "#9ca3af" : provided.color,
-  }),
-});
-
-const FormInput = ({
-  label,
-  name,
-  value,
-  onChange,
-  type = "text",
-  required = false,
-  error,
-  disabled = false,
-  className = "",
-}) => (
-  <div className={`relative ${className}`}>
-    <input
-      type={type}
-      id={name}
-      name={name}
-      value={value}
-      onChange={onChange}
-      placeholder=" "
-      disabled={disabled}
-      className={`block w-full px-3 py-2 bg-transparent border rounded-lg appearance-none focus:outline-none focus:ring-2 peer text-sm ${
-        error
-          ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-          : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-      }
-      ${disabled ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""} 
-      `}
-    />
-    <label
-      htmlFor={name}
-      className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none ${
-        error ? "text-red-600" : "text-gray-500 peer-focus:text-blue-600"
-      }
-      ${disabled ? "text-gray-400" : ""}
-      `}
-    >
-      {label} {required && <span className="text-red-500">*</span>}
-    </label>
-    {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-  </div>
-);
-
-// --- MODIFIED FormInputWithPrefix to accept 'disabled' prop ---
-const FormInputWithPrefix = ({
-  label,
-  name,
-  value,
-  onChange,
-  prefix,
-  type = "text",
-  required = false,
-  error,
-  disabled = false, // <-- ADDED
-  className = "",
-}) => (
-  <div className={`relative ${className}`}>
-    <div
-      className={`flex rounded-lg border
-      ${error ? "border-red-500" : "border-gray-300"}
-      ${
-        !error &&
-        !disabled && // <-- ADDED
-        "focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500"
-      }
-      ${
-        error &&
-        !disabled && // <-- ADDED
-        "focus-within:ring-2 focus-within:ring-red-500 focus-within:border-red-500"
-      }
-      ${disabled ? "bg-gray-100 cursor-not-allowed" : ""} // <-- ADDED
-    `}
-    >
-      <span
-        className={`flex items-center px-3 text-sm text-gray-500 bg-gray-50 border-r border-gray-300 rounded-l-lg ${
-          disabled ? "text-gray-400" : "" // <-- ADDED
-        }`}
-      >
-        {prefix}
-      </span>
-
-      <div className="relative w-full">
-        <input
-          type={type}
-          id={name}
-          name={name}
-          value={value}
-          onChange={onChange}
-          placeholder=" "
-          disabled={disabled} // <-- ADDED
-          className={`block w-full px-3 py-2 bg-transparent appearance-none focus:outline-none peer text-sm rounded-r-lg border-none ${
-            disabled ? "cursor-not-allowed text-gray-500" : "" // <-- ADDED
-          }`}
-        />
-        <label
-          htmlFor={name}
-          className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none ${
-            error ? "text-red-600" : "text-gray-500 peer-focus:text-blue-600"
-          }
-          ${disabled ? "text-gray-400" : ""} // <-- ADDED
-          `}
-        >
-          {label} {required && <span className="text-red-500">*</span>}
-        </label>
-      </div>
-    </div>
-    {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-  </div>
-);
-
-const FormSelect = ({
-  label,
-  name,
-  value,
-  onChange,
-  options,
-  required = false,
-  error,
-  isDisabled = false,
-  className = "",
-  ...props
-}) => {
-  const [isFocused, setIsFocused] = useState(false);
-
-  const hasValue = !!value;
-
-  return (
-    <div className={`relative ${className}`}>
-      <label
-        htmlFor={name}
-        className={`absolute text-sm duration-300 transform z-10 origin-[0] px-2 left-1 pointer-events-none
-        ${
-          isFocused || hasValue
-            ? "scale-75 -translate-y-4 top-2"
-            : "scale-100 translate-y-0 top-1.5"
-        }
-        ${
-          error ? "text-red-600" : isFocused ? "text-blue-600" : "text-gray-500"
-        }
-        ${isDisabled ? "text-gray-400 bg-gray-50" : "bg-white"}
-      `}
-      >
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <Select
-        id={name}
-        name={name}
-        value={value}
-        onChange={onChange}
-        options={options}
-        placeholder=" "
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        styles={customReactSelectStyles(!!error)}
-        isDisabled={isDisabled}
-        classNamePrefix="select"
-        menuPlacement="auto"
-        maxMenuHeight={200}
-        {...props}
-      />
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-    </div>
-  );
-};
-
-// --- END OF FORM COMPONENTS ---
+import {
+  FormInput,
+  FormInputWithPrefix,
+  FormSelect,
+} from "../../BaseComponet/CustomeFormComponents";
 
 function EditProposal() {
   const navigate = useNavigate();
-  const { proposalId } = useParams(); // <-- Get ID from URL
-  const [loading, setLoading] = useState(false); // Submit loading
-  const [pageLoading, setPageLoading] = useState(true); // Page loading
+  const { proposalId } = useParams();
+  const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const { LayoutComponent, role } = useLayout();
   const [errors, setErrors] = useState({});
+  const [deletedContentIds, setDeletedContentIds] = useState([]);
 
   // Same state structure as CreateProposal
   const [proposalInfo, setProposalInfo] = useState({
@@ -243,6 +28,7 @@ function EditProposal() {
     currencyType: "INR",
     discount: 0,
     taxType: "GST",
+    taxPercentage: 18,
     dueDate: "",
     proposalDate: new Date().toISOString().split("T")[0],
     totalAmmount: 0,
@@ -277,7 +63,6 @@ function EditProposal() {
   const [relatedIdOptions, setRelatedIdOptions] = useState([]);
   const [isRelatedIdLoading, setIsRelatedIdLoading] = useState(false);
 
-  // --- Options (Same as CreateProposal) ---
   const relatedOptions = [
     { value: "lead", label: "Lead" },
     { value: "customer", label: "Customer" },
@@ -303,9 +88,7 @@ function EditProposal() {
     { value: "USD", label: "USD" },
     { value: "EUR", label: "EUR" },
   ];
-  // --- End Options ---
 
-  // --- NEW: useEffect to fetch proposal data ---
   useEffect(() => {
     const fetchProposalData = async () => {
       if (!proposalId) {
@@ -315,12 +98,11 @@ function EditProposal() {
       }
       try {
         const response = await axiosInstance.get(
-          `/admin/getProposalById/${proposalId}`
+          `getProposalById/${proposalId}`
         );
         const { proposalInfo: fetchedInfo, proposalContent: fetchedContent } =
           response.data;
 
-        // 1. Handle Proposal Number (strip prefix)
         if (
           fetchedInfo.proposalNumber &&
           fetchedInfo.proposalNumber.startsWith("PROP-")
@@ -328,40 +110,44 @@ function EditProposal() {
           fetchedInfo.proposalNumber = fetchedInfo.proposalNumber.substring(5);
         }
 
-        // 2. Handle Tax Rate
-        // Assuming 'taxRate' is returned in proposalInfo as per update payload
-        if (fetchedInfo.taxRate !== null && fetchedInfo.taxRate !== undefined) {
+        if (
+          fetchedInfo.taxPercentage !== null &&
+          fetchedInfo.taxPercentage !== undefined
+        ) {
+          setTaxRateInput(fetchedInfo.taxPercentage.toString());
+        } else if (
+          fetchedInfo.taxRate !== null &&
+          fetchedInfo.taxRate !== undefined
+        ) {
           setTaxRateInput(fetchedInfo.taxRate.toString());
+          fetchedInfo.taxPercentage = Number(fetchedInfo.taxRate);
         } else {
-          // Fallback logic if taxRate is missing
           const matchingTax = taxOptions.find(
             (o) => o.value === fetchedInfo.taxType
           );
-          setTaxRateInput(
-            matchingTax ? matchingTax.defaultRate.toString() : "0"
-          );
+          const defaultRate = matchingTax
+            ? matchingTax.defaultRate.toString()
+            : "0";
+          setTaxRateInput(defaultRate);
+          fetchedInfo.taxPercentage = Number(defaultRate);
         }
-
-        // 3. Handle AssignTo (pre-populate options for select)
         if (fetchedInfo.employeeId && fetchedInfo.assignTo) {
           setAssignToOptions([
             { value: fetchedInfo.employeeId, label: fetchedInfo.assignTo },
           ]);
         }
-
-        // 4. Handle RelatedId (pre-load full list so select can find the value)
         if (fetchedInfo.relatedTo) {
           let endpoint = "";
           let mappingFunc;
 
           if (fetchedInfo.relatedTo === "lead") {
-            endpoint = "/admin/getLeadNameAndId";
+            endpoint = "getLeadNameAndId";
             mappingFunc = (lead) => ({
               label: lead.clientName,
               value: lead.leadId,
             });
           } else if (fetchedInfo.relatedTo === "customer") {
-            endpoint = "/admin/getCustomerListWithNameAndId";
+            endpoint = "getCustomerListWithNameAndId";
             mappingFunc = (customer) => ({
               label: customer.companyName,
               value: customer.id,
@@ -446,10 +232,8 @@ function EditProposal() {
     };
 
     fetchProposalData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [proposalId]); // Only re-run if proposalId changes
+  }, [proposalId]);
 
-  // --- Country/State/City dependent useEffects (Modified) ---
   useEffect(() => {
     if (selectedCountry) {
       setStates(
@@ -460,7 +244,6 @@ function EditProposal() {
         }))
       );
       setCities([]);
-      // Only reset if the user *changes* the country, not on initial load
       if (proposalInfo.country !== selectedCountry.label) {
         setSelectedState(null);
         setSelectedCity(null);
@@ -483,7 +266,6 @@ function EditProposal() {
       setStates([]);
       setCities([]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCountry]);
 
   useEffect(() => {
@@ -497,7 +279,6 @@ function EditProposal() {
           })
         )
       );
-      // Only reset if the user *changes* the state
       if (proposalInfo.state !== selectedState.label) {
         setSelectedCity(null);
         setProposalInfo((prev) => ({
@@ -516,14 +297,11 @@ function EditProposal() {
     } else {
       setCities([]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedState]);
-
-  // --- Handlers (Mostly same as CreateProposal) ---
 
   const handleCancel = () => {
     if (role === "ROLE_ADMIN") {
-      navigate("/Admin/Proposal");
+      navigate("/Proposal");
     } else if (role === "ROLE_EMPLOYEE") {
       navigate("/Employee/Proposal");
     } else {
@@ -543,8 +321,8 @@ function EditProposal() {
     if (name === "assignTo") {
       setProposalInfo((prev) => ({
         ...prev,
-        assignTo: selectedOption ? selectedOption.label : "", // Set name
-        employeeId: selectedOption ? selectedOption.value : "", // Set ID
+        assignTo: selectedOption ? selectedOption.label : "",
+        employeeId: selectedOption ? selectedOption.value : "",
       }));
 
       if (errors.assignTo) {
@@ -554,9 +332,9 @@ function EditProposal() {
       setProposalInfo((prev) => ({
         ...prev,
         relatedTo: selectedOption ? selectedOption.value : "",
-        relatedId: "", // Clear relatedId when 'Related To' changes
+        relatedId: "",
       }));
-      setRelatedIdOptions([]); // Clear options
+      setRelatedIdOptions([]);
 
       if (errors.relatedTo) setErrors((prev) => ({ ...prev, relatedTo: "" }));
       if (errors.relatedId) setErrors((prev) => ({ ...prev, relatedId: "" }));
@@ -588,11 +366,19 @@ function EditProposal() {
 
   const handleRemoveItem = (index) => {
     const list = [...proposalContent];
+    const itemToRemove = list[index];
+
+    if (itemToRemove.proposalContentId) {
+      setDeletedContentIds((prevIds) => [
+        ...prevIds,
+        itemToRemove.proposalContentId,
+      ]);
+    }
+
     list.splice(index, 1);
     setProposalContent(list);
   };
 
-  // --- Calculations (Same as CreateProposal) ---
   const { subtotal, taxAmount, total } = useMemo(() => {
     const sub = proposalContent.reduce(
       (acc, item) =>
@@ -627,15 +413,13 @@ function EditProposal() {
     setProposalInfo((prev) => ({ ...prev, totalAmmount: total }));
   }, [total]);
 
-  // --- Async Option Loaders (Same as CreateProposal) ---
   const loadAssignToOptions = async () => {
-    // Prevent re-loading if we already have the initial value
     if (assignToOptions.length > 1 || isAssignToLoading) {
       return;
     }
     setIsAssignToLoading(true);
     try {
-      const response = await axiosInstance.get("/admin/getEmployeeNameAndId");
+      const response = await axiosInstance.get("getEmployeeNameAndId");
       const mappedOptions = response.data.map((emp) => ({
         label: emp.name,
         value: emp.employeeId,
@@ -650,7 +434,6 @@ function EditProposal() {
   };
 
   const loadRelatedIdOptions = async () => {
-    // Prevent re-loading if we already have the full list
     if (
       (relatedIdOptions.length > 0 && !isRelatedIdLoading) ||
       !proposalInfo.relatedTo
@@ -664,14 +447,14 @@ function EditProposal() {
 
     try {
       if (proposalInfo.relatedTo === "lead") {
-        endpoint = "/admin/getLeadNameAndId";
+        endpoint = "getLeadNameAndId";
         const response = await axiosInstance.get(endpoint);
         mappedOptions = response.data.map((lead) => ({
           label: lead.clientName,
           value: lead.leadId,
         }));
       } else if (proposalInfo.relatedTo === "customer") {
-        endpoint = "/admin/getCustomerListWithNameAndId";
+        endpoint = "getCustomerListWithNameAndId";
         const response = await axiosInstance.get(endpoint);
         mappedOptions = response.data.map((customer) => ({
           label: customer.companyName,
@@ -688,7 +471,6 @@ function EditProposal() {
     }
   };
 
-  // --- Validation (Same as CreateProposal) ---
   const validateForm = () => {
     const newErrors = {};
     if (!proposalInfo.proposalNumber.trim())
@@ -721,7 +503,6 @@ function EditProposal() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // --- MODIFIED: handleSubmit for Update ---
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -732,32 +513,43 @@ function EditProposal() {
     setErrors({});
     setLoading(true);
 
-    const effectiveTaxRate = Number(taxRateInput) || 0;
-
     const payload = {
       proposalInfo: {
         ...proposalInfo,
-        proposalId: proposalId, // <-- Include the proposalId for update
-        proposalNumber: `PROP-${proposalInfo.proposalNumber}`, // Re-add prefix
+        proposalId: proposalId,
+        proposalNumber: `PROP-${proposalInfo.proposalNumber}`,
         discount: Number(proposalInfo.discount),
         totalAmmount: Number(proposalInfo.totalAmmount),
-        taxRate: effectiveTaxRate,
       },
       proposalContent: proposalContent.map((item) => ({
-        ...item, // This will include existing IDs (proposalContentId, proposalId)
+        ...item,
         quantity: Number(item.quantity),
         rate: Number(item.rate),
       })),
     };
 
     try {
-      await axiosInstance.put("/admin/updateProposal", payload); // <-- Use PUT
+      await axiosInstance.put("updateProposal", payload);
       console.log("Form Updated:", payload);
-      toast.success("Proposal updated successfully!"); // <-- Changed toast
+
+      if (deletedContentIds.length > 0) {
+        console.log("Deleting content IDs:", deletedContentIds);
+        try {
+          await axiosInstance.delete("deleteProposalContent", {
+            data: deletedContentIds,
+          });
+          console.log("Successfully deleted removed items.");
+        } catch (deleteError) {
+          console.error("Failed to delete proposal content:", deleteError);
+          toast.error("Proposal updated, but failed to remove old items.");
+        }
+      }
+
+      toast.success("Proposal updated successfully!");
       setLoading(false);
 
       if (role === "ROLE_ADMIN") {
-        navigate("/Admin/Proposal");
+        navigate("/Proposal");
       } else if (role === "ROLE_EMPLOYEE") {
         navigate("/Employee/Proposal");
       }
@@ -791,7 +583,7 @@ function EditProposal() {
             <button
               onClick={() => {
                 if (role === "ROLE_ADMIN") {
-                  navigate("/Admin/Proposal");
+                  navigate("/Proposal");
                 } else if (role === "ROLE_EMPLOYEE") {
                   navigate("/Employee/Proposal");
                 }
@@ -854,7 +646,7 @@ function EditProposal() {
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    Update Proposal {/* <-- MODIFIED */}
+                    Update Proposal
                   </>
                 )}
               </button>
@@ -882,7 +674,7 @@ function EditProposal() {
                       onChange={handleInfoChange}
                       required
                       error={errors.proposalNumber}
-                      disabled={true} // <-- MODIFIED: Proposal number not editable
+                      disabled={true}
                       className="md:col-span-1"
                     />
                     <FormInput
@@ -1237,9 +1029,17 @@ function EditProposal() {
                           if (opt) {
                             handleSelectChange("taxType", opt);
                             setTaxRateInput(opt.defaultRate);
+                            setProposalInfo((prev) => ({
+                              ...prev,
+                              taxPercentage: Number(opt.defaultRate) || 0,
+                            }));
                           } else {
                             handleSelectChange("taxType", null);
                             setTaxRateInput("");
+                            setProposalInfo((prev) => ({
+                              ...prev,
+                              taxPercentage: 0,
+                            }));
                           }
                         }}
                         options={taxOptions}
@@ -1252,7 +1052,14 @@ function EditProposal() {
                         name="taxRateInput"
                         type="number"
                         value={taxRateInput}
-                        onChange={(e) => setTaxRateInput(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setTaxRateInput(value);
+                          setProposalInfo((prev) => ({
+                            ...prev,
+                            taxPercentage: Number(value) || 0,
+                          }));
+                        }}
                         disabled={proposalInfo.taxType === "No Tax"}
                         className="w-full"
                       />
