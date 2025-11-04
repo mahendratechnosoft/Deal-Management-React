@@ -8,4 +8,14 @@
 
 .crm-Leadlist-kanbadn-col-list {
   scrollbar-width: thin;
+
+}
+
+
+@media (min-wdith:310px) and (max-width:768px){
+
+  .crm-Leadlist-kanbadn-col-list {
+  
+
+}
 }

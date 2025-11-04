@@ -136,12 +136,11 @@ function LeadList() {
   // Default columns
   const [columns, setColumns] = useState([
     { id: "clientName", name: "CLIENT NAME", visible: true, order: 0 },
-    { id: "status", name: "STATUS", visible: true, order: 1 },
-    { id: "source", name: "SOURCE", visible: true, order: 2 },
-    { id: "city", name: "CITY", visible: true, order: 3 },
-    { id: "state", name: "STATE", visible: true, order: 4 },
-    { id: "country", name: "COUNTRY", visible: true, order: 5 },
-    { id: "createdDate", name: "CREATED DATE", visible: true, order: 6 },
+    { id: "companyName", name: "COMPANY NAME", visible: true, order: 1 },
+    { id: "email", name: "EMAIL", visible: true, order: 2 },
+    { id: "mobileNumber", name: "PHONE", visible: true, order: 3 },
+    { id: "status", name: "STATUS", visible: true, order: 4 },
+       { id: "createdDate", name: "CREATED DATE", visible: true, order: 5 },
   ]);
 
   const [tempColumns, setTempColumns] = useState(columns);
@@ -448,6 +447,16 @@ function LeadList() {
     dragOverItem.current = null;
   };
 
+  // Utility function to truncate text with ellipsis
+  const truncateText = (text, maxLength = 10) => {
+    if (!text || text === "N/A") return text || "N/A";
+
+    if (text.length <= maxLength) {
+      return text;
+    }
+
+    return text.substring(0, maxLength) + "...";
+  };
   // Kanban handlers
   const handleKanbanDragStart = (e, lead, columnId) => {
     setDraggedLead({ ...lead, fromColumn: columnId });
@@ -984,9 +993,10 @@ function LeadList() {
                         {visibleColumns.map((column) => (
                           <th
                             key={column.id}
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider truncate"
+                            title={column.name}
                           >
-                            {column.name}
+                            {truncateText(column.name, 10)}
                           </th>
                         ))}
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1008,13 +1018,21 @@ function LeadList() {
                               className="px-6 py-1 whitespace-nowrap text-sm text-gray-900"
                             >
                               {column.id === "clientName" ? (
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
                                     {getInitials(lead.clientName)}
                                   </div>
-                                  <span className="font-semibold">
-                                    {lead[column.id] || "N/A"}
-                                  </span>
+                                  <div className="min-w-0 flex-1">
+                                    <span
+                                      className="font-semibold truncate block"
+                                      title={lead[column.id] || "N/A"}
+                                    >
+                                      {truncateText(
+                                        lead[column.id] || "N/A",
+                                        10
+                                      )}
+                                    </span>
+                                  </div>
                                 </div>
                               ) : column.id === "status" ? (
                                 <div className="status-dropdown relative">
@@ -1024,11 +1042,17 @@ function LeadList() {
                                     }
                                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
                                       lead[column.id]
-                                    )} hover:opacity-80 transition-opacity`}
+                                    )} hover:opacity-80 transition-opacity max-w-full truncate`}
+                                    title={lead[column.id] || "N/A"}
                                   >
-                                    {lead[column.id] || "Unknown"}
+                                    <span className="truncate">
+                                      {truncateText(
+                                        lead[column.id] || "N/A",
+                                        10
+                                      )}
+                                    </span>
                                     <svg
-                                      className="w-3 h-3 ml-1"
+                                      className="w-3 h-3 ml-1 flex-shrink-0"
                                       fill="none"
                                       stroke="currentColor"
                                       viewBox="0 0 24 24"
@@ -1051,13 +1075,14 @@ function LeadList() {
                                             onClick={() =>
                                               updateLeadStatus(lead.id, status)
                                             }
-                                            className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
+                                            className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 truncate ${
                                               lead.status === status
                                                 ? "bg-blue-50 text-blue-600"
                                                 : "text-gray-700"
                                             }`}
+                                            title={status}
                                           >
-                                            {status}
+                                            {truncateText(status, 10)}
                                           </button>
                                         ))}
                                       </div>
@@ -1068,18 +1093,48 @@ function LeadList() {
                                 <span
                                   className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(
                                     lead[column.id]
-                                  )}`}
+                                  )} max-w-full truncate`}
+                                  title={lead[column.id] || "N/A"}
                                 >
-                                  {lead[column.id] || "Unknown"}
+                                  {truncateText(lead[column.id] || "N/A", 10)}
                                 </span>
                               ) : column.id === "revenue" ? (
-                                <span className="font-semibold">
-                                  {formatCurrency(lead[column.id])}
+                                <span
+                                  className="font-semibold truncate block"
+                                  title={formatCurrency(lead[column.id])}
+                                >
+                                  {truncateText(
+                                    formatCurrency(lead[column.id]),
+                                    10
+                                  )}
                                 </span>
                               ) : column.id === "createdDate" ? (
-                                formatDate(lead[column.id])
+                                <span
+                                  className="truncate block"
+                                  title={formatDate(lead[column.id])}
+                                >
+                                  {truncateText(
+                                    formatDate(lead[column.id]),
+                                    10
+                                  )}
+                                </span>
                               ) : (
-                                lead[column.id] || "N/A"
+                                <div className="relative group">
+                                  <span
+                                    className="truncate block max-w-xs"
+                                    title={lead[column.id] || "N/A"}
+                                  >
+                                    {truncateText(lead[column.id] || "N/A", 10)}
+                                  </span>
+                                  {/* Show full text on hover for long content */}
+                                  {lead[column.id] &&
+                                    lead[column.id].length > 10 && (
+                                      <div className="absolute invisible group-hover:visible z-20 bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-normal max-w-xs break-words">
+                                        {lead[column.id]}
+                                        <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                                      </div>
+                                    )}
+                                </div>
                               )}
                             </td>
                           ))}
@@ -1088,7 +1143,7 @@ function LeadList() {
                               {/* Preview Button */}
                               <button
                                 onClick={() => handlePreview(lead.id)}
-                                className="text-gray-400 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1"
+                                className="text-gray-400 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 flex-shrink-0"
                                 title="Preview Lead"
                               >
                                 <svg
@@ -1115,7 +1170,7 @@ function LeadList() {
                               {/* Edit Button */}
                               <button
                                 onClick={() => handleEdit(lead.id)}
-                                className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
+                                className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1 flex-shrink-0"
                                 title="Edit Lead"
                               >
                                 <svg
@@ -1175,7 +1230,6 @@ function LeadList() {
                 </div>
               )}
             </div>
-
             {/* Pagination - Outside table card, above the table */}
             <div
               className="bg-white rounded-lg border border-gray-200 shadow-xs p-3 mt-4 sticky bottom-0 "
