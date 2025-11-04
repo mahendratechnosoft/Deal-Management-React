@@ -343,9 +343,9 @@ function CreateCustomer() {
       newErrors.mobile = "Please enter a valid mobile number";
     }
 
-    if (formData.website && !/^https?:\/\/.+\..+/.test(formData.website)) {
-      newErrors.website = "Please enter a valid website URL";
-    }
+   if (formData.website && !/^(https?:\/\/)?.+\..+/.test(formData.website)) {
+     newErrors.website = "Please enter a valid website URL";
+   }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -398,7 +398,7 @@ function CreateCustomer() {
       await axiosInstance.post("createCustomer", submitData);
 
       toast.success("Customer created successfully!");
-      navigate("/Admin/CustomerList");
+     navigateCustList();
     } catch (error) {
       console.error("Error creating customer:", error);
       if (error.response?.data?.message) {
@@ -413,15 +413,7 @@ function CreateCustomer() {
     }
   };
 
-  const handleCancel = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to cancel? Any unsaved changes will be lost."
-      )
-    ) {
-      navigate("/Admin/CustomerList");
-    }
-  };
+
 
   const customStyles = {
     control: (base) => ({
@@ -438,13 +430,22 @@ function CreateCustomer() {
     }),
   };
 
+   const navigateCustList = () => {
+    
+
+     if (role === "ROLE_ADMIN") {
+       navigate("/Admin/CustomerList");
+     } else if (role === "ROLE_EMPLOYEE") {
+       navigate("/Employee/CustomerList");
+     }
+   };
   return (
     <LayoutComponent>
       <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
         <div className="">
           <div className="flex items-center gap-2 mb-2">
             <button
-              onClick={() => navigate("/Admin/CustomerList")}
+              onClick={() => navigateCustList()}
               className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200"
             >
               <svg
@@ -475,7 +476,7 @@ function CreateCustomer() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={handleCancel}
+                onClick={() => navigateCustList()}
                 className="px-4 py-2 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 text-sm font-medium"
               >
                 Cancel
@@ -633,7 +634,7 @@ function CreateCustomer() {
 
                       <div className="relative">
                         <input
-                          type="url"
+                          type="text"
                           name="website"
                           value={formData.website}
                           onChange={handleChange}

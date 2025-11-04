@@ -365,13 +365,27 @@ function LeadList() {
     };
   }, []);
 
-  // Other handlers
+  // // Other handlers
+  // const handleCreateLead = () => {
+  //   navigate("/CreateLead");
+  // };
+
   const handleCreateLead = () => {
-    navigate("/CreateLead");
+    console.log("Current role:", role);
+
+    if (role === "ROLE_ADMIN") {
+      navigate("/Admin/CreateLead");
+    } else if (role === "ROLE_EMPLOYEE") {
+      navigate("/Employee/CreateLead");
+    }
   };
 
   const handleEdit = (leadId) => {
-    navigate(`/EditLead/${leadId}`);
+    if (role === "ROLE_ADMIN") {
+      navigate(`/Admin/EditLead/${leadId}`);
+    } else if (role === "ROLE_EMPLOYEE") {
+      navigate(`/Employee/EditLead/${leadId}`);
+    }
   };
 
   const handleRefresh = () => {

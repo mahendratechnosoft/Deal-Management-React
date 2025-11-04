@@ -387,7 +387,13 @@ function CreateLead() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={handleCancel}
+                onClick={() => {
+                  if (role === "ROLE_ADMIN") {
+                    navigate("/Admin/LeadList");
+                  } else if (role === "ROLE_EMPLOYEE") {
+                    navigate("/Employee/LeadList");
+                  }
+                }}
                 className="px-4 py-2 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 text-sm font-medium"
               >
                 Cancel

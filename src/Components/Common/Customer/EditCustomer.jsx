@@ -526,10 +526,9 @@ function EditCustomer() {
       newErrors.mobile = "Please enter a valid mobile number";
     }
 
-    if (formData.website && !/^https?:\/\/.+\..+/.test(formData.website)) {
-      newErrors.website = "Please enter a valid website URL";
-    }
-
+ if (formData.website && !/^(https?:\/\/)?.+\..+/.test(formData.website)) {
+   newErrors.website = "Please enter a valid website URL";
+ }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -841,7 +840,7 @@ const handleSubmit = async (e) => {
 
                       <div className="relative">
                         <input
-                          type="url"
+                          type="text"
                           name="website"
                           value={formData.website}
                           onChange={handleChange}

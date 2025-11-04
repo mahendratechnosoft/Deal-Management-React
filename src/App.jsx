@@ -85,6 +85,14 @@ function App() {
             }
           />
           <Route
+            path="/Admin/CreateLead"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <CreateLead />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
             path="/Admin/EmployeeList"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
@@ -108,14 +116,14 @@ function App() {
               </RoleBasedRoute>
             }
           />
-          {/* <Route
+          <Route
             path="/Admin/EditLead/:id"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                 <EditLead />
               </RoleBasedRoute>
             }
-          /> */}
+          />
           <Route
             path="/Admin/CustomerList"
             element={
@@ -159,33 +167,33 @@ function App() {
               </RoleBasedRoute>
             }
           />
-          {/* <Route
+          <Route
             path="/Employee/EditLead/:id"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
                 <EditLead />
               </RoleBasedRoute>
             }
-          /> */}
+          />
 
           {/* Common Routes */}
-          <Route
-            path="/CreateLead"
+          {/* <Route
+            path="/Employee/CreateLead"
             element={
-              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
                 <CreateLead />
               </RoleBasedRoute>
             }
-          />
+          /> */}
           {/* Common Routes - Use this for both Admin and Employee */}
-          <Route
+          {/* <Route
             path="/EditLead/:id"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
                 <EditLead />
               </RoleBasedRoute>
             }
-          />
+          /> */}
 
           <Route
             path="/Employee/CustomerList"
@@ -198,12 +206,11 @@ function App() {
           <Route
             path="/Employee/CreateCustomer"
             element={
-              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
                 <CreateCustomer />
               </RoleBasedRoute>
             }
           />
-
           <Route
             path="/Employee/EditCustomer/:customerId"
             element={

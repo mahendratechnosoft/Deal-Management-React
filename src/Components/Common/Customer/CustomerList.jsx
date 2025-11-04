@@ -35,33 +35,30 @@ function CustomerList() {
     "Other",
   ];
 
-
-const InlineSpinner = ({ label = "Loading..." }) => (
-  <div className="flex items-center gap-3">
-    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
-    <span className="text-sm text-gray-600">{label}</span>
-  </div>
-);
-
-const TableSkeleton = ({ rows = 5, cols = 8 }) => {
-  const r = Array.from({ length: rows });
-  const c = Array.from({ length: cols });
-  return (
-    <tbody>
-      {r.map((_, i) => (
-        <tr key={i} className="animate-pulse">
-          {c.map((_, j) => (
-            <td key={j} className="px-4 py-3">
-              <div className="h-4 bg-gray-200 rounded w-full" />
-            </td>
-          ))}
-        </tr>
-      ))}
-    </tbody>
+  const InlineSpinner = ({ label = "Loading..." }) => (
+    <div className="flex items-center gap-3">
+      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
+      <span className="text-sm text-gray-600">{label}</span>
+    </div>
   );
-};
 
-
+  const TableSkeleton = ({ rows = 5, cols = 8 }) => {
+    const r = Array.from({ length: rows });
+    const c = Array.from({ length: cols });
+    return (
+      <tbody>
+        {r.map((_, i) => (
+          <tr key={i} className="animate-pulse">
+            {c.map((_, j) => (
+              <td key={j} className="px-4 py-3">
+                <div className="h-4 bg-gray-200 rounded w-full" />
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    );
+  };
 
   // Fetch customers with search functionality - using useCallback to prevent unnecessary recreations
   const fetchCustomers = useCallback(
@@ -108,13 +105,14 @@ const TableSkeleton = ({ rows = 5, cols = 8 }) => {
   };
 
   const handleCreateCustomer = () => {
+    console.log("Current role:", role);
+
     if (role === "ROLE_ADMIN") {
       navigate("/Admin/CreateCustomer");
     } else if (role === "ROLE_EMPLOYEE") {
       navigate("/Employee/CreateCustomer");
     }
   };
-
   const handleEdit = (customerId) => {
     if (role === "ROLE_ADMIN") {
       navigate(`/Admin/EditCustomer/${customerId}`);
@@ -213,8 +211,6 @@ const TableSkeleton = ({ rows = 5, cols = 8 }) => {
       customer.industry?.toLowerCase() === industryFilter.toLowerCase();
     return matchesIndustry;
   });
-
-
 
   if (error) {
     return (
@@ -632,9 +628,7 @@ const TableSkeleton = ({ rows = 5, cols = 8 }) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between pr-2  border-gray-200">
-              <div>
-            
-              </div>
+              <div></div>
               <button
                 onClick={handleCloseContactModal}
                 className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
