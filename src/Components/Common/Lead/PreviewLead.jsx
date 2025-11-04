@@ -2,11 +2,12 @@ import React, { useState, useEffect } from "react";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 
-function PreviewLead({ leadId, onClose, onEdit }) {
+function PreviewLead({ leadId, onClose, onEdit, onConvert }) {
   const [activeTab, setActiveTab] = useState("profile");
   const [leadData, setLeadData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [converting, setConverting] = useState(false);
 
   useEffect(() => {
     if (leadId) {
@@ -18,24 +19,91 @@ function PreviewLead({ leadId, onClose, onEdit }) {
     try {
       setLoading(true);
       setError(null);
-
-      // Use the exact same pattern as LeadList - no leading slash
       const response = await axiosInstance.get(`getLeadById/${leadId}`);
       const data = response.data;
 
-      // Use the same response structure checking as LeadList
       if (data && data.lead) {
         setLeadData(data.lead);
       } else {
-        // If response structure is different, try to adapt
         setLeadData(data || null);
       }
     } catch (err) {
       console.error("Error fetching lead details:", err);
-      // Use the same error handling pattern as LeadList
       setError(err.message || "Failed to load lead details");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleConvertToCustomer = async () => {
+    if (!leadData) return;
+
+    setConverting(true);
+    try {
+      // Prepare customer data from lead data
+      const customerData = {
+        companyName: leadData.companyName || leadData.clientName,
+        phone: leadData.phoneNumber || "",
+        mobile: leadData.mobileNumber || "",
+        website: leadData.website || "",
+        industry: leadData.industry || "",
+        revenue: leadData.revenue || 0,
+        gstin: "", // Not available in lead data
+        panNumber: "", // Not available in lead data
+        billingStreet: leadData.street || "",
+        billingCity: leadData.city || "",
+        billingState: leadData.state || "",
+        billingCountry: leadData.country || "",
+        billingZipCode: leadData.zipCode || "",
+        shippingStreet: leadData.street || "", // Same as billing if not specified
+        shippingCity: leadData.city || "",
+        shippingState: leadData.state || "",
+        shippingCountry: leadData.country || "",
+        shippingZipCode: leadData.zipCode || "",
+        description:
+          leadData.description || `Converted from lead: ${leadData.clientName}`,
+        // Add lead reference if needed
+        leadId: leadData.id,
+      };
+
+      // Call create customer API
+      const response = await axiosInstance.post("createCustomer", customerData);
+
+      if (response.data) {
+        // Optionally update lead status to mark as converted
+        try {
+          await axiosInstance.put("updateLeadStatus", {
+            leadId: leadData.id,
+            status: "Converted",
+            converted: true,
+            customerId: response.data.id, // If API returns customer ID
+          });
+        } catch (updateError) {
+          console.error("Error updating lead status:", updateError);
+          // Continue even if status update fails
+        }
+
+        toast.success("Lead successfully converted to customer!");
+        // Call the onConvert callback to refresh parent data
+        if (onConvert) {
+          onConvert();
+        }
+
+        // Close the preview modal
+        onClose();
+
+        // You might want to refresh the parent component or navigate
+        // For example: navigate to customer list or refresh leads
+      }
+    } catch (error) {
+      console.error("Error converting lead to customer:", error);
+      if (error.response?.data?.message) {
+        toast.error(`Failed to convert lead: ${error.response.data.message}`);
+      } else {
+        toast.error("Failed to convert lead to customer. Please try again.");
+      }
+    } finally {
+      setConverting(false);
     }
   };
 
@@ -73,13 +141,6 @@ function PreviewLead({ leadId, onClose, onEdit }) {
       .join("")
       .toUpperCase()
       .substring(0, 2);
-  };
-
-  const handleConvertToCustomer = () => {
-    // Placeholder function as requested
-    toast.success(
-      "Convert to customer functionality will be implemented soon!"
-    );
   };
 
   if (loading) {
@@ -215,22 +276,55 @@ function PreviewLead({ leadId, onClose, onEdit }) {
                         </button>
                         <button
                           onClick={handleConvertToCustomer}
-                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md transition-colors duration-200 font-medium flex items-center gap-1.5 text-xs"
+                          disabled={converting || leadData.converted}
+                          className={`px-3 py-1.5 rounded-md transition-colors duration-200 font-medium flex items-center gap-1.5 text-xs ${
+                            leadData.converted
+                              ? "bg-gray-400 text-white cursor-not-allowed"
+                              : converting
+                              ? "bg-green-500 text-white cursor-not-allowed"
+                              : "bg-green-600 hover:bg-green-700 text-white"
+                          }`}
                         >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                          Convert to Customer
+                          {converting ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
+                              Converting...
+                            </>
+                          ) : leadData.converted ? (
+                            <>
+                              <svg
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              Already Converted
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>
+                              Convert to Customer
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>
@@ -251,15 +345,17 @@ function PreviewLead({ leadId, onClose, onEdit }) {
                             ? "bg-green-500 text-white"
                             : leadData.status === "Lost"
                             ? "bg-red-500 text-white"
+                            : leadData.converted
+                            ? "bg-green-500 text-white"
                             : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {leadData.status || "Unknown"}
+                        {leadData.converted
+                          ? "Converted"
+                          : leadData.status || "Unknown"}
                       </span>
                     </div>
                   </div>
-
-                  {/* Action Buttons */}
 
                   {/* Lead Details Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

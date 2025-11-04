@@ -157,6 +157,7 @@ function LeadList() {
     "Negotiation",
     "Won",
     "Lost",
+    "Converted",
   ];
 
   const kanbanColumns = [
@@ -172,7 +173,12 @@ function LeadList() {
     },
     { id: "won", title: "Won", color: "bg-green-600", leads: [] },
     { id: "lost", title: "Lost", color: "bg-red-500", leads: [] },
+    { id: "converted", title: "Converted", color: "bg-indigo-500", leads: [] },
   ];
+
+  const refreshLeadsData = () => {
+    fetchLeads(currentPage, searchTerm, statusFilter);
+  };
 
   // Fetch leads function
   const fetchLeads = async (page = 0, search = "", status = "all") => {
@@ -261,6 +267,12 @@ function LeadList() {
   const handleEditFromPreview = (leadId) => {
     setShowPreviewModal(false);
     handleEdit(leadId);
+  };
+
+  const handleLeadConverted = () => {
+    // Refresh the leads data to reflect changes
+    refreshLeadsData();
+    toast.success("Lead converted to customer successfully!");
   };
 
   const handleCardFilter = (status) => {
@@ -479,6 +491,8 @@ function LeadList() {
         return "bg-green-500 text-white";
       case "lost":
         return "bg-red-500 text-white";
+      case "converted": // Add this case
+        return "bg-indigo-100 text-indigo-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -798,7 +812,6 @@ function LeadList() {
             </div>
           </div>
 
-
           {/* Status Cards */}
           {statusAndCount.map((statusCount, index) => {
             const statusConfig = {
@@ -864,6 +877,16 @@ function LeadList() {
                 activeBorderColor: "border-red-400",
                 ringColor: "ring-red-500",
                 icon: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z",
+              },
+
+              Converted: {
+                bgColor: "bg-indigo-100",
+                activeBgColor: "bg-indigo-200",
+                iconColor: "text-indigo-600",
+                borderColor: "border-indigo-200",
+                activeBorderColor: "border-indigo-400",
+                ringColor: "ring-indigo-500",
+                icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
               },
             };
 
@@ -1544,6 +1567,7 @@ function LeadList() {
           leadId={previewLeadId}
           onClose={handleClosePreview}
           onEdit={handleEditFromPreview}
+          onConvert={handleLeadConverted}
         />
       )}
     </LayoutComponent>
