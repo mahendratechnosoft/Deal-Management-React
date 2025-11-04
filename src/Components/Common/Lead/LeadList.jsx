@@ -4,14 +4,116 @@ import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
 import toast from "react-hot-toast";
 import PreviewLead from "./PreviewLead";
+
+// Table Skeleton Component
+const TableSkeleton = () => {
+  return (
+    <div className="p-6">
+      {/* Header Skeleton */}
+      <div className="mb-4">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-2 h-8 bg-gray-300 rounded-full animate-pulse"></div>
+              <div className="h-8 bg-gray-300 rounded w-32 animate-pulse"></div>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+            <div className="flex bg-gray-100 rounded-lg p-0.5">
+              <div className="px-2.5 py-1.5 rounded bg-gray-300 w-16 animate-pulse"></div>
+              <div className="px-2.5 py-1.5 rounded bg-gray-200 w-16 animate-pulse ml-1"></div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 flex-1">
+              <div className="relative flex-1 sm:max-w-64">
+                <div className="w-full h-10 bg-gray-300 rounded-lg animate-pulse"></div>
+              </div>
+              <div className="flex-1 sm:flex-none hidden">
+                <div className="w-full sm:w-40 h-10 bg-gray-300 rounded-lg animate-pulse"></div>
+              </div>
+            </div>
+            <div className="bg-gray-300 rounded-lg w-32 h-10 animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Count Cards Skeleton */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8 gap-2 mb-4">
+        {[...Array(8)].map((_, index) => (
+          <div
+            key={index}
+            className="bg-white rounded-lg p-2 shadow-sm border border-gray-200"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-gray-300 animate-pulse"></div>
+              <div className="min-w-0 flex-1">
+                <div className="h-3 bg-gray-300 rounded w-12 mb-1 animate-pulse"></div>
+                <div className="h-4 bg-gray-400 rounded w-8 animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Table Skeleton */}
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+        <div className="relative overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                {[...Array(7)].map((_, index) => (
+                  <th key={index} className="px-6 py-3 text-left">
+                    <div className="h-4 bg-gray-300 rounded w-24 animate-pulse"></div>
+                  </th>
+                ))}
+                <th className="px-6 py-3 text-left">
+                  <div className="h-4 bg-gray-300 rounded w-16 animate-pulse"></div>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {[...Array(5)].map((_, rowIndex) => (
+                <tr key={rowIndex}>
+                  {[...Array(8)].map((_, colIndex) => (
+                    <td key={colIndex} className="px-6 py-4">
+                      <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Pagination Skeleton */}
+      <div className="bg-white rounded-lg border border-gray-200 p-3 mt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-4">
+            <div className="h-4 bg-gray-300 rounded w-20 animate-pulse"></div>
+            <div className="flex items-center gap-2">
+              <div className="h-4 bg-gray-300 rounded w-12 animate-pulse"></div>
+              <div className="h-8 bg-gray-300 rounded w-16 animate-pulse"></div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-1">
+            {[...Array(5)].map((_, index) => (
+              <div
+                key={index}
+                className="h-8 bg-gray-300 rounded w-8 animate-pulse"
+              ></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function LeadList() {
   const navigate = useNavigate();
-
-  // Get user role from localStorage
-  const getUserRole = () => {
-    return localStorage.getItem("role");
-  };
+  const abortControllerRef = useRef(null);
   const { LayoutComponent, role } = useLayout();
+
   const [showColumnPopup, setShowColumnPopup] = useState(false);
   const [viewMode, setViewMode] = useState("table");
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,36 +128,16 @@ function LeadList() {
   const [pageSize, setPageSize] = useState(10);
   const [activeStatusDropdown, setActiveStatusDropdown] = useState(null);
 
-  // Add these state variables near other state declarations
   const [draggedLead, setDraggedLead] = useState(null);
   const [dragOverColumn, setDragOverColumn] = useState(null);
-
   const [previewLeadId, setPreviewLeadId] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
-
-const handlePreview = (leadId) => {
-  setPreviewLeadId(leadId);
-  setShowPreviewModal(true);
-};
-
-const handleClosePreview = () => {
-  setShowPreviewModal(false);
-  setPreviewLeadId(null);
-};
-
-const handleEditFromPreview = (leadId) => {
-  setShowPreviewModal(false);
-  handleEdit(leadId); // Use existing edit function
-};
-
-  // Default columns based on API response structure
+  // Default columns
   const [columns, setColumns] = useState([
     { id: "clientName", name: "CLIENT NAME", visible: true, order: 0 },
-
     { id: "status", name: "STATUS", visible: true, order: 1 },
     { id: "source", name: "SOURCE", visible: true, order: 2 },
-
     { id: "city", name: "CITY", visible: true, order: 3 },
     { id: "state", name: "STATE", visible: true, order: 4 },
     { id: "country", name: "COUNTRY", visible: true, order: 5 },
@@ -66,42 +148,7 @@ const handleEditFromPreview = (leadId) => {
   const dragItem = useRef();
   const dragOverItem = useRef();
 
-  // Add drag and drop handlers for Kanban
-  const handleKanbanDragStart = (e, lead, columnId) => {
-    setDraggedLead({ ...lead, fromColumn: columnId });
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleKanbanDragOver = (e, columnId) => {
-    e.preventDefault();
-    setDragOverColumn(columnId);
-  };
-
-  const handleKanbanDragLeave = () => {
-    setDragOverColumn(null);
-  };
-
-  const handleKanbanDrop = async (e, targetColumnId) => {
-    e.preventDefault();
-
-    if (draggedLead && draggedLead.fromColumn !== targetColumnId) {
-      const newStatus = targetColumnId
-        .split(" ")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
-
-      try {
-        // Update status via API
-        await updateLeadStatus(draggedLead.id, newStatus);
-      } catch (error) {
-        console.error("Error updating lead status via drag and drop:", error);
-      }
-    }
-
-    setDraggedLead(null);
-    setDragOverColumn(null);
-  };
-
+  // Status options and kanban columns
   const statusOptions = [
     "New Lead",
     "Contacted",
@@ -127,9 +174,16 @@ const handleEditFromPreview = (leadId) => {
     { id: "lost", title: "Lost", color: "bg-red-500", leads: [] },
   ];
 
-  // Fetch leads with search functionality
-  // Update the fetchLeads function to handle status filtering
+  // Fetch leads function
   const fetchLeads = async (page = 0, search = "", status = "all") => {
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
+
     try {
       setLoading(true);
 
@@ -148,7 +202,10 @@ const handleEditFromPreview = (leadId) => {
         url += `?${params.join("&")}`;
       }
 
-      const response = await axiosInstance.get(url);
+      const response = await axiosInstance.get(url, {
+        signal: abortControllerRef.current.signal,
+      });
+
       const data = response.data;
 
       setLeads(data.leadList || []);
@@ -158,6 +215,11 @@ const handleEditFromPreview = (leadId) => {
       setStatusAndCount(data.statusAndCount || []);
       setError(null);
     } catch (err) {
+      // Ignore abort errors
+      if (err.name === "AbortError") {
+        console.log("Request was cancelled");
+        return;
+      }
       console.error("Error fetching leads:", err);
       setError(err.message);
     } finally {
@@ -165,32 +227,47 @@ const handleEditFromPreview = (leadId) => {
     }
   };
 
-  // Refresh data when pageSize changes
-
-  useEffect(() => {
-    fetchLeads(0, searchTerm, statusFilter);
-  }, [pageSize]);
-
-  // Update the handleCardFilter function to call API with status filter
-  const handleCardFilter = (status) => {
-    setStatusFilter(status);
-    fetchLeads(0, searchTerm, status); // Reset to page 0 when filtering
-  };
-
-  // Update the search useEffect to include status filter
+  // SINGLE useEffect for all data fetching - FIXED
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchLeads(0, searchTerm, statusFilter);
     }, 500);
 
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+    // Cleanup function
+    return () => {
+      clearTimeout(timeoutId);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [searchTerm, statusFilter, pageSize]); // All dependencies in one useEffect
 
-  // Update the pageSize useEffect to include status filter
+  // Remove duplicate useEffect hooks - DELETE THESE:
+  // useEffect(() => {
+  //   fetchLeads(0, searchTerm, statusFilter);
+  // }, [navigate]);
 
-  // Handle page change
+  // Event handlers
+  const handlePreview = (leadId) => {
+    setPreviewLeadId(leadId);
+    setShowPreviewModal(true);
+  };
 
-  // Update the handlePageChange function to include status filter
+  const handleClosePreview = () => {
+    setShowPreviewModal(false);
+    setPreviewLeadId(null);
+  };
+
+  const handleEditFromPreview = (leadId) => {
+    setShowPreviewModal(false);
+    handleEdit(leadId);
+  };
+
+  const handleCardFilter = (status) => {
+    setStatusFilter(status);
+    // Don't call fetchLeads here - it will be handled by useEffect
+  };
+
   const handlePageChange = (newPage) => {
     if (newPage >= 0 && newPage < totalPages) {
       fetchLeads(newPage, searchTerm, statusFilter);
@@ -204,7 +281,7 @@ const handleEditFromPreview = (leadId) => {
         status: newStatus,
       });
 
-      toast.success("Status Update successfully!");
+      toast.success("Status updated successfully!");
       if (response.data) {
         // Update local state immediately for better UX
         setLeads((prevLeads) =>
@@ -250,7 +327,6 @@ const handleEditFromPreview = (leadId) => {
           fetchLeads(currentPage, searchTerm, statusFilter);
         }
 
-        // Close dropdown
         setActiveStatusDropdown(null);
       }
     } catch (error) {
@@ -259,7 +335,6 @@ const handleEditFromPreview = (leadId) => {
     }
   };
 
-  // Toggle status dropdown
   const toggleStatusDropdown = (leadId) => {
     setActiveStatusDropdown(activeStatusDropdown === leadId ? null : leadId);
   };
@@ -278,20 +353,19 @@ const handleEditFromPreview = (leadId) => {
     };
   }, []);
 
-  // Load data on component mount
-  useEffect(() => {
-    fetchLeads(0, searchTerm, statusFilter);
-  }, [navigate]);
-
-  // Organize leads for kanban view (current page only)
-  const organizedKanbanColumns = kanbanColumns.map((column) => ({
-    ...column,
-    leads: leads.filter((lead) => lead.status?.toLowerCase() === column.id),
-  }));
-
+  // Other handlers
   const handleCreateLead = () => {
-    navigate("/CreateLead"); // Changed from "/Employee/LeadList"
+    navigate("/CreateLead");
   };
+
+  const handleEdit = (leadId) => {
+    navigate(`/EditLead/${leadId}`);
+  };
+
+  const handleRefresh = () => {
+    fetchLeads(currentPage, searchTerm, statusFilter);
+  };
+
   const handleOpenPopup = () => {
     setTempColumns([...columns]);
     setShowColumnPopup(true);
@@ -348,20 +422,48 @@ const handleEditFromPreview = (leadId) => {
     dragOverItem.current = null;
   };
 
-const handleEdit = (leadId) => {
-  navigate(`/EditLead/${leadId}`);
-};
-
-  const handleRefresh = () => {
-    fetchLeads(currentPage, searchTerm, statusFilter); // Added statusFilter parameter
+  // Kanban handlers
+  const handleKanbanDragStart = (e, lead, columnId) => {
+    setDraggedLead({ ...lead, fromColumn: columnId });
+    e.dataTransfer.effectAllowed = "move";
   };
+
+  const handleKanbanDragOver = (e, columnId) => {
+    e.preventDefault();
+    setDragOverColumn(columnId);
+  };
+
+  const handleKanbanDragLeave = () => {
+    setDragOverColumn(null);
+  };
+
+  const handleKanbanDrop = async (e, targetColumnId) => {
+    e.preventDefault();
+
+    if (draggedLead && draggedLead.fromColumn !== targetColumnId) {
+      const newStatus = targetColumnId
+        .split(" ")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+
+      try {
+        await updateLeadStatus(draggedLead.id, newStatus);
+      } catch (error) {
+        console.error("Error updating lead status via drag and drop:", error);
+      }
+    }
+
+    setDraggedLead(null);
+    setDragOverColumn(null);
+  };
+
+  // Helper functions
   const visibleColumns = columns
     .filter((col) => col.visible)
     .sort((a, b) => a.order - b.order);
 
   const getStatusColor = (status) => {
     if (!status) return "bg-gray-100 text-gray-800";
-
     switch (status.toLowerCase()) {
       case "new lead":
         return "bg-blue-100 text-blue-800";
@@ -384,7 +486,6 @@ const handleEdit = (leadId) => {
 
   const getSourceColor = (source) => {
     if (!source) return "bg-gray-100 text-gray-800";
-
     switch (source.toLowerCase()) {
       case "website":
         return "bg-blue-100 text-blue-800";
@@ -435,15 +536,12 @@ const handleEdit = (leadId) => {
     }).format(amount);
   };
 
-  // Generate page numbers for pagination
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
-
     let startPage = Math.max(0, currentPage - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 1);
 
-    // Adjust start page if we're near the end
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(0, endPage - maxVisiblePages + 1);
     }
@@ -455,14 +553,30 @@ const handleEdit = (leadId) => {
     return pages;
   };
 
+  // Calculate total leads from all status counts
+  const calculateTotalLeads = () => {
+    if (!statusAndCount || statusAndCount.length === 0) return 0;
+
+    return statusAndCount.reduce((total, statusCount) => {
+      return total + (statusCount.count || 0);
+    }, 0);
+  };
+
+  // Use this in your JSX instead of totalLeads from API
+  const displayTotalLeads = calculateTotalLeads();
+
+  // Organize leads for kanban view
+  const organizedKanbanColumns = kanbanColumns.map((column) => ({
+    ...column,
+    leads: leads.filter((lead) => lead.status?.toLowerCase() === column.id),
+  }));
+
+  // Use TableSkeleton instead of loading spinner
   if (loading) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading leads...</p>
-        </div>
-      </div>
+      <LayoutComponent>
+        <TableSkeleton />
+      </LayoutComponent>
     );
   }
 
@@ -646,6 +760,7 @@ const handleEdit = (leadId) => {
         {/* Second Row - Better Responsive Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8 gap-2 mb-4">
           {/* Total Leads Card */}
+          {/* Total Leads Card */}
           <div
             className={`bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer ${
               statusFilter === "all" ? "ring-2 ring-blue-500" : ""
@@ -677,13 +792,13 @@ const handleEdit = (leadId) => {
                   Total
                 </p>
                 <p className="text-gray-900 text-sm font-bold truncate">
-                  {totalLeads.toLocaleString()}
+                  {calculateTotalLeads().toLocaleString()}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Status Cards */}
+
           {/* Status Cards */}
           {statusAndCount.map((statusCount, index) => {
             const statusConfig = {
