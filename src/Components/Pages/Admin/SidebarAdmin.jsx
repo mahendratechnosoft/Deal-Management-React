@@ -1,7 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-function Sidebar({ isOpen, toggleSidebar, onSwitchToLogin }) {
+function Sidebar({ isOpen, toggleSidebar }) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -356,7 +356,7 @@ function Sidebar({ isOpen, toggleSidebar, onSwitchToLogin }) {
                 {isOpen && (
                   <div
                     className="ml-3 flex-1 text-left"
-                    onClick={onSwitchToLogin}
+                    onClick={() => navigate("/login")}
                   >
                     <span className="font-medium block text-xs text-gray-300 group-hover:text-red-400 transition-colors duration-300">
                       Logout
