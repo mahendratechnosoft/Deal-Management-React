@@ -562,7 +562,7 @@ function CreateLead() {
                       {/* Website Field with Floating Label */}
                       <div className="relative">
                         <input
-                          type="url"
+                          type="text"
                           name="website"
                           value={formData.website}
                           onChange={handleChange}

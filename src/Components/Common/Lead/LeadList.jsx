@@ -348,9 +348,9 @@ const handleEditFromPreview = (leadId) => {
     dragOverItem.current = null;
   };
 
-  const handleEdit = (leadId) => {
-    navigate(`/Admin/EditLead/${leadId}`);
-  };
+const handleEdit = (leadId) => {
+  navigate(`/EditLead/${leadId}`);
+};
 
   const handleRefresh = () => {
     fetchLeads(currentPage, searchTerm, statusFilter); // Added statusFilter parameter

@@ -12,6 +12,7 @@ function EditLead() {
   const [loading, setLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { LayoutComponent, role } = useLayout();
+  const [employeeId, setEmployeeId] = useState("");
 
   const [formData, setFormData] = useState({
     companyName: "",
@@ -72,18 +73,23 @@ function EditLead() {
     return state ? state.isoCode : "";
   };
 
-  // Fetch lead data when component mounts
+  // Fetch lead data when component mounts - FIXED API ENDPOINT
   useEffect(() => {
     const fetchLeadData = async () => {
       if (!id) {
         toast.error("Lead ID not found!");
-        navigate("/Admin/LeadList");
+        if (role === "ROLE_ADMIN") {
+          navigate("/Admin/LeadList");
+        } else if (role === "ROLE_EMPLOYEE") {
+          navigate("/Employee/LeadList");
+        }
         return;
       }
 
       setIsLoading(true);
       try {
-        const response = await axiosInstance.get(`/admin/getLeadById/${id}`);
+        // Use common endpoint instead of admin-specific endpoint
+        const response = await axiosInstance.get(`getLeadById/${id}`);
 
         const apiResponse = response.data;
         const leadData = apiResponse.lead;
@@ -92,9 +98,16 @@ function EditLead() {
 
         if (!leadData) {
           toast.error("Lead data not found in response!");
-          navigate("/Admin/LeadList");
+          if (role === "ROLE_ADMIN") {
+            navigate("/Admin/LeadList");
+          } else if (role === "ROLE_EMPLOYEE") {
+            navigate("/Employee/LeadList");
+          }
           return;
         }
+          if (leadData.employeeId) {
+            setEmployeeId(leadData.employeeId);
+          }
 
         // Map API response to form data
         const mappedFormData = {
@@ -191,14 +204,18 @@ function EditLead() {
         } else {
           toast.error("Failed to fetch lead data. Please try again.");
         }
-        navigate("/Admin/LeadList");
+        if (role === "ROLE_ADMIN") {
+          navigate("/Admin/LeadList");
+        } else if (role === "ROLE_EMPLOYEE") {
+          navigate("/Employee/LeadList");
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchLeadData();
-  }, [id, navigate]);
+  }, [id, navigate, role]);
 
   // Update states when country changes
   useEffect(() => {
@@ -343,9 +360,14 @@ function EditLead() {
         description: formData.description,
       };
 
+        if (role === "ROLE_EMPLOYEE" && employeeId) {
+          submitData.employeeId = employeeId;
+        }
+
       console.log("Updating lead with data:", submitData);
 
-      await axiosInstance.put("/admin/updateLead", submitData);
+      // Use common endpoint instead of admin-specific endpoint
+      await axiosInstance.put("updateLead", submitData);
 
       toast.success("Lead updated successfully!");
       if (role === "ROLE_ADMIN") {
@@ -739,7 +761,7 @@ function EditLead() {
 
                       <div className="relative">
                         <input
-                          type="url"
+                          type="text"
                           name="website"
                           value={formData.website}
                           onChange={handleChange}
