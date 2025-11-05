@@ -20,7 +20,7 @@ import CustomToaster from "./Components/Common/Toaster";
 import SettingsLayout from "./Components/Pages/Admin/Settings/SettingsLayout.jsx";
 import Department from "./Components/Common/Settings/RoleAndDepartment/Department.jsx";
 import General from "./Components/Common/Settings/General.jsx";
-import RoleList from "./Components/Common/Settings/RoleAndDepartment/RoleList.JSX";
+import RoleListCompo from "./Components/Common/Settings/RoleAndDepartment/RoleListCompo.jsx";
 import RoleBasedRoute from "./Components/BaseComponet/RoleBasedRoute.jsx";
 import LeadList from "./Components/Common/Lead/LeadList";
 import ProposalList from "./Components/Common/Proposal/ProposalList.jsx";
@@ -277,7 +277,7 @@ function App() {
             <Route path="Department" element={<Department />} />
             <Route
               path="Department/:departmentId/Roles"
-              element={<RoleList />}
+              element={<RoleListCompo />}
             />
           </Route>
 

@@ -44,7 +44,7 @@ const SkeletonRow = () => (
   </tr>
 );
 
-function RoleList() {
+function RoleListCompo() {
   const [roles, setRoles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const { departmentId } = useParams();
@@ -617,4 +617,4 @@ function RoleList() {
   );
 }
 
-export default RoleList;
+export default RoleListCompo;
