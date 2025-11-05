@@ -9,6 +9,7 @@ import {
   FormInput,
   FormInputWithPrefix,
   FormSelect,
+  FormTextarea,
 } from "../../BaseComponet/CustomeFormComponents";
 
 function EditProposal() {
@@ -29,8 +30,8 @@ function EditProposal() {
     proposalNumber: "",
     currencyType: "INR",
     discount: 0,
-    taxType: "GST",
-    taxPercentage: 18,
+    taxType: "",
+    taxPercentage: 0,
     dueDate: "",
     proposalDate: new Date().toISOString().split("T")[0],
     totalAmmount: 0,
@@ -1005,8 +1006,24 @@ function EditProposal() {
 
               {/* --- Section 3: Summary --- */}
               <div className="pt-8 border-t border-gray-200">
-                <div className="flex justify-end">
-                  <div className="w-full md:w-1/2 lg:w-1/3 space-y-4">
+                <div className="flex flex-col md:flex-row justify-between gap-8">
+                  <div className="w-full md:w-1/2 lg:flex-1 space-y-4">
+                    <FormTextarea
+                      label="Notes"
+                      name="notes"
+                      value={proposalInfo.notes}
+                      onChange={handleInfoChange}
+                      rows={5}
+                    />
+                    <FormTextarea
+                      label="Terms & Conditions"
+                      name="termsAndConditions"
+                      value={proposalInfo.termsAndConditions}
+                      onChange={handleInfoChange}
+                      rows={8}
+                    />
+                  </div>
+                  <div className="w-full md:w-1/2 lg:w-1/3 space-y-4 bg-gray-50 p-4 rounded-lg">
                     <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">
                       Summary
                     </h2>

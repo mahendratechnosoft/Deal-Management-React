@@ -159,6 +159,49 @@ export const FormInputWithPrefix = ({
 );
 
 /* ---------------------------------------------
+    🔹 FormTextarea — Floating Label Textarea
+--------------------------------------------- */
+export const FormTextarea = ({
+  label,
+  name,
+  value,
+  onChange,
+  required = false,
+  error,
+  disabled = false,
+  className = "",
+  rows = 4, // Added a default rows prop
+}) => (
+  <div className={`relative ${className}`}>
+    <textarea
+      id={name}
+      name={name}
+      value={value}
+      onChange={onChange}
+      placeholder=" "
+      disabled={disabled}
+      rows={rows}
+      className={`block w-full px-3 py-2 bg-transparent border rounded-lg appearance-none focus:outline-none focus:ring-2 peer text-sm resize-y ${
+        error
+          ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+          : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+      } ${disabled ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
+    />
+    <label
+      htmlFor={name}
+      className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 
+         peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
+         peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none 
+         ${error ? "text-red-600" : "text-gray-500 peer-focus:text-blue-600"} 
+         ${disabled ? "text-gray-400" : ""}`}
+    >
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+  </div>
+);
+
+/* ---------------------------------------------
    🔹 FormSelect — Dropdown (react-select)
 --------------------------------------------- */
 export const FormSelect = ({
