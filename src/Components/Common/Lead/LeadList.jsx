@@ -133,6 +133,13 @@ function LeadList() {
   const [previewLeadId, setPreviewLeadId] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
+  // Add these to your existing state
+  const [kanbanData, setKanbanData] = useState({});
+  const [kanbanLoading, setKanbanLoading] = useState({});
+  const [kanbanPage, setKanbanPage] = useState({});
+  const [kanbanHasMore, setKanbanHasMore] = useState({});
+  const [kanbanTotal, setKanbanTotal] = useState({});
+
   // Default columns
   const [columns, setColumns] = useState([
     { id: "clientName", name: "CLIENT NAME", visible: true, order: 0 },
@@ -140,7 +147,7 @@ function LeadList() {
     { id: "email", name: "EMAIL", visible: true, order: 2 },
     { id: "mobileNumber", name: "PHONE", visible: true, order: 3 },
     { id: "status", name: "STATUS", visible: true, order: 4 },
-       { id: "createdDate", name: "CREATED DATE", visible: true, order: 5 },
+    { id: "createdDate", name: "CREATED DATE", visible: true, order: 5 },
   ]);
 
   const [tempColumns, setTempColumns] = useState(columns);
@@ -160,23 +167,91 @@ function LeadList() {
   ];
 
   const kanbanColumns = [
-    { id: "new lead", title: "New Lead", color: "bg-blue-500", leads: [] },
-    { id: "contacted", title: "Contacted", color: "bg-purple-500", leads: [] },
-    { id: "qualified", title: "Qualified", color: "bg-green-500", leads: [] },
-    { id: "proposal", title: "Proposal", color: "bg-yellow-500", leads: [] },
+    {
+      id: "new lead",
+      title: "New Lead",
+      color: "bg-blue-500",
+      apiStatus: "New Lead", // Try with proper case
+      page: 0,
+      hasMore: true,
+      loading: false,
+    },
+    {
+      id: "contacted",
+      title: "Contacted",
+      color: "bg-purple-500",
+      apiStatus: "Contacted", // Try with proper case
+      page: 0,
+      hasMore: true,
+      loading: false,
+    },
+    {
+      id: "qualified",
+      title: "Qualified",
+      color: "bg-green-500",
+      apiStatus: "Qualified", // Try with proper case
+      page: 0,
+      hasMore: true,
+      loading: false,
+    },
+    {
+      id: "proposal",
+      title: "Proposal",
+      color: "bg-yellow-500",
+      apiStatus: "Proposal", // Try with proper case
+      page: 0,
+      hasMore: true,
+      loading: false,
+    },
     {
       id: "negotiation",
       title: "Negotiation",
       color: "bg-orange-500",
-      leads: [],
+      apiStatus: "Negotiation", // Try with proper case
+      page: 0,
+      hasMore: true,
+      loading: false,
     },
-    { id: "won", title: "Won", color: "bg-green-600", leads: [] },
-    { id: "lost", title: "Lost", color: "bg-red-500", leads: [] },
-    { id: "converted", title: "Converted", color: "bg-indigo-500", leads: [] },
+    {
+      id: "won",
+      title: "Won",
+      color: "bg-green-600",
+      apiStatus: "Won", // Try with proper case
+      page: 0,
+      hasMore: true,
+      loading: false,
+    },
+    {
+      id: "lost",
+      title: "Lost",
+      color: "bg-red-500",
+      apiStatus: "Lost", // Try with proper case
+      page: 0,
+      hasMore: true,
+      loading: false,
+    },
+    {
+      id: "converted",
+      title: "Converted",
+      color: "bg-indigo-500",
+      apiStatus: "Converted", // Try with proper case
+      page: 0,
+      hasMore: true,
+      loading: false,
+    },
   ];
-
   const refreshLeadsData = () => {
     fetchLeads(currentPage, searchTerm, statusFilter);
+  };
+
+  // Fetch status counts function
+  const fetchStatusCounts = async () => {
+    try {
+      const response = await axiosInstance.get("getLeadStatusAndCount");
+      setStatusAndCount(response.data || []);
+    } catch (err) {
+      console.error("Error fetching status counts:", err);
+    }
   };
 
   // Fetch leads function
@@ -232,10 +307,15 @@ function LeadList() {
     }
   };
 
-  // SINGLE useEffect for all data fetching - FIXED
+  // SINGLE useEffect for all data fetching - UPDATED
   useEffect(() => {
+    const fetchData = async () => {
+      await fetchStatusCounts(); // Fetch status counts first
+      await fetchLeads(0, searchTerm, statusFilter); // Then fetch leads
+    };
+
     const timeoutId = setTimeout(() => {
-      fetchLeads(0, searchTerm, statusFilter);
+      fetchData();
     }, 500);
 
     // Cleanup function
@@ -247,11 +327,21 @@ function LeadList() {
     };
   }, [searchTerm, statusFilter, pageSize]); // All dependencies in one useEffect
 
-  // Remove duplicate useEffect hooks - DELETE THESE:
-  // useEffect(() => {
-  //   fetchLeads(0, searchTerm, statusFilter);
-  // }, [navigate]);
+  // Separate useEffect for kanban data
+  useEffect(() => {
+    if (viewMode === "kanban") {
+      const timeoutId = setTimeout(() => {
+        fetchAllKanbanColumns();
+      }, 500);
 
+      return () => {
+        clearTimeout(timeoutId);
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+      };
+    }
+  }, [viewMode, searchTerm, pageSize]); // Only fetch kanban data when in kanban view
   // Event handlers
   const handlePreview = (leadId) => {
     setPreviewLeadId(leadId);
@@ -285,67 +375,54 @@ function LeadList() {
     }
   };
 
-  const updateLeadStatus = async (leadId, newStatus) => {
-    try {
-      const response = await axiosInstance.put("updateLeadStatus", {
-        leadId: leadId,
-        status: newStatus,
-      });
+const updateLeadStatus = async (leadId, newStatus) => {
+  try {
+    const response = await axiosInstance.put("updateLeadStatus", {
+      leadId: leadId,
+      status: newStatus,
+    });
 
-      toast.success("Status updated successfully!");
-      if (response.data) {
-        // Update local state immediately for better UX
-        setLeads((prevLeads) =>
-          prevLeads.map((lead) =>
-            lead.id === leadId ? { ...lead, status: newStatus } : lead
-          )
+    toast.success("Status updated successfully!");
+
+    if (response.data) {
+      // Find the lead to get old status BEFORE updating state
+      const oldLead = leads.find((lead) => lead.id === leadId);
+
+      // Update table view leads
+      setLeads((prevLeads) =>
+        prevLeads.map((lead) =>
+          lead.id === leadId ? { ...lead, status: newStatus } : lead
+        )
+      );
+
+      // Refresh status counts from API to ensure accuracy
+      await fetchStatusCounts();
+
+      // If in kanban view, refresh kanban data to ensure consistency
+      if (viewMode === "kanban") {
+        // Instead of refreshing all columns, just update the specific ones
+        const sourceColumn = kanbanColumns.find(
+          (col) => col.apiStatus === oldLead?.status
+        );
+        const targetColumn = kanbanColumns.find(
+          (col) => col.apiStatus === newStatus
         );
 
-        // Update status counts in real-time
-        setStatusAndCount((prevStatusCounts) => {
-          const updatedCounts = [...prevStatusCounts];
-
-          // Decrease count for old status
-          const oldLead = leads.find((lead) => lead.id === leadId);
-          if (oldLead && oldLead.status) {
-            const oldStatusIndex = updatedCounts.findIndex(
-              (sc) => sc.status === oldLead.status
-            );
-            if (oldStatusIndex !== -1) {
-              updatedCounts[oldStatusIndex] = {
-                ...updatedCounts[oldStatusIndex],
-                count: Math.max(0, updatedCounts[oldStatusIndex].count - 1),
-              };
-            }
-          }
-
-          // Increase count for new status
-          const newStatusIndex = updatedCounts.findIndex(
-            (sc) => sc.status === newStatus
-          );
-          if (newStatusIndex !== -1) {
-            updatedCounts[newStatusIndex] = {
-              ...updatedCounts[newStatusIndex],
-              count: updatedCounts[newStatusIndex].count + 1,
-            };
-          }
-
-          return updatedCounts;
-        });
-
-        // Only if we're viewing a filtered status (not "all")
-        if (statusFilter !== "all") {
-          fetchLeads(currentPage, searchTerm, statusFilter);
+        if (sourceColumn) {
+          fetchKanbanLeads(sourceColumn.apiStatus, 0, false);
         }
-
-        setActiveStatusDropdown(null);
+        if (targetColumn) {
+          fetchKanbanLeads(targetColumn.apiStatus, 0, false);
+        }
       }
-    } catch (error) {
-      console.error("Error updating lead status:", error);
-      alert("Failed to update status. Please try again.");
-    }
-  };
 
+      setActiveStatusDropdown(null);
+    }
+  } catch (error) {
+    console.error("Error updating lead status:", error);
+    toast.error("Failed to update status. Please try again.");
+  }
+};
   const toggleStatusDropdown = (leadId) => {
     setActiveStatusDropdown(activeStatusDropdown === leadId ? null : leadId);
   };
@@ -447,6 +524,14 @@ function LeadList() {
     dragOverItem.current = null;
   };
 
+  const handleKanbanDragEnd = (e) => {
+    // Reset opacity for dragged element
+    e.target.style.opacity = "1";
+
+    // Reset drag states
+    setDraggedLead(null);
+    setDragOverColumn(null);
+  };
   // Utility function to truncate text with ellipsis
   const truncateText = (text, maxLength = 10) => {
     if (!text || text === "N/A") return text || "N/A";
@@ -458,40 +543,203 @@ function LeadList() {
     return text.substring(0, maxLength) + "...";
   };
   // Kanban handlers
+
+  // Fetch leads for specific status column
+  // Enhanced fetch function that tries multiple status formats
+  const fetchKanbanLeads = async (status, page = 0, append = false) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    abortControllerRef.current = new AbortController();
+
+    try {
+      setKanbanLoading((prev) => ({ ...prev, [status]: true }));
+
+      console.log(`Fetching leads for status: "${status}", page: ${page}`);
+
+      // Try different status formats
+      const statusFormats = [
+        status, // Original format
+        status.toLowerCase(), // Lowercase
+        status.toUpperCase(), // Uppercase
+        status.charAt(0).toUpperCase() + status.slice(1).toLowerCase(), // Title case
+      ];
+
+      let leads = [];
+      let successfulFormat = null;
+
+      // Try each format until one works
+      for (const format of statusFormats) {
+        try {
+          const encodedStatus = encodeURIComponent(format);
+          let url = `getAllLeads/${page}/${pageSize}?leadStatus=${encodedStatus}`;
+
+          if (searchTerm.trim()) {
+            url += `&search=${encodeURIComponent(searchTerm)}`;
+          }
+
+          console.log(`Trying format: "${format}", URL: ${url}`);
+
+          const response = await axiosInstance.get(url, {
+            signal: abortControllerRef.current.signal,
+          });
+
+          const data = response.data;
+          leads = data.leadList || [];
+          successfulFormat = format;
+
+          console.log(
+            `Success with format: "${format}", got ${leads.length} leads`
+          );
+          break; // Exit loop if successful
+        } catch (formatError) {
+          console.log(
+            `Format "${format}" failed:`,
+            formatError.response?.status
+          );
+          continue; // Try next format
+        }
+      }
+
+      if (successfulFormat) {
+        setKanbanData((prev) => ({
+          ...prev,
+          [status]: append ? [...(prev[status] || []), ...leads] : leads,
+        }));
+
+        setKanbanPage((prev) => ({ ...prev, [status]: page }));
+        // For hasMore, we'll assume it's true for now since we don't have totalPages from individual calls
+        setKanbanHasMore((prev) => ({
+          ...prev,
+          [status]: leads.length === pageSize,
+        }));
+        setKanbanTotal((prev) => ({
+          ...prev,
+          [status]: (prev[status] || 0) + leads.length,
+        }));
+      } else {
+        throw new Error(`All status formats failed for: ${status}`);
+      }
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        console.error(`Error fetching ${status} leads:`, err);
+        console.error(`Error details:`, err.response?.data || err.message);
+        toast.error(`Failed to load ${status} leads`);
+      }
+    } finally {
+      setKanbanLoading((prev) => ({ ...prev, [status]: false }));
+    }
+  };
+  // Fetch initial data for all kanban columns
+  const fetchAllKanbanColumns = () => {
+    kanbanColumns.forEach((column) => {
+      fetchKanbanLeads(column.apiStatus, 0, false);
+    });
+  };
+
+  // Infinite scroll handler for each column
+  const handleColumnScroll = (event, status) => {
+    const element = event.target;
+    const { scrollTop, scrollHeight, clientHeight } = element;
+
+    // Load more when 80% scrolled
+    if (
+      scrollHeight - scrollTop <= clientHeight * 1.2 &&
+      kanbanHasMore[status] &&
+      !kanbanLoading[status]
+    ) {
+      const nextPage = (kanbanPage[status] || 0) + 1;
+      fetchKanbanLeads(status, nextPage, true);
+    }
+  };
+
+  //  ====================================
+
   const handleKanbanDragStart = (e, lead, columnId) => {
     setDraggedLead({ ...lead, fromColumn: columnId });
     e.dataTransfer.effectAllowed = "move";
+
+    // Add visual feedback
+    e.target.style.opacity = "0.4";
+
+    // Add event listener for drag end cleanup
+    e.target.addEventListener("dragend", handleKanbanDragEnd, { once: true });
   };
 
   const handleKanbanDragOver = (e, columnId) => {
     e.preventDefault();
     setDragOverColumn(columnId);
+
+    // Add visual feedback for drop target
+    e.currentTarget.style.backgroundColor = "#f0f9ff";
+    e.currentTarget.style.borderColor = "#3b82f6";
   };
 
-  const handleKanbanDragLeave = () => {
+  const handleKanbanDragLeave = (e) => {
     setDragOverColumn(null);
+
+    // Remove visual feedback
+    e.currentTarget.style.backgroundColor = "";
+    e.currentTarget.style.borderColor = "";
   };
 
   const handleKanbanDrop = async (e, targetColumnId) => {
     e.preventDefault();
 
     if (draggedLead && draggedLead.fromColumn !== targetColumnId) {
-      const newStatus = targetColumnId
-        .split(" ")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
+      const targetColumn = kanbanColumns.find(
+        (col) => col.id === targetColumnId
+      );
+      const sourceColumn = kanbanColumns.find(
+        (col) => col.id === draggedLead.fromColumn
+      );
+
+      if (!targetColumn || !sourceColumn) return;
+
+      // Use the exact status from the target column's apiStatus
+      const newStatus = targetColumn.apiStatus;
 
       try {
+        // Update the lead status via API - this will handle count updates
         await updateLeadStatus(draggedLead.id, newStatus);
+
+        // Update local kanban data immediately for better UX
+        // Remove from source column
+        setKanbanData((prev) => ({
+          ...prev,
+          [sourceColumn.apiStatus]: (prev[sourceColumn.apiStatus] || []).filter(
+            (lead) => lead.id !== draggedLead.id
+          ),
+        }));
+
+        // Add to target column
+        setKanbanData((prev) => ({
+          ...prev,
+          [targetColumn.apiStatus]: [
+            ...(prev[targetColumn.apiStatus] || []),
+            { ...draggedLead, status: newStatus },
+          ],
+        }));
+
+        // CRITICAL: Refresh status counts from API to get accurate numbers
+        await fetchStatusCounts();
+
+        // toast.success(`Lead moved to ${targetColumn.title}`);
       } catch (error) {
         console.error("Error updating lead status via drag and drop:", error);
+        toast.error("Failed to move lead");
       }
     }
 
+    // Reset drag states
     setDraggedLead(null);
     setDragOverColumn(null);
-  };
 
+    // Remove visual feedback
+    e.currentTarget.style.backgroundColor = "";
+    e.currentTarget.style.borderColor = "";
+  };
   // Helper functions
   const visibleColumns = columns
     .filter((col) => col.visible)
@@ -593,10 +841,16 @@ function LeadList() {
   // Calculate total leads from all status counts
   const calculateTotalLeads = () => {
     if (!statusAndCount || statusAndCount.length === 0) return 0;
-
     return statusAndCount.reduce((total, statusCount) => {
       return total + (statusCount.count || 0);
     }, 0);
+  };
+
+  // Helper function to get count for a specific status
+  // Helper function to get count for a specific status
+  const getStatusCount = (statusName) => {
+    const statusCount = statusAndCount.find((sc) => sc.status === statusName);
+    return statusCount ? statusCount.count : 0;
   };
 
   // Use this in your JSX instead of totalLeads from API
@@ -795,172 +1049,173 @@ function LeadList() {
         </div>
 
         {/* Second Row - Better Responsive Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8 gap-2 mb-4">
-          {/* Total Leads Card */}
-          {/* Total Leads Card */}
-          <div
-            className={`bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer ${
-              statusFilter === "all" ? "ring-2 ring-blue-500" : ""
-            }`}
-            onClick={() => handleCardFilter("all")}
-          >
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
-                  statusFilter === "all" ? "bg-gray-200" : "bg-gray-100"
-                }`}
-              >
-                <svg
-                  className="w-3 h-3 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+
+        {viewMode === "table" && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8 gap-2 mb-4">
+            {/* Total Leads Card */}
+            <div
+              className={`bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer ${
+                statusFilter === "all" ? "ring-2 ring-blue-500" : ""
+              }`}
+              onClick={() => handleCardFilter("all")}
+            >
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
+                    statusFilter === "all" ? "bg-gray-200" : "bg-gray-100"
+                  }`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-gray-500 text-[12px] font-medium truncate">
-                  Total
-                </p>
-                <p className="text-gray-900 text-sm font-bold truncate">
-                  {calculateTotalLeads().toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Status Cards */}
-          {statusAndCount.map((statusCount, index) => {
-            const statusConfig = {
-              "New Lead": {
-                bgColor: "bg-blue-100",
-                activeBgColor: "bg-blue-200",
-                iconColor: "text-blue-600",
-                borderColor: "border-blue-200",
-                activeBorderColor: "border-blue-400",
-                ringColor: "ring-blue-500",
-                icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.0 015 0z",
-              },
-              Contacted: {
-                bgColor: "bg-purple-100",
-                activeBgColor: "bg-purple-200",
-                iconColor: "text-purple-600",
-                borderColor: "border-purple-200",
-                activeBorderColor: "border-purple-400",
-                ringColor: "ring-purple-500",
-                icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
-              },
-              Qualified: {
-                bgColor: "bg-green-100",
-                activeBgColor: "bg-green-200",
-                iconColor: "text-green-600",
-                borderColor: "border-green-200",
-                activeBorderColor: "border-green-400",
-                ringColor: "ring-green-500",
-                icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
-              },
-              Proposal: {
-                bgColor: "bg-yellow-100",
-                activeBgColor: "bg-yellow-200",
-                iconColor: "text-yellow-600",
-                borderColor: "border-yellow-200",
-                activeBorderColor: "border-yellow-400",
-                ringColor: "ring-yellow-500",
-                icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
-              },
-              Negotiation: {
-                bgColor: "bg-orange-100",
-                activeBgColor: "bg-orange-200",
-                iconColor: "text-orange-600",
-                borderColor: "border-orange-200",
-                activeBorderColor: "border-orange-400",
-                ringColor: "ring-orange-500",
-                icon: "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4",
-              },
-              Won: {
-                bgColor: "bg-emerald-100",
-                activeBgColor: "bg-emerald-200",
-                iconColor: "text-emerald-600",
-                borderColor: "border-emerald-200",
-                activeBorderColor: "border-emerald-400",
-                ringColor: "ring-emerald-500",
-                icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
-              },
-              Lost: {
-                bgColor: "bg-red-100",
-                activeBgColor: "bg-red-200",
-                iconColor: "text-red-600",
-                borderColor: "border-red-200",
-                activeBorderColor: "border-red-400",
-                ringColor: "ring-red-500",
-                icon: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z",
-              },
-
-              Converted: {
-                bgColor: "bg-indigo-100",
-                activeBgColor: "bg-indigo-200",
-                iconColor: "text-indigo-600",
-                borderColor: "border-indigo-200",
-                activeBorderColor: "border-indigo-400",
-                ringColor: "ring-indigo-500",
-                icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
-              },
-            };
-
-            const config =
-              statusConfig[statusCount.status] || statusConfig["New Lead"];
-            const isActive = statusFilter === statusCount.status.toLowerCase();
-
-            return (
-              <div
-                key={statusCount.status}
-                className={`bg-white rounded-lg p-2 shadow-sm border hover:shadow-md transition-all duration-200 cursor-pointer ${
-                  isActive ? config.activeBorderColor : config.borderColor
-                } ${isActive ? `ring-2 ${config.ringColor}` : ""}`}
-                onClick={() =>
-                  handleCardFilter(statusCount.status.toLowerCase())
-                }
-              >
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
-                      isActive ? config.activeBgColor : config.bgColor
-                    }`}
+                  <svg
+                    className="w-3 h-3 text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <svg
-                      className={`w-3 h-3 ${config.iconColor}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d={config.icon}
-                      />
-                    </svg>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-gray-500 text-[11px] font-medium truncate">
-                      {statusCount.status.split(" ")[0]}
-                    </p>
-                    <p className="text-gray-900 text-sm font-bold">
-                      {statusCount.count}
-                    </p>
-                  </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-gray-500 text-[12px] font-medium truncate">
+                    Total
+                  </p>
+                  <p className="text-gray-900 text-sm font-bold truncate">
+                    {calculateTotalLeads().toLocaleString()}
+                  </p>
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
 
+            {/* Status Cards from API Data */}
+            {statusAndCount.map((statusCount) => {
+              const statusConfig = {
+                "New Lead": {
+                  bgColor: "bg-blue-100",
+                  activeBgColor: "bg-blue-200",
+                  iconColor: "text-blue-600",
+                  borderColor: "border-blue-200",
+                  activeBorderColor: "border-blue-400",
+                  ringColor: "ring-blue-500",
+                  icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.0 015 0z",
+                },
+                Contacted: {
+                  bgColor: "bg-purple-100",
+                  activeBgColor: "bg-purple-200",
+                  iconColor: "text-purple-600",
+                  borderColor: "border-purple-200",
+                  activeBorderColor: "border-purple-400",
+                  ringColor: "ring-purple-500",
+                  icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
+                },
+                Qualified: {
+                  bgColor: "bg-green-100",
+                  activeBgColor: "bg-green-200",
+                  iconColor: "text-green-600",
+                  borderColor: "border-green-200",
+                  activeBorderColor: "border-green-400",
+                  ringColor: "ring-green-500",
+                  icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+                },
+                Proposal: {
+                  bgColor: "bg-yellow-100",
+                  activeBgColor: "bg-yellow-200",
+                  iconColor: "text-yellow-600",
+                  borderColor: "border-yellow-200",
+                  activeBorderColor: "border-yellow-400",
+                  ringColor: "ring-yellow-500",
+                  icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+                },
+                Negotiation: {
+                  bgColor: "bg-orange-100",
+                  activeBgColor: "bg-orange-200",
+                  iconColor: "text-orange-600",
+                  borderColor: "border-orange-200",
+                  activeBorderColor: "border-orange-400",
+                  ringColor: "ring-orange-500",
+                  icon: "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4",
+                },
+                Won: {
+                  bgColor: "bg-emerald-100",
+                  activeBgColor: "bg-emerald-200",
+                  iconColor: "text-emerald-600",
+                  borderColor: "border-emerald-200",
+                  activeBorderColor: "border-emerald-400",
+                  ringColor: "ring-emerald-500",
+                  icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
+                },
+                Lost: {
+                  bgColor: "bg-red-100",
+                  activeBgColor: "bg-red-200",
+                  iconColor: "text-red-600",
+                  borderColor: "border-red-200",
+                  activeBorderColor: "border-red-400",
+                  ringColor: "ring-red-500",
+                  icon: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z",
+                },
+                Converted: {
+                  bgColor: "bg-indigo-100",
+                  activeBgColor: "bg-indigo-200",
+                  iconColor: "text-indigo-600",
+                  borderColor: "border-indigo-200",
+                  activeBorderColor: "border-indigo-400",
+                  ringColor: "ring-indigo-500",
+                  icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+                },
+              };
+
+              const config =
+                statusConfig[statusCount.status] || statusConfig["New Lead"];
+              const isActive =
+                statusFilter === statusCount.status.toLowerCase();
+
+              return (
+                <div
+                  key={statusCount.status}
+                  className={`bg-white rounded-lg p-2 shadow-sm border hover:shadow-md transition-all duration-200 cursor-pointer ${
+                    isActive ? config.activeBorderColor : config.borderColor
+                  } ${isActive ? `ring-2 ${config.ringColor}` : ""}`}
+                  onClick={() =>
+                    handleCardFilter(statusCount.status.toLowerCase())
+                  }
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
+                        isActive ? config.activeBgColor : config.bgColor
+                      }`}
+                    >
+                      <svg
+                        className={`w-3 h-3 ${config.iconColor}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d={config.icon}
+                        />
+                      </svg>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-gray-500 text-[11px] font-medium truncate">
+                        {statusCount.status.split(" ")[0]}
+                      </p>
+                      <p className="text-gray-900 text-sm font-bold">
+                        {statusCount.count}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
         {/* Content Area */}
         {viewMode === "table" ? (
           <>
@@ -996,7 +1251,7 @@ function LeadList() {
                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider truncate"
                             title={column.name}
                           >
-                            {(column.name)}
+                            {column.name}
                           </th>
                         ))}
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1314,243 +1569,177 @@ function LeadList() {
           </>
         ) : (
           /* Kanban View */
+
           <div className="space-y-4">
             <div className="overflow-x-auto pb-4 crm-Leadlist-kanbadn-col-list">
-              <div
-                className="flex gap-4 min-w-max"
-                style={{ minWidth: "max-content" }}
-              >
-                {organizedKanbanColumns.map((column) => (
-                  <div
-                    key={column.id}
-                    className="w-80 flex-shrink-0"
-                    onDragOver={(e) => handleKanbanDragOver(e, column.id)}
-                    onDragLeave={handleKanbanDragLeave}
-                    onDrop={(e) => handleKanbanDrop(e, column.id)}
-                  >
-                    <div
-                      className={`bg-white rounded-xl shadow-sm border border-gray-200 h-full ${
-                        dragOverColumn === column.id
-                          ? "border-2 border-blue-400 bg-blue-50"
-                          : ""
-                      }`}
-                    >
-                      <div className="p-4 border-b border-gray-200">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={`w-3 h-3 rounded-full ${column.color}`}
-                            ></div>
-                            <h3 className="font-semibold text-gray-900">
-                              {column.title}
-                            </h3>
-                            <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
-                              {column.leads.length}
-                            </span>
-                          </div>
-                          <button className="text-gray-400 hover:text-gray-600">
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 4v16m8-8H4"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
+              <div className="flex gap-4 min-w-max">
+                {kanbanColumns.map((column) => {
+                  // Get the correct count from statusAndCount - updated to use exact status match
+                  const statusCount = statusAndCount.find(
+                    (sc) => sc.status === column.apiStatus // Use exact API status match
+                  );
+                  const columnTotal = statusCount?.count || 0;
 
-                      <div className="p-4 space-y-3 min-h-[200px] h-[54vh] overflow-y-auto crm-Leadlist-kanbadn-col-list">
-                        {column.leads.map((lead) => (
-                          <div
-                            key={lead.id}
-                            className={`bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-colors duration-200 cursor-grab ${
-                              draggedLead?.id === lead.id ? "opacity-50" : ""
-                            } ${
-                              dragOverColumn === column.id
-                                ? "border-2 border-blue-400 bg-blue-50"
-                                : ""
-                            }`}
-                            draggable
-                            onDragStart={(e) =>
-                              handleKanbanDragStart(e, lead, column.id)
-                            }
-                            onDragEnd={() => {
-                              setDraggedLead(null);
-                              setDragOverColumn(null);
-                            }}
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                  {getInitials(lead.clientName)}
-                                </div>
-                                <span className="font-medium text-sm text-gray-900">
-                                  {lead.clientName}
-                                </span>
-                              </div>
-                              <span
-                                className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(
-                                  lead.status
-                                )}`}
-                              >
-                                {lead.status}
+                  // Get leads from kanbanData
+                  const columnLeads = kanbanData[column.apiStatus] || [];
+                  const isLoading = kanbanLoading[column.apiStatus];
+                  const hasMore = kanbanHasMore[column.apiStatus];
+
+                  return (
+                    <div key={column.id} className="w-80 flex-shrink-0">
+                      <div
+                        className={`bg-white rounded-xl shadow-sm border border-gray-200 h-full transition-all duration-200 ${
+                          dragOverColumn === column.id
+                            ? "ring-2 ring-blue-400 bg-blue-50"
+                            : ""
+                        }`}
+                        onDragOver={(e) => handleKanbanDragOver(e, column.id)}
+                        onDragLeave={handleKanbanDragLeave}
+                        onDrop={(e) => handleKanbanDrop(e, column.id)}
+                      >
+                        {/* Column Header */}
+
+                        <div className="p-4 border-b border-gray-200">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className={`w-3 h-3 rounded-full ${column.color}`}
+                              ></div>
+                              <h3 className="font-semibold text-gray-900">
+                                {column.title}
+                              </h3>
+                              <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                                {columnTotal}{" "}
+                                {/* Use the real count from API */}
                               </span>
                             </div>
+                            {isLoading && (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                            )}
+                          </div>
+                        </div>
 
-                            <p className="text-xs text-gray-600 mb-2">
-                              {lead.employeeId} • {formatCurrency(lead.revenue)}
-                            </p>
-
-                            <div className="flex items-center justify-between text-xs text-gray-500">
-                              <span>{formatDate(lead.createdDate)}</span>
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => handlePreview(lead.id)}
-                                  className="text-gray-400 hover:text-blue-600 transition-colors duration-200"
-                                  title="Preview Lead"
+                        {/* Column Content with Infinite Scroll */}
+                        <div
+                          className="p-4 space-y-3 min-h-[200px] h-[60vh] overflow-y-auto crm-Leadlist-kanbadn-col-list"
+                          onScroll={(e) =>
+                            handleColumnScroll(e, column.apiStatus)
+                          }
+                        >
+                          {/* Leads List */}
+                          {columnLeads.map((lead) => (
+                            <div
+                              key={lead.id}
+                              className="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-colors duration-200 cursor-grab"
+                              draggable
+                              onDragStart={(e) =>
+                                handleKanbanDragStart(e, lead, column.id)
+                              }
+                              onDragEnd={() => {
+                                setDraggedLead(null);
+                                setDragOverColumn(null);
+                              }}
+                            >
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                    {getInitials(lead.clientName)}
+                                  </div>
+                                  <span className="font-medium text-sm text-gray-900">
+                                    {lead.clientName}
+                                  </span>
+                                </div>
+                                <span
+                                  className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(
+                                    lead.status
+                                  )}`}
                                 >
-                                  <svg
-                                    className="w-3 h-3"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
+                                  {lead.status}
+                                </span>
+                              </div>
+
+                              <p className="text-xs text-gray-600 mb-2">
+                                {lead.employeeId} •{" "}
+                                {formatCurrency(lead.revenue)}
+                              </p>
+
+                              <div className="flex items-center justify-between text-xs text-gray-500">
+                                <span>{formatDate(lead.createdDate)}</span>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => handlePreview(lead.id)}
+                                    className="text-gray-400 hover:text-blue-600 transition-colors duration-200"
+                                    title="Preview Lead"
                                   >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                    />
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                    />
-                                  </svg>
-                                </button>
-                                <button
-                                  onClick={() => handleEdit(lead.id)}
-                                  className="text-blue-600 hover:text-blue-800 font-medium"
-                                >
-                                  Edit
-                                </button>
+                                    <svg
+                                      className="w-3 h-3"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                      />
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                      />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={() => handleEdit(lead.id)}
+                                    className="text-blue-600 hover:text-blue-800 font-medium"
+                                  >
+                                    Edit
+                                  </button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
 
-                        {column.leads.length === 0 && (
-                          <div className="text-center py-8 text-gray-400">
-                            <svg
-                              className="w-8 h-8 mx-auto mb-2"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                              />
-                            </svg>
-                            <p className="text-sm">No leads</p>
-                          </div>
-                        )}
+                          {/* Loading More Indicator */}
+                          {isLoading && columnLeads.length > 0 && (
+                            <div className="flex justify-center py-2">
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                            </div>
+                          )}
+
+                          {/* No Leads Message */}
+                          {columnLeads.length === 0 && !isLoading && (
+                            <div className="text-center py-8 text-gray-400">
+                              <svg
+                                className="w-8 h-8 mx-auto mb-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                />
+                              </svg>
+                              <p className="text-sm">No leads</p>
+                            </div>
+                          )}
+
+                          {/* End of List Message */}
+                          {!hasMore && columnLeads.length > 0 && (
+                            <div className="text-center py-2 text-xs text-gray-500">
+                              No more leads to load
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Pagination for Kanban View */}
-
-            <div className="bg-white rounded-lg border border-gray-200">
-              <div className="px-4 py-3 border-t border-gray-200">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="text-xs text-gray-600">
-                      {totalPages > 1
-                        ? `Page ${currentPage + 1} of ${totalPages}`
-                        : `All ${totalLeads} leads`}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs text-gray-600">Rows:</span>
-                      <select
-                        value={pageSize}
-                        onChange={(e) => {
-                          const newSize = parseInt(e.target.value);
-                          setPageSize(newSize);
-                        }}
-                        className="px-1.5 py-0.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value={5}>5</option>
-                        <option value={10}>10</option>
-                        <option value={25}>25</option>
-                        <option value={50}>50</option>
-                        <option value={100}>100</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Show pagination buttons only if there are multiple pages */}
-                  {totalPages > 1 && (
-                    <div className="flex items-center space-x-1">
-                      <button
-                        onClick={() => handlePageChange(0)}
-                        disabled={currentPage === 0}
-                        className="px-2 py-0.5 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                      >
-                        First
-                      </button>
-                      <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 0}
-                        className="px-2 py-0.5 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                      >
-                        Prev
-                      </button>
-
-                      {getPageNumbers().map((page) => (
-                        <button
-                          key={page}
-                          onClick={() => handlePageChange(page)}
-                          className={`px-2 py-0.5 rounded text-xs font-medium ${
-                            currentPage === page
-                              ? "bg-blue-600 text-white"
-                              : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                          }`}
-                        >
-                          {page + 1}
-                        </button>
-                      ))}
-
-                      <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages - 1}
-                        className="px-2 py-0.5 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                      >
-                        Next
-                      </button>
-                      <button
-                        onClick={() => handlePageChange(totalPages - 1)}
-                        disabled={currentPage === totalPages - 1}
-                        className="px-2 py-0.5 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                      >
-                        Last
-                      </button>
-                    </div>
-                  )}
-                </div>
+                  );
+                })}
               </div>
             </div>
           </div>
