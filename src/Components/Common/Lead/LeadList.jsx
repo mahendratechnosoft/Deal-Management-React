@@ -996,7 +996,7 @@ function LeadList() {
                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider truncate"
                             title={column.name}
                           >
-                            {truncateText(column.name, 10)}
+                            {(column.name)}
                           </th>
                         ))}
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">

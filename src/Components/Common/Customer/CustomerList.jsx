@@ -432,7 +432,7 @@ function CustomerList() {
                           )}`}
                           title={customer.industry}
                         >
-                          {customer.industry || "Unknown"}
+                          {customer.industry || "N/A"}
                         </span>
                       </td>
 

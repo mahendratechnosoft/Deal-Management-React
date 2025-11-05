@@ -34,6 +34,102 @@ const EmployeeRowSkeleton = () => (
   </tr>
 );
 
+// Skeleton component for the entire page
+const EmployeeListSkeleton = () => {
+  return (
+    <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none animate-pulse">
+      {/* Header Section Skeleton */}
+      <div className="mb-4">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-2 h-8 bg-gray-300 rounded-full"></div>
+              <div className="flex-1">
+                <div className="h-7 bg-gray-300 rounded w-48 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-64"></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+            {/* Search Input Skeleton */}
+            <div className="relative flex-1 sm:max-w-64">
+              <div className="w-full h-11 bg-gray-200 rounded-lg"></div>
+            </div>
+
+            {/* Create Button Skeleton */}
+            <div className="w-full sm:w-48 h-11 bg-gray-300 rounded-lg"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Cards Skeleton */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-4">
+        {[...Array(5)].map((_, index) => (
+          <div
+            key={index}
+            className="bg-white rounded-lg p-2 shadow-sm border border-gray-200"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-gray-200 flex-shrink-0"></div>
+              <div className="min-w-0 flex-1">
+                <div className="h-3 bg-gray-200 rounded w-20 mb-1"></div>
+                <div className="h-4 bg-gray-300 rounded w-12"></div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Table Section Skeleton */}
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+        <div className="overflow-x-auto">
+          <div className="relative">
+            <table className="min-w-full divide-y divide-gray-200">
+              <colgroup>
+                <col style={{ width: "5%" }} />
+                <col style={{ width: "25%" }} />
+                <col style={{ width: "30%" }} />
+                <col style={{ width: "20%" }} />
+                <col style={{ width: "10%" }} />
+                <col style={{ width: "10%" }} />
+              </colgroup>
+
+              <thead className="bg-gray-50 sticky top-0">
+                <tr>
+                  {[...Array(6)].map((_, index) => (
+                    <th key={index} className="px-6 py-3 text-left">
+                      <div className="h-4 bg-gray-300 rounded w-16"></div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody className="bg-white divide-y divide-gray-200">
+                {[...Array(10)].map((_, index) => (
+                  <EmployeeRowSkeleton key={index} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Pagination Skeleton */}
+      <div className="py-4 flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
+        <div className="flex items-center space-x-2">
+          <div className="h-8 bg-gray-200 rounded w-32"></div>
+          <div className="h-8 bg-gray-200 rounded w-24"></div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <div className="h-8 bg-gray-200 rounded w-24"></div>
+          <div className="h-8 bg-gray-200 rounded w-32"></div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function EmployeeList() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -128,14 +224,7 @@ function EmployeeList() {
   };
 
   if (loading) {
-    return (
-      <div className="p-6 flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading employees...</p>
-        </div>
-      </div>
-    );
+    return <EmployeeListSkeleton />;
   }
 
   if (error) {
