@@ -5,27 +5,11 @@ import toast from "react-hot-toast";
 import { useLayout } from "../../Layout/useLayout";
 import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
 import { ToWords } from "to-words";
+import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
+import ProposalPDF from "./ProposalPDF";
+import "./ProposalList.css";
 
 // --- SVG Icon Components (No Changes) ---
-const IconDownload = ({ className }) => (
-  <svg
-    className={className}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-    <polyline points="7 10 12 15 17 10"></polyline>
-    <line x1="12" y1="15" x2="12" y2="3"></line>
-  </svg>
-);
-
 const IconXCircle = ({ className }) => (
   <svg
     className={className}
@@ -44,7 +28,6 @@ const IconXCircle = ({ className }) => (
     <line x1="9" y1="9" x2="15" y2="15"></line>
   </svg>
 );
-
 const IconCheckCircle = ({ className }) => (
   <svg
     className={className}
@@ -337,6 +320,7 @@ function ProposalPreview() {
   const { role } = useLayout();
   const [proposal, setProposal] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchProposalData = async () => {
@@ -489,20 +473,38 @@ function ProposalPreview() {
           </div>
 
           {/* Action Buttons */}
-          {/* <div className="flex gap-2 mt-4 md:mt-0 w-full md:w-auto justify-start md:justify-end">
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 text-sm font-medium">
-              <IconDownload className="w-4 h-4" />
-              Download
+          <div className="flex gap-2 mt-4 md:mt-0 w-full md:w-auto justify-start md:justify-end">
+            <button
+              title="View PDF"
+              onClick={() => setIsPdfModalOpen(true)}
+              className="flex items-center gap-2 px-1 py-1 border border-gray-300 rounded bg-white text-sm font-medium text-red-600 hover:text-red-900"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                ></path>
+              </svg>
+              Pdf
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 border border-red-500 rounded text-red-500 hover:bg-red-50 text-sm font-medium">
+
+            {/* <button className="flex items-center gap-2 px-4 py-2 border border-red-500 rounded text-red-500 hover:bg-red-50 text-sm font-medium">
               <IconXCircle className="w-4 h-4" />
               Decline
             </button>
             <button className="flex items-center gap-2 px-4 py-2 border-0 rounded text-white bg-green-600 hover:bg-green-700 text-sm font-medium">
               <IconCheckCircle className="w-4 h-4" />
               Accept
-            </button>
-          </div> */}
+            </button>*/}
+          </div>
         </div>
 
         {/* Body (2-Column) */}
@@ -733,6 +735,85 @@ function ProposalPreview() {
           </div>
         </div>
       </div>
+      {isPdfModalOpen && proposal && (
+        <div className="proposal-pdf-modal-backdrop">
+          <div className="proposal-pdf-modal-content">
+            <div className="proposal-pdf-modal-header">
+              <h3>{proposal.proposalInfo.proposalNumber}</h3>
+              <div style={{ display: "flex", gap: "10px" }}>
+                {/* --- Download Button --- */}
+                {/* No loading state needed, data is already here */}
+                <PDFDownloadLink
+                  document={<ProposalPDF data={proposal} />}
+                  fileName={
+                    `Proposal-${proposal.proposalInfo.proposalNumber}-${proposal.proposalInfo.companyName}.pdf` ||
+                    "proposal.pdf"
+                  }
+                  title="Download PDF"
+                  className="download-button-icon-wrapper"
+                  style={{
+                    padding: "0.25rem",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    background: "#f9f9f9",
+                    cursor: "pointer",
+                    textDecoration: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    lineHeight: 1,
+                  }}
+                >
+                  {({ loading }) =>
+                    loading ? (
+                      <span style={{ padding: "0 4px", color: "#333" }}>
+                        ...
+                      </span>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        stroke="currentColor"
+                        style={{ width: "20px", height: "16px" }}
+                        className="proposal-download-button-icon"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                        />
+                      </svg>
+                    )
+                  }
+                </PDFDownloadLink>
+
+                {/* --- Close Button --- */}
+                <button
+                  onClick={() => setIsPdfModalOpen(false)}
+                  style={{
+                    padding: "0.25rem 0.75rem",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    background: "#f9f9f9",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            <div className="proposal-pdf-viewer-container">
+              {/* No loader, just render the PDF */}
+              <PDFViewer width="100%" height="100%">
+                <ProposalPDF data={proposal} />
+              </PDFViewer>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

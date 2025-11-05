@@ -7,9 +7,20 @@ import {
   Document,
   StyleSheet,
   Image,
+  Font,
 } from "@react-pdf/renderer";
 import { ToWords } from "to-words";
-import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg"; // Adjust path if needed
+import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
+import RobotoRegular from "../../../../public/fonts/Roboto-Regular.ttf";
+import RobotoBold from "../../../../public/fonts/Roboto-Bold.ttf";
+
+Font.register({
+  family: "Roboto",
+  fonts: [
+    { src: RobotoRegular, fontWeight: "normal" },
+    { src: RobotoBold, fontWeight: "bold" },
+  ],
+});
 
 // --- Helper Functions (No Changes) ---
 
@@ -88,7 +99,7 @@ const numberToWords = (num, currency = "INR") => {
 // --- PDF Styles ---
 const styles = StyleSheet.create({
   page: {
-    fontFamily: "Helvetica",
+    fontFamily: "Roboto",
     fontSize: 10,
     paddingTop: 30,
     paddingLeft: 40,
@@ -117,7 +128,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: "Helvetica-Bold",
+    fontWeight: "bold",
     color: "#000",
     marginBottom: 4,
   },
@@ -136,20 +147,20 @@ const styles = StyleSheet.create({
   },
   subHeader: {
     fontSize: 11,
-    fontFamily: "Helvetica-Bold",
+    fontWeight: "bold",
     color: "#000", // Black color
     marginBottom: 4,
   },
   // <-- NEW STYLE for request #3
   companyName: {
-    fontFamily: "Helvetica-Bold",
+    fontWeight: "bold",
     color: "#000",
     marginBottom: 2,
     fontSize: 10,
   },
   // <-- NEW STYLE for request #3
   label: {
-    fontFamily: "Helvetica-Bold",
+    fontWeight: "bold",
     color: "#000",
   },
   subjectSection: {
@@ -173,7 +184,7 @@ const styles = StyleSheet.create({
   },
   tableHeaderCol: {
     padding: 8,
-    fontFamily: "Helvetica-Bold",
+    fontWeight: "bold",
   },
   tableRow: {
     flexDirection: "row",
@@ -206,7 +217,7 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica",
   },
   totalValue: {
-    fontFamily: "Helvetica-Bold",
+    fontWeight: "bold",
   },
   taxableRow: {
     borderTopWidth: 1,
@@ -221,11 +232,11 @@ const styles = StyleSheet.create({
     paddingTop: 5,
   },
   grandTotalLabel: {
-    fontFamily: "Helvetica-Bold",
+    fontWeight: "bold",
     fontSize: 12,
   },
   grandTotalValue: {
-    fontFamily: "Helvetica-Bold",
+    fontWeight: "bold",
     fontSize: 12,
   },
   // Words
@@ -236,7 +247,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   wordsHeader: {
-    fontFamily: "Helvetica-Bold",
+    fontWeight: "bold",
   },
   wordsValue: {
     fontSize: 10,
