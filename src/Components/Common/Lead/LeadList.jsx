@@ -5,8 +5,53 @@ import { useLayout } from "../../Layout/useLayout";
 import toast from "react-hot-toast";
 import PreviewLead from "./PreviewLead";
 
-// Table Skeleton Component
-const TableSkeleton = () => {
+// Table Body Skeleton Component (for search operations)
+const TableBodySkeleton = ({ rows = 5, columns = 7 }) => {
+  return (
+    <tbody className="bg-white divide-y divide-gray-200">
+      {[...Array(rows)].map((_, rowIndex) => (
+        <tr key={rowIndex} className="animate-pulse">
+          {[...Array(columns)].map((_, colIndex) => (
+            <td key={colIndex} className="px-6 py-4">
+              <div className="h-4 bg-gray-200 rounded w-full"></div>
+            </td>
+          ))}
+          <td className="px-6 py-4">
+            <div className="flex items-center gap-3">
+              <div className="h-4 bg-gray-200 rounded w-8"></div>
+              <div className="h-4 bg-gray-200 rounded w-8"></div>
+            </div>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  );
+};
+
+// Pagination Skeleton Component (for search operations)
+const PaginationSkeleton = () => {
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 p-3 mt-4 animate-pulse">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-4">
+          <div className="h-4 bg-gray-300 rounded w-20"></div>
+          <div className="flex items-center gap-2">
+            <div className="h-4 bg-gray-300 rounded w-12"></div>
+            <div className="h-8 bg-gray-300 rounded w-16"></div>
+          </div>
+        </div>
+        <div className="flex items-center space-x-1">
+          {[...Array(5)].map((_, index) => (
+            <div key={index} className="h-8 bg-gray-300 rounded w-8"></div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Full Page Skeleton Component (for initial load)
+const LeadListSkeleton = () => {
   return (
     <div className="p-6">
       {/* Header Skeleton */}
@@ -70,41 +115,12 @@ const TableSkeleton = () => {
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {[...Array(5)].map((_, rowIndex) => (
-                <tr key={rowIndex}>
-                  {[...Array(8)].map((_, colIndex) => (
-                    <td key={colIndex} className="px-6 py-4">
-                      <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
+            <TableBodySkeleton rows={5} columns={7} />
           </table>
         </div>
       </div>
 
-      {/* Pagination Skeleton */}
-      <div className="bg-white rounded-lg border border-gray-200 p-3 mt-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-4">
-            <div className="h-4 bg-gray-300 rounded w-20 animate-pulse"></div>
-            <div className="flex items-center gap-2">
-              <div className="h-4 bg-gray-300 rounded w-12 animate-pulse"></div>
-              <div className="h-8 bg-gray-300 rounded w-16 animate-pulse"></div>
-            </div>
-          </div>
-          <div className="flex items-center space-x-1">
-            {[...Array(5)].map((_, index) => (
-              <div
-                key={index}
-                className="h-8 bg-gray-300 rounded w-8 animate-pulse"
-              ></div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <PaginationSkeleton />
     </div>
   );
 };
@@ -127,6 +143,7 @@ function LeadList() {
   const [statusAndCount, setStatusAndCount] = useState([]);
   const [pageSize, setPageSize] = useState(10);
   const [activeStatusDropdown, setActiveStatusDropdown] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const [draggedLead, setDraggedLead] = useState(null);
   const [dragOverColumn, setDragOverColumn] = useState(null);
@@ -240,6 +257,7 @@ function LeadList() {
       loading: false,
     },
   ];
+
   const refreshLeadsData = () => {
     fetchLeads(currentPage, searchTerm, statusFilter);
   };
@@ -254,18 +272,29 @@ function LeadList() {
     }
   };
 
-  // Fetch leads function
-  const fetchLeads = async (page = 0, search = "", status = "all") => {
+  // Optimized fetch function for both initial load and search
+  const fetchLeads = async (
+    page = 0,
+    search = "",
+    status = "all",
+    isSearch = false
+  ) => {
     // Cancel previous request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
 
-    // Create new abort controller
     abortControllerRef.current = new AbortController();
 
     try {
-      setLoading(true);
+      // Set appropriate loading state
+      if (isSearch) {
+        setSearchLoading(true);
+      } else if (page === 0 && search === "" && status === "all") {
+        setLoading(true);
+      } else {
+        setSearchLoading(true);
+      }
 
       let url = `getAllLeads/${page}/${pageSize}`;
       const params = [];
@@ -292,10 +321,14 @@ function LeadList() {
       setTotalPages(data.totalPages || 1);
       setCurrentPage(page);
       setTotalLeads(data.totalLeads || 0);
-      setStatusAndCount(data.statusAndCount || []);
+
+      // Only update status counts on initial load or first page search
+      if (page === 0) {
+        setStatusAndCount(data.statusAndCount || []);
+      }
+
       setError(null);
     } catch (err) {
-      // Ignore abort errors
       if (err.name === "AbortError") {
         console.log("Request was cancelled");
         return;
@@ -304,45 +337,56 @@ function LeadList() {
       setError(err.message);
     } finally {
       setLoading(false);
+      setSearchLoading(false);
     }
   };
 
-  // SINGLE useEffect for all data fetching - UPDATED
+  // Separate function for kanban search
+  const handleKanbanSearch = async (search = "", status = "all") => {
+    if (viewMode === "kanban") {
+      // Reset all kanban columns and refetch with search
+      kanbanColumns.forEach((column) => {
+        fetchKanbanLeads(column.apiStatus, 0, false);
+      });
+    }
+  };
+
+  // Optimized useEffect for search and initial load
   useEffect(() => {
-    const fetchData = async () => {
-      await fetchStatusCounts(); // Fetch status counts first
-      await fetchLeads(0, searchTerm, statusFilter); // Then fetch leads
-    };
+    if (viewMode === "table") {
+      const timeoutId = setTimeout(() => {
+        const isSearch =
+          searchTerm !== "" || statusFilter !== "all" || currentPage !== 0;
+        fetchLeads(0, searchTerm, statusFilter, isSearch);
+      }, 500);
 
-    const timeoutId = setTimeout(() => {
-      fetchData();
-    }, 500);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [searchTerm, statusFilter, viewMode, pageSize]);
 
-    // Cleanup function
-    return () => {
-      clearTimeout(timeoutId);
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, [searchTerm, statusFilter, pageSize]); // All dependencies in one useEffect
+  // Separate useEffect for initial data loading
+  useEffect(() => {
+    fetchStatusCounts();
+  }, []);
 
   // Separate useEffect for kanban data
   useEffect(() => {
     if (viewMode === "kanban") {
+      // Cancel any pending requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
       const timeoutId = setTimeout(() => {
         fetchAllKanbanColumns();
-      }, 500);
+      }, 300);
 
-      return () => {
-        clearTimeout(timeoutId);
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-        }
-      };
+      return () => clearTimeout(timeoutId);
     }
-  }, [viewMode, searchTerm, pageSize]); // Only fetch kanban data when in kanban view
+  }, [viewMode]); // Removed searchTerm and pageSize from dependencies
+
   // Event handlers
+  // Your existing handlers remain the same...
   const handlePreview = (leadId) => {
     setPreviewLeadId(leadId);
     setShowPreviewModal(true);
@@ -359,70 +403,68 @@ function LeadList() {
   };
 
   const handleLeadConverted = () => {
-    // Refresh the leads data to reflect changes
     refreshLeadsData();
     toast.success("Lead converted to customer successfully!");
   };
 
   const handleCardFilter = (status) => {
     setStatusFilter(status);
-    // Don't call fetchLeads here - it will be handled by useEffect
   };
 
   const handlePageChange = (newPage) => {
     if (newPage >= 0 && newPage < totalPages) {
-      fetchLeads(newPage, searchTerm, statusFilter);
+      fetchLeads(newPage, searchTerm, statusFilter, true);
     }
   };
 
-const updateLeadStatus = async (leadId, newStatus) => {
-  try {
-    const response = await axiosInstance.put("updateLeadStatus", {
-      leadId: leadId,
-      status: newStatus,
-    });
+  const updateLeadStatus = async (leadId, newStatus) => {
+    try {
+      const response = await axiosInstance.put("updateLeadStatus", {
+        leadId: leadId,
+        status: newStatus,
+      });
 
-    toast.success("Status updated successfully!");
+      toast.success("Status updated successfully!");
 
-    if (response.data) {
-      // Find the lead to get old status BEFORE updating state
-      const oldLead = leads.find((lead) => lead.id === leadId);
+      if (response.data) {
+        // Find the lead to get old status BEFORE updating state
+        const oldLead = leads.find((lead) => lead.id === leadId);
 
-      // Update table view leads
-      setLeads((prevLeads) =>
-        prevLeads.map((lead) =>
-          lead.id === leadId ? { ...lead, status: newStatus } : lead
-        )
-      );
-
-      // Refresh status counts from API to ensure accuracy
-      await fetchStatusCounts();
-
-      // If in kanban view, refresh kanban data to ensure consistency
-      if (viewMode === "kanban") {
-        // Instead of refreshing all columns, just update the specific ones
-        const sourceColumn = kanbanColumns.find(
-          (col) => col.apiStatus === oldLead?.status
-        );
-        const targetColumn = kanbanColumns.find(
-          (col) => col.apiStatus === newStatus
+        // Update table view leads
+        setLeads((prevLeads) =>
+          prevLeads.map((lead) =>
+            lead.id === leadId ? { ...lead, status: newStatus } : lead
+          )
         );
 
-        if (sourceColumn) {
-          fetchKanbanLeads(sourceColumn.apiStatus, 0, false);
+        // Refresh status counts from API to ensure accuracy
+        await fetchStatusCounts();
+
+        // If in kanban view, refresh kanban data to ensure consistency
+        if (viewMode === "kanban") {
+          // Instead of refreshing all columns, just update the specific ones
+          const sourceColumn = kanbanColumns.find(
+            (col) => col.apiStatus === oldLead?.status
+          );
+          const targetColumn = kanbanColumns.find(
+            (col) => col.apiStatus === newStatus
+          );
+
+          if (sourceColumn) {
+            fetchKanbanLeads(sourceColumn.apiStatus, 0, false);
+          }
+          if (targetColumn) {
+            fetchKanbanLeads(targetColumn.apiStatus, 0, false);
+          }
         }
-        if (targetColumn) {
-          fetchKanbanLeads(targetColumn.apiStatus, 0, false);
-        }
+
+        setActiveStatusDropdown(null);
       }
-
-      setActiveStatusDropdown(null);
+    } catch (error) {
+      console.error("Error updating lead status:", error);
+      toast.error("Failed to update status. Please try again.");
     }
-  } catch (error) {
-    console.error("Error updating lead status:", error);
-    toast.error("Failed to update status. Please try again.");
-  }
-};
+  };
   const toggleStatusDropdown = (leadId) => {
     setActiveStatusDropdown(activeStatusDropdown === leadId ? null : leadId);
   };
@@ -545,98 +587,63 @@ const updateLeadStatus = async (leadId, newStatus) => {
   // Kanban handlers
 
   // Fetch leads for specific status column
-  // Enhanced fetch function that tries multiple status formats
-  const fetchKanbanLeads = async (status, page = 0, append = false) => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
+const fetchKanbanLeads = async (status, page = 0, append = false) => {
+  // Create new AbortController for this specific request
+  const controller = new AbortController();
+
+  try {
+    setKanbanLoading((prev) => ({ ...prev, [status]: true }));
+
+    console.log(`Fetching leads for status: "${status}", page: ${page}`);
+
+    const encodedStatus = encodeURIComponent(status);
+    let url = `getAllLeads/${page}/${pageSize}?leadStatus=${encodedStatus}`;
+
+    if (searchTerm.trim()) {
+      url += `&search=${encodeURIComponent(searchTerm)}`;
     }
 
-    abortControllerRef.current = new AbortController();
+    const response = await axiosInstance.get(url, {
+      signal: controller.signal,
+    });
 
-    try {
-      setKanbanLoading((prev) => ({ ...prev, [status]: true }));
+    const data = response.data;
+    const leads = data.leadList || [];
 
-      console.log(`Fetching leads for status: "${status}", page: ${page}`);
+    setKanbanData((prev) => ({
+      ...prev,
+      [status]: append ? [...(prev[status] || []), ...leads] : leads,
+    }));
 
-      // Try different status formats
-      const statusFormats = [
-        status, // Original format
-        status.toLowerCase(), // Lowercase
-        status.toUpperCase(), // Uppercase
-        status.charAt(0).toUpperCase() + status.slice(1).toLowerCase(), // Title case
-      ];
-
-      let leads = [];
-      let successfulFormat = null;
-
-      // Try each format until one works
-      for (const format of statusFormats) {
-        try {
-          const encodedStatus = encodeURIComponent(format);
-          let url = `getAllLeads/${page}/${pageSize}?leadStatus=${encodedStatus}`;
-
-          if (searchTerm.trim()) {
-            url += `&search=${encodeURIComponent(searchTerm)}`;
-          }
-
-          console.log(`Trying format: "${format}", URL: ${url}`);
-
-          const response = await axiosInstance.get(url, {
-            signal: abortControllerRef.current.signal,
-          });
-
-          const data = response.data;
-          leads = data.leadList || [];
-          successfulFormat = format;
-
-          console.log(
-            `Success with format: "${format}", got ${leads.length} leads`
-          );
-          break; // Exit loop if successful
-        } catch (formatError) {
-          console.log(
-            `Format "${format}" failed:`,
-            formatError.response?.status
-          );
-          continue; // Try next format
-        }
-      }
-
-      if (successfulFormat) {
-        setKanbanData((prev) => ({
-          ...prev,
-          [status]: append ? [...(prev[status] || []), ...leads] : leads,
-        }));
-
-        setKanbanPage((prev) => ({ ...prev, [status]: page }));
-        // For hasMore, we'll assume it's true for now since we don't have totalPages from individual calls
-        setKanbanHasMore((prev) => ({
-          ...prev,
-          [status]: leads.length === pageSize,
-        }));
-        setKanbanTotal((prev) => ({
-          ...prev,
-          [status]: (prev[status] || 0) + leads.length,
-        }));
-      } else {
-        throw new Error(`All status formats failed for: ${status}`);
-      }
-    } catch (err) {
-      if (err.name !== "AbortError") {
-        console.error(`Error fetching ${status} leads:`, err);
-        console.error(`Error details:`, err.response?.data || err.message);
+    setKanbanPage((prev) => ({ ...prev, [status]: page }));
+    setKanbanHasMore((prev) => ({
+      ...prev,
+      [status]: leads.length === pageSize,
+    }));
+    setKanbanTotal((prev) => ({
+      ...prev,
+      [status]: (prev[status] || 0) + leads.length,
+    }));
+  } catch (err) {
+    if (err.name !== "AbortError") {
+      console.error(`Error fetching ${status} leads:`, err);
+      // Don't show toast for every failed request to avoid spam
+      if (!append) {
+        // Only show error for initial load, not infinite scroll
         toast.error(`Failed to load ${status} leads`);
       }
-    } finally {
-      setKanbanLoading((prev) => ({ ...prev, [status]: false }));
     }
-  };
+  } finally {
+    setKanbanLoading((prev) => ({ ...prev, [status]: false }));
+  }
+};
   // Fetch initial data for all kanban columns
-  const fetchAllKanbanColumns = () => {
-    kanbanColumns.forEach((column) => {
-      fetchKanbanLeads(column.apiStatus, 0, false);
-    });
-  };
+ const fetchAllKanbanColumns = () => {
+   console.log("Fetching all kanban columns...");
+   kanbanColumns.forEach((column) => {
+     fetchKanbanLeads(column.apiStatus, 0, false);
+   });
+ };
 
   // Infinite scroll handler for each column
   const handleColumnScroll = (event, status) => {
@@ -866,7 +873,7 @@ const updateLeadStatus = async (leadId, newStatus) => {
   if (loading) {
     return (
       <LayoutComponent>
-        <TableSkeleton />
+        <LeadListSkeleton />
       </LayoutComponent>
     );
   }
@@ -1222,6 +1229,8 @@ const updateLeadStatus = async (leadId, newStatus) => {
             {/* Table View */}
             <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
               <div className="">
+                {searchLoading && <></>}
+
                 {/* Single table container */}
                 <div className="relative overflow-x-auto crm-Leadlist-kanbadn-col-list">
                   <table className="min-w-full divide-y divide-gray-200">
@@ -1261,25 +1270,134 @@ const updateLeadStatus = async (leadId, newStatus) => {
                     </thead>
 
                     {/* Table body */}
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {leads.map((lead) => (
-                        <tr
-                          key={lead.id}
-                          className="hover:bg-gray-50 transition-colors duration-150"
-                        >
-                          {visibleColumns.map((column) => (
-                            <td
-                              key={column.id}
-                              className="px-6 py-1 whitespace-nowrap text-sm text-gray-900"
-                            >
-                              {column.id === "clientName" ? (
-                                <div className="flex items-center gap-3 min-w-0">
-                                  <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                    {getInitials(lead.clientName)}
+                    {searchLoading ? (
+                      <TableBodySkeleton
+                        rows={pageSize}
+                        columns={visibleColumns.length}
+                      />
+                    ) : (
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {leads.map((lead) => (
+                          <tr
+                            key={lead.id}
+                            className="hover:bg-gray-50 transition-colors duration-150"
+                          >
+                            {visibleColumns.map((column) => (
+                              <td
+                                key={column.id}
+                                className="px-6 py-1 whitespace-nowrap text-sm text-gray-900"
+                              >
+                                {column.id === "clientName" ? (
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                      {getInitials(lead.clientName)}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <span
+                                        className="font-semibold truncate block"
+                                        title={lead[column.id] || "N/A"}
+                                      >
+                                        {truncateText(
+                                          lead[column.id] || "N/A",
+                                          10
+                                        )}
+                                      </span>
+                                    </div>
                                   </div>
-                                  <div className="min-w-0 flex-1">
+                                ) : column.id === "status" ? (
+                                  <div className="status-dropdown relative">
+                                    <button
+                                      onClick={() =>
+                                        toggleStatusDropdown(lead.id)
+                                      }
+                                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                                        lead[column.id]
+                                      )} hover:opacity-80 transition-opacity max-w-full truncate`}
+                                      title={lead[column.id] || "N/A"}
+                                    >
+                                      <span className="truncate">
+                                        {truncateText(
+                                          lead[column.id] || "N/A",
+                                          10
+                                        )}
+                                      </span>
+                                      <svg
+                                        className="w-3 h-3 ml-1 flex-shrink-0"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M19 9l-7 7-7-7"
+                                        />
+                                      </svg>
+                                    </button>
+
+                                    {activeStatusDropdown === lead.id && (
+                                      <div
+                                        className="absolute left-0 mb-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                                        
+                                      >
+                                        <div className="py-1 max-h-60 overflow-y-auto">
+                                          {statusOptions.map((status) => (
+                                            <button
+                                              key={status}
+                                              onClick={() =>
+                                                updateLeadStatus(
+                                                  lead.id,
+                                                  status
+                                                )
+                                              }
+                                              className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 truncate ${
+                                                lead.status === status
+                                                  ? "bg-blue-50 text-blue-600"
+                                                  : "text-gray-700"
+                                              }`}
+                                              title={status}
+                                            >
+                                              {truncateText(status, 10)}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : column.id === "source" ? (
+                                  <span
+                                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(
+                                      lead[column.id]
+                                    )} max-w-full truncate`}
+                                    title={lead[column.id] || "N/A"}
+                                  >
+                                    {truncateText(lead[column.id] || "N/A", 10)}
+                                  </span>
+                                ) : column.id === "revenue" ? (
+                                  <span
+                                    className="font-semibold truncate block"
+                                    title={formatCurrency(lead[column.id])}
+                                  >
+                                    {truncateText(
+                                      formatCurrency(lead[column.id]),
+                                      10
+                                    )}
+                                  </span>
+                                ) : column.id === "createdDate" ? (
+                                  <span
+                                    className="truncate block"
+                                    title={formatDate(lead[column.id])}
+                                  >
+                                    {truncateText(
+                                      formatDate(lead[column.id]),
+                                      10
+                                    )}
+                                  </span>
+                                ) : (
+                                  <div className="relative group">
                                     <span
-                                      className="font-semibold truncate block"
+                                      className="truncate block max-w-xs"
                                       title={lead[column.id] || "N/A"}
                                     >
                                       {truncateText(
@@ -1288,170 +1406,69 @@ const updateLeadStatus = async (leadId, newStatus) => {
                                       )}
                                     </span>
                                   </div>
-                                </div>
-                              ) : column.id === "status" ? (
-                                <div className="status-dropdown relative">
-                                  <button
-                                    onClick={() =>
-                                      toggleStatusDropdown(lead.id)
-                                    }
-                                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                                      lead[column.id]
-                                    )} hover:opacity-80 transition-opacity max-w-full truncate`}
-                                    title={lead[column.id] || "N/A"}
+                                )}
+                              </td>
+                            ))}
+                            <td className="px-6 py-1 whitespace-nowrap text-sm font-medium">
+                              <div className="flex items-center gap-3">
+                                {/* Preview Button */}
+                                <button
+                                  onClick={() => handlePreview(lead.id)}
+                                  className="text-gray-400 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 flex-shrink-0"
+                                  title="Preview Lead"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
                                   >
-                                    <span className="truncate">
-                                      {truncateText(
-                                        lead[column.id] || "N/A",
-                                        10
-                                      )}
-                                    </span>
-                                    <svg
-                                      className="w-3 h-3 ml-1 flex-shrink-0"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M19 9l-7 7-7-7"
-                                      />
-                                    </svg>
-                                  </button>
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                    />
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                    />
+                                  </svg>
+                                </button>
 
-                                  {activeStatusDropdown === lead.id && (
-                                    <div className="absolute left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                                      <div className="py-1">
-                                        {statusOptions.map((status) => (
-                                          <button
-                                            key={status}
-                                            onClick={() =>
-                                              updateLeadStatus(lead.id, status)
-                                            }
-                                            className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 truncate ${
-                                              lead.status === status
-                                                ? "bg-blue-50 text-blue-600"
-                                                : "text-gray-700"
-                                            }`}
-                                            title={status}
-                                          >
-                                            {truncateText(status, 10)}
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              ) : column.id === "source" ? (
-                                <span
-                                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(
-                                    lead[column.id]
-                                  )} max-w-full truncate`}
-                                  title={lead[column.id] || "N/A"}
+                                {/* Edit Button */}
+                                <button
+                                  onClick={() => handleEdit(lead.id)}
+                                  className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1 flex-shrink-0"
+                                  title="Edit Lead"
                                 >
-                                  {truncateText(lead[column.id] || "N/A", 10)}
-                                </span>
-                              ) : column.id === "revenue" ? (
-                                <span
-                                  className="font-semibold truncate block"
-                                  title={formatCurrency(lead[column.id])}
-                                >
-                                  {truncateText(
-                                    formatCurrency(lead[column.id]),
-                                    10
-                                  )}
-                                </span>
-                              ) : column.id === "createdDate" ? (
-                                <span
-                                  className="truncate block"
-                                  title={formatDate(lead[column.id])}
-                                >
-                                  {truncateText(
-                                    formatDate(lead[column.id]),
-                                    10
-                                  )}
-                                </span>
-                              ) : (
-                                <div className="relative group">
-                                  <span
-                                    className="truncate block max-w-xs"
-                                    title={lead[column.id] || "N/A"}
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
                                   >
-                                    {truncateText(lead[column.id] || "N/A", 10)}
-                                  </span>
-                                  {/* Show full text on hover for long content */}
-                                  {lead[column.id] &&
-                                    lead[column.id].length > 10 && (
-                                      <div className="absolute invisible group-hover:visible z-20 bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-normal max-w-xs break-words">
-                                        {lead[column.id]}
-                                        <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
-                                      </div>
-                                    )}
-                                </div>
-                              )}
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
                             </td>
-                          ))}
-                          <td className="px-6 py-1 whitespace-nowrap text-sm font-medium">
-                            <div className="flex items-center gap-3">
-                              {/* Preview Button */}
-                              <button
-                                onClick={() => handlePreview(lead.id)}
-                                className="text-gray-400 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 flex-shrink-0"
-                                title="Preview Lead"
-                              >
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                  />
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                  />
-                                </svg>
-                              </button>
-
-                              {/* Edit Button */}
-                              <button
-                                onClick={() => handleEdit(lead.id)}
-                                className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1 flex-shrink-0"
-                                title="Edit Lead"
-                              >
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                  />
-                                </svg>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
+                          </tr>
+                        ))}
+                      </tbody>
+                    )}
                   </table>
                 </div>
               </div>
 
-              {leads.length === 0 && (
+              {leads.length === 0 && !searchLoading && (
                 <div className="text-center py-12">
                   <svg
                     className="w-16 h-16 mx-auto text-gray-400 mb-4"
@@ -1486,86 +1503,91 @@ const updateLeadStatus = async (leadId, newStatus) => {
               )}
             </div>
             {/* Pagination - Outside table card, above the table */}
-            <div
-              className="bg-white rounded-lg border border-gray-200 shadow-xs p-3 mt-4 sticky bottom-0 "
-              style={{ zIndex: "39" }}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex items-center gap-4 text-xs">
-                  <div className="text-gray-600">
-                    {totalPages > 1
-                      ? `Page ${currentPage + 1} of ${totalPages}`
-                      : `${totalLeads} leads`}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600">Rows:</span>
-                    <select
-                      value={pageSize}
-                      onChange={(e) => {
-                        const newSize = parseInt(e.target.value);
-                        setPageSize(newSize);
-                      }}
-                      className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value={5}>5</option>
-                      <option value={10}>10</option>
-                      <option value={25}>25</option>
-                      <option value={50}>50</option>
-                      <option value={100}>100</option>
-                    </select>
-                  </div>
-                </div>
 
-                {/* Show pagination only if there are multiple pages */}
-                {totalPages > 1 && (
-                  <div className="flex items-center space-x-1">
-                    <button
-                      onClick={() => handlePageChange(0)}
-                      disabled={currentPage === 0}
-                      className="px-2 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-w-8"
-                    >
-                      First
-                    </button>
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 0}
-                      className="px-2 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-w-8"
-                    >
-                      ‹
-                    </button>
-
-                    {getPageNumbers().map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => handlePageChange(page)}
-                        className={`px-2 py-1 rounded text-xs font-medium min-w-8 ${
-                          currentPage === page
-                            ? "bg-blue-600 text-white"
-                            : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                        }`}
+            {searchLoading ? (
+              <PaginationSkeleton />
+            ) : (
+              <div
+                className="bg-white rounded-lg border border-gray-200 shadow-xs p-3 mt-4 sticky bottom-0 "
+                style={{ zIndex: "39" }}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-center gap-4 text-xs">
+                    <div className="text-gray-600">
+                      {totalPages > 1
+                        ? `Page ${currentPage + 1} of ${totalPages}`
+                        : `${totalLeads} leads`}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600">Rows:</span>
+                      <select
+                        value={pageSize}
+                        onChange={(e) => {
+                          const newSize = parseInt(e.target.value);
+                          setPageSize(newSize);
+                        }}
+                        className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                       >
-                        {page + 1}
-                      </button>
-                    ))}
-
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages - 1}
-                      className="px-2 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-w-8"
-                    >
-                      ›
-                    </button>
-                    <button
-                      onClick={() => handlePageChange(totalPages - 1)}
-                      disabled={currentPage === totalPages - 1}
-                      className="px-2 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-w-8"
-                    >
-                      Last
-                    </button>
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                      </select>
+                    </div>
                   </div>
-                )}
+
+                  {/* Show pagination only if there are multiple pages */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={() => handlePageChange(0)}
+                        disabled={currentPage === 0}
+                        className="px-2 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-w-8"
+                      >
+                        First
+                      </button>
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 0}
+                        className="px-2 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-w-8"
+                      >
+                        ‹
+                      </button>
+
+                      {getPageNumbers().map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          className={`px-2 py-1 rounded text-xs font-medium min-w-8 ${
+                            currentPage === page
+                              ? "bg-blue-600 text-white"
+                              : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          {page + 1}
+                        </button>
+                      ))}
+
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages - 1}
+                        className="px-2 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-w-8"
+                      >
+                        ›
+                      </button>
+                      <button
+                        onClick={() => handlePageChange(totalPages - 1)}
+                        disabled={currentPage === totalPages - 1}
+                        className="px-2 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 min-w-8"
+                      >
+                        Last
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </>
         ) : (
           /* Kanban View */
@@ -1659,7 +1681,6 @@ const updateLeadStatus = async (leadId, newStatus) => {
                               </div>
 
                               <p className="text-xs text-gray-600 mb-2">
-                                {lead.employeeId} •{" "}
                                 {formatCurrency(lead.revenue)}
                               </p>
 
