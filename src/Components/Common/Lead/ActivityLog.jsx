@@ -43,7 +43,7 @@ const ActivityLog = ({ moduleId, moduleType = "lead" }) => {
           "en-US",
           {
             year: "numeric",
-            month: "long",
+            month: "short",
             day: "numeric",
           }
         );
@@ -69,14 +69,14 @@ const ActivityLog = ({ moduleId, moduleType = "lead" }) => {
     });
   };
 
-  const formatFullDateTime = (dateString) => {
+  const formatFullDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
+      weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-      hour12: true,
     });
   };
 
@@ -84,16 +84,16 @@ const ActivityLog = ({ moduleId, moduleType = "lead" }) => {
 
   if (loading) {
     return (
-      <div className="p-2">
+      <div className="p-3">
         <div className="animate-pulse space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="flex space-x-2">
+            <div key={i} className="flex space-x-3">
               <div className="flex-shrink-0">
-                <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
+                <div className="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
               </div>
-              <div className="flex-1 space-y-1">
-                <div className="h-3 bg-gray-300 rounded w-3/4"></div>
-                <div className="h-2 bg-gray-200 rounded w-1/4"></div>
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
               </div>
             </div>
           ))}
@@ -104,28 +104,14 @@ const ActivityLog = ({ moduleId, moduleType = "lead" }) => {
 
   if (error) {
     return (
-      <div className="p-2 text-center">
-        <div className="bg-red-50 border border-red-200 rounded p-2">
-          <svg
-            className="w-5 h-5 text-red-400 mx-auto mb-1"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
+      <div className="p-3 text-center">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
           <p className="text-red-800 font-medium text-sm mb-1">
-            Error loading activity log
+            Failed to load activities
           </p>
-          <p className="text-red-600 text-xs mb-2">{error}</p>
           <button
             onClick={fetchActivities}
-            className="px-2 py-1 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 transition-colors"
+            className="px-3 py-1 bg-red-600 text-white rounded text-sm font-medium hover:bg-red-700 transition-colors"
           >
             Try Again
           </button>
@@ -136,28 +122,8 @@ const ActivityLog = ({ moduleId, moduleType = "lead" }) => {
 
   if (activities.length === 0) {
     return (
-      <div className="p-3 text-center">
-        <div className="bg-gray-50 rounded-lg p-4">
-          <svg
-            className="w-10 h-10 text-gray-400 mx-auto mb-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1}
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <h3 className="text-sm font-semibold text-gray-900 mb-1">
-            No Activity Logs
-          </h3>
-          <p className="text-gray-600 text-xs">
-            No activities recorded for this lead yet.
-          </p>
-        </div>
+      <div className="p-4 text-center text-gray-500">
+        <div className="text-sm">No activities found</div>
       </div>
     );
   }
@@ -165,96 +131,108 @@ const ActivityLog = ({ moduleId, moduleType = "lead" }) => {
   return (
     <div className="max-h-80 overflow-y-auto">
       {Object.entries(groupedActivities).map(([displayDate, group]) => (
-        <div key={displayDate} className="mb-4 last:mb-0">
+        <div key={displayDate} className="mb-6">
           {/* Date Header */}
-          <div className="sticky top-0 bg-white z-10 px-2 py-1 border-b border-gray-200 mb-2">
-            <div className="flex items-center">
-              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-              <h4
-                className="text-xs font-semibold text-gray-700 cursor-help"
-                title={formatFullDateTime(group.actualDate)}
-              >
-                {displayDate}
-              </h4>
-            </div>
+          <div className="px-3 py-2 mb-3">
+            <h4
+              className="text-sm font-semibold text-gray-700 bg-white inline-block px-3 py-1 rounded-full border cursor-help"
+              title={formatFullDate(group.actualDate)}
+            >
+              {displayDate}
+            </h4>
           </div>
 
-          {/* Activities List */}
-          <div className="space-y-2 px-2">
-            {group.activities.map((activity, index) => (
-              <div
-                key={activity.activityId || index}
-                className="flex items-start space-x-2 p-2 rounded border border-gray-200 hover:border-gray-300 bg-white"
-              >
-                {/* Activity Icon */}
-                <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-3 h-3 text-blue-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
-                  </svg>
-                </div>
+          {/* Connected Cards Container */}
+          <div className="relative">
+            {/* Main Vertical Timeline Line - Fixed */}
+            <div
+              className="absolute left-4 top-2 bottom-2 w-0.5 bg-blue-200"
+              style={{
+                top: "8px",
+                bottom: "8px",
+                height: `calc(100% - 16px)`,
+              }}
+            ></div>
 
-                {/* Activity Content */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-800 leading-relaxed">
-                    {activity.description}
-                  </p>
+            {/* Activities Cards */}
+            <div className="space-y-1">
+              {group.activities.map((activity, index, array) => (
+                <div
+                  key={activity.activityId || index}
+                  className="relative flex items-start"
+                >
+                  {/* Timeline Dot Container */}
+                  <div className="flex-shrink-0 w-8 flex justify-center relative">
+                    {/* Connection Dot */}
+                    <div
+                      className="w-3 h-3 bg-blue-500 border-2 border-white rounded-full shadow-sm z-10 cursor-help"
+                      title={formatFullDate(activity.createdDateTime)}
+                    ></div>
 
-                  {/* Activity Meta */}
-                  <div className="flex items-center space-x-2 mt-1">
-                    <div className="flex items-center space-x-1 text-xs text-gray-500">
-                      <svg
-                        className="w-2.5 h-2.5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4l3 3"
-                        />
-                      </svg>
-                      <span
-                        className="cursor-help text-xs"
-                        title={formatFullDateTime(activity.createdDateTime)}
-                      >
-                        {formatTime(activity.createdDateTime)}
-                      </span>
-                    </div>
-
-                    {activity.createdBy && (
-                      <div className="flex items-center space-x-1 text-xs text-gray-500">
-                        <svg
-                          className="w-2.5 h-2.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                          />
-                        </svg>
-                        <span className="text-xs">By {activity.createdBy}</span>
-                      </div>
+                    {/* Connecting line to next card - Fixed */}
+                    {index < array.length - 1 && (
+                      <div
+                        className="absolute left-1/2 top-3 transform -translate-x-1/2 w-0.5 bg-blue-200 z-0"
+                        style={{ height: "calc(100% + 8px)" }}
+                      ></div>
                     )}
                   </div>
+
+                  {/* Activity Card */}
+                  <div
+                    className="flex-1 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 hover:border-blue-300 mb-3 ml-2 cursor-help"
+                    title={formatFullDate(activity.createdDateTime)}
+                  >
+                    <div className="p-3">
+                      <p className="text-sm font-medium text-gray-900 mb-2">
+                        {activity.description}
+                      </p>
+
+                      <div className="flex items-center space-x-4 text-xs text-gray-500">
+                        <div className="flex items-center space-x-1">
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3"
+                            />
+                          </svg>
+                          <span>{formatTime(activity.createdDateTime)}</span>
+                        </div>
+
+                        {activity.createdBy && (
+                          <>
+                            <div className="w-px h-3 bg-gray-300"></div>
+                            <div className="flex items-center space-x-1">
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                />
+                              </svg>
+                              <span>By {activity.createdBy}</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       ))}
