@@ -1,0 +1,56 @@
+.proposal-pdf-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.proposal-pdf-modal-content {
+  background-color: white;
+  width: 90%;
+  height: 90vh;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.proposal-pdf-modal-header {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.proposal-pdf-modal-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.proposal-pdf-modal-header button {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #f9f9f9;
+  cursor: pointer;
+}
+
+.proposal-pdf-viewer-container {
+  flex-grow: 1;
+  height: 100%;
+}
+
+/* Existing styles... */
+
+.proposal-download-button-icon {
+  color: #6b7280; /* Faint black (gray-500 equivalent) */
+  transition: color 0.2s ease-in-out; /* Smooth transition for hover */
+}
+
+.proposal-download-button-icon:hover {
+  color: #1f2937; /* Darker black (gray-900 equivalent) */
+}
