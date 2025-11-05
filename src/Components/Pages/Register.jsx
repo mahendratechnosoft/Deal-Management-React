@@ -63,7 +63,7 @@ function Register({ onSwitchToLogin }) {
     setIsLoading(true);
 
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      const API_BASE = import.meta.env.VITE_API_URL || "http://91.203.133.210:9090";
 
       const response = await fetch(`${API_BASE}/register`, {
         method: "POST",
