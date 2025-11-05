@@ -1,28 +1,23 @@
-# Use official OpenJDK image as base
-FROM eclipse-temurin:21-jdk-jammy
+# Stage 1: Build React app with Vite
+FROM node:22 AS build
 
-# Install comprehensive font libraries
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    fontconfig \
-    libfreetype6 \
-    libfontconfig1 \
-    fonts-dejavu \
-    fonts-dejavu-extra \
-    fonts-liberation \
-    fonts-noto \
-    fonts-freefont-ttf \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set working directory inside container
 WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
 
-# Copy built JAR into container
-COPY target/*.jar app.jar
+# Stage 2: Serve with Nginx
+FROM nginx:alpine
 
-# Expose application port
-EXPOSE 8080
+WORKDIR /usr/share/nginx/html
+RUN rm -rf ./*
 
-# Run the application with headless mode
-ENTRYPOINT ["java", "-Djava.awt.headless=true", "-jar", "app.jar"]
+# Copy React build output from /dist
+COPY --from=build /app/dist .
+
+# Copy custom Nginx config (for SPA routing)
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
