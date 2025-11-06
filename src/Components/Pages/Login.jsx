@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import Mtech_logo from "../../../public/Images/Mtech_Logo.jpg";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../BaseComponet/axiosInstance";
+
 function Login({ onSwitchToRegister, onLogin }) {
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -17,6 +18,7 @@ function Login({ onSwitchToRegister, onLogin }) {
     message: "",
     type: "",
   });
+  const [showPassword, setShowPassword] = useState(false); // Add this state
 
   const showToaster = (message, type = "success") => {
     setToaster({ show: true, message, type });
@@ -39,6 +41,11 @@ function Login({ onSwitchToRegister, onLogin }) {
     }
   };
 
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -56,102 +63,102 @@ function Login({ onSwitchToRegister, onLogin }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  // In your login component, update the success handler:
- const handleSubmit = async (e) => {
-   e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-   if (!validateForm()) {
-     return;
-   }
+    if (!validateForm()) {
+      return;
+    }
 
-   setIsLoading(true);
+    setIsLoading(true);
 
-   try {
-     const response = await axiosInstance.post(
-       "/signin",
-       {
-         username: formData.username,
-         password: formData.password,
-       },
-       {
-         headers: {
-           "Content-Type": "application/json",
-         },
-       }
-     );
+    try {
+      const response = await axiosInstance.post(
+        "/signin",
+        {
+          username: formData.username,
+          password: formData.password,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-     const data = await response.data;
+      const data = await response.data;
 
-     // Store the token and user data
-     if (data.jwtToken) {
-       localStorage.setItem("authToken", data.jwtToken);
-       localStorage.setItem(
-         "userData",
-         JSON.stringify({
-           userId: data.userId,
-           loginEmail: data.loginEmail,
-           role: data.role,
-           expiryDate: data.expiryDate,
-         })
-       );
+      // Store the token and user data
+      if (data.jwtToken) {
+        localStorage.setItem("authToken", data.jwtToken);
+        localStorage.setItem(
+          "userData",
+          JSON.stringify({
+            userId: data.userId,
+            loginEmail: data.loginEmail,
+            role: data.role,
+            expiryDate: data.expiryDate,
+          })
+        );
 
-       // Store role separately for easy access
-       localStorage.setItem("role", data.role);
+        // Store role separately for easy access
+        localStorage.setItem("role", data.role);
 
-       if (rememberMe) {
-         localStorage.setItem("rememberMe", "true");
-       }
+        if (rememberMe) {
+          localStorage.setItem("rememberMe", "true");
+        }
 
-       showToaster("Sign in successful! Welcome back.", "success");
+        showToaster("Sign in successful! Welcome back.", "success");
 
-       // Call onLogin with the correct data structure
-       if (onLogin) {
-         onLogin({
-           user: {
-             userId: data.userId,
-             email: data.loginEmail,
-             role: data.role,
-             expiryDate: data.expiryDate,
-           },
-         });
-       }
+        // Call onLogin with the correct data structure
+        if (onLogin) {
+          onLogin({
+            user: {
+              userId: data.userId,
+              email: data.loginEmail,
+              role: data.role,
+              expiryDate: data.expiryDate,
+            },
+          });
+        }
 
-       // Navigate based on the role from API response (not from localStorage)
-       if (data.role === "ROLE_ADMIN") {
-         navigate("/Admin/LeadList");
-       } else if (data.role === "ROLE_EMPLOYEE") {
-         navigate("/Employee/LeadList");
-       } else {
-         // Default fallback route
-         navigate("/");
-       }
-     } else {
-       throw new Error("No authentication token received");
-     }
-   } catch (error) {
-     console.error("Sign in error:", error);
-     if (
-       error.name === "TypeError" &&
-       error.message.includes("Failed to fetch")
-     ) {
-       showToaster(
-         "Cannot connect to server. Please check if the backend is running.",
-         "error"
-       );
-     } else {
-       showToaster(
-         error.message || "Sign in failed. Please check your credentials.",
-         "error"
-       );
-     }
-   } finally {
-     setIsLoading(false);
-   }
- };
+        // Navigate based on the role from API response (not from localStorage)
+        if (data.role === "ROLE_ADMIN") {
+          navigate("/Admin/LeadList");
+        } else if (data.role === "ROLE_EMPLOYEE") {
+          navigate("/Employee/LeadList");
+        } else {
+          // Default fallback route
+          navigate("/");
+        }
+      } else {
+        throw new Error("No authentication token received");
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+      if (
+        error.name === "TypeError" &&
+        error.message.includes("Failed to fetch")
+      ) {
+        showToaster(
+          "Cannot connect to server. Please check if the backend is running.",
+          "error"
+        );
+      } else {
+        showToaster(
+          error.message || "Sign in failed. Please check your credentials.",
+          "error"
+        );
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleCreateAccount = (e) => {
     navigate("/register");
   };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 relative overflow-hidden">
       {/* Animated Background Elements */}
@@ -409,19 +416,62 @@ function Login({ onSwitchToRegister, onLogin }) {
                   >
                     Password
                   </label>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 ${
-                      errors.password
-                        ? "border-red-300 bg-red-50"
-                        : "border-gray-300 hover:border-blue-300"
-                    }`}
-                    placeholder="Enter your password"
-                  />
+                  <div className="relative">
+                    <input
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-3 pr-10 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 ${
+                        errors.password
+                          ? "border-red-300 bg-red-50"
+                          : "border-gray-300 hover:border-blue-300"
+                      }`}
+                      placeholder="Enter your password"
+                    />
+                    <button
+                      type="button"
+                      onClick={togglePasswordVisibility}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition duration-200"
+                    >
+                      {showPassword ? (
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                   {errors.password && (
                     <p className="text-red-600 text-sm mt-2 flex items-center">
                       <svg
@@ -442,7 +492,7 @@ function Login({ onSwitchToRegister, onLogin }) {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <input
+                    {/* <input
                       id="remember-me"
                       type="checkbox"
                       checked={rememberMe}
@@ -454,7 +504,7 @@ function Login({ onSwitchToRegister, onLogin }) {
                       className="ml-2 block text-sm text-gray-700"
                     >
                       Remember me
-                    </label>
+                    </label> */}
                   </div>
                   <button
                     type="button"

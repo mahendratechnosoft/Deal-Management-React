@@ -105,11 +105,12 @@ function EditLead() {
           }
           return;
         }
-          if (leadData.employeeId) {
-            setEmployeeId(leadData.employeeId);
-          }
+        if (leadData.employeeId) {
+          setEmployeeId(leadData.employeeId);
+        }
 
         // Map API response to form data
+       
         const mappedFormData = {
           companyName: leadData.companyName || "",
           assignTo: leadData.assignTo || "",
@@ -129,6 +130,9 @@ function EditLead() {
           city: leadData.city || "",
           zipCode: leadData.zipCode || "",
           description: leadData.description || "",
+          // Add these lines to preserve dates
+          createdDate: leadData.createdDate,
+          updatedDate: leadData.updatedDate,
         };
 
         setFormData(mappedFormData);
@@ -327,72 +331,75 @@ function EditLead() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!validateForm()) return;
 
-    setLoading(true);
-    try {
-      const submitData = {
-        id: id,
-        companyName: formData.companyName,
-        assignTo: formData.assignTo,
-        status: formData.status,
-        source: formData.source,
-        clientName: formData.clientName,
-        revenue: formData.revenue ? parseFloat(formData.revenue) : 0,
-        mobileNumber: formData.mobileNumber || null,
-        phoneNumber: formData.phoneNumber || null,
-        email: formData.email || null,
-        website: formData.website || null,
-        industry: formData.industry || null,
-        priority: formData.priority || null,
-        street: formData.street,
-        country: formData.country
-          ? dropdownData.countries.find((c) => c.value === formData.country)
-              ?.label
-          : "",
-        state: formData.state
-          ? dropdownData.states.find((s) => s.value === formData.state)?.label
-          : "",
-        city: formData.city,
-        zipCode: formData.zipCode,
-        description: formData.description,
-      };
+  setLoading(true);
+  try {
+    const submitData = {
+      id: id,
+      companyName: formData.companyName,
+      assignTo: formData.assignTo,
+      status: formData.status,
+      source: formData.source,
+      clientName: formData.clientName,
+      revenue: formData.revenue ? parseFloat(formData.revenue) : 0,
+      mobileNumber: formData.mobileNumber || null,
+      phoneNumber: formData.phoneNumber || null,
+      email: formData.email || null,
+      website: formData.website || null,
+      industry: formData.industry || null,
+      priority: formData.priority || null,
+      street: formData.street,
+      country: formData.country
+        ? dropdownData.countries.find((c) => c.value === formData.country)
+            ?.label
+        : "",
+      state: formData.state
+        ? dropdownData.states.find((s) => s.value === formData.state)?.label
+        : "",
+      city: formData.city,
+      zipCode: formData.zipCode,
+      description: formData.description,
+      // Preserve these fields from original data
+      createdDate: formData.createdDate, // Add this line
+      updatedDate: new Date().toISOString(), // Update only this one
+    };
 
-        if (role === "ROLE_EMPLOYEE" && employeeId) {
-          submitData.employeeId = employeeId;
-        }
-
-      console.log("Updating lead with data:", submitData);
-
-      // Use common endpoint instead of admin-specific endpoint
-      await axiosInstance.put("updateLead", submitData);
-
-      toast.success("Lead updated successfully!");
-      if (role === "ROLE_ADMIN") {
-        navigate("/Admin/LeadList");
-      } else if (role === "ROLE_EMPLOYEE") {
-        navigate("/Employee/LeadList");
-      }
-    } catch (error) {
-      console.error("Error updating lead:", error);
-      if (error.response?.data?.message) {
-        toast.error(`Failed to update lead: ${error.response.data.message}`);
-      } else if (
-        error.name === "TypeError" &&
-        error.message.includes("Failed to fetch")
-      ) {
-        toast.error(
-          "Cannot connect to server. Please check if the backend is running."
-        );
-      } else {
-        toast.error("Failed to update lead. Please try again.");
-      }
-    } finally {
-      setLoading(false);
+    if (role === "ROLE_EMPLOYEE" && employeeId) {
+      submitData.employeeId = employeeId;
     }
-  };
+
+    console.log("Updating lead with data:", submitData);
+
+    // Use common endpoint instead of admin-specific endpoint
+    await axiosInstance.put("updateLead", submitData);
+
+    toast.success("Lead updated successfully!");
+    if (role === "ROLE_ADMIN") {
+      navigate("/Admin/LeadList");
+    } else if (role === "ROLE_EMPLOYEE") {
+      navigate("/Employee/LeadList");
+    }
+  } catch (error) {
+    console.error("Error updating lead:", error);
+    if (error.response?.data?.message) {
+      toast.error(`Failed to update lead: ${error.response.data.message}`);
+    } else if (
+      error.name === "TypeError" &&
+      error.message.includes("Failed to fetch")
+    ) {
+      toast.error(
+        "Cannot connect to server. Please check if the backend is running."
+      );
+    } else {
+      toast.error("Failed to update lead. Please try again.");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCancel = () => {
     if (
@@ -525,18 +532,101 @@ function EditLead() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600 text-sm">
-            Loading lead information...
-          </p>
+if (isLoading) {
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <LayoutComponent>
+        <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
+          {/* Header Skeleton */}
+          <div className="mb-6">
+            <div className="skeleton h-4 w-32 mb-2"></div>
+            <div className="skeleton h-8 w-64 mb-2"></div>
+            <div className="skeleton h-4 w-48"></div>
+          </div>
+
+          {/* Form Skeleton */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            {/* Section Header Skeleton */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="skeleton w-8 h-8 rounded-lg"></div>
+              <div className="skeleton h-6 w-48"></div>
+            </div>
+
+            {/* Form Fields Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              {[...Array(6)].map((_, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="skeleton h-4 w-24"></div>
+                  <div className="skeleton h-10 w-full"></div>
+                </div>
+              ))}
+            </div>
+
+            {/* Address Section Skeleton */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="skeleton w-8 h-8 rounded-lg"></div>
+              <div className="skeleton h-6 w-32"></div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="skeleton h-4 w-20"></div>
+                  <div className="skeleton h-10 w-full"></div>
+                </div>
+              ))}
+            </div>
+
+            {/* Lead Details Skeleton */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="skeleton w-8 h-8 rounded-lg"></div>
+              <div className="skeleton h-6 w-36"></div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="skeleton h-4 w-28"></div>
+                  <div className="skeleton h-10 w-full"></div>
+                </div>
+              ))}
+            </div>
+
+            {/* Description Skeleton */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="skeleton w-8 h-8 rounded-lg"></div>
+              <div className="skeleton h-6 w-40"></div>
+            </div>
+            <div className="skeleton h-32 w-full"></div>
+          </div>
         </div>
-      </div>
-    );
-  }
+      </LayoutComponent>
+
+      <style jsx>{`
+        .skeleton {
+          background: linear-gradient(
+            90deg,
+            #f0f0f0 25%,
+            #e0e0e0 50%,
+            #f0f0f0 75%
+          );
+          background-size: 200% 100%;
+          animation: loading 1.5s infinite;
+          border-radius: 4px;
+        }
+
+        @keyframes loading {
+          0% {
+            background-position: 200% 0;
+          }
+          100% {
+            background-position: -200% 0;
+          }
+        }
+      `}</style>
+    </div>
+  );
+}
 
   return (
     <LayoutComponent>
