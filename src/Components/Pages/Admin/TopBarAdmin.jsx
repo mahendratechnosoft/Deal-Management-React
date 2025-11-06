@@ -41,7 +41,7 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
 
           {/* Quick Actions */}
           <div className="flex items-center space-x-1">
-            <button className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative">
+            {/* <button className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative">
               <svg
                 className="w-4 h-4 text-white group-hover:scale-110 transition-transform duration-300"
                 fill="none"
@@ -55,11 +55,11 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-            </button>
+            </button> */}
 
             {/* Notifications */}
             <div className="relative">
-              <button
+              {/* <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative"
               >
@@ -77,7 +77,7 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
                   />
                 </svg>
                 <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-400 rounded-full border border-blue-600"></span>
-              </button>
+              </button> */}
 
               {/* Notifications Dropdown */}
               {showNotifications && (
@@ -145,7 +145,7 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
                   <p className="text-xs text-gray-600">admin@example.com</p>
                 </div>
                 <div className="py-1">
-                  {["Profile", "Settings", "Team", "Billing"].map((item) => (
+                  {["Profile", "Settings"].map((item) => (
                     <button
                       key={item}
                       className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-blue-50 transition-colors duration-200"

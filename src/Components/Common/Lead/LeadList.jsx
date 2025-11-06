@@ -404,7 +404,7 @@ function LeadList() {
 
   const handleLeadConverted = () => {
     refreshLeadsData();
-    toast.success("Lead converted to customer successfully!");
+    // toast.success("Lead converted to customer successfully!");
   };
 
   const handleCardFilter = (status) => {
