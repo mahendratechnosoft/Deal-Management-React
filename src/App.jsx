@@ -30,6 +30,8 @@ import CustomerList from "./Components/Common/Customer/CustomerList.jsx";
 import CreateCustomer from "./Components/Common/Customer/CreateCustomer.jsx";
 import EditCustomer from "./Components/Common/Customer/EditCustomer.jsx";
 import ProposalPreview from "./Components/Common/Proposal/ProposalPreview.jsx";
+import DynamicFormBase from "./Components/Common/Settings/DynamicForm/DynamicFormBase.jsx";
+import PublicForm from "./Components/Common/Settings/DynamicForm/PublicForm.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -279,7 +281,13 @@ function App() {
               path="Department/:departmentId/Roles"
               element={<RoleListCompo />}
             />
+            <Route path="Form" element={<DynamicFormBase />} />
           </Route>
+
+          <Route
+            path="/public-form/:adminId/:formId"
+            element={<PublicForm />}
+          />
 
           {/* Default redirect based on role */}
           <Route

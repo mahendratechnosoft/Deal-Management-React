@@ -208,6 +208,16 @@ const SettingsLayout = () => {
                             Department and Roles
                           </span>
                         </NavLink>
+
+                        <NavLink
+                          to="/Admin/Settings/Form"
+                          className={getNavLinkClass}
+                        >
+                          <DepartmentIcon />
+                          <span className="ml-3 font-medium block text-xs">
+                            Dynamic Form
+                          </span>
+                        </NavLink>
                       </div>
                     </div>
                   </nav>
