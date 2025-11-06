@@ -33,6 +33,7 @@ function EditCustomer() {
     shippingCountry: "",
     shippingZipCode: "",
     description: "",
+    employeeId: "",
   });
 
   const [sameAsBilling, setSameAsBilling] = useState(false);
@@ -214,6 +215,7 @@ function EditCustomer() {
           shippingCountry: customer.shippingCountry || "", // Keep as name initially
           shippingZipCode: customer.shippingZipCode || "",
           description: customer.description || "",
+          employeeId: customer.employeeId || "",
         });
 
         // Check if shipping address is same as billing
@@ -516,7 +518,7 @@ function EditCustomer() {
 
     if (!formData.companyName?.trim())
       newErrors.companyName = "Company name is required";
-    if (!formData.industry?.trim()) newErrors.industry = "Industry is required";
+
 
     if (formData.phone && !/^[0-9+\-\s()]{10,}$/.test(formData.phone)) {
       newErrors.phone = "Please enter a valid phone number";
@@ -576,6 +578,7 @@ const handleSubmit = async (e) => {
         : null,
       shippingZipCode: formData.shippingZipCode || null,
       description: formData.description || null,
+      employeeId: formData.employeeId || null,
     };
 
     await axiosInstance.put("updateCustomer", submitData);
@@ -631,15 +634,145 @@ const handleSubmit = async (e) => {
   if (fetchLoading) {
     return (
       <LayoutComponent>
-        <div className="p-6 flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading customer data...</p>
+        <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
+          {/* Header Skeleton */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="skeleton h-4 w-24 rounded"></div>
+            </div>
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+              <div className="space-y-2">
+                <div className="skeleton h-6 w-48 rounded"></div>
+                <div className="skeleton h-4 w-64 rounded"></div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="skeleton h-9 w-20 rounded"></div>
+                <div className="skeleton h-9 w-32 rounded"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Form Skeleton */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div className="p-6 space-y-6">
+                  {/* Company Information Section Skeleton */}
+                  <section>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="skeleton w-8 h-8 rounded-lg"></div>
+                      <div className="skeleton h-6 w-48 rounded"></div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[...Array(8)].map((_, index) => (
+                        <div key={index} className="space-y-2">
+                          <div className="skeleton h-4 w-24 rounded"></div>
+                          <div className="skeleton h-10 w-full rounded"></div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  {/* Address Information Section Skeleton */}
+                  <section>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="skeleton w-8 h-8 rounded-lg"></div>
+                      <div className="skeleton h-6 w-40 rounded"></div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Billing Address Skeleton */}
+                      <div className="space-y-4">
+                        <div className="skeleton h-6 w-32 rounded mb-2"></div>
+                        {[...Array(5)].map((_, index) => (
+                          <div key={index} className="space-y-2">
+                            <div className="skeleton h-4 w-20 rounded"></div>
+                            <div className="skeleton h-10 w-full rounded"></div>
+                          </div>
+                        ))}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <div className="skeleton h-4 w-12 rounded"></div>
+                            <div className="skeleton h-10 w-full rounded"></div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="skeleton h-4 w-16 rounded"></div>
+                            <div className="skeleton h-10 w-full rounded"></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Shipping Address Skeleton */}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="skeleton h-6 w-36 rounded"></div>
+                          <div className="flex items-center gap-2">
+                            <div className="skeleton h-4 w-4 rounded"></div>
+                            <div className="skeleton h-4 w-24 rounded"></div>
+                          </div>
+                        </div>
+                        {[...Array(5)].map((_, index) => (
+                          <div key={index} className="space-y-2">
+                            <div className="skeleton h-4 w-20 rounded"></div>
+                            <div className="skeleton h-10 w-full rounded"></div>
+                          </div>
+                        ))}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <div className="skeleton h-4 w-12 rounded"></div>
+                            <div className="skeleton h-10 w-full rounded"></div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="skeleton h-4 w-16 rounded"></div>
+                            <div className="skeleton h-10 w-full rounded"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Description Section Skeleton */}
+                  <section>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="skeleton w-8 h-8 rounded-lg"></div>
+                      <div className="skeleton h-6 w-32 rounded"></div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="skeleton h-4 w-24 rounded"></div>
+                      <div className="skeleton h-24 w-full rounded"></div>
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+
+        <style jsx>{`
+          .skeleton {
+            background: linear-gradient(
+              90deg,
+              #f0f0f0 25%,
+              #e0e0e0 50%,
+              #f0f0f0 75%
+            );
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+          }
+
+          @keyframes loading {
+            0% {
+              background-position: 200% 0;
+            }
+            100% {
+              background-position: -200% 0;
+            }
+          }
+        `}</style>
       </LayoutComponent>
     );
   }
+
 
   return (
     <LayoutComponent>
@@ -799,7 +932,7 @@ const handleSubmit = async (e) => {
                           <option value="Other">Other</option>
                         </select>
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600">
-                          Industry *
+                          Industry
                         </label>
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                           <svg

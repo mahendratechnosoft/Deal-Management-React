@@ -456,7 +456,12 @@ function CustomerList() {
                       <td className="px-4 py-3 whitespace-nowrap text-sm">
                         {customer.website ? (
                           <a
-                            href={customer.website}
+                            href={
+                              customer.website.startsWith("http://") ||
+                              customer.website.startsWith("https://")
+                                ? customer.website
+                                : `https://${customer.website}`
+                            }
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:text-blue-800 text-sm truncate max-w-[80px] block"
@@ -506,10 +511,6 @@ function CustomerList() {
                                 d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
                               />
                             </svg>
-                            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-                              Manage Contacts
-                              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1 w-2 h-2 bg-gray-800 rotate-45"></div>
-                            </div>
                           </button>
 
                           {/* Edit Button */}
@@ -531,13 +532,7 @@ function CustomerList() {
                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                               />
                             </svg>
-                            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-                              Edit Customer
-                              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1 w-2 h-2 bg-gray-800 rotate-45"></div>
-                            </div>
                           </button>
-
-                        
                         </div>
                       </td>
                     </tr>
