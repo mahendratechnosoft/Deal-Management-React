@@ -4,7 +4,7 @@ import Swal from "sweetalert2";
 
 const axiosInstance = axios.create({
   // baseURL: "http://localhost:8080",
-  baseURL: "https://api.mtechnosoft.xpertbizsolutions.com",
+  baseURL: "http://91.203.133.210:9091",
 });
 
 axiosInstance.interceptors.request.use(
