@@ -1,8 +1,60 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
+
 function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [userData, setUserData] = useState(null);
+  const navigate = useNavigate();
+
+  // Get user data from localStorage on component mount
+  useEffect(() => {
+    const storedUserData = localStorage.getItem("userData");
+    if (storedUserData) {
+      try {
+        setUserData(JSON.parse(storedUserData));
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
+
+  // Get initials from user name
+  const getUserInitials = () => {
+    if (!userData?.loginUserName) return "UN";
+
+    const name = userData.loginUserName.trim();
+    if (name.length === 0) return "UN";
+
+    const nameParts = name.split(" ");
+    if (nameParts.length === 1) {
+      return nameParts[0].charAt(0).toUpperCase();
+    }
+    return (
+      nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)
+    ).toUpperCase();
+  };
+
+  // Handle navigation to settings
+  const handleSettings = () => {
+    setShowUserMenu(false);
+    navigate("/Employee/Settings");
+  };
+
+  // Handle navigation to profile
+  const handleProfile = () => {
+    setShowUserMenu(false);
+    navigate("/Employee/Settings"); // Same link for both as requested
+  };
+
+  // Handle sign out
+  const handleSignOut = () => {
+    setShowUserMenu(false);
+    if (onSwitchToLogin) {
+      onSwitchToLogin();
+    }
+  };
 
   return (
     <div className="bg-gradient-to-r from-blue-600 to-blue-800 shadow z-40">
@@ -39,45 +91,9 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
         <div className="flex items-center space-x-3">
           {/* Quick Actions */}
           <div className="flex items-center space-x-1">
-            {/* <button className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative">
-              <svg
-                className="w-4 h-4 text-white group-hover:scale-110 transition-transform duration-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-            </button> */}
-
             {/* Notifications */}
             <div className="relative">
-              {/* <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative"
-              >
-                <svg
-                  className="w-4 h-4 text-white group-hover:scale-110 transition-transform duration-300"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 17h5l-5 5v-5zM10.24 8.56a5.97 5.97 0 01-4.66-7.5 1 1 0 00-1.2-1.2 7.97 7.97 0 006.16 10.02 1 1 0 001.7 0 5.97 5.97 0 010-1.32z"
-                  />
-                </svg>
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-400 rounded-full border border-blue-600"></span>
-              </button> */}
-
-              {/* Notifications Dropdown */}
+              {/* Notification button code remains the same */}
               {showNotifications && (
                 <div className="absolute right-0 mt-1 w-72 bg-white rounded-xl shadow border border-gray-200 py-1 z-50">
                   <div className="px-3 py-1.5 border-b border-gray-100">
@@ -112,11 +128,15 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
               className="flex items-center space-x-2 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group"
             >
               <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center text-white font-medium shadow group-hover:scale-105 transition-transform duration-300 text-xs">
-                UN
+                {getUserInitials()}
               </div>
               <div className="text-left hidden lg:block">
-                <p className="text-white font-medium text-xs">User Name</p>
-                <p className="text-blue-200 text-xs">Employee</p>
+                <p className="text-white font-medium text-xs">
+                  {userData?.loginUserName || "User Name"}
+                </p>
+                <p className="text-blue-200 text-xs">
+                  {userData?.role === "ROLE_EMPLOYEE" ? "Employee" : "User"}
+                </p>
               </div>
               <svg
                 className={`w-3 h-3 text-blue-200 transform transition-transform duration-300 ${
@@ -139,23 +159,31 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
             {showUserMenu && (
               <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow border border-gray-200 py-1 z-50">
                 <div className="px-3 py-2 border-b border-gray-100">
-                  <p className="font-medium text-gray-800 text-sm">User Name</p>
-                  <p className="text-xs text-gray-600">admin@example.com</p>
+                  <p className="font-medium text-gray-800 text-sm">
+                    {userData?.loginUserName || "User Name"}
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    {userData?.loginEmail || "employee@example.com"}
+                  </p>
                 </div>
-                <div className="py-1">
-                  {["Profile", "Settings"].map((item) => (
-                    <button
-                      key={item}
-                      className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-blue-50 transition-colors duration-200"
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
+                {/* <div className="py-1">
+                  <button
+                    onClick={handleProfile}
+                    className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-blue-50 transition-colors duration-200"
+                  >
+                    Profile
+                  </button>
+                  <button
+                    onClick={handleSettings}
+                    className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-blue-50 transition-colors duration-200"
+                  >
+                    Settings
+                  </button>
+                </div> */}
                 <div className="border-t border-gray-100 pt-1">
                   <button
+                    onClick={handleSignOut}
                     className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 transition-colors duration-200"
-                    onClick={onSwitchToLogin}
                   >
                     Sign Out
                   </button>

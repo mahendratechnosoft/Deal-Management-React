@@ -13,19 +13,7 @@ function Login({ onSwitchToRegister, onLogin }) {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [toaster, setToaster] = useState({
-    show: false,
-    message: "",
-    type: "",
-  });
-  const [showPassword, setShowPassword] = useState(false); // Add this state
-
-  const showToaster = (message, type = "success") => {
-    setToaster({ show: true, message, type });
-    setTimeout(() => {
-      setToaster({ show: false, message: "", type: "" });
-    }, 4000);
-  };
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,10 +21,18 @@ function Login({ onSwitchToRegister, onLogin }) {
       ...prev,
       [name]: value,
     }));
+    // Clear errors when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
         [name]: "",
+      }));
+    }
+    // Clear API error when user modifies credentials
+    if (errors.api) {
+      setErrors((prev) => ({
+        ...prev,
+        api: "",
       }));
     }
   };
@@ -98,17 +94,21 @@ function Login({ onSwitchToRegister, onLogin }) {
             loginEmail: data.loginEmail,
             role: data.role,
             expiryDate: data.expiryDate,
+            loginUserName: data.loginUserName,
           })
         );
 
         // Store role separately for easy access
         localStorage.setItem("role", data.role);
 
+        // Store loginUserName separately for easy access
+        if (data.loginUserName) {
+          localStorage.setItem("loginUserName", data.loginUserName);
+        }
+
         if (rememberMe) {
           localStorage.setItem("rememberMe", "true");
         }
-
-        showToaster("Sign in successful! Welcome back.", "success");
 
         // Call onLogin with the correct data structure
         if (onLogin) {
@@ -118,6 +118,7 @@ function Login({ onSwitchToRegister, onLogin }) {
               email: data.loginEmail,
               role: data.role,
               expiryDate: data.expiryDate,
+              loginUserName: data.loginUserName,
             },
           });
         }
@@ -136,19 +137,22 @@ function Login({ onSwitchToRegister, onLogin }) {
       }
     } catch (error) {
       console.error("Sign in error:", error);
-      if (
+
+      // Handle different types of errors and set them in errors state
+      if (error.response?.status === 401) {
+        setErrors({ api: "Invalid email or password. Please try again." });
+      } else if (
         error.name === "TypeError" &&
         error.message.includes("Failed to fetch")
       ) {
-        showToaster(
-          "Cannot connect to server. Please check if the backend is running.",
-          "error"
-        );
+        setErrors({
+          api: "Cannot connect to server. Please check if the backend is running.",
+        });
       } else {
-        showToaster(
-          error.message || "Sign in failed. Please check your credentials.",
-          "error"
-        );
+        setErrors({
+          api:
+            error.message || "Sign in failed. Please check your credentials.",
+        });
       }
     } finally {
       setIsLoading(false);
@@ -180,85 +184,6 @@ function Login({ onSwitchToRegister, onLogin }) {
           ></div>
         </div>
       </div>
-
-      {/* Toaster Notification */}
-      {toaster.show && (
-        <div
-          className={`fixed top-6 right-6 z-50 max-w-sm w-full bg-white rounded-lg shadow-lg border ${
-            toaster.type === "error" ? "border-red-200" : "border-green-200"
-          } transform transition-all duration-300 ${
-            toaster.show
-              ? "translate-x-0 opacity-100"
-              : "translate-x-full opacity-0"
-          }`}
-        >
-          <div className="p-4">
-            <div className="flex items-center">
-              <div
-                className={`flex-shrink-0 ${
-                  toaster.type === "error" ? "text-red-400" : "text-green-400"
-                }`}
-              >
-                {toaster.type === "error" ? (
-                  <svg
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                )}
-              </div>
-              <div className="ml-3">
-                <p
-                  className={`text-sm font-medium ${
-                    toaster.type === "error" ? "text-red-800" : "text-green-800"
-                  }`}
-                >
-                  {toaster.type === "error" ? "Error" : "Success"}
-                </p>
-                <p className="text-sm text-gray-600 mt-1">{toaster.message}</p>
-              </div>
-              <button
-                onClick={() =>
-                  setToaster({ show: false, message: "", type: "" })
-                }
-                className="ml-auto flex-shrink-0 text-gray-400 hover:text-gray-600 transition duration-200"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="relative z-10 flex min-h-screen">
         {/* Left Side - Brand Section */}
@@ -347,7 +272,7 @@ function Login({ onSwitchToRegister, onLogin }) {
               <div className="flex items-center justify-center mb-6">
                 <div className="bg-blue-600 rounded-xl p-4 shadow-lg">
                   <img
-                    src="/images/logo.png"
+                    src={Mtech_logo}
                     alt="Mahendra Technosoft"
                     className="h-12 w-auto filter brightness-0 invert"
                   />
@@ -369,6 +294,26 @@ function Login({ onSwitchToRegister, onLogin }) {
                   Welcome back! Please sign in to your account
                 </p>
               </div>
+
+              {/* API Error Message */}
+              {errors.api && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-red-700 text-sm flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-2 flex-shrink-0"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    {errors.api}
+                  </p>
+                </div>
+              )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
@@ -506,12 +451,12 @@ function Login({ onSwitchToRegister, onLogin }) {
                       Remember me
                     </label> */}
                   </div>
-                  <button
+                  {/* <button
                     type="button"
                     className="text-sm text-blue-600 hover:text-blue-500 font-medium transition duration-200"
                   >
                     Forgot password?
-                  </button>
+                  </button> */}
                 </div>
 
                 <button
