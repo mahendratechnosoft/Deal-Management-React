@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../BaseComponet/axiosInstance"; // Assuming this path from your reference
 import toast from "react-hot-toast";
+import CustomeImageUploader from "../../BaseComponet/CustomeImageUploader";
 
 // --- Reusable FormInput component (based on your reference) ---
 const FormInput = ({
@@ -157,7 +158,9 @@ function General() {
     accountHolderName: "",
     accountNumber: "",
     ifscCode: "",
-    loginEmail: "", // To display the (disabled) email
+    loginEmail: "",
+    signatureBase64: "",
+    stampBase64: "",
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false); // For submit button
@@ -176,13 +179,15 @@ function General() {
           address: data.address || "",
           companyName: data.companyName || "",
           description: data.description || "",
-          logoBase64: data.logo || "", // API 'get' response has 'logo'
+          logoBase64: data.logo || "",
           gstNumber: data.gstNumber || "",
           bankName: data.bankName || "",
           accountHolderName: data.accountHolderName || "",
           accountNumber: data.accountNumber || "",
           ifscCode: data.ifscCode || "",
-          loginEmail: data.loginEmail || "", // Get email
+          loginEmail: data.loginEmail || "",
+          signatureBase64: data.companySignature || "",
+          stampBase64: data.companyStamp || "",
         });
       } catch (error) {
         console.error("Error fetching admin info:", error);
@@ -239,6 +244,36 @@ function General() {
     }
   };
 
+  const handleImageUpload = (file, fieldName) => {
+    // Handle file clearing
+    if (!file) {
+      setFormData((prev) => ({ ...prev, [fieldName]: "" }));
+      return;
+    }
+
+    // Validation (optional, as your uploader does some)
+    if (!["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
+      toast.error("Invalid file type. Please select a JPG or PNG.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      // 5MB limit
+      toast.error("File is too large. Maximum size is 5MB.");
+      return;
+    }
+
+    // Convert to Base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result.toString().split(",")[1];
+      setFormData((prev) => ({
+        ...prev,
+        [fieldName]: base64String,
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   // --- Validate Form ---
   const validateForm = () => {
     const newErrors = {};
@@ -256,22 +291,10 @@ function General() {
       newErrors.accountNumber = "Account number is required";
     if (!formData.ifscCode?.trim())
       newErrors.ifscCode = "IFSC code is required";
-
-    // Basic regex validation
-    if (
-      formData.gstNumber &&
-      !/^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}Z[A-Z\d]{1}$/.test(
-        formData.gstNumber.toUpperCase()
-      )
-    ) {
-      newErrors.gstNumber = "Invalid GST number format";
-    }
-    if (
-      formData.ifscCode &&
-      !/^[A-Z]{4}0[A-Z\d]{6}$/.test(formData.ifscCode.toUpperCase())
-    ) {
-      newErrors.ifscCode = "Invalid IFSC code format";
-    }
+    if (!formData.gstNumber?.trim())
+      newErrors.gstNumber = "Gst number is required";
+    if (!formData.ifscCode?.trim())
+      newErrors.ifscCode = "IFSC code is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -299,7 +322,9 @@ function General() {
       accountHolderName: formData.accountHolderName,
       accountNumber: formData.accountNumber,
       ifscCode: formData.ifscCode,
-      logoBase64: formData.logoBase64, // API 'update' expects 'logoBase64'
+      logoBase64: formData.logoBase64,
+      signatureBase64: formData.signatureBase64,
+      stampBase64: formData.stampBase64,
     };
 
     try {
@@ -542,6 +567,47 @@ function General() {
                   value={formData.ifscCode}
                   onChange={handleChange}
                   error={errors.ifscCode}
+                />
+              </div>
+            </section>
+
+            <section>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <svg
+                    className="w-4 h-4 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Authorised Signature & Company Stamp
+                  </h2>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <CustomeImageUploader
+                  title="Authorised Signature"
+                  onFileChange={(file) =>
+                    handleImageUpload(file, "signatureBase64")
+                  }
+                  initialBase64={formData.signatureBase64}
+                />
+                <CustomeImageUploader
+                  title="Company Stamp"
+                  onFileChange={(file) =>
+                    handleImageUpload(file, "stampBase64")
+                  }
+                  initialBase64={formData.stampBase64}
                 />
               </div>
             </section>
