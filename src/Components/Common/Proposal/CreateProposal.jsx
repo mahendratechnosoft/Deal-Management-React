@@ -16,6 +16,9 @@ function CreateProposal() {
   const [loading, setLoading] = useState(false);
   const { LayoutComponent, role } = useLayout();
   const [errors, setErrors] = useState({});
+  const [signatureUrl, setSignatureUrl] = useState(null);
+  const [stampUrl, setStampUrl] = useState(null);
+  const [companyMediaLoading, setCompanyMediaLoading] = useState(true);
 
   const [proposalInfo, setProposalInfo] = useState({
     employeeId: "",
@@ -40,6 +43,10 @@ function CreateProposal() {
     state: "",
     country: "",
     zipCode: "",
+    notes: "",
+    termsAndConditions: "",
+    companySignature: "",
+    companyStamp: "",
   });
 
   const [proposalContent, setProposalContent] = useState([
@@ -148,6 +155,64 @@ function CreateProposal() {
       setSelectedCity(null);
     }
   }, [selectedState]);
+
+  useEffect(() => {
+    const fetchCompanyMedia = async () => {
+      if (!role) {
+        setCompanyMediaLoading(false);
+        return; // Don't fetch if role isn't set
+      }
+
+      setCompanyMediaLoading(true);
+      let endpoint = "";
+
+      if (role === "ROLE_ADMIN") {
+        endpoint = "getAdminInfo";
+      } else if (role === "ROLE_EMPLOYEE") {
+        endpoint = "getEmployeeInfo";
+      } else {
+        setCompanyMediaLoading(false);
+        return; // Unknown role
+      }
+
+      try {
+        const response = await axiosInstance.get(endpoint);
+        const data = response.data;
+
+        let sigData = null;
+        let stampData = null;
+
+        if (role === "ROLE_ADMIN") {
+          sigData = data.companySignature;
+          stampData = data.companyStamp;
+        } else if (role === "ROLE_EMPLOYEE" && data.admin) {
+          sigData = data.admin.companySignature;
+          stampData = data.admin.companyStamp;
+        }
+
+        if (sigData) {
+          setSignatureUrl(`data:;base64,${sigData}`);
+        }
+
+        if (stampData) {
+          setStampUrl(`data:;base64,${stampData}`);
+        }
+
+        setProposalInfo((prev) => ({
+          ...prev,
+          companySignature: sigData || "",
+          companyStamp: stampData || "",
+        }));
+      } catch (error) {
+        console.error("Failed to load company media:", error);
+        toast.error("Could not load signature and stamp.");
+      } finally {
+        setCompanyMediaLoading(false);
+      }
+    };
+
+    fetchCompanyMedia();
+  }, [role]);
 
   const handleCancel = () => {
     if (role === "ROLE_ADMIN") {
@@ -805,7 +870,6 @@ function CreateProposal() {
                 </button>
               </div>
 
-              {/* --- Section 3: Summary (with separator) --- */}
               <div className="pt-8 border-t border-gray-200">
                 <div className="flex justify-end">
                   <div className="w-full md:w-1/2 lg:w-1/3 space-y-4">
@@ -898,6 +962,60 @@ function CreateProposal() {
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              <div className="pt-8 border-t border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                  Signature & Stamp
+                </h2>
+                <div className="flex flex-col md:flex-row w-1/2 gap-8">
+                  <div className="w-full md:w-1/2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Authorized Signature
+                    </label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg h-40 w-full flex items-center justify-center bg-gray-50 p-2">
+                      {companyMediaLoading ? (
+                        <span className="text-gray-400 text-sm">
+                          Loading Signature...
+                        </span>
+                      ) : signatureUrl ? (
+                        <img
+                          src={signatureUrl}
+                          alt="Authorized Signature"
+                          className="max-h-full max-w-full object-contain" // Resized
+                        />
+                      ) : (
+                        <span className="text-gray-400 text-sm text-center px-4">
+                          Please add signature from General Settings.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {(companyMediaLoading || stampUrl) && (
+                    <div className="w-full md:w-1/2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Company Stamp
+                      </label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg h-40 w-full flex items-center justify-center bg-gray-50 p-2">
+                        {companyMediaLoading ? (
+                          <span className="text-gray-400 text-sm">
+                            Loading Stamp...
+                          </span>
+                        ) : stampUrl ? (
+                          <img
+                            src={stampUrl}
+                            alt="Company Stamp"
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        ) : (
+                          <span className="text-gray-400 text-sm">
+                            Stamp Image Not Available
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

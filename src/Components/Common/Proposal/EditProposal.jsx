@@ -19,6 +19,8 @@ function EditProposal() {
   const { LayoutComponent, role } = useLayout();
   const [errors, setErrors] = useState({});
   const [deletedContentIds, setDeletedContentIds] = useState([]);
+  const [signatureUrl, setSignatureUrl] = useState(null);
+  const [stampUrl, setStampUrl] = useState(null);
 
   // Same state structure as CreateProposal
   const [proposalInfo, setProposalInfo] = useState({
@@ -44,6 +46,10 @@ function EditProposal() {
     state: "",
     country: "",
     zipCode: "",
+    notes: "",
+    termsAndConditions: "",
+    companySignature: null,
+    companyStamp: null,
   });
 
   const [proposalContent, setProposalContent] = useState([
@@ -166,6 +172,14 @@ function EditProposal() {
               setIsRelatedIdLoading(false);
             }
           }
+        }
+
+        if (fetchedInfo.companySignature) {
+          setSignatureUrl(`data:;base64,${fetchedInfo.companySignature}`);
+        }
+
+        if (fetchedInfo.companyStamp) {
+          setStampUrl(`data:;base64,${fetchedInfo.companyStamp}`);
         }
 
         // 5. Handle Country/State/City
@@ -1080,6 +1094,60 @@ function EditProposal() {
                         </span>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                <div className="pt-8 border-t border-gray-200">
+                  <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                    Signature & Stamp
+                  </h2>
+                  <div className="flex flex-col md:flex-row w-1/2 gap-8">
+                    <div className="w-full md:w-1/2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Authorized Signature
+                      </label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg h-40 w-full flex items-center justify-center bg-gray-50 p-2">
+                        {pageLoading ? (
+                          <span className="text-gray-400 text-sm">
+                            Loading Signature...
+                          </span>
+                        ) : signatureUrl ? (
+                          <img
+                            src={signatureUrl}
+                            alt="Authorized Signature"
+                            className="max-h-full max-w-full object-contain" // Resized
+                          />
+                        ) : (
+                          <span className="text-gray-400 text-sm text-center px-4">
+                            No Signature added at time of creation
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {(pageLoading || stampUrl) && (
+                      <div className="w-full md:w-1/2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Company Stamp
+                        </label>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg h-40 w-full flex items-center justify-center bg-gray-50 p-2">
+                          {pageLoading ? (
+                            <span className="text-gray-400 text-sm">
+                              Loading Stamp...
+                            </span>
+                          ) : stampUrl ? (
+                            <img
+                              src={stampUrl}
+                              alt="Company Stamp"
+                              className="max-h-full max-w-full object-contain"
+                            />
+                          ) : (
+                            <span className="text-gray-400 text-sm">
+                              Stamp Image Not Available
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

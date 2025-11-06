@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     width: "45%",
   },
   subHeader: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "bold",
     color: "#000", // Black color
     marginBottom: 4,
@@ -251,6 +251,32 @@ const styles = StyleSheet.create({
   },
   wordsValue: {
     fontSize: 10,
+  },
+  notesAndTermsSection: {
+    borderTopWidth: 1,
+    borderTopColor: "#eaeaea",
+    marginTop: 15,
+    paddingTop: 8,
+  },
+  sectionContent: {
+    fontSize: 10,
+    color: "#333",
+  },
+
+  signatureStampSection: {
+    pageBreakInside: "avoid",
+    borderTopWidth: 1,
+    borderTopColor: "#eaeaea",
+    marginTop: 5,
+    paddingTop: 8,
+  },
+  imageBlock: {
+    height: "60",
+    width: "130",
+  },
+  image: {
+    objectFit: "contain",
+    alignSelf: "flex-start",
   },
   // Footer
   footer: {
@@ -369,7 +395,6 @@ const ProposalPDF = ({ data }) => {
             </View>
           </View>
         </View>
-
         {/* 2. Address Section (CHANGED for request #3) */}
         <View style={styles.addressSection}>
           <View style={styles.addressBlock}>
@@ -408,7 +433,6 @@ const ProposalPDF = ({ data }) => {
             </Text>
           </View>
         </View>
-
         {/* 3. Subject (CHANGED for request #4) */}
         <View style={styles.subjectSection}>
           <Text>
@@ -416,7 +440,6 @@ const ProposalPDF = ({ data }) => {
             <Text>{proposalInfo.subject}</Text>
           </Text>
         </View>
-
         {/* 4. Items Table (No Changes) */}
         <View style={styles.table}>
           {/* Table Header */}
@@ -455,7 +478,6 @@ const ProposalPDF = ({ data }) => {
             </View>
           ))}
         </View>
-
         {/* 5. Totals Section (No Changes) */}
         <View style={styles.totalsSection}>
           <View style={styles.totalRow}>
@@ -488,7 +510,6 @@ const ProposalPDF = ({ data }) => {
             </Text>
           </View>
         </View>
-
         {/* 6. Amount in Words (No Changes) */}
         <View style={styles.wordsSection}>
           <Text>
@@ -498,8 +519,53 @@ const ProposalPDF = ({ data }) => {
             </Text>
           </Text>
         </View>
-
-        {/* 7. Footer (No Changes) */}
+        {/* 7. Notes & Terms (NEW) */}       
+        {(proposalInfo.notes || proposalInfo.termsAndConditions) && (
+          <View style={styles.notesAndTermsSection}>
+            {proposalInfo.notes && (
+              <View style={{ marginBottom: 10 }}>
+                <Text style={styles.subHeader}>Notes:</Text>
+                <Text style={styles.sectionContent}>{proposalInfo.notes}</Text>
+              </View>
+            )}
+                       
+            {proposalInfo.termsAndConditions && (
+              <View>
+                <Text style={styles.subHeader}>Terms & Conditions:</Text> 
+                <Text style={styles.sectionContent}>
+                  {proposalInfo.termsAndConditions}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+        {/* 8. Signature & Stamp (NEW) */}
+        {(proposalInfo.companySignature || proposalInfo.companyStamp) && (
+          <View style={styles.signatureStampSection}>
+            <View style={{ marginBottom: 10 }}>
+              <Text style={styles.subHeader}>Authorization:</Text>
+            </View>
+            <View style={{ flexDirection: "row", gap: 2 }}>
+              {proposalInfo.companySignature && (
+                <View style={styles.imageBlock}>
+                  <Image
+                    style={styles.image}
+                    src={`data:;base64,${proposalInfo.companySignature}`}
+                  />
+                </View>
+              )}
+              {proposalInfo.companyStamp && (
+                <View style={styles.imageBlock}>
+                  <Image
+                    style={styles.image}
+                    src={`data:;base64,${proposalInfo.companyStamp}`}
+                  />
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+        {/* 9. Footer (No Changes) */}
         <View style={styles.footer} fixed>
           <Text>Thank you for your business!</Text>
           <Text>Mahendra Technosoft Pvt. Ltd.</Text>
