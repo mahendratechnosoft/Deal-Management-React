@@ -33,6 +33,7 @@ function EditCustomer() {
     shippingCountry: "",
     shippingZipCode: "",
     description: "",
+    employeeId: "",
   });
 
   const [sameAsBilling, setSameAsBilling] = useState(false);
@@ -214,6 +215,7 @@ function EditCustomer() {
           shippingCountry: customer.shippingCountry || "", // Keep as name initially
           shippingZipCode: customer.shippingZipCode || "",
           description: customer.description || "",
+          employeeId: customer.employeeId || "",
         });
 
         // Check if shipping address is same as billing
@@ -516,7 +518,7 @@ function EditCustomer() {
 
     if (!formData.companyName?.trim())
       newErrors.companyName = "Company name is required";
-    if (!formData.industry?.trim()) newErrors.industry = "Industry is required";
+
 
     if (formData.phone && !/^[0-9+\-\s()]{10,}$/.test(formData.phone)) {
       newErrors.phone = "Please enter a valid phone number";
@@ -576,6 +578,7 @@ const handleSubmit = async (e) => {
         : null,
       shippingZipCode: formData.shippingZipCode || null,
       description: formData.description || null,
+      employeeId: formData.employeeId || null,
     };
 
     await axiosInstance.put("updateCustomer", submitData);
@@ -929,7 +932,7 @@ const handleSubmit = async (e) => {
                           <option value="Other">Other</option>
                         </select>
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600">
-                          Industry *
+                          Industry
                         </label>
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                           <svg

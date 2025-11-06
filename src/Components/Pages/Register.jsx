@@ -332,7 +332,7 @@ function Register({ onSwitchToLogin }) {
               <div className="flex items-center justify-center mb-6">
                 <div className="bg-blue-600 rounded-xl p-4 shadow-lg">
                   <img
-                    src="/images/logo.png"
+                    src={Mtech_logo}
                     alt="Mahendra Technosoft"
                     className="h-12 w-auto filter brightness-0 invert"
                   />

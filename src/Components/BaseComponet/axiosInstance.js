@@ -53,6 +53,11 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // Skip session expiration handling for login endpoint
+    if (error.config?.url?.includes("/signin")) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 || error.response?.status === 403) {
       await Swal.fire({
         title: "Session Expired",
