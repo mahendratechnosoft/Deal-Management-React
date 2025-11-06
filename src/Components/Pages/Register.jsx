@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import Mtech_logo from "../../../public/Images/Mtech_Logo.jpg";
+import { useNavigate } from "react-router-dom";
+import axiosInstance from "../BaseComponet/axiosInstance";
+
 function Register({ onSwitchToLogin }) {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -63,59 +68,59 @@ function Register({ onSwitchToLogin }) {
     setIsLoading(true);
 
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || "http://91.203.133.210:9090";
-
-      const response = await fetch(`${API_BASE}/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      // Use axiosInstance instead of fetch
+      const response = await axiosInstance.post(
+        "/register",
+        {
           username: formData.username,
           password: formData.password,
-        }),
-      });
-
-      if (!response.ok) {
-        let errorMessage = "Registration failed";
-
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch (parseError) {
-          errorMessage = response.statusText || errorMessage;
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
+      );
 
-        throw new Error(errorMessage);
-      }
-
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        data = { message: "Registration successful!" };
-      }
+      const data = response.data;
 
       showToaster(
         data.message || "Registration successful! Welcome to Leads Management.",
         "success"
       );
+
       setFormData({ username: "", password: "" });
+
       setTimeout(() => {
-        onSwitchToLogin();
+        if (onSwitchToLogin) {
+          onSwitchToLogin();
+        }
+        navigate("/login");
       }, 2000);
     } catch (error) {
       console.error("Registration error:", error);
 
+      // Enhanced error handling with axios
       if (
-        error.name === "TypeError" &&
-        error.message.includes("Failed to fetch")
+        error.code === "NETWORK_ERROR" ||
+        error.message.includes("Network Error")
       ) {
         showToaster(
           "Cannot connect to server. Please check if the backend is running.",
           "error"
         );
+      } else if (error.response) {
+        // Server responded with error status
+        const errorMessage =
+          error.response.data?.message ||
+          error.response.data?.error ||
+          `Registration failed: ${error.response.status}`;
+        showToaster(errorMessage, "error");
+      } else if (error.request) {
+        // Request made but no response received
+        showToaster("No response from server. Please try again.", "error");
       } else {
+        // Something else happened
         showToaster(
           error.message || "Registration error. Please try again.",
           "error"
@@ -126,6 +131,13 @@ function Register({ onSwitchToLogin }) {
     }
   };
 
+  const handleLoginRedirect = () => {
+    if (onSwitchToLogin) {
+      onSwitchToLogin();
+    } else {
+      navigate("/login");
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 relative overflow-hidden">
       {/* Animated Background Elements */}
@@ -437,7 +449,7 @@ function Register({ onSwitchToLogin }) {
                 <p className="text-sm text-gray-600">
                   Already have an account?{" "}
                   <button
-                    onClick={onSwitchToLogin}
+                    onClick={() => navigate("/login")}
                     className="text-blue-600 hover:text-blue-500 font-semibold transition duration-200 hover:underline"
                   >
                     Sign in here
