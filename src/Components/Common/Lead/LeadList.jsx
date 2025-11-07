@@ -4,7 +4,8 @@ import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
 import toast from "react-hot-toast";
 import PreviewLead from "./PreviewLead";
-
+import Select from "react-select";
+import { components } from "react-select";
 // Table Body Skeleton Component (for search operations)
 const TableBodySkeleton = ({ rows = 5, columns = 7 }) => {
   return (
@@ -172,16 +173,105 @@ function LeadList() {
   const dragOverItem = useRef();
 
   // Status options and kanban columns
+  // Status options for React Select
   const statusOptions = [
-    "New Lead",
-    "Contacted",
-    "Qualified",
-    "Proposal",
-    "Negotiation",
-    "Won",
-    "Lost",
-    "Converted",
+    { value: "New Lead", label: "New Lead", color: "#3b82f6" },
+    { value: "Contacted", label: "Contacted", color: "#8b5cf6" },
+    { value: "Qualified", label: "Qualified", color: "#10b981" },
+    { value: "Proposal", label: "Proposal", color: "#f59e0b" },
+    { value: "Negotiation", label: "Negotiation", color: "#f97316" },
+    { value: "Won", label: "Won", color: "#059669" },
+    { value: "Lost", label: "Lost", color: "#ef4444" },
+    { value: "Converted", label: "Converted", color: "#6366f1" },
   ];
+
+  // Updated custom styles for React Select v5
+ const customStyles = {
+   control: (base, state) => ({
+     ...base,
+     minHeight: "24px",
+     height: "24px",
+     border: "none",
+     boxShadow: "none",
+     backgroundColor: "transparent",
+     cursor: "pointer",
+     "&:hover": {
+       border: "none",
+     },
+   }),
+
+   valueContainer: (base) => ({
+     ...base,
+     height: "24px",
+     padding: "0 6px",
+     display: "flex",
+     alignItems: "center",
+   }),
+
+   singleValue: (base, state) => ({
+     ...base,
+     color: "#374151", // keep text normal (no change)
+     fontWeight: "600",
+     fontSize: "12px",
+     margin: 0,
+     lineHeight: "1",
+   }),
+
+   indicatorsContainer: (base) => ({
+     ...base,
+     height: "24px",
+   }),
+
+   dropdownIndicator: (base) => ({
+     ...base,
+     padding: "4px",
+     svg: {
+       width: "14px",
+       height: "14px",
+     },
+   }),
+
+   menu: (base) => ({
+     ...base,
+     width: "160px",
+     fontSize: "12px",
+     zIndex: 9999,
+     position: "absolute",
+     backgroundColor: "#fff", // dropdown background visible clearly
+     border: "1px solid #e5e7eb",
+     borderRadius: "8px",
+     boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+   }),
+
+   option: (base, state) => ({
+     ...base,
+     fontSize: "12px",
+     padding: "6px 8px",
+     backgroundColor: state.isSelected
+       ? "#d4e3f6" // bright blue for selected
+       : state.isFocused
+       ? "#f3f4f6" // light gray hover
+       : "#fff", // normal
+     color: state.isSelected ? "#2563eb" : "#111827",
+     cursor: "pointer",
+     transition: "background-color 0.2s ease",
+   }),
+
+   indicatorSeparator: () => ({
+     display: "none",
+   }),
+ };
+
+  // Format option label with color dot
+  const formatOptionLabel = ({ value, label, color }) => (
+    <div className="flex items-center gap-2">
+      <div
+        className="w-2 h-2 rounded-full flex-shrink-0"
+        style={{ backgroundColor: color }}
+      />
+      <span className="truncate">{label}</span>
+    </div>
+  );
 
   const kanbanColumns = [
     {
@@ -417,11 +507,12 @@ function LeadList() {
     }
   };
 
+  // Update lead status function
   const updateLeadStatus = async (leadId, newStatus) => {
     try {
       const response = await axiosInstance.put("updateLeadStatus", {
         leadId: leadId,
-        status: newStatus,
+        status: newStatus.value, // React Select uses object with value property
       });
 
       toast.success("Status updated successfully!");
@@ -433,7 +524,7 @@ function LeadList() {
         // Update table view leads
         setLeads((prevLeads) =>
           prevLeads.map((lead) =>
-            lead.id === leadId ? { ...lead, status: newStatus } : lead
+            lead.id === leadId ? { ...lead, status: newStatus.value } : lead
           )
         );
 
@@ -442,12 +533,11 @@ function LeadList() {
 
         // If in kanban view, refresh kanban data to ensure consistency
         if (viewMode === "kanban") {
-          // Instead of refreshing all columns, just update the specific ones
           const sourceColumn = kanbanColumns.find(
             (col) => col.apiStatus === oldLead?.status
           );
           const targetColumn = kanbanColumns.find(
-            (col) => col.apiStatus === newStatus
+            (col) => col.apiStatus === newStatus.value
           );
 
           if (sourceColumn) {
@@ -457,14 +547,94 @@ function LeadList() {
             fetchKanbanLeads(targetColumn.apiStatus, 0, false);
           }
         }
-
-        setActiveStatusDropdown(null);
       }
     } catch (error) {
       console.error("Error updating lead status:", error);
       toast.error("Failed to update status. Please try again.");
     }
   };
+
+  // Get current status value for React Select
+  const getCurrentStatus = (leadStatus) => {
+    return (
+      statusOptions.find((option) => option.value === leadStatus) ||
+      statusOptions.find((option) => option.value === "New Lead")
+    );
+  };
+
+  // Get background color for the select container
+  const getStatusBackgroundColor = (status) => {
+    if (!status) return "bg-gray-100";
+    switch (status.toLowerCase()) {
+      case "new lead":
+        return "bg-blue-100";
+      case "contacted":
+        return "bg-purple-100";
+      case "qualified":
+        return "bg-green-100";
+      case "proposal":
+        return "bg-yellow-100";
+      case "negotiation":
+        return "bg-orange-100";
+      case "won":
+        return "bg-green-200";
+      case "lost":
+        return "bg-red-100";
+      case "converted":
+        return "bg-indigo-100";
+      default:
+        return "bg-gray-100";
+    }
+  };
+
+  // Get text color for the select container
+  const getStatusTextColor = (status) => {
+    if (!status) return "text-gray-800";
+    switch (status.toLowerCase()) {
+      case "new lead":
+        return "text-blue-800";
+      case "contacted":
+        return "text-purple-800";
+      case "qualified":
+        return "text-green-800";
+      case "proposal":
+        return "text-yellow-800";
+      case "negotiation":
+        return "text-orange-800";
+      case "won":
+        return "text-white";
+      case "lost":
+        return "text-white";
+      case "converted":
+        return "text-indigo-800";
+      default:
+        return "text-gray-800";
+    }
+  };
+
+
+  const StatusSelect = ({ value, onChange, options, styles }) => {
+    return (
+      <Select
+        value={value}
+        options={options}
+        onChange={onChange}
+        styles={styles}
+        isSearchable={false}
+        menuPlacement="auto"
+        classNamePrefix="react-select"
+        onMenuOpen={() => {}}
+        onMenuClose={() => {}}
+        onInputChange={() => {}}
+        menuPortalTarget={document.body} // This renders dropdown in body
+        menuPosition="fixed" // Use fixed positioning
+        components={{
+          IndicatorSeparator: null,
+        }}
+      />
+    );
+  };
+
   const toggleStatusDropdown = (leadId) => {
     setActiveStatusDropdown(activeStatusDropdown === leadId ? null : leadId);
   };
@@ -587,63 +757,63 @@ function LeadList() {
   // Kanban handlers
 
   // Fetch leads for specific status column
-const fetchKanbanLeads = async (status, page = 0, append = false) => {
-  // Create new AbortController for this specific request
-  const controller = new AbortController();
+  const fetchKanbanLeads = async (status, page = 0, append = false) => {
+    // Create new AbortController for this specific request
+    const controller = new AbortController();
 
-  try {
-    setKanbanLoading((prev) => ({ ...prev, [status]: true }));
+    try {
+      setKanbanLoading((prev) => ({ ...prev, [status]: true }));
 
-    console.log(`Fetching leads for status: "${status}", page: ${page}`);
+      console.log(`Fetching leads for status: "${status}", page: ${page}`);
 
-    const encodedStatus = encodeURIComponent(status);
-    let url = `getAllLeads/${page}/${pageSize}?leadStatus=${encodedStatus}`;
+      const encodedStatus = encodeURIComponent(status);
+      let url = `getAllLeads/${page}/${pageSize}?leadStatus=${encodedStatus}`;
 
-    if (searchTerm.trim()) {
-      url += `&search=${encodeURIComponent(searchTerm)}`;
-    }
-
-    const response = await axiosInstance.get(url, {
-      signal: controller.signal,
-    });
-
-    const data = response.data;
-    const leads = data.leadList || [];
-
-    setKanbanData((prev) => ({
-      ...prev,
-      [status]: append ? [...(prev[status] || []), ...leads] : leads,
-    }));
-
-    setKanbanPage((prev) => ({ ...prev, [status]: page }));
-    setKanbanHasMore((prev) => ({
-      ...prev,
-      [status]: leads.length === pageSize,
-    }));
-    setKanbanTotal((prev) => ({
-      ...prev,
-      [status]: (prev[status] || 0) + leads.length,
-    }));
-  } catch (err) {
-    if (err.name !== "AbortError") {
-      console.error(`Error fetching ${status} leads:`, err);
-      // Don't show toast for every failed request to avoid spam
-      if (!append) {
-        // Only show error for initial load, not infinite scroll
-        toast.error(`Failed to load ${status} leads`);
+      if (searchTerm.trim()) {
+        url += `&search=${encodeURIComponent(searchTerm)}`;
       }
+
+      const response = await axiosInstance.get(url, {
+        signal: controller.signal,
+      });
+
+      const data = response.data;
+      const leads = data.leadList || [];
+
+      setKanbanData((prev) => ({
+        ...prev,
+        [status]: append ? [...(prev[status] || []), ...leads] : leads,
+      }));
+
+      setKanbanPage((prev) => ({ ...prev, [status]: page }));
+      setKanbanHasMore((prev) => ({
+        ...prev,
+        [status]: leads.length === pageSize,
+      }));
+      setKanbanTotal((prev) => ({
+        ...prev,
+        [status]: (prev[status] || 0) + leads.length,
+      }));
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        console.error(`Error fetching ${status} leads:`, err);
+        // Don't show toast for every failed request to avoid spam
+        if (!append) {
+          // Only show error for initial load, not infinite scroll
+          toast.error(`Failed to load ${status} leads`);
+        }
+      }
+    } finally {
+      setKanbanLoading((prev) => ({ ...prev, [status]: false }));
     }
-  } finally {
-    setKanbanLoading((prev) => ({ ...prev, [status]: false }));
-  }
-};
+  };
   // Fetch initial data for all kanban columns
- const fetchAllKanbanColumns = () => {
-   console.log("Fetching all kanban columns...");
-   kanbanColumns.forEach((column) => {
-     fetchKanbanLeads(column.apiStatus, 0, false);
-   });
- };
+  const fetchAllKanbanColumns = () => {
+    console.log("Fetching all kanban columns...");
+    kanbanColumns.forEach((column) => {
+      fetchKanbanLeads(column.apiStatus, 0, false);
+    });
+  };
 
   // Infinite scroll handler for each column
   const handleColumnScroll = (event, status) => {
@@ -708,8 +878,11 @@ const fetchKanbanLeads = async (status, page = 0, append = false) => {
       const newStatus = targetColumn.apiStatus;
 
       try {
+        // Fix: Create the proper object format for React Select
+        const statusObject = { value: newStatus, label: newStatus };
+
         // Update the lead status via API - this will handle count updates
-        await updateLeadStatus(draggedLead.id, newStatus);
+        await updateLeadStatus(draggedLead.id, statusObject);
 
         // Update local kanban data immediately for better UX
         // Remove from source column
@@ -731,8 +904,6 @@ const fetchKanbanLeads = async (status, page = 0, append = false) => {
 
         // CRITICAL: Refresh status counts from API to get accurate numbers
         await fetchStatusCounts();
-
-        // toast.success(`Lead moved to ${targetColumn.title}`);
       } catch (error) {
         console.error("Error updating lead status via drag and drop:", error);
         toast.error("Failed to move lead");
@@ -1018,7 +1189,8 @@ const fetchKanbanLeads = async (status, page = 0, append = false) => {
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                     className="w-full sm:w-40 px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white transition-colors duration-200"
-                  >
+                  
+                >
                     <option value="all">All Status</option>
                     <option value="new lead">New Lead</option>
                     <option value="contacted">Contacted</option>
@@ -1305,65 +1477,23 @@ const fetchKanbanLeads = async (status, page = 0, append = false) => {
                                     </div>
                                   </div>
                                 ) : column.id === "status" ? (
-                                  <div className="status-dropdown relative">
-                                    <button
-                                      onClick={() =>
-                                        toggleStatusDropdown(lead.id)
-                                      }
-                                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                                        lead[column.id]
-                                      )} hover:opacity-80 transition-opacity max-w-full truncate`}
-                                      title={lead[column.id] || "N/A"}
+                                  <div className="status-select-container">
+                                    <div
+                                      className={`inline-flex rounded-full ${getStatusBackgroundColor(
+                                        lead.status
+                                      )} ${getStatusTextColor(
+                                        lead.status
+                                      )} px-2 py-0.5`}
                                     >
-                                      <span className="truncate">
-                                        {truncateText(
-                                          lead[column.id] || "N/A",
-                                          10
-                                        )}
-                                      </span>
-                                      <svg
-                                        className="w-3 h-3 ml-1 flex-shrink-0"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M19 9l-7 7-7-7"
-                                        />
-                                      </svg>
-                                    </button>
-
-                                    {activeStatusDropdown === lead.id && (
-                                      <div
-                                        className="absolute left-0 mb-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
-                                        
-                                      >
-                                        <div className="py-1 max-h-60 overflow-y-auto">
-                                          {statusOptions.map((status) => (
-                                            <button
-                                              key={status}
-                                              onClick={() =>
-                                                updateLeadStatus(
-                                                  lead.id,
-                                                  status
-                                                )
-                                              }
-                                              className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 truncate ${
-                                                lead.status === status
-                                                  ? "bg-blue-50 text-blue-600"
-                                                  : "text-gray-700"
-                                              }`}
-                                              title={status}
-                                            >
-                                              {truncateText(status, 10)}
-                                            </button>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
+                                      <StatusSelect
+                                        value={getCurrentStatus(lead.status)}
+                                        options={statusOptions}
+                                        onChange={(newValue) =>
+                                          updateLeadStatus(lead.id, newValue)
+                                        }
+                                        styles={customStyles}
+                                      />
+                                    </div>
                                   </div>
                                 ) : column.id === "source" ? (
                                   <span
@@ -1509,7 +1639,7 @@ const fetchKanbanLeads = async (status, page = 0, append = false) => {
             ) : (
               <div
                 className="bg-white rounded-lg border border-gray-200 shadow-xs p-3 mt-4 sticky bottom-0 "
-                style={{ zIndex: "39" }}
+                style={{ zIndex: "1" }}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex items-center gap-4 text-xs">
