@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Select from "react-select";
 import { Country, State, City } from "country-state-city";
 import { toast } from "react-hot-toast";
+import PhoneInput from 'react-phone-input-2'
+import 'react-phone-input-2/lib/style.css'
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
 
@@ -31,6 +33,16 @@ function CreateLead() {
     description: "",
   });
 
+  // Separate state for display values (with formatting)
+  const [phoneDisplay, setPhoneDisplay] = useState({
+    mobileNumber: "",
+    phoneNumber: "",
+  });
+  const [phoneData, setPhoneData] = useState({
+    primaryCountry: "in",
+    secondaryCountry: "in",
+  });
+
   const [dropdownData, setDropdownData] = useState({
     countries: [],
     states: [],
@@ -38,6 +50,28 @@ function CreateLead() {
   });
 
   const [errors, setErrors] = useState({});
+
+  // Country-specific digit limits
+  const countryDigitLimits = {
+    in: 10,
+    us: 10,
+    gb: 10,
+    ca: 10,
+    au: 9,
+    de: 10,
+    fr: 9,
+    br: 11,
+    jp: 10,
+    cn: 11,
+    ru: 10,
+    es: 9,
+    it: 10,
+    mx: 10,
+  };
+
+  const getDigitLimit = (countryCode) => {
+    return countryDigitLimits[countryCode.toLowerCase()] || 10;
+  };
 
   useEffect(() => {
     const countries = Country.getAllCountries().map((country) => ({
@@ -103,6 +137,64 @@ function CreateLead() {
     }
   };
 
+const handlePhoneChange = (value, country, type = "primary") => {
+  const countryCode = country.countryCode;
+  const countryDialCode = country.dialCode;
+
+  // Remove ALL non-digit characters including spaces, dashes, parentheses
+  const digitsOnly = value.replace(/\D/g, "");
+
+  // Extract local number by removing country code
+  const localNumber = digitsOnly.slice(countryDialCode.length);
+
+  // Format as (+91)7744998493 (no space after parentheses)
+  const completeNumber = `(+${countryDialCode})${localNumber}`;
+
+  // Create display value without dashes
+  const displayNumber = `+${countryDialCode} ${localNumber}`;
+
+  console.log("Phone Change Debug:", {
+    inputValue: value,
+    countryCode,
+    countryDialCode,
+    digitsOnly,
+    localNumber,
+    completeNumber,
+    displayNumber,
+  });
+
+  // Update display value (without dashes)
+  if (type === "primary") {
+    setPhoneDisplay((prev) => ({ ...prev, mobileNumber: displayNumber }));
+    setFormData((prev) => ({
+      ...prev,
+      mobileNumber: completeNumber, // Store as (+91)7744998493
+    }));
+    setPhoneData((prev) => ({
+      ...prev,
+      primaryCountry: countryCode,
+    }));
+  } else {
+    setPhoneDisplay((prev) => ({ ...prev, phoneNumber: displayNumber }));
+    setFormData((prev) => ({
+      ...prev,
+      phoneNumber: completeNumber, // Store as (+91)7744998493
+    }));
+    setPhoneData((prev) => ({
+      ...prev,
+      secondaryCountry: countryCode,
+    }));
+  }
+
+  if (errors.mobileNumber || errors.phoneNumber) {
+    setErrors((prev) => ({
+      ...prev,
+      mobileNumber: "",
+      phoneNumber: "",
+    }));
+  }
+};
+  
   const handleSelectChange = (selectedOption, { name }) => {
     setFormData((prev) => ({
       ...prev,
@@ -117,49 +209,96 @@ function CreateLead() {
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+const validateForm = () => {
+  const newErrors = {};
 
-    if (!formData.clientName?.trim())
-      newErrors.clientName = "Client name is required";
-    if (!formData.companyName?.trim())
-      newErrors.companyName = "Company name is required";
-    if (!formData.mobileNumber?.trim())
-      newErrors.mobileNumber = "Primary number is required";
+  if (!formData.clientName?.trim())
+    newErrors.clientName = "Client name is required";
+  if (!formData.companyName?.trim())
+    newErrors.companyName = "Company name is required";
 
-    if (formData.state && !formData.country) {
-      newErrors.country = "Country is required when state is selected";
+  // Primary number validation - UPDATED FOR NEW FORMAT
+  if (!formData.mobileNumber?.trim()) {
+    newErrors.mobileNumber = "Primary number is required";
+  } else {
+    // Extract country code and local number from format: (+91)7744998493
+    const match = formData.mobileNumber.match(/\(\+(\d+)\)(\d+)/);
+
+    if (match && match[1] && match[2]) {
+      const countryDialCode = match[1]; // "91"
+      const localNumber = match[2]; // "7744998493"
+      const requiredLength = getDigitLimit(phoneData.primaryCountry);
+
+      console.log("Primary validation - NEW FORMAT:", {
+        storedValue: formData.mobileNumber,
+        countryDialCode,
+        localNumber,
+        localNumberLength: localNumber.length,
+        requiredLength,
+      });
+
+      if (localNumber.length !== requiredLength) {
+        newErrors.mobileNumber = `Phone number must be exactly ${requiredLength} digits for selected country`;
+      }
+    } else {
+      newErrors.mobileNumber = "Invalid phone number format";
     }
+  }
+
+  // Secondary number validation - UPDATED FOR NEW FORMAT
+  if (formData.phoneNumber?.trim()) {
+    const match = formData.phoneNumber.match(/\(\+(\d+)\)(\d+)/);
+
+    if (match && match[1] && match[2]) {
+      const countryDialCode = match[1];
+      const localNumber = match[2];
+      const requiredLength = getDigitLimit(phoneData.secondaryCountry);
+
+      console.log("Secondary validation - NEW FORMAT:", {
+        storedValue: formData.phoneNumber,
+        countryDialCode,
+        localNumber,
+        localNumberLength: localNumber.length,
+        requiredLength,
+      });
+
+      if (localNumber.length !== requiredLength) {
+        newErrors.phoneNumber = `Phone number must be exactly ${requiredLength} digits for selected country`;
+      }
+    } else {
+      newErrors.phoneNumber = "Invalid phone number format";
+    }
+  }
+
+  // Rest of validation remains the same
+  if (formData.state && !formData.country) {
+    newErrors.country = "Country is required when state is selected";
+  }
+  if (formData.city && !formData.state) {
+    newErrors.state = "State is required when city is selected";
+  }
+  if (formData.city && !formData.country) {
+    newErrors.country = "Country is required when city is selected";
+  }
+
+  if (formData.street || formData.zipCode) {
     if (formData.city && !formData.state) {
-      newErrors.state = "State is required when city is selected";
+      newErrors.state = "State is required when city is provided";
     }
-    if (formData.city && !formData.country) {
-      newErrors.country = "Country is required when city is selected";
+    if (formData.state && !formData.country) {
+      newErrors.country = "Country is required when state is provided";
     }
+  }
 
-    if (formData.street || formData.zipCode) {
-      if (formData.city && !formData.state) {
-        newErrors.state = "State is required when city is provided";
-      }
-      if (formData.state && !formData.country) {
-        newErrors.country = "Country is required when state is provided";
-      }
-    }
+  if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    newErrors.email = "Please enter a valid email address";
+  }
 
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
 
-    if (
-      formData.mobileNumber &&
-      !/^[0-9+\-\s()]{10,}$/.test(formData.mobileNumber)
-    ) {
-      newErrors.mobileNumber = "Please enter a valid primary number";
-    }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -347,6 +486,22 @@ function CreateLead() {
     }
   };
 
+  // Get country name for display
+  const getCountryName = (countryCode) => {
+    const countryNames = {
+      in: "India",
+      us: "United States",
+      gb: "United Kingdom",
+      ca: "Canada",
+      au: "Australia",
+      de: "Germany",
+      fr: "France",
+      br: "Brazil",
+      jp: "Japan",
+      cn: "China",
+    };
+    return countryNames[countryCode] || countryCode.toUpperCase();
+  };
   return (
     <LayoutComponent>
       <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
@@ -504,21 +659,39 @@ function CreateLead() {
                         )}
                       </div>
 
-                      {/* Primary Number Field with Floating Label */}
+                      {/* Primary Number */}
                       <div className="relative">
-                        <input
-                          type="text"
-                          name="mobileNumber"
-                          value={formData.mobileNumber}
-                          onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
+                        <div
+                          className={`phone-input-wrapper ${
                             errors.mobileNumber
                               ? "border-red-500"
                               : "border-gray-300"
                           }`}
-                          placeholder=" "
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                        >
+                          <PhoneInput
+                            country={"in"}
+                            value={phoneDisplay.mobileNumber} // Use display value
+                            onChange={(value, country) =>
+                              handlePhoneChange(value, country, "primary")
+                            }
+                            placeholder="Enter primary phone number"
+                            inputClass="w-full"
+                            buttonClass="!border-r-0 !rounded-l"
+                            inputStyle={{
+                              width: "100%",
+                              height: "42px",
+                              borderLeft: "none",
+                              borderTopLeftRadius: "0",
+                              borderBottomLeftRadius: "0",
+                            }}
+                            buttonStyle={{
+                              borderRight: "none",
+                              borderTopRightRadius: "0",
+                              borderBottomRightRadius: "0",
+                            }}
+                          />
+                        </div>
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 pointer-events-none">
                           Primary Number *
                         </label>
                         {errors.mobileNumber && (
@@ -526,24 +699,64 @@ function CreateLead() {
                             {errors.mobileNumber}
                           </p>
                         )}
+                        <p className="mt-1 text-xs text-gray-500">
+                          {getCountryName(phoneData.primaryCountry)} format:{" "}
+                          {getDigitLimit(phoneData.primaryCountry)} digits
+                        
+                        </p>
                       </div>
 
-                      {/* Secondary Number Field with Floating Label */}
+                      {/* Secondary Number */}
                       <div className="relative">
-                        <input
-                          type="text"
-                          name="phoneNumber"
-                          value={formData.phoneNumber}
-                          onChange={handleChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
-                          placeholder=" "
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                        <div
+                          className={`phone-input-wrapper ${
+                            errors.phoneNumber
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          <PhoneInput
+                            country={"in"}
+                            value={phoneDisplay.phoneNumber} // Use display value
+                            onChange={(value, country) =>
+                              handlePhoneChange(value, country, "secondary")
+                            }
+                            placeholder="Enter secondary phone number"
+                            inputClass="w-full"
+                            buttonClass="!border-r-0 !rounded-l"
+                            inputStyle={{
+                              width: "100%",
+                              height: "42px",
+                              borderLeft: "none",
+                              borderTopLeftRadius: "0",
+                              borderBottomLeftRadius: "0",
+                            }}
+                            buttonStyle={{
+                              borderRight: "none",
+                              borderTopRightRadius: "0",
+                              borderBottomRightRadius: "0",
+                            }}
+                          />
+                        </div>
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 pointer-events-none">
                           Secondary Number
                         </label>
+                        {errors.phoneNumber && (
+                          <p className="mt-1 text-xs text-red-600">
+                            {errors.phoneNumber}
+                          </p>
+                        )}
+                        {formData.phoneNumber && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            {getCountryName(phoneData.secondaryCountry)} format:{" "}
+                            {getDigitLimit(phoneData.secondaryCountry)} digits
+                            {/* Debug info */}
+                          
+                          </p>
+                        )}
                       </div>
 
-                      {/* Email Field with Floating Label */}
+                      {/* Rest of your form fields remain the same */}
                       <div className="relative">
                         <input
                           type="email"
@@ -608,7 +821,7 @@ function CreateLead() {
                           isSearchable
                           styles={customStyles}
                         />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-1 pointer-events-none">
                           Country
                         </label>
                         {errors.country && (
@@ -633,7 +846,7 @@ function CreateLead() {
                           isDisabled={!formData.country}
                           styles={customStyles}
                         />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-1 pointer-events-none">
                           State
                         </label>
                         {errors.state && (
@@ -658,7 +871,7 @@ function CreateLead() {
                           isDisabled={!formData.state}
                           styles={customStyles}
                         />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-1 pointer-events-none">
                           City
                         </label>
                         {errors.city && (
@@ -685,6 +898,7 @@ function CreateLead() {
                     </div>
                   </section>
 
+                  {/* Rest of the form sections remain exactly the same */}
                   <section>
                     <div className="flex items-center gap-3 mb-6">
                       <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
@@ -871,7 +1085,15 @@ function CreateLead() {
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        // .react-tel-input {
+        //   border: 2px solid black;
+        //   border-radius: 8px;
+        // }
+      `}</style>
     </LayoutComponent>
   );
 }
+
 export default CreateLead;

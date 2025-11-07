@@ -5,6 +5,8 @@ import { Country, State, City } from "country-state-city";
 import { useLayout } from "../../Layout/useLayout";
 import { toast } from "react-hot-toast";
 import axiosInstance from "../../BaseComponet/axiosInstance";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 
 function EditLead() {
   const { id } = useParams();
@@ -35,6 +37,17 @@ function EditLead() {
     description: "",
   });
 
+  // PHONE STATES
+  const [phoneDisplay, setPhoneDisplay] = useState({
+    mobileNumber: "",
+    phoneNumber: "",
+  });
+
+  const [phoneData, setPhoneData] = useState({
+    primaryCountry: "in",
+    secondaryCountry: "in",
+  });
+
   const [dropdownData, setDropdownData] = useState({
     countries: [],
     states: [],
@@ -42,6 +55,449 @@ function EditLead() {
   });
 
   const [errors, setErrors] = useState({});
+
+  // Country-specific digit limits
+  const countryDigitLimits = {
+    in: 10,
+    us: 10,
+    gb: 10,
+    ca: 10,
+    au: 9,
+    de: 10,
+    fr: 9,
+    br: 11,
+    jp: 10,
+    cn: 11,
+    ru: 10,
+    es: 9,
+    it: 10,
+    mx: 10,
+  };
+
+  const getDigitLimit = (countryCode) => {
+    return countryDigitLimits[countryCode.toLowerCase()] || 10;
+  };
+
+  // Helper functions
+  const findCountryCodeByName = (countryName) => {
+    const country = Country.getAllCountries().find(
+      (c) => c.name === countryName
+    );
+    return country ? country.isoCode : "";
+  };
+
+  const findStateCodeByName = (stateName, countryCode) => {
+    const states = State.getStatesOfCountry(countryCode);
+    const state = states.find((s) => s.name === stateName);
+    return state ? state.isoCode : "";
+  };
+
+  // FIXED: Phone helper functions - USE STRINGS for country codes
+  const extractCountryFromPhoneNumber = (phoneNumber) => {
+    if (!phoneNumber) return "in";
+
+    // Extract country code from format: (+91)7744998493
+    const match = phoneNumber.match(/\(\+(\d+)\)/);
+    if (match && match[1]) {
+      const countryCodeDigits = match[1];
+
+      // USE STRINGS as keys
+      const countryCodes = {
+        91: "in",
+        1: "us",
+        44: "gb",
+        86: "cn",
+        81: "jp",
+        49: "de",
+        33: "fr",
+        55: "br",
+        7: "ru",
+        61: "au",
+      };
+
+      return countryCodes[countryCodeDigits] || "in";
+    }
+
+    return "in";
+  };
+
+  const formatPhoneForDisplay = (phoneNumber, countryCode) => {
+    if (!phoneNumber) return "";
+
+    // Extract local number from format: (+91)7744998493
+    const match = phoneNumber.match(/\(\+\d+\)(\d+)/);
+    if (match && match[1]) {
+      return match[1];
+    }
+
+    return phoneNumber;
+  };
+
+  // Phone change handler
+  const handlePhoneChange = (value, country, type = "primary") => {
+    const countryCode = country.countryCode;
+    const countryDialCode = country.dialCode;
+
+    const digitsOnly = value.replace(/\D/g, "");
+    const localNumber = digitsOnly.slice(countryDialCode.length);
+    const completeNumber = `(+${countryDialCode})${localNumber}`;
+    const displayNumber = `+${countryDialCode} ${localNumber}`;
+
+    console.log("Phone Change:", {
+      type,
+      inputValue: value,
+      countryCode,
+      countryDialCode,
+      localNumber,
+      completeNumber,
+      displayNumber,
+    });
+
+    if (type === "primary") {
+      setPhoneDisplay((prev) => ({ ...prev, mobileNumber: displayNumber }));
+      setFormData((prev) => ({
+        ...prev,
+        mobileNumber: completeNumber,
+      }));
+      setPhoneData((prev) => ({
+        ...prev,
+        primaryCountry: countryCode,
+      }));
+    } else {
+      setPhoneDisplay((prev) => ({ ...prev, phoneNumber: displayNumber }));
+      setFormData((prev) => ({
+        ...prev,
+        phoneNumber: completeNumber,
+      }));
+      setPhoneData((prev) => ({
+        ...prev,
+        secondaryCountry: countryCode,
+      }));
+    }
+
+    if (errors.mobileNumber || errors.phoneNumber) {
+      setErrors((prev) => ({
+        ...prev,
+        mobileNumber: "",
+        phoneNumber: "",
+      }));
+    }
+  };
+
+  // Initialize countries - ONLY ONCE
+  useEffect(() => {
+    const countries = Country.getAllCountries().map((country) => ({
+      value: country.isoCode,
+      label: country.name,
+      phonecode: country.phonecode,
+      flag: country.flag,
+    }));
+
+    setDropdownData((prev) => ({
+      ...prev,
+      countries,
+    }));
+  }, []);
+
+  // SINGLE FETCH FUNCTION - REMOVED DUPLICATES
+  useEffect(() => {
+    const fetchLeadData = async () => {
+      if (!id) {
+        toast.error("Lead ID not found!");
+        navigateBasedOnRole();
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await axiosInstance.get(`getLeadById/${id}`);
+        const apiResponse = response.data;
+        const leadData = apiResponse.lead;
+
+        console.log("Fetched lead data:", leadData);
+
+        if (!leadData) {
+          toast.error("Lead data not found in response!");
+          navigateBasedOnRole();
+          return;
+        }
+
+        if (leadData.employeeId) {
+          setEmployeeId(leadData.employeeId);
+        }
+
+        // Map API response to form data
+        const mappedFormData = {
+          companyName: leadData.companyName || "",
+          assignTo: leadData.assignTo || "",
+          status: leadData.status,
+          source: leadData.source || "",
+          clientName: leadData.clientName || "",
+          revenue: leadData.revenue ? leadData.revenue.toString() : "",
+          mobileNumber: leadData.mobileNumber || "",
+          phoneNumber: leadData.phoneNumber || "",
+          email: leadData.email || "",
+          website: leadData.website || "",
+          industry: leadData.industry || "",
+          priority: leadData.priority || "",
+          street: leadData.street || "",
+          country: leadData.country || "",
+          state: leadData.state || "",
+          city: leadData.city || "",
+          zipCode: leadData.zipCode || "",
+          description: leadData.description || "",
+          createdDate: leadData.createdDate,
+          updatedDate: leadData.updatedDate,
+        };
+
+        setFormData(mappedFormData);
+
+        // SET UP PHONE DATA FOR DISPLAY
+        console.log("Setting up phone data:", {
+          mobileNumber: leadData.mobileNumber,
+          phoneNumber: leadData.phoneNumber,
+        });
+
+        if (leadData.mobileNumber) {
+          const primaryCountry = extractCountryFromPhoneNumber(
+            leadData.mobileNumber
+          );
+          const primaryDisplay = formatPhoneForDisplay(
+            leadData.mobileNumber,
+            primaryCountry
+          );
+
+          console.log("Primary phone setup:", {
+            original: leadData.mobileNumber,
+            country: primaryCountry,
+            display: primaryDisplay,
+          });
+
+          setPhoneData((prev) => ({ ...prev, primaryCountry }));
+          setPhoneDisplay((prev) => ({
+            ...prev,
+            mobileNumber: primaryDisplay,
+          }));
+        }
+
+        if (leadData.phoneNumber) {
+          const secondaryCountry = extractCountryFromPhoneNumber(
+            leadData.phoneNumber
+          );
+          const secondaryDisplay = formatPhoneForDisplay(
+            leadData.phoneNumber,
+            secondaryCountry
+          );
+
+          console.log("Secondary phone setup:", {
+            original: leadData.phoneNumber,
+            country: secondaryCountry,
+            display: secondaryDisplay,
+          });
+
+          setPhoneData((prev) => ({ ...prev, secondaryCountry }));
+          setPhoneDisplay((prev) => ({
+            ...prev,
+            phoneNumber: secondaryDisplay,
+          }));
+        }
+
+        // Handle country-state-city dropdowns
+        if (leadData.country) {
+          const countryCode = findCountryCodeByName(leadData.country);
+          if (countryCode) {
+            const states = State.getStatesOfCountry(countryCode).map(
+              (state) => ({
+                value: state.isoCode,
+                label: state.name,
+              })
+            );
+
+            setDropdownData((prev) => ({
+              ...prev,
+              states,
+            }));
+
+            setFormData((prev) => ({
+              ...prev,
+              country: countryCode,
+            }));
+
+            if (leadData.state) {
+              const stateCode = findStateCodeByName(
+                leadData.state,
+                countryCode
+              );
+              if (stateCode) {
+                const cities = City.getCitiesOfState(
+                  countryCode,
+                  stateCode
+                ).map((city) => ({
+                  value: city.name,
+                  label: city.name,
+                }));
+
+                setDropdownData((prev) => ({
+                  ...prev,
+                  cities,
+                }));
+
+                setFormData((prev) => ({
+                  ...prev,
+                  state: stateCode,
+                }));
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching lead:", error);
+        handleFetchError(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const navigateBasedOnRole = () => {
+      if (role === "ROLE_ADMIN") {
+        navigate("/Admin/LeadList");
+      } else if (role === "ROLE_EMPLOYEE") {
+        navigate("/Employee/LeadList");
+      }
+    };
+
+    const handleFetchError = (error) => {
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please login again.");
+        navigate("/login");
+        return;
+      }
+
+      if (
+        error.name === "TypeError" &&
+        error.message.includes("Failed to fetch")
+      ) {
+        toast.error(
+          "Cannot connect to server. Please check if the backend is running."
+        );
+      } else {
+        toast.error("Failed to fetch lead data. Please try again.");
+      }
+      navigateBasedOnRole();
+    };
+
+    fetchLeadData();
+  }, [id, navigate, role]);
+
+  // Update states when country changes
+  useEffect(() => {
+    if (formData.country) {
+      const states = State.getStatesOfCountry(formData.country).map(
+        (state) => ({
+          value: state.isoCode,
+          label: state.name,
+        })
+      );
+
+      setDropdownData((prev) => ({
+        ...prev,
+        states,
+        cities: [],
+      }));
+    }
+  }, [formData.country]);
+
+  // Update cities when state changes
+  useEffect(() => {
+    if (formData.country && formData.state) {
+      const cities = City.getCitiesOfState(
+        formData.country,
+        formData.state
+      ).map((city) => ({
+        value: city.name,
+        label: city.name,
+      }));
+
+      setDropdownData((prev) => ({
+        ...prev,
+        cities,
+      }));
+    }
+  }, [formData.country, formData.state]);
+
+  // Validation function
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.clientName?.trim())
+      newErrors.clientName = "Client name is required";
+    if (!formData.companyName?.trim())
+      newErrors.companyName = "Company name is required";
+
+    // Primary number validation
+    if (!formData.mobileNumber?.trim()) {
+      newErrors.mobileNumber = "Primary number is required";
+    } else {
+      const match = formData.mobileNumber.match(/\(\+(\d+)\)(\d+)/);
+      if (match && match[1] && match[2]) {
+        const localNumber = match[2];
+        const requiredLength = getDigitLimit(phoneData.primaryCountry);
+
+        if (localNumber.length !== requiredLength) {
+          newErrors.mobileNumber = `Phone number must be exactly ${requiredLength} digits for selected country`;
+        }
+      } else {
+        newErrors.mobileNumber = "Invalid phone number format";
+      }
+    }
+
+    // Secondary number validation
+    if (formData.phoneNumber?.trim()) {
+      const match = formData.phoneNumber.match(/\(\+(\d+)\)(\d+)/);
+      if (match && match[1] && match[2]) {
+        const localNumber = match[2];
+        const requiredLength = getDigitLimit(phoneData.secondaryCountry);
+
+        if (localNumber.length !== requiredLength) {
+          newErrors.phoneNumber = `Phone number must be exactly ${requiredLength} digits for selected country`;
+        }
+      }
+    }
+
+    // Rest of validation
+    if (formData.state && !formData.country) {
+      newErrors.country = "Country is required when state is selected";
+    }
+    if (formData.city && !formData.state) {
+      newErrors.state = "State is required when city is selected";
+    }
+
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const getCountryName = (countryCode) => {
+    const countryNames = {
+      in: "India",
+      us: "United States",
+      gb: "United Kingdom",
+      ca: "Canada",
+      au: "Australia",
+      de: "Germany",
+      fr: "France",
+      br: "Brazil",
+      jp: "Japan",
+      cn: "China",
+    };
+    return countryNames[countryCode] || countryCode.toUpperCase();
+  };
+  
+
+  // ===========================================================
 
   // Initialize countries on component mount
   useEffect(() => {
@@ -110,7 +566,7 @@ function EditLead() {
         }
 
         // Map API response to form data
-       
+
         const mappedFormData = {
           companyName: leadData.companyName || "",
           assignTo: leadData.assignTo || "",
@@ -287,119 +743,75 @@ function EditLead() {
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
 
-    if (!formData.clientName?.trim())
-      newErrors.clientName = "Client name is required";
-    if (!formData.companyName?.trim())
-      newErrors.companyName = "Company name is required";
-    if (!formData.mobileNumber?.trim())
-      newErrors.mobileNumber = "Primary number is required";
+    setLoading(true);
+    try {
+      const submitData = {
+        id: id,
+        companyName: formData.companyName,
+        assignTo: formData.assignTo,
+        status: formData.status,
+        source: formData.source,
+        clientName: formData.clientName,
+        revenue: formData.revenue ? parseFloat(formData.revenue) : 0,
+        mobileNumber: formData.mobileNumber || null,
+        phoneNumber: formData.phoneNumber || null,
+        email: formData.email || null,
+        website: formData.website || null,
+        industry: formData.industry || null,
+        priority: formData.priority || null,
+        street: formData.street,
+        country: formData.country
+          ? dropdownData.countries.find((c) => c.value === formData.country)
+              ?.label
+          : "",
+        state: formData.state
+          ? dropdownData.states.find((s) => s.value === formData.state)?.label
+          : "",
+        city: formData.city,
+        zipCode: formData.zipCode,
+        description: formData.description,
+        // Preserve these fields from original data
+        createdDate: formData.createdDate, // Add this line
+        updatedDate: new Date().toISOString(), // Update only this one
+      };
 
-    if (formData.state && !formData.country) {
-      newErrors.country = "Country is required when state is selected";
-    }
-    if (formData.city && !formData.state) {
-      newErrors.state = "State is required when city is selected";
-    }
-    if (formData.city && !formData.country) {
-      newErrors.country = "Country is required when city is selected";
-    }
-
-    if (formData.street || formData.zipCode) {
-      if (formData.city && !formData.state) {
-        newErrors.state = "State is required when city is provided";
+      if (role === "ROLE_EMPLOYEE" && employeeId) {
+        submitData.employeeId = employeeId;
       }
-      if (formData.state && !formData.country) {
-        newErrors.country = "Country is required when state is provided";
+
+      console.log("Updating lead with data:", submitData);
+
+      // Use common endpoint instead of admin-specific endpoint
+      await axiosInstance.put("updateLead", submitData);
+
+      toast.success("Lead updated successfully!");
+      if (role === "ROLE_ADMIN") {
+        navigate("/Admin/LeadList");
+      } else if (role === "ROLE_EMPLOYEE") {
+        navigate("/Employee/LeadList");
       }
+    } catch (error) {
+      console.error("Error updating lead:", error);
+      if (error.response?.data?.message) {
+        toast.error(`Failed to update lead: ${error.response.data.message}`);
+      } else if (
+        error.name === "TypeError" &&
+        error.message.includes("Failed to fetch")
+      ) {
+        toast.error(
+          "Cannot connect to server. Please check if the backend is running."
+        );
+      } else {
+        toast.error("Failed to update lead. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
-
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
-
-    if (
-      formData.mobileNumber &&
-      !/^[0-9+\-\s()]{10,}$/.test(formData.mobileNumber)
-    ) {
-      newErrors.mobileNumber = "Please enter a valid primary number";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!validateForm()) return;
-
-  setLoading(true);
-  try {
-    const submitData = {
-      id: id,
-      companyName: formData.companyName,
-      assignTo: formData.assignTo,
-      status: formData.status,
-      source: formData.source,
-      clientName: formData.clientName,
-      revenue: formData.revenue ? parseFloat(formData.revenue) : 0,
-      mobileNumber: formData.mobileNumber || null,
-      phoneNumber: formData.phoneNumber || null,
-      email: formData.email || null,
-      website: formData.website || null,
-      industry: formData.industry || null,
-      priority: formData.priority || null,
-      street: formData.street,
-      country: formData.country
-        ? dropdownData.countries.find((c) => c.value === formData.country)
-            ?.label
-        : "",
-      state: formData.state
-        ? dropdownData.states.find((s) => s.value === formData.state)?.label
-        : "",
-      city: formData.city,
-      zipCode: formData.zipCode,
-      description: formData.description,
-      // Preserve these fields from original data
-      createdDate: formData.createdDate, // Add this line
-      updatedDate: new Date().toISOString(), // Update only this one
-    };
-
-    if (role === "ROLE_EMPLOYEE" && employeeId) {
-      submitData.employeeId = employeeId;
-    }
-
-    console.log("Updating lead with data:", submitData);
-
-    // Use common endpoint instead of admin-specific endpoint
-    await axiosInstance.put("updateLead", submitData);
-
-    toast.success("Lead updated successfully!");
-    if (role === "ROLE_ADMIN") {
-      navigate("/Admin/LeadList");
-    } else if (role === "ROLE_EMPLOYEE") {
-      navigate("/Employee/LeadList");
-    }
-  } catch (error) {
-    console.error("Error updating lead:", error);
-    if (error.response?.data?.message) {
-      toast.error(`Failed to update lead: ${error.response.data.message}`);
-    } else if (
-      error.name === "TypeError" &&
-      error.message.includes("Failed to fetch")
-    ) {
-      toast.error(
-        "Cannot connect to server. Please check if the backend is running."
-      );
-    } else {
-      toast.error("Failed to update lead. Please try again.");
-    }
-  } finally {
-    setLoading(false);
-  }
-};
 
   const handleCancel = () => {
     if (
@@ -532,101 +944,101 @@ const handleSubmit = async (e) => {
     }
   };
 
-if (isLoading) {
-  return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <LayoutComponent>
-        <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
-          {/* Header Skeleton */}
-          <div className="mb-6">
-            <div className="skeleton h-4 w-32 mb-2"></div>
-            <div className="skeleton h-8 w-64 mb-2"></div>
-            <div className="skeleton h-4 w-48"></div>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <LayoutComponent>
+          <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
+            {/* Header Skeleton */}
+            <div className="mb-6">
+              <div className="skeleton h-4 w-32 mb-2"></div>
+              <div className="skeleton h-8 w-64 mb-2"></div>
+              <div className="skeleton h-4 w-48"></div>
+            </div>
+
+            {/* Form Skeleton */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              {/* Section Header Skeleton */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="skeleton w-8 h-8 rounded-lg"></div>
+                <div className="skeleton h-6 w-48"></div>
+              </div>
+
+              {/* Form Fields Skeleton */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                {[...Array(6)].map((_, index) => (
+                  <div key={index} className="space-y-2">
+                    <div className="skeleton h-4 w-24"></div>
+                    <div className="skeleton h-10 w-full"></div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Address Section Skeleton */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="skeleton w-8 h-8 rounded-lg"></div>
+                <div className="skeleton h-6 w-32"></div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                {[...Array(4)].map((_, index) => (
+                  <div key={index} className="space-y-2">
+                    <div className="skeleton h-4 w-20"></div>
+                    <div className="skeleton h-10 w-full"></div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Lead Details Skeleton */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="skeleton w-8 h-8 rounded-lg"></div>
+                <div className="skeleton h-6 w-36"></div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                {[...Array(4)].map((_, index) => (
+                  <div key={index} className="space-y-2">
+                    <div className="skeleton h-4 w-28"></div>
+                    <div className="skeleton h-10 w-full"></div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Description Skeleton */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="skeleton w-8 h-8 rounded-lg"></div>
+                <div className="skeleton h-6 w-40"></div>
+              </div>
+              <div className="skeleton h-32 w-full"></div>
+            </div>
           </div>
+        </LayoutComponent>
 
-          {/* Form Skeleton */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            {/* Section Header Skeleton */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="skeleton w-8 h-8 rounded-lg"></div>
-              <div className="skeleton h-6 w-48"></div>
-            </div>
-
-            {/* Form Fields Skeleton */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              {[...Array(6)].map((_, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="skeleton h-4 w-24"></div>
-                  <div className="skeleton h-10 w-full"></div>
-                </div>
-              ))}
-            </div>
-
-            {/* Address Section Skeleton */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="skeleton w-8 h-8 rounded-lg"></div>
-              <div className="skeleton h-6 w-32"></div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              {[...Array(4)].map((_, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="skeleton h-4 w-20"></div>
-                  <div className="skeleton h-10 w-full"></div>
-                </div>
-              ))}
-            </div>
-
-            {/* Lead Details Skeleton */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="skeleton w-8 h-8 rounded-lg"></div>
-              <div className="skeleton h-6 w-36"></div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              {[...Array(4)].map((_, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="skeleton h-4 w-28"></div>
-                  <div className="skeleton h-10 w-full"></div>
-                </div>
-              ))}
-            </div>
-
-            {/* Description Skeleton */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="skeleton w-8 h-8 rounded-lg"></div>
-              <div className="skeleton h-6 w-40"></div>
-            </div>
-            <div className="skeleton h-32 w-full"></div>
-          </div>
-        </div>
-      </LayoutComponent>
-
-      <style jsx>{`
-        .skeleton {
-          background: linear-gradient(
-            90deg,
-            #f0f0f0 25%,
-            #e0e0e0 50%,
-            #f0f0f0 75%
-          );
-          background-size: 200% 100%;
-          animation: loading 1.5s infinite;
-          border-radius: 4px;
-        }
-
-        @keyframes loading {
-          0% {
-            background-position: 200% 0;
+        <style jsx>{`
+          .skeleton {
+            background: linear-gradient(
+              90deg,
+              #f0f0f0 25%,
+              #e0e0e0 50%,
+              #f0f0f0 75%
+            );
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
           }
-          100% {
-            background-position: -200% 0;
+
+          @keyframes loading {
+            0% {
+              background-position: 200% 0;
+            }
+            100% {
+              background-position: -200% 0;
+            }
           }
-        }
-      `}</style>
-    </div>
-  );
-}
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <LayoutComponent>
@@ -789,21 +1201,39 @@ if (isLoading) {
                           </p>
                         )}
                       </div>
-                      {/* Primary Number Field with Floating Label */}
+                      {/* Replace the current Primary Number input field with: */}
                       <div className="relative">
-                        <input
-                          type="text"
-                          name="mobileNumber"
-                          value={formData.mobileNumber}
-                          onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
+                        <div
+                          className={`phone-input-wrapper ${
                             errors.mobileNumber
                               ? "border-red-500"
                               : "border-gray-300"
                           }`}
-                          placeholder=" "
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                        >
+                          <PhoneInput
+                            country={phoneData.primaryCountry}
+                            value={phoneDisplay.mobileNumber}
+                            onChange={(value, country) =>
+                              handlePhoneChange(value, country, "primary")
+                            }
+                            placeholder="Enter primary phone number"
+                            inputClass="w-full"
+                            buttonClass="!border-r-0 !rounded-l"
+                            inputStyle={{
+                              width: "100%",
+                              height: "42px",
+                              borderLeft: "none",
+                              borderTopLeftRadius: "0",
+                              borderBottomLeftRadius: "0",
+                            }}
+                            buttonStyle={{
+                              borderRight: "none",
+                              borderTopRightRadius: "0",
+                              borderBottomRightRadius: "0",
+                            }}
+                          />
+                        </div>
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 pointer-events-none">
                           Primary Number *
                         </label>
                         {errors.mobileNumber && (
@@ -811,21 +1241,58 @@ if (isLoading) {
                             {errors.mobileNumber}
                           </p>
                         )}
+                        <p className="mt-1 text-xs text-gray-500">
+                          {getCountryName(phoneData.primaryCountry)} format:{" "}
+                          {getDigitLimit(phoneData.primaryCountry)} digits
+                        </p>
                       </div>
 
-                      {/* Secondary Number Field with Floating Label */}
+                      {/* Replace the current Secondary Number input field with: */}
                       <div className="relative">
-                        <input
-                          type="text"
-                          name="phoneNumber"
-                          value={formData.phoneNumber}
-                          onChange={handleChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
-                          placeholder=" "
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                        <div
+                          className={`phone-input-wrapper ${
+                            errors.phoneNumber
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          <PhoneInput
+                            country={phoneData.secondaryCountry}
+                            value={phoneDisplay.phoneNumber}
+                            onChange={(value, country) =>
+                              handlePhoneChange(value, country, "secondary")
+                            }
+                            placeholder="Enter secondary phone number"
+                            inputClass="w-full"
+                            buttonClass="!border-r-0 !rounded-l"
+                            inputStyle={{
+                              width: "100%",
+                              height: "42px",
+                              borderLeft: "none",
+                              borderTopLeftRadius: "0",
+                              borderBottomLeftRadius: "0",
+                            }}
+                            buttonStyle={{
+                              borderRight: "none",
+                              borderTopRightRadius: "0",
+                              borderBottomRightRadius: "0",
+                            }}
+                          />
+                        </div>
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 pointer-events-none">
                           Secondary Number
                         </label>
+                        {errors.phoneNumber && (
+                          <p className="mt-1 text-xs text-red-600">
+                            {errors.phoneNumber}
+                          </p>
+                        )}
+                        {formData.phoneNumber && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            {getCountryName(phoneData.secondaryCountry)} format:{" "}
+                            {getDigitLimit(phoneData.secondaryCountry)} digits
+                          </p>
+                        )}
                       </div>
 
                       <div className="relative">
