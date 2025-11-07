@@ -17,12 +17,7 @@ const TableBodySkeleton = ({ rows = 5, columns = 7 }) => {
               <div className="h-4 bg-gray-200 rounded w-full"></div>
             </td>
           ))}
-          <td className="px-6 py-4">
-            <div className="flex items-center gap-3">
-              <div className="h-4 bg-gray-200 rounded w-8"></div>
-              <div className="h-4 bg-gray-200 rounded w-8"></div>
-            </div>
-          </td>
+     
         </tr>
       ))}
     </tbody>
@@ -186,81 +181,81 @@ function LeadList() {
   ];
 
   // Updated custom styles for React Select v5
- const customStyles = {
-   control: (base, state) => ({
-     ...base,
-     minHeight: "24px",
-     height: "24px",
-     border: "none",
-     boxShadow: "none",
-     backgroundColor: "transparent",
-     cursor: "pointer",
-     "&:hover": {
-       border: "none",
-     },
-   }),
+  const customStyles = {
+    control: (base, state) => ({
+      ...base,
+      minHeight: "24px",
+      height: "24px",
+      border: "none",
+      boxShadow: "none",
+      backgroundColor: "transparent",
+      cursor: "pointer",
+      "&:hover": {
+        border: "none",
+      },
+      minWidth: "120px",
+    }),
 
-   valueContainer: (base) => ({
-     ...base,
-     height: "24px",
-     padding: "0 6px",
-     display: "flex",
-     alignItems: "center",
-   }),
+    valueContainer: (base) => ({
+      ...base,
+      height: "24px",
+      padding: "0 6px",
+      display: "flex",
+      alignItems: "center",
+    }),
 
-   singleValue: (base, state) => ({
-     ...base,
-     color: "#374151", // keep text normal (no change)
-     fontWeight: "600",
-     fontSize: "12px",
-     margin: 0,
-     lineHeight: "1",
-   }),
+    singleValue: (base, state) => ({
+      color: "#374151", // keep text normal (no change)
+      fontWeight: "600",
+      fontSize: "12px",
+      margin: 0,
+      lineHeight: "1",
+    }),
 
-   indicatorsContainer: (base) => ({
-     ...base,
-     height: "24px",
-   }),
+    indicatorsContainer: (base) => ({
+      ...base,
+      height: "24px",
+    }),
 
-   dropdownIndicator: (base) => ({
-     ...base,
-     padding: "4px",
-     svg: {
-       width: "14px",
-       height: "14px",
-     },
-   }),
+    dropdownIndicator: (base) => ({
+      ...base,
+      padding: "4px",
+      svg: {
+        width: "14px",
+        height: "14px",
+      },
+    }),
 
-   menu: (base) => ({
-     ...base,
-     width: "160px",
-     fontSize: "12px",
-     zIndex: 9999,
-     position: "absolute",
-     backgroundColor: "#fff", // dropdown background visible clearly
-     border: "1px solid #e5e7eb",
-     borderRadius: "8px",
-     boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-   }),
+    menu: (base) => ({
+      ...base,
+      width: "160px",
+      fontSize: "12px",
+      zIndex: 9999,
+      position: "absolute",
+      backgroundColor: "#fff", // dropdown background visible clearly
+      border: "1px solid #e5e7eb",
+      borderRadius: "8px",
+      boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+    }),
 
-   option: (base, state) => ({
-     ...base,
-     fontSize: "12px",
-     padding: "6px 8px",
-     backgroundColor: state.isSelected
-       ? "#d4e3f6" // bright blue for selected
-       : state.isFocused
-       ? "#f3f4f6" // light gray hover
-       : "#fff", // normal
-     color: state.isSelected ? "#2563eb" : "#111827",
-     cursor: "pointer",
-     transition: "background-color 0.2s ease",
-   }),
+    option: (base, state) => ({
+      ...base,
+      fontSize: "12px",
+      padding: "6px 8px",
+      backgroundColor: state.isSelected
+        ? "#d4e3f6" // bright blue for selected
+        : state.isFocused
+        ? "#f3f4f6" // light gray hover
+        : "#fff", // normal
+      color: state.isSelected ? "#2563eb" : "#111827",
+      cursor: "pointer",
+      transition: "background-color 0.2s ease",
+    }),
 
-   indicatorSeparator: () => ({
-     display: "none",
-   }),
- };
+    indicatorSeparator: () => ({
+      display: "none",
+    }),
+  };
 
   // Format option label with color dot
   const formatOptionLabel = ({ value, label, color }) => (
@@ -611,7 +606,6 @@ function LeadList() {
         return "text-gray-800";
     }
   };
-
 
   const StatusSelect = ({ value, onChange, options, styles }) => {
     return (
@@ -1189,8 +1183,7 @@ function LeadList() {
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                     className="w-full sm:w-40 px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white transition-colors duration-200"
-                  
-                >
+                  >
                     <option value="all">All Status</option>
                     <option value="new lead">New Lead</option>
                     <option value="contacted">Contacted</option>
@@ -1412,15 +1405,10 @@ function LeadList() {
                         <col
                           key={column.id}
                           style={{
-                            width: `${100 / (visibleColumns.length + 1)}%`,
+                            width: `${100 / visibleColumns.length}%`,
                           }}
                         />
                       ))}
-                      <col
-                        style={{
-                          width: `${100 / (visibleColumns.length + 1)}%`,
-                        }}
-                      />
                     </colgroup>
 
                     {/* Table header */}
@@ -1435,9 +1423,6 @@ function LeadList() {
                             {column.name}
                           </th>
                         ))}
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          ACTIONS
-                        </th>
                       </tr>
                     </thead>
 
@@ -1452,32 +1437,106 @@ function LeadList() {
                         {leads.map((lead) => (
                           <tr
                             key={lead.id}
-                            className="hover:bg-gray-50 transition-colors duration-150"
+                            className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer group" // Added group class here
+                            onClick={(e) => {
+                              // Don't trigger preview if clicking on status dropdown or action buttons
+                              if (
+                                !e.target.closest(".status-select-container") &&
+                                !e.target.closest(".action-buttons")
+                              ) {
+                                handlePreview(lead.id);
+                              }
+                            }}
                           >
                             {visibleColumns.map((column) => (
                               <td
                                 key={column.id}
-                                className="px-6 py-1 whitespace-nowrap text-sm text-gray-900"
+                                className="px-6 py-3 whitespace-nowrap text-sm text-gray-900 relative"
                               >
                                 {column.id === "clientName" ? (
-                                  <div className="flex items-center gap-3 min-w-0">
-                                    <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                      {getInitials(lead.clientName)}
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                      <span
-                                        className="font-semibold truncate block"
-                                        title={lead[column.id] || "N/A"}
-                                      >
-                                        {truncateText(
-                                          lead[column.id] || "N/A",
-                                          10
-                                        )}
-                                      </span>
+                                  <div className="flex flex-col min-w-0">
+                                    {/* Client Name and Avatar Row */}
+                                    <div className="flex items-center gap-3">
+                                      <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                        {getInitials(lead.clientName)}
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <span
+                                          className="font-semibold block"
+                                          title={lead[column.id] || "N/A"}
+                                        >
+                                          {truncateText(
+                                            lead[column.id] || "N/A",
+                                            30
+                                          )}
+                                        </span>
+
+                                        {/* Action Buttons - Show below on row hover */}
+                                        <div className="action-buttons flex items-center gap-3 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                          {/* Preview Button */}
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handlePreview(lead.id);
+                                            }}
+                                            className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs"
+                                            title="Preview Lead"
+                                          >
+                                            <svg
+                                              className="w-3 h-3"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                              />
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                              />
+                                            </svg>
+                                            View
+                                          </button>
+
+                                          {/* Edit Button */}
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleEdit(lead.id);
+                                            }}
+                                            className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs"
+                                            title="Edit Lead"
+                                          >
+                                            <svg
+                                              className="w-3 h-3"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                              />
+                                            </svg>
+                                            Edit
+                                          </button>
+                                        </div>
+                                      </div>
                                     </div>
                                   </div>
                                 ) : column.id === "status" ? (
-                                  <div className="status-select-container">
+                                  <div
+                                    className="status-select-container p-0"
+                                    onClick={(e) => e.stopPropagation()} // Prevent row click for status column
+                                  >
                                     <div
                                       className={`inline-flex rounded-full ${getStatusBackgroundColor(
                                         lead.status
@@ -1525,7 +1584,7 @@ function LeadList() {
                                     )}
                                   </span>
                                 ) : (
-                                  <div className="relative group">
+                                  <div className="relative">
                                     <span
                                       className="truncate block max-w-xs"
                                       title={lead[column.id] || "N/A"}
@@ -1539,57 +1598,6 @@ function LeadList() {
                                 )}
                               </td>
                             ))}
-                            <td className="px-6 py-1 whitespace-nowrap text-sm font-medium">
-                              <div className="flex items-center gap-3">
-                                {/* Preview Button */}
-                                <button
-                                  onClick={() => handlePreview(lead.id)}
-                                  className="text-gray-400 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 flex-shrink-0"
-                                  title="Preview Lead"
-                                >
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                    />
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                    />
-                                  </svg>
-                                </button>
-
-                                {/* Edit Button */}
-                                <button
-                                  onClick={() => handleEdit(lead.id)}
-                                  className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1 flex-shrink-0"
-                                  title="Edit Lead"
-                                >
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                    />
-                                  </svg>
-                                </button>
-                              </div>
-                            </td>
                           </tr>
                         ))}
                       </tbody>
