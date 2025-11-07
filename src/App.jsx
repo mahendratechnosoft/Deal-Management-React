@@ -30,6 +30,9 @@ import CustomerList from "./Components/Common/Customer/CustomerList.jsx";
 import CreateCustomer from "./Components/Common/Customer/CreateCustomer.jsx";
 import EditCustomer from "./Components/Common/Customer/EditCustomer.jsx";
 import ProposalPreview from "./Components/Common/Proposal/ProposalPreview.jsx";
+import ProformaList from "./Components/Common/Proforma/ProformaList.jsx";
+import CreateProforma from "./Components/Common/Proforma/CreateProforma.jsx";
+import EditProforma from "./Components/Common/Proforma/EditProforma.jsx";
 import DynamicFormBase from "./Components/Common/Settings/DynamicForm/DynamicFormBase.jsx";
 import PublicForm from "./Components/Common/Settings/DynamicForm/PublicForm.jsx";
 function App() {
@@ -222,7 +225,6 @@ function App() {
             }
           />
 
-          {/* Settings Routes */}
           <Route
             path="/Proposal"
             element={
@@ -266,7 +268,34 @@ function App() {
               </RoleBasedRoute>
             }
           />
+          <Route
+            path="/Proforma"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <ProformaList />
+              </RoleBasedRoute>
+            }
+          />
 
+          <Route
+            path="/Proforma/Create"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
+                <CreateProforma />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Proforma/Edit/:proformaInvoiceId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
+                <EditProforma />
+              </RoleBasedRoute>
+            }
+          />
+
+          {/* Settings Routes */}
           <Route
             path="/Admin/Settings"
             element={
