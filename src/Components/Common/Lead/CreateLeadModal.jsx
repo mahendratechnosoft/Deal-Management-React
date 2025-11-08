@@ -52,7 +52,7 @@ function CreateLeadModal({ onClose, onSuccess }) {
 
   const [errors, setErrors] = useState({});
 
-  // Country digit limits (keep your existing object)
+  // Country digit limits
   const countryDigitLimits = {
     in: 10,
     us: 10,
@@ -63,7 +63,6 @@ function CreateLeadModal({ onClose, onSuccess }) {
     fr: 9,
     jp: 10,
     cn: 11,
-    // ... keep all your existing country digit limits
   };
 
   const getDigitLimit = (countryCode) => {
@@ -326,14 +325,101 @@ function CreateLeadModal({ onClose, onSuccess }) {
     }
   };
 
-  // Form validation
+  // Validate current section
+  const validateCurrentSection = () => {
+    const newErrors = {};
+
+    if (activeSection === "basic") {
+      if (!formData.clientName?.trim())
+        newErrors.clientName = "Client name is required";
+      if (!formData.companyName?.trim())
+        newErrors.companyName = "Company name is required";
+
+      // Primary number validation
+      if (!formData.mobileNumber?.trim()) {
+        newErrors.mobileNumber = "Primary number is required";
+      } else {
+        if (/\s/.test(formData.mobileNumber)) {
+          newErrors.mobileNumber = "Phone number should not contain spaces";
+        } else {
+          const match = formData.mobileNumber.match(/\(\+(\d+)\)(\d+)/);
+          if (match && match[1] && match[2]) {
+            const localNumber = match[2];
+            const requiredLength = getDigitLimit(phoneData.primaryCountry);
+            if (localNumber.length !== requiredLength) {
+              newErrors.mobileNumber = `Phone number must be exactly ${requiredLength} digits for ${getCountryName(
+                phoneData.primaryCountry
+              )}`;
+            }
+          } else {
+            newErrors.mobileNumber = "Invalid phone number format";
+          }
+        }
+      }
+
+      // Secondary number validation
+      if (formData.phoneNumber?.trim()) {
+        if (/\s/.test(formData.phoneNumber)) {
+          newErrors.phoneNumber = "Phone number should not contain spaces";
+        } else {
+          const match = formData.phoneNumber.match(/\(\+(\d+)\)(\d+)/);
+          if (match && match[1] && match[2]) {
+            const localNumber = match[2];
+            const requiredLength = getDigitLimit(phoneData.secondaryCountry);
+            if (localNumber.length !== requiredLength) {
+              newErrors.phoneNumber = `Phone number must be exactly ${requiredLength} digits for ${getCountryName(
+                phoneData.secondaryCountry
+              )}`;
+            }
+          } else {
+            newErrors.phoneNumber = "Invalid phone number format";
+          }
+        }
+      }
+
+      // Address validation
+      if (formData.state && !formData.country) {
+        newErrors.country = "Country is required when state is selected";
+      }
+      if (formData.city && !formData.state) {
+        newErrors.state = "State is required when city is selected";
+      }
+      if (formData.city && !formData.country) {
+        newErrors.country = "Country is required when city is selected";
+      }
+
+      if (formData.street || formData.zipCode) {
+        if (formData.city && !formData.state) {
+          newErrors.state = "State is required when city is provided";
+        }
+        if (formData.state && !formData.country) {
+          newErrors.country = "Country is required when state is provided";
+        }
+      }
+
+      if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        newErrors.email = "Please enter a valid email address";
+      }
+    } else if (activeSection === "details") {
+      if (!formData.source?.trim())
+        newErrors.source = "Lead source is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Form validation for final submission
   const validateForm = () => {
     const newErrors = {};
 
+    // Basic info validation
     if (!formData.clientName?.trim())
       newErrors.clientName = "Client name is required";
     if (!formData.companyName?.trim())
       newErrors.companyName = "Company name is required";
+    if (!formData.source?.trim())
+      newErrors.source = "Lead source is required";
 
     // Primary number validation
     if (!formData.mobileNumber?.trim()) {
@@ -405,10 +491,23 @@ function CreateLeadModal({ onClose, onSuccess }) {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Show validation toast
+  const showValidationToast = () => {
+    const errorMessages = Object.values(errors).filter(msg => msg);
+    if (errorMessages.length > 0) {
+      toast.error(`Please fix the following errors: ${errorMessages.join(', ')}`);
+    } else {
+      toast.error("Please fill in all required fields before proceeding.");
+    }
+  };
+
   // Form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      showValidationToast();
+      return;
+    }
 
     setLoading(true);
     try {
@@ -470,18 +569,43 @@ function CreateLeadModal({ onClose, onSuccess }) {
     }
   };
 
+  // Handle next section
+  const handleNext = () => {
+    if (!validateCurrentSection()) {
+      showValidationToast();
+      return;
+    }
+    
+    const currentIndex = navItems.findIndex(
+      (item) => item.id === activeSection
+    );
+    if (currentIndex < navItems.length - 1) {
+      setActiveSection(navItems[currentIndex + 1].id);
+    }
+  };
+
+  // Handle previous section
+  const handlePrevious = () => {
+    const currentIndex = navItems.findIndex(
+      (item) => item.id === activeSection
+    );
+    if (currentIndex > 0) {
+      setActiveSection(navItems[currentIndex - 1].id);
+    }
+  };
+
   // Custom styles for react-select
   const customStyles = {
     control: (base, state) => ({
       ...base,
-      minHeight: "44px",
+      minHeight: "40px",
       borderColor: state.isFocused
         ? "#3b82f6"
         : errors.country || errors.state || errors.city
         ? "#ef4444"
         : "#e5e7eb",
       borderWidth: "1px",
-      borderRadius: "8px",
+      borderRadius: "6px",
       boxShadow: state.isFocused ? "0 0 0 3px rgba(59, 130, 246, 0.1)" : "none",
       "&:hover": {
         borderColor: state.isFocused ? "#3b82f6" : "#9ca3af",
@@ -491,7 +615,7 @@ function CreateLeadModal({ onClose, onSuccess }) {
     menu: (base) => ({
       ...base,
       zIndex: 50,
-      borderRadius: "8px",
+      borderRadius: "6px",
       boxShadow: "0 10px 25px rgba(0, 0, 0, 0.15)",
     }),
     option: (base, state) => ({
@@ -531,15 +655,15 @@ function CreateLeadModal({ onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden border border-gray-200">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden border border-gray-200">
         {/* Modal Header */}
-        <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-8">
+        <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-6">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center backdrop-blur-sm">
                 <svg
-                  className="w-6 h-6 text-white"
+                  className="w-5 h-5 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -553,18 +677,18 @@ function CreateLeadModal({ onClose, onSuccess }) {
                 </svg>
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Create New Lead</h2>
-                <p className="text-blue-100 mt-1">
+                <h2 className="text-xl font-bold">Create New Lead</h2>
+                <p className="text-blue-100 text-sm">
                   Fill in the lead information below
                 </p>
               </div>
             </div>
             <button
               onClick={handleCancel}
-              className="p-2 hover:bg-white hover:bg-opacity-20 rounded-xl transition-all duration-200 transform hover:scale-110"
+              className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-all duration-200 transform hover:scale-110"
             >
               <svg
-                className="w-6 h-6"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -582,18 +706,18 @@ function CreateLeadModal({ onClose, onSuccess }) {
 
         {/* Navigation Tabs */}
         <div className="border-b border-gray-200 bg-gray-50">
-          <div className="flex space-x-1 p-4">
+          <div className="flex space-x-1 p-3">
             {navItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setActiveSection(item.id)}
-                className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
                   activeSection === item.id
                     ? "bg-white text-blue-600 shadow-sm border border-blue-100"
                     : "text-gray-600 hover:text-gray-900 hover:bg-white"
                 }`}
               >
-                <span className="text-lg">{item.icon}</span>
+                <span className="text-base">{item.icon}</span>
                 {item.label}
               </button>
             ))}
@@ -601,12 +725,12 @@ function CreateLeadModal({ onClose, onSuccess }) {
         </div>
 
         {/* Modal Body */}
-        <div className="overflow-y-auto max-h-[calc(95vh-220px)]">
-          <form onSubmit={handleSubmit} className="p-8">
+        <div className="overflow-y-auto max-h-[calc(80vh-180px)]" >
+          <form onSubmit={handleSubmit} className="p-6">
             {/* Basic Information Section */}
             {activeSection === "basic" && (
-              <div className="space-y-8">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Client Name */}
                   <div className="space-y-2">
                     <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
@@ -618,15 +742,15 @@ function CreateLeadModal({ onClose, onSuccess }) {
                       name="clientName"
                       value={formData.clientName}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
                         errors.clientName ? "border-red-500" : "border-gray-300"
                       }`}
                       placeholder="Enter client name"
                     />
                     {errors.clientName && (
-                      <p className="text-red-500 text-sm flex items-center gap-1">
+                      <p className="text-red-500 text-xs flex items-center gap-1">
                         <svg
-                          className="w-4 h-4"
+                          className="w-3 h-3"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -654,7 +778,7 @@ function CreateLeadModal({ onClose, onSuccess }) {
                       name="companyName"
                       value={formData.companyName}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
                         errors.companyName
                           ? "border-red-500"
                           : "border-gray-300"
@@ -662,9 +786,9 @@ function CreateLeadModal({ onClose, onSuccess }) {
                       placeholder="Enter company name"
                     />
                     {errors.companyName && (
-                      <p className="text-red-500 text-sm flex items-center gap-1">
+                      <p className="text-red-500 text-xs flex items-center gap-1">
                         <svg
-                          className="w-4 h-4"
+                          className="w-3 h-3"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -689,7 +813,7 @@ function CreateLeadModal({ onClose, onSuccess }) {
                     </label>
                     <div
                       className={`phone-input-wrapper ${
-                        errors.mobileNumber ? "border-red-500 rounded-xl" : ""
+                        errors.mobileNumber ? "border-red-500 rounded-lg" : ""
                       }`}
                     >
                       <PhoneInput
@@ -700,11 +824,11 @@ function CreateLeadModal({ onClose, onSuccess }) {
                         }
                         enableSearch={true}
                         placeholder="Enter primary phone number"
-                        inputClass="w-full h-12 px-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        inputClass="w-full h-10 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         buttonClass="!border-r-0 !rounded-l"
                         inputStyle={{
                           width: "100%",
-                          height: "48px",
+                          height: "40px",
                           borderLeft: "none",
                           borderTopLeftRadius: "0",
                           borderBottomLeftRadius: "0",
@@ -713,14 +837,14 @@ function CreateLeadModal({ onClose, onSuccess }) {
                           borderRight: "none",
                           borderTopRightRadius: "0",
                           borderBottomRightRadius: "0",
-                          height: "48px",
+                          height: "40px",
                         }}
                       />
                     </div>
                     {errors.mobileNumber && (
-                      <p className="text-red-500 text-sm flex items-center gap-1">
+                      <p className="text-red-500 text-xs flex items-center gap-1">
                         <svg
-                          className="w-4 h-4"
+                          className="w-3 h-3"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -748,7 +872,7 @@ function CreateLeadModal({ onClose, onSuccess }) {
                     </label>
                     <div
                       className={`phone-input-wrapper ${
-                        errors.phoneNumber ? "border-red-500 rounded-xl" : ""
+                        errors.phoneNumber ? "border-red-500 rounded-lg" : ""
                       }`}
                     >
                       <PhoneInput
@@ -759,11 +883,11 @@ function CreateLeadModal({ onClose, onSuccess }) {
                         }
                         enableSearch={true}
                         placeholder="Enter secondary phone number"
-                        inputClass="w-full h-12 px-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        inputClass="w-full h-10 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         buttonClass="!border-r-0 !rounded-l"
                         inputStyle={{
                           width: "100%",
-                          height: "48px",
+                          height: "40px",
                           borderLeft: "none",
                           borderTopLeftRadius: "0",
                           borderBottomLeftRadius: "0",
@@ -772,14 +896,14 @@ function CreateLeadModal({ onClose, onSuccess }) {
                           borderRight: "none",
                           borderTopRightRadius: "0",
                           borderBottomRightRadius: "0",
-                          height: "48px",
+                          height: "40px",
                         }}
                       />
                     </div>
                     {errors.phoneNumber && (
-                      <p className="text-red-500 text-sm flex items-center gap-1">
+                      <p className="text-red-500 text-xs flex items-center gap-1">
                         <svg
-                          className="w-4 h-4"
+                          className="w-3 h-3"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -812,15 +936,15 @@ function CreateLeadModal({ onClose, onSuccess }) {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
                         errors.email ? "border-red-500" : "border-gray-300"
                       }`}
                       placeholder="Enter email address"
                     />
                     {errors.email && (
-                      <p className="text-red-500 text-sm flex items-center gap-1">
+                      <p className="text-red-500 text-xs flex items-center gap-1">
                         <svg
-                          className="w-4 h-4"
+                          className="w-3 h-3"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -847,7 +971,7 @@ function CreateLeadModal({ onClose, onSuccess }) {
                       name="website"
                       value={formData.website}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                       placeholder="Enter website URL"
                     />
                   </div>
@@ -862,7 +986,7 @@ function CreateLeadModal({ onClose, onSuccess }) {
                       name="street"
                       value={formData.street}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                       placeholder="Enter street address"
                     />
                   </div>
@@ -884,9 +1008,9 @@ function CreateLeadModal({ onClose, onSuccess }) {
                       styles={customStyles}
                     />
                     {errors.country && (
-                      <p className="text-red-500 text-sm flex items-center gap-1">
+                      <p className="text-red-500 text-xs flex items-center gap-1">
                         <svg
-                          className="w-4 h-4"
+                          className="w-3 h-3"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -922,9 +1046,9 @@ function CreateLeadModal({ onClose, onSuccess }) {
                       styles={customStyles}
                     />
                     {errors.state && (
-                      <p className="text-red-500 text-sm flex items-center gap-1">
+                      <p className="text-red-500 text-xs flex items-center gap-1">
                         <svg
-                          className="w-4 h-4"
+                          className="w-3 h-3"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -960,9 +1084,9 @@ function CreateLeadModal({ onClose, onSuccess }) {
                       styles={customStyles}
                     />
                     {errors.city && (
-                      <p className="text-red-500 text-sm flex items-center gap-1">
+                      <p className="text-red-500 text-xs flex items-center gap-1">
                         <svg
-                          className="w-4 h-4"
+                          className="w-3 h-3"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -989,7 +1113,7 @@ function CreateLeadModal({ onClose, onSuccess }) {
                       name="zipCode"
                       value={formData.zipCode}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                       placeholder="Enter ZIP code"
                     />
                   </div>
@@ -999,8 +1123,8 @@ function CreateLeadModal({ onClose, onSuccess }) {
 
             {/* Lead Details Section */}
             {activeSection === "details" && (
-              <div className="space-y-8">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Lead Source */}
                   <div className="space-y-2">
                     <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
@@ -1011,7 +1135,7 @@ function CreateLeadModal({ onClose, onSuccess }) {
                       name="source"
                       value={formData.source}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none bg-white ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none bg-white ${
                         errors.source ? "border-red-500" : "border-gray-300"
                       }`}
                     >
@@ -1024,9 +1148,9 @@ function CreateLeadModal({ onClose, onSuccess }) {
                       <option value="Email Campaign">Email Campaign</option>
                     </select>
                     {errors.source && (
-                      <p className="text-red-500 text-sm flex items-center gap-1">
+                      <p className="text-red-500 text-xs flex items-center gap-1">
                         <svg
-                          className="w-4 h-4"
+                          className="w-3 h-3"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1052,7 +1176,7 @@ function CreateLeadModal({ onClose, onSuccess }) {
                       name="industry"
                       value={formData.industry}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none bg-white"
                     >
                       <option value="">Select Industry</option>
                       <option value="Technology">Technology</option>
@@ -1066,25 +1190,7 @@ function CreateLeadModal({ onClose, onSuccess }) {
                     </select>
                   </div>
 
-                  {/* Priority */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700">
-                      Priority
-                    </label>
-                    <select
-                      name="priority"
-                      value={formData.priority}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none bg-white"
-                    >
-                      <option value="">Select Priority</option>
-                      <option value="Low">Low</option>
-                      <option value="Medium">Medium</option>
-                      <option value="High">High</option>
-                      <option value="Urgent">Urgent</option>
-                    </select>
-                  </div>
-
+           
                   {/* Revenue */}
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-gray-700">
@@ -1095,7 +1201,7 @@ function CreateLeadModal({ onClose, onSuccess }) {
                       name="revenue"
                       value={formData.revenue}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                       placeholder="Enter revenue amount"
                     />
                   </div>
@@ -1114,8 +1220,8 @@ function CreateLeadModal({ onClose, onSuccess }) {
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
-                    rows={6}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"
+                    rows={5}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"
                     placeholder="Enter additional notes, requirements, or description about this lead..."
                   />
                 </div>
@@ -1125,121 +1231,114 @@ function CreateLeadModal({ onClose, onSuccess }) {
         </div>
 
         {/* Modal Footer */}
-        <div className="border-t border-gray-200 bg-gray-50 p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 font-medium flex items-center gap-2 hover:shadow-sm"
+     {/* Modal Footer */}
+<div className="border-t border-gray-200 bg-gray-50 p-4">
+  <div className="flex items-center justify-between">
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={handleCancel}
+        className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 font-medium flex items-center gap-2 hover:shadow-sm text-sm"
+      >
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+        Cancel
+      </button>
+    </div>
+
+    <div className="flex items-center gap-2">
+      {/* Previous Button - Show in all tabs except first */}
+      {activeSection !== "basic" && (
+        <button
+          type="button"
+          onClick={handlePrevious}
+          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 font-medium flex items-center gap-2 text-sm"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          Previous
+        </button>
+      )}
+
+      {/* Next Button - Show in all tabs except last */}
+      {activeSection !== "description" ? (
+        <button
+          type="button"
+          onClick={handleNext}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium flex items-center gap-2 text-sm"
+        >
+          Next
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={loading}
+          className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl text-sm"
+        >
+          {loading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              Creating...
+            </>
+          ) : (
+            <>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-                Cancel
-              </button>
-            </div>
-
-            <div className="flex items-center gap-3">
-              {activeSection !== "basic" && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const currentIndex = navItems.findIndex(
-                      (item) => item.id === activeSection
-                    );
-                    setActiveSection(navItems[currentIndex - 1].id);
-                  }}
-                  className="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 font-medium flex items-center gap-2"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                  Previous
-                </button>
-              )}
-
-              {activeSection !== "description" ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const currentIndex = navItems.findIndex(
-                      (item) => item.id === activeSection
-                    );
-                    setActiveSection(navItems[currentIndex + 1].id);
-                  }}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 font-medium flex items-center gap-2"
-                >
-                  Next
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      Create Lead
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              Create Lead
+            </>
+          )}
+        </button>
+      )}
+    </div>
+  </div>
+</div>
       </div>
     </div>
   );
