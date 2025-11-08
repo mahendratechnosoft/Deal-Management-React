@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import PreviewLead from "./PreviewLead";
 import Select from "react-select";
 import { components } from "react-select";
+import CreateLeadModal from "./CreateLeadModal";
 // Table Body Skeleton Component (for search operations)
 const TableBodySkeleton = ({ rows = 5, columns = 7 }) => {
   return (
@@ -152,6 +153,7 @@ function LeadList() {
   const [kanbanPage, setKanbanPage] = useState({});
   const [kanbanHasMore, setKanbanHasMore] = useState({});
   const [kanbanTotal, setKanbanTotal] = useState({});
+  const [showCreateLeadModal, setShowCreateLeadModal] = useState(false);
 
   // Default columns
   const [columns, setColumns] = useState([
@@ -652,15 +654,38 @@ function LeadList() {
   //   navigate("/CreateLead");
   // };
 
-  const handleCreateLead = () => {
-    console.log("Current role:", role);
-
-    if (role === "ROLE_ADMIN") {
-      navigate("/Admin/CreateLead");
-    } else if (role === "ROLE_EMPLOYEE") {
-      navigate("/Employee/CreateLead");
-    }
+  // Handle successful lead creation
+  const handleLeadCreated = () => {
+    setShowCreateLeadModal(false);
+ 
+    refreshLeadsData(); // Refresh the leads list
   };
+
+  // Handle modal close
+  const handleCloseModal = () => {
+    setShowCreateLeadModal(false);
+  };
+
+ const handleCreateLead = () => {
+   console.log("Create Lead button clicked");
+   console.log("showCreateLeadModal before:", showCreateLeadModal);
+   setShowCreateLeadModal(true);
+   console.log("showCreateLeadModal after:", showCreateLeadModal);
+ };
+
+ // Add this useEffect to monitor state changes
+ useEffect(() => {
+   console.log("showCreateLeadModal state changed:", showCreateLeadModal);
+ }, [showCreateLeadModal]);
+  // const handleCreateLead = () => {
+  //   console.log("Current role:", role);
+
+  //   if (role === "ROLE_ADMIN") {
+  //     navigate("/Admin/CreateLead");
+  //   } else if (role === "ROLE_EMPLOYEE") {
+  //     navigate("/Employee/CreateLead");
+  //   }
+  // };
 
   const handleEdit = (leadId) => {
     if (role === "ROLE_ADMIN") {
@@ -1197,6 +1222,26 @@ function LeadList() {
               </div>
 
               {/* Create Button */}
+              {/* <button
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
+                onClick={handleCreateLead}
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Create Lead
+              </button> */}
+
               <button
                 className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
                 onClick={handleCreateLead}
@@ -1977,6 +2022,15 @@ function LeadList() {
           </div>
         )}
       </div>
+
+      {/* Create Lead Modal */}
+      {showCreateLeadModal && (
+        <CreateLeadModal
+          onClose={handleCloseModal}
+          onSuccess={handleLeadCreated}
+          role={role}
+        />
+      )}
       {/* Preview Modal */}
       {showPreviewModal && (
         <PreviewLead
