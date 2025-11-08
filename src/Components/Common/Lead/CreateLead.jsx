@@ -987,10 +987,11 @@ const getCountryName = (countryCode) => {
                         >
                           <PhoneInput
                             country={"in"}
-                            value={phoneDisplay.mobileNumber} // Use display value
+                            value={phoneDisplay.mobileNumber}
                             onChange={(value, country) =>
                               handlePhoneChange(value, country, "primary")
                             }
+                            enableSearch={true} // Add this line
                             placeholder="Enter primary phone number"
                             inputClass="w-full"
                             buttonClass="!border-r-0 !rounded-l"
@@ -1019,7 +1020,6 @@ const getCountryName = (countryCode) => {
                         <p className="mt-1 text-xs text-gray-500">
                           {getCountryName(phoneData.primaryCountry)} format:{" "}
                           {getDigitLimit(phoneData.primaryCountry)} digits
-                        
                         </p>
                       </div>
 
@@ -1034,10 +1034,11 @@ const getCountryName = (countryCode) => {
                         >
                           <PhoneInput
                             country={"in"}
-                            value={phoneDisplay.phoneNumber} // Use display value
+                            value={phoneDisplay.phoneNumber}
                             onChange={(value, country) =>
                               handlePhoneChange(value, country, "secondary")
                             }
+                            enableSearch={true} // Add this line
                             placeholder="Enter secondary phone number"
                             inputClass="w-full"
                             buttonClass="!border-r-0 !rounded-l"
@@ -1067,8 +1068,6 @@ const getCountryName = (countryCode) => {
                           <p className="mt-1 text-xs text-gray-500">
                             {getCountryName(phoneData.secondaryCountry)} format:{" "}
                             {getDigitLimit(phoneData.secondaryCountry)} digits
-                            {/* Debug info */}
-                          
                           </p>
                         )}
                       </div>

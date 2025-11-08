@@ -5,9 +5,8 @@ import { Country, State, City } from "country-state-city";
 import { useLayout } from "../../Layout/useLayout";
 import { toast } from "react-hot-toast";
 import axiosInstance from "../../BaseComponet/axiosInstance";
-import { PhoneInput } from "react-international-phone";
-import "react-international-phone/style.css";
-
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 function EditLead() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -37,10 +36,12 @@ function EditLead() {
     description: "",
   });
 
-  // Simplified phone states
+  // Updated phone states for react-phone-input-2
   const [phoneData, setPhoneData] = useState({
     mobileNumber: "",
     phoneNumber: "",
+    primaryCountry: "in",
+    secondaryCountry: "in",
   });
 
   const [dropdownData, setDropdownData] = useState({
@@ -224,7 +225,7 @@ function EditLead() {
 
   const getDigitLimit = (countryCode) => {
     const code = countryCode ? countryCode.toLowerCase() : "in";
-    return countryDigitLimits[code] || 10; // Default to 10 if country not found
+    return countryDigitLimits[code] || 10;
   };
 
   // COMPLETE: Extract country code from international phone number
@@ -690,405 +691,308 @@ function EditLead() {
 
     return countryNames[countryCode] || countryCode.toUpperCase();
   };
-  // Parse phone number from your format (+91)7732032039
+
+  // UPDATED: Parse phone number for react-phone-input-2 format
   const parsePhoneNumber = (phoneString) => {
     if (!phoneString) return { country: "in", number: "" };
 
     console.log("Parsing phone:", phoneString);
 
-    // Handle format: (+91)7732032039 or (+91) 7732032039
-    const match = phoneString.match(/\(\+(\d+)\)\s*(\d+)/);
+    // Handle format: (+91)7732032039
+    const match = phoneString.match(/\(\+(\d+)\)(\d+)/);
     if (match && match[1] && match[2]) {
-      const countryCode = match[1];
+      const countryDialCode = match[1];
       const localNumber = match[2];
 
-      // Map country dial codes to country codes
-      // COMPLETE dial code to country mapping (for validation)
-      const dialCodeToCountry = {
-        // Asia
-        91: "in",
-        86: "cn",
-        81: "jp",
-        82: "kr",
-        852: "hk",
-        886: "tw",
-        65: "sg",
-        60: "my",
-        66: "th",
-        62: "id",
-        63: "ph",
-        84: "vn",
-        95: "mm",
-        855: "kh",
-        856: "la",
-        673: "bn",
-        977: "np",
-        94: "lk",
-        880: "bd",
-        92: "pk",
-        93: "af",
-        7: "kz",
-        998: "uz",
-        996: "kg",
-        992: "tj",
-        993: "tm",
-        976: "mn",
-        975: "bt",
-        960: "mv",
+      // Convert to react-phone-input-2 format: 917732032039
+      const fullNumber = `${countryDialCode}${localNumber}`;
 
-        // Middle East
-        966: "sa",
-        971: "ae",
-        972: "il",
-        90: "tr",
-        98: "ir",
-        964: "iq",
-        962: "jo",
-        961: "lb",
-        965: "kw",
-        968: "om",
-        974: "qa",
-        973: "bh",
-        967: "ye",
-        963: "sy",
-        970: "ps",
+      // Determine country code from dial code
+      let countryCode = "in";
+      if (countryDialCode === "1") countryCode = "us";
+      else if (countryDialCode === "44") countryCode = "gb";
+      // Add more mappings as needed
 
-        // North America
-        1: "us",
-        52: "mx",
+      console.log("Parsed result:", {
+        original: phoneString,
+        countryCode,
+        fullNumber,
+        countryDialCode,
+        localNumber,
+      });
 
-        // Europe
-        44: "gb",
-        49: "de",
-        33: "fr",
-        39: "it",
-        34: "es",
-        31: "nl",
-        32: "be",
-        41: "ch",
-        43: "at",
-        46: "se",
-        47: "no",
-        45: "dk",
-        358: "fi",
-        48: "pl",
-        420: "cz",
-        421: "sk",
-        36: "hu",
-        40: "ro",
-        359: "bg",
-        30: "gr",
-        351: "pt",
-        353: "ie",
-        352: "lu",
-        372: "ee",
-        371: "lv",
-        370: "lt",
-        386: "si",
-        385: "hr",
-        381: "rs",
-        387: "ba",
-        389: "mk",
-        355: "al",
-        382: "me",
-        354: "is",
-        356: "mt",
-        357: "cy",
-        423: "li",
-        377: "mc",
-        378: "sm",
-        379: "va",
-        376: "ad",
-        375: "by",
-        373: "md",
-        380: "ua",
-        7: "ru",
-
-        // Africa
-        20: "eg",
-        27: "za",
-        234: "ng",
-        254: "ke",
-        251: "et",
-        233: "gh",
-        225: "ci",
-        221: "sn",
-        237: "cm",
-        256: "ug",
-        255: "tz",
-        263: "zw",
-        258: "mz",
-        261: "mg",
-        244: "ao",
-        249: "sd",
-        213: "dz",
-        212: "ma",
-        216: "tn",
-        218: "ly",
-        250: "rw",
-        257: "bi",
-        252: "so",
-        291: "er",
-        253: "dj",
-        232: "sl",
-        231: "lr",
-        223: "ml",
-        227: "ne",
-        235: "td",
-        236: "cf",
-        243: "cd",
-        242: "cg",
-        241: "ga",
-        220: "gm",
-        245: "gw",
-        222: "mr",
-        226: "bf",
-        229: "bj",
-        228: "tg",
-        238: "cv",
-        239: "st",
-        240: "gq",
-        268: "sz",
-        266: "ls",
-        267: "bw",
-        264: "na",
-        260: "zm",
-        265: "mw",
-        269: "km",
-        230: "mu",
-        248: "sc",
-
-        // Oceania
-        61: "au",
-        64: "nz",
-        679: "fj",
-        675: "pg",
-        677: "sb",
-        678: "vu",
-        674: "nr",
-        686: "ki",
-        688: "tv",
-        685: "ws",
-        676: "to",
-        691: "fm",
-        692: "mh",
-        680: "pw",
-        682: "ck",
-        683: "nu",
-        690: "tk",
-        689: "pf",
-        687: "nc",
-
-        // Latin America & Caribbean
-        55: "br",
-        54: "ar",
-        57: "co",
-        51: "pe",
-        58: "ve",
-        56: "cl",
-        593: "ec",
-        591: "bo",
-        595: "py",
-        598: "uy",
-        506: "cr",
-        507: "pa",
-        1: "do",
-        502: "gt",
-        503: "sv",
-        504: "hn",
-        505: "ni",
-        1: "pr",
-        53: "cu",
-        1: "jm",
-        509: "ht",
-        1: "tt",
-        1: "bb",
-        1: "bs",
-        1: "lc",
-        1: "vc",
-        1: "gd",
-        1: "dm",
-        1: "kn",
-        1: "ag",
-      };
-      const country = dialCodeToCountry[countryCode] || "in";
-      const fullNumber = `+${countryCode}${localNumber}`;
-
-      console.log("Parsed result:", { country, fullNumber, localNumber });
-      return { country, number: fullNumber };
+      return { country: countryCode, number: fullNumber };
     }
 
-    // If it's already in international format
+    // If it's already in international format with +
     if (phoneString.startsWith("+")) {
-      // Extract country code from the number itself
-      const countryFromNumber = phoneString.startsWith("+91")
-        ? "in"
-        : phoneString.startsWith("+1")
-        ? "us"
-        : phoneString.startsWith("+44")
-        ? "gb"
-        : "in";
-      return { country: countryFromNumber, number: phoneString };
+      const withoutPlus = phoneString.substring(1);
+      // Extract country code (first 1-3 digits)
+      let countryDialCode = "";
+      let localNumber = "";
+
+      if (withoutPlus.startsWith("1")) {
+        countryDialCode = "1";
+        localNumber = withoutPlus.substring(1);
+      } else if (withoutPlus.startsWith("91")) {
+        countryDialCode = "91";
+        localNumber = withoutPlus.substring(2);
+      } else {
+        // Default: take first 2 digits as country code
+        countryDialCode = withoutPlus.substring(0, 2);
+        localNumber = withoutPlus.substring(2);
+      }
+
+      const fullNumber = `${countryDialCode}${localNumber}`;
+      return { country: "in", number: fullNumber };
     }
 
     // Default to India
     return { country: "in", number: phoneString };
   };
 
-// UPDATED: Format phone number for your backend: (+91)7744998493
-const formatPhoneForBackend = (phoneString) => {
-  if (!phoneString) return "";
+  // UPDATED: Format phone number for your backend: (+91)7744998493
+  const formatPhoneForBackend = (phoneString) => {
+    if (!phoneString) return "";
 
-  console.log("Formatting for backend:", phoneString);
+    console.log("Formatting for backend:", phoneString);
 
-  // If it's already in our format, return as is
-  if (phoneString.match(/\(\+\d+\)\d+/)) {
-    return phoneString;
-  }
-
-  // Remove ALL spaces from the input first
-  const cleanPhoneString = phoneString.replace(/\s/g, '');
-  console.log("Cleaned phone string:", cleanPhoneString);
-
-  // Handle international format using extractCountryCode
-  if (cleanPhoneString.startsWith("+")) {
-    const countryCode = extractCountryCode(cleanPhoneString);
-    console.log("Detected country:", countryCode);
-
-    // Remove the + and get the dial code
-    const withoutPlus = cleanPhoneString.substring(1);
-
-    // Get the dial code from the country code mapping (reverse lookup)
-    const countryToDialCode = {
-      // Asia
-      in: "91", cn: "86", jp: "81", kr: "82", hk: "852", tw: "886",
-      sg: "65", my: "60", th: "66", id: "62", ph: "63", vn: "84",
-      mm: "95", kh: "855", la: "856", bn: "673", np: "977", lk: "94",
-      bd: "880", pk: "92", af: "93", kz: "7", uz: "998", kg: "996",
-      tj: "992", tm: "993", mn: "976", bt: "975", mv: "960",
-
-      // Middle East
-      sa: "966", ae: "971", il: "972", tr: "90", ir: "98", iq: "964",
-      jo: "962", lb: "961", kw: "965", om: "968", qa: "974", bh: "973",
-      ye: "967", sy: "963", ps: "970",
-
-      // North America
-      us: "1", ca: "1", mx: "52",
-
-      // Europe
-      gb: "44", de: "49", fr: "33", it: "39", es: "34", nl: "31",
-      be: "32", ch: "41", at: "43", se: "46", no: "47", dk: "45",
-      fi: "358", pl: "48", cz: "420", sk: "421", hu: "36", ro: "40",
-      bg: "359", gr: "30", pt: "351", ie: "353", lu: "352", ee: "372",
-      lv: "371", lt: "370", si: "386", hr: "385", rs: "381", ba: "387",
-      mk: "389", al: "355", me: "382", is: "354", mt: "356", cy: "357",
-      li: "423", mc: "377", sm: "378", va: "379", ad: "376", by: "375",
-      md: "373", ua: "380", ru: "7",
-
-      // Africa
-      eg: "20", za: "27", ng: "234", ke: "254", et: "251", gh: "233",
-      ci: "225", sn: "221", cm: "237", ug: "256", tz: "255", zw: "263",
-      mz: "258", mg: "261", ao: "244", sd: "249", dz: "213", ma: "212",
-      tn: "216", ly: "218", rw: "250", bi: "257", so: "252", er: "291",
-      dj: "253", sl: "232", lr: "231", ml: "223", ne: "227", td: "235",
-      cf: "236", cd: "243", cg: "242", ga: "241", gm: "220", gw: "245",
-      mr: "222", bf: "226", bj: "229", tg: "228", cv: "238", st: "239",
-      gq: "240", sz: "268", ls: "266", bw: "267", na: "264", zm: "260",
-      mw: "265", km: "269", mu: "230", sc: "248",
-
-      // Oceania
-      au: "61", nz: "64", fj: "679", pg: "675", sb: "677", vu: "678",
-      nr: "674", ki: "686", tv: "688", ws: "685", to: "676", fm: "691",
-      mh: "692", pw: "680", ck: "682", nu: "683", tk: "690", pf: "689",
-      nc: "687",
-
-      // Latin America & Caribbean
-      br: "55", ar: "54", co: "57", pe: "51", ve: "58", cl: "56",
-      ec: "593", bo: "591", py: "595", uy: "598", cr: "506", pa: "507",
-      do: "1", gt: "502", sv: "503", hn: "504", ni: "505", pr: "1",
-      cu: "53", jm: "1", ht: "509", tt: "1", bb: "1", bs: "1",
-      lc: "1", vc: "1", gd: "1", dm: "1", kn: "1", ag: "1",
-
-      // French Guiana (GF)
-      gf: "594"
-    };
-
-    const dialCode = countryToDialCode[countryCode];
-
-    if (dialCode && withoutPlus.startsWith(dialCode)) {
-      const localNumber = withoutPlus.substring(dialCode.length);
-      const formatted = `(+${dialCode})${localNumber}`;
-      console.log("Successfully formatted:", {
-        input: phoneString,
-        cleanInput: cleanPhoneString,
-        dialCode,
-        localNumber,
-        formatted,
-      });
-      return formatted;
+    // If it's already in our format, return as is
+    if (phoneString.match(/\(\+\d+\)\d+/)) {
+      return phoneString;
     }
 
-    // Fallback: try to extract using the complete country codes mapping
-    const completeCountryCodes = {
-      // Asia
-      "+91": "in", "+86": "cn", "+81": "jp", "+82": "kr", "+852": "hk", "+886": "tw",
-      "+65": "sg", "+60": "my", "+66": "th", "+62": "id", "+63": "ph", "+84": "vn",
-      "+95": "mm", "+855": "kh", "+856": "la", "+673": "bn", "+977": "np", "+94": "lk",
-      "+880": "bd", "+92": "pk", "+93": "af", "+7": "kz", "+998": "uz", "+996": "kg",
-      "+992": "tj", "+993": "tm", "+976": "mn", "+975": "bt", "+960": "mv",
+    // Remove ALL spaces from the input first
+    const cleanPhoneString = phoneString.replace(/\s/g, "");
+    console.log("Cleaned phone string:", cleanPhoneString);
 
-      // Middle East
-      "+966": "sa", "+971": "ae", "+972": "il", "+90": "tr", "+98": "ir", "+964": "iq",
-      "+962": "jo", "+961": "lb", "+965": "kw", "+968": "om", "+974": "qa", "+973": "bh",
-      "+967": "ye", "+963": "sy", "+970": "ps",
+    // Handle international format using extractCountryCode
+    if (cleanPhoneString.startsWith("+")) {
+      const countryCode = extractCountryCode(cleanPhoneString);
+      console.log("Detected country:", countryCode);
 
-      // North America
-      "+1": "us", "+52": "mx",
+      // Remove the + and get the dial code
+      const withoutPlus = cleanPhoneString.substring(1);
 
-      // Europe
-      "+44": "gb", "+49": "de", "+33": "fr", "+39": "it", "+34": "es", "+31": "nl",
-      "+32": "be", "+41": "ch", "+43": "at", "+46": "se", "+47": "no", "+45": "dk",
-      "+358": "fi", "+48": "pl", "+420": "cz", "+421": "sk", "+36": "hu", "+40": "ro",
-      "+359": "bg", "+30": "gr", "+351": "pt", "+353": "ie", "+352": "lu", "+372": "ee",
-      "+371": "lv", "+370": "lt", "+386": "si", "+385": "hr", "+381": "rs", "+387": "ba",
-      "+389": "mk", "+355": "al", "+382": "me", "+354": "is", "+356": "mt", "+357": "cy",
-      "+423": "li", "+377": "mc", "+378": "sm", "+379": "va", "+376": "ad", "+375": "by",
-      "+373": "md", "+380": "ua", "+7": "ru",
+      // Get the dial code from the country code mapping (reverse lookup)
+      const countryToDialCode = {
+        // Asia
+        in: "91",
+        cn: "86",
+        jp: "81",
+        kr: "82",
+        hk: "852",
+        tw: "886",
+        sg: "65",
+        my: "60",
+        th: "66",
+        id: "62",
+        ph: "63",
+        vn: "84",
+        mm: "95",
+        kh: "855",
+        la: "856",
+        bn: "673",
+        np: "977",
+        lk: "94",
+        bd: "880",
+        pk: "92",
+        af: "93",
+        kz: "7",
+        uz: "998",
+        kg: "996",
+        tj: "992",
+        tm: "993",
+        mn: "976",
+        bt: "975",
+        mv: "960",
 
-      // Africa
-      "+20": "eg", "+27": "za", "+234": "ng", "+254": "ke", "+251": "et", "+233": "gh",
-      "+225": "ci", "+221": "sn", "+237": "cm", "+256": "ug", "+255": "tz", "+263": "zw",
-      "+258": "mz", "+261": "mg", "+244": "ao", "+249": "sd", "+213": "dz", "+212": "ma",
-      "+216": "tn", "+218": "ly", "+250": "rw", "+257": "bi", "+252": "so", "+291": "er",
-      "+253": "dj", "+232": "sl", "+231": "lr", "+223": "ml", "+227": "ne", "+235": "td",
-      "+236": "cf", "+243": "cd", "+242": "cg", "+241": "ga", "+220": "gm", "+245": "gw",
-      "+222": "mr", "+226": "bf", "+229": "bj", "+228": "tg", "+238": "cv", "+239": "st",
-      "+240": "gq", "+268": "sz", "+266": "ls", "+267": "bw", "+264": "na", "+260": "zm",
-      "+265": "mw", "+269": "km", "+230": "mu", "+248": "sc",
+        // Middle East
+        sa: "966",
+        ae: "971",
+        il: "972",
+        tr: "90",
+        ir: "98",
+        iq: "964",
+        jo: "962",
+        lb: "961",
+        kw: "965",
+        om: "968",
+        qa: "974",
+        bh: "973",
+        ye: "967",
+        sy: "963",
+        ps: "970",
 
-      // Oceania
-      "+61": "au", "+64": "nz", "+679": "fj", "+675": "pg", "+677": "sb", "+678": "vu",
-      "+674": "nr", "+686": "ki", "+688": "tv", "+685": "ws", "+676": "to", "+691": "fm",
-      "+692": "mh", "+680": "pw", "+682": "ck", "+683": "nu", "+690": "tk", "+689": "pf",
-      "+687": "nc",
+        // North America
+        us: "1",
+        ca: "1",
+        mx: "52",
 
-      // Latin America & Caribbean
-      "+55": "br", "+54": "ar", "+57": "co", "+51": "pe", "+58": "ve", "+56": "cl",
-      "+593": "ec", "+591": "bo", "+595": "py", "+598": "uy", "+506": "cr", "+507": "pa",
-      "+1": "do", "+502": "gt", "+503": "sv", "+504": "hn", "+505": "ni", "+1": "pr",
-      "+53": "cu", "+1": "jm", "+509": "ht", "+1": "tt", "+1": "bb", "+1": "bs",
-      "+1": "lc", "+1": "vc", "+1": "gd", "+1": "dm", "+1": "kn", "+1": "ag",
+        // Europe
+        gb: "44",
+        de: "49",
+        fr: "33",
+        it: "39",
+        es: "34",
+        nl: "31",
+        be: "32",
+        ch: "41",
+        at: "43",
+        se: "46",
+        no: "47",
+        dk: "45",
+        fi: "358",
+        pl: "48",
+        cz: "420",
+        sk: "421",
+        hu: "36",
+        ro: "40",
+        bg: "359",
+        gr: "30",
+        pt: "351",
+        ie: "353",
+        lu: "352",
+        ee: "372",
+        lv: "371",
+        lt: "370",
+        si: "386",
+        hr: "385",
+        rs: "381",
+        ba: "387",
+        mk: "389",
+        al: "355",
+        me: "382",
+        is: "354",
+        mt: "356",
+        cy: "357",
+        li: "423",
+        mc: "377",
+        sm: "378",
+        va: "379",
+        ad: "376",
+        by: "375",
+        md: "373",
+        ua: "380",
+        ru: "7",
 
-      // French Guiana
-      "+594": "gf"
-    };
+        // Africa
+        eg: "20",
+        za: "27",
+        ng: "234",
+        ke: "254",
+        et: "251",
+        gh: "233",
+        ci: "225",
+        sn: "221",
+        cm: "237",
+        ug: "256",
+        tz: "255",
+        zw: "263",
+        mz: "258",
+        mg: "261",
+        ao: "244",
+        sd: "249",
+        dz: "213",
+        ma: "212",
+        tn: "216",
+        ly: "218",
+        rw: "250",
+        bi: "257",
+        so: "252",
+        er: "291",
+        dj: "253",
+        sl: "232",
+        lr: "231",
+        ml: "223",
+        ne: "227",
+        td: "235",
+        cf: "236",
+        cd: "243",
+        cg: "242",
+        ga: "241",
+        gm: "220",
+        gw: "245",
+        mr: "222",
+        bf: "226",
+        bj: "229",
+        tg: "228",
+        cv: "238",
+        st: "239",
+        gq: "240",
+        sz: "268",
+        ls: "266",
+        bw: "267",
+        na: "264",
+        zm: "260",
+        mw: "265",
+        km: "269",
+        mu: "230",
+        sc: "248",
 
-    for (const [code, country] of Object.entries(completeCountryCodes)) {
-      if (cleanPhoneString.startsWith(code)) {
-        const dialCode = code.substring(1); // Remove the +
-        const localNumber = cleanPhoneString.substring(code.length);
+        // Oceania
+        au: "61",
+        nz: "64",
+        fj: "679",
+        pg: "675",
+        sb: "677",
+        vu: "678",
+        nr: "674",
+        ki: "686",
+        tv: "688",
+        ws: "685",
+        to: "676",
+        fm: "691",
+        mh: "692",
+        pw: "680",
+        ck: "682",
+        nu: "683",
+        tk: "690",
+        pf: "689",
+        nc: "687",
+
+        // Latin America & Caribbean
+        br: "55",
+        ar: "54",
+        co: "57",
+        pe: "51",
+        ve: "58",
+        cl: "56",
+        ec: "593",
+        bo: "591",
+        py: "595",
+        uy: "598",
+        cr: "506",
+        pa: "507",
+        do: "1",
+        gt: "502",
+        sv: "503",
+        hn: "504",
+        ni: "505",
+        pr: "1",
+        cu: "53",
+        jm: "1",
+        ht: "509",
+        tt: "1",
+        bb: "1",
+        bs: "1",
+        lc: "1",
+        vc: "1",
+        gd: "1",
+        dm: "1",
+        kn: "1",
+        ag: "1",
+
+        // French Guiana (GF)
+        gf: "594",
+      };
+
+      const dialCode = countryToDialCode[countryCode];
+
+      if (dialCode && withoutPlus.startsWith(dialCode)) {
+        const localNumber = withoutPlus.substring(dialCode.length);
         const formatted = `(+${dialCode})${localNumber}`;
-        console.log("Formatted using complete mapping:", {
+        console.log("Successfully formatted:", {
           input: phoneString,
           cleanInput: cleanPhoneString,
           dialCode,
@@ -1097,52 +1001,290 @@ const formatPhoneForBackend = (phoneString) => {
         });
         return formatted;
       }
+
+      // Fallback: try to extract using the complete country codes mapping
+      const completeCountryCodes = {
+        // Asia
+        "+91": "in",
+        "+86": "cn",
+        "+81": "jp",
+        "+82": "kr",
+        "+852": "hk",
+        "+886": "tw",
+        "+65": "sg",
+        "+60": "my",
+        "+66": "th",
+        "+62": "id",
+        "+63": "ph",
+        "+84": "vn",
+        "+95": "mm",
+        "+855": "kh",
+        "+856": "la",
+        "+673": "bn",
+        "+977": "np",
+        "+94": "lk",
+        "+880": "bd",
+        "+92": "pk",
+        "+93": "af",
+        "+7": "kz",
+        "+998": "uz",
+        "+996": "kg",
+        "+992": "tj",
+        "+993": "tm",
+        "+976": "mn",
+        "+975": "bt",
+        "+960": "mv",
+
+        // Middle East
+        "+966": "sa",
+        "+971": "ae",
+        "+972": "il",
+        "+90": "tr",
+        "+98": "ir",
+        "+964": "iq",
+        "+962": "jo",
+        "+961": "lb",
+        "+965": "kw",
+        "+968": "om",
+        "+974": "qa",
+        "+973": "bh",
+        "+967": "ye",
+        "+963": "sy",
+        "+970": "ps",
+
+        // North America
+        "+1": "us",
+        "+52": "mx",
+
+        // Europe
+        "+44": "gb",
+        "+49": "de",
+        "+33": "fr",
+        "+39": "it",
+        "+34": "es",
+        "+31": "nl",
+        "+32": "be",
+        "+41": "ch",
+        "+43": "at",
+        "+46": "se",
+        "+47": "no",
+        "+45": "dk",
+        "+358": "fi",
+        "+48": "pl",
+        "+420": "cz",
+        "+421": "sk",
+        "+36": "hu",
+        "+40": "ro",
+        "+359": "bg",
+        "+30": "gr",
+        "+351": "pt",
+        "+353": "ie",
+        "+352": "lu",
+        "+372": "ee",
+        "+371": "lv",
+        "+370": "lt",
+        "+386": "si",
+        "+385": "hr",
+        "+381": "rs",
+        "+387": "ba",
+        "+389": "mk",
+        "+355": "al",
+        "+382": "me",
+        "+354": "is",
+        "+356": "mt",
+        "+357": "cy",
+        "+423": "li",
+        "+377": "mc",
+        "+378": "sm",
+        "+379": "va",
+        "+376": "ad",
+        "+375": "by",
+        "+373": "md",
+        "+380": "ua",
+        "+7": "ru",
+
+        // Africa
+        "+20": "eg",
+        "+27": "za",
+        "+234": "ng",
+        "+254": "ke",
+        "+251": "et",
+        "+233": "gh",
+        "+225": "ci",
+        "+221": "sn",
+        "+237": "cm",
+        "+256": "ug",
+        "+255": "tz",
+        "+263": "zw",
+        "+258": "mz",
+        "+261": "mg",
+        "+244": "ao",
+        "+249": "sd",
+        "+213": "dz",
+        "+212": "ma",
+        "+216": "tn",
+        "+218": "ly",
+        "+250": "rw",
+        "+257": "bi",
+        "+252": "so",
+        "+291": "er",
+        "+253": "dj",
+        "+232": "sl",
+        "+231": "lr",
+        "+223": "ml",
+        "+227": "ne",
+        "+235": "td",
+        "+236": "cf",
+        "+243": "cd",
+        "+242": "cg",
+        "+241": "ga",
+        "+220": "gm",
+        "+245": "gw",
+        "+222": "mr",
+        "+226": "bf",
+        "+229": "bj",
+        "+228": "tg",
+        "+238": "cv",
+        "+239": "st",
+        "+240": "gq",
+        "+268": "sz",
+        "+266": "ls",
+        "+267": "bw",
+        "+264": "na",
+        "+260": "zm",
+        "+265": "mw",
+        "+269": "km",
+        "+230": "mu",
+        "+248": "sc",
+
+        // Oceania
+        "+61": "au",
+        "+64": "nz",
+        "+679": "fj",
+        "+675": "pg",
+        "+677": "sb",
+        "+678": "vu",
+        "+674": "nr",
+        "+686": "ki",
+        "+688": "tv",
+        "+685": "ws",
+        "+676": "to",
+        "+691": "fm",
+        "+692": "mh",
+        "+680": "pw",
+        "+682": "ck",
+        "+683": "nu",
+        "+690": "tk",
+        "+689": "pf",
+        "+687": "nc",
+
+        // Latin America & Caribbean
+        "+55": "br",
+        "+54": "ar",
+        "+57": "co",
+        "+51": "pe",
+        "+58": "ve",
+        "+56": "cl",
+        "+593": "ec",
+        "+591": "bo",
+        "+595": "py",
+        "+598": "uy",
+        "+506": "cr",
+        "+507": "pa",
+        "+1": "do",
+        "+502": "gt",
+        "+503": "sv",
+        "+504": "hn",
+        "+505": "ni",
+        "+1": "pr",
+        "+53": "cu",
+        "+1": "jm",
+        "+509": "ht",
+        "+1": "tt",
+        "+1": "bb",
+        "+1": "bs",
+        "+1": "lc",
+        "+1": "vc",
+        "+1": "gd",
+        "+1": "dm",
+        "+1": "kn",
+        "+1": "ag",
+
+        // French Guiana
+        "+594": "gf",
+      };
+
+      for (const [code, country] of Object.entries(completeCountryCodes)) {
+        if (cleanPhoneString.startsWith(code)) {
+          const dialCode = code.substring(1); // Remove the +
+          const localNumber = cleanPhoneString.substring(code.length);
+          const formatted = `(+${dialCode})${localNumber}`;
+          console.log("Formatted using complete mapping:", {
+            input: phoneString,
+            cleanInput: cleanPhoneString,
+            dialCode,
+            localNumber,
+            formatted,
+          });
+          return formatted;
+        }
+      }
     }
-  }
 
-  console.log("Could not format phone:", phoneString);
-  return phoneString;
-};
+    console.log("Could not format phone:", phoneString);
+    return phoneString;
+  };
 
+  // UPDATED: Handle phone change for react-phone-input-2
+  const handlePhoneChange = (value, country, type = "mobile") => {
+    const countryCode = country.countryCode;
+    const countryDialCode = country.dialCode;
 
+    // Remove country code from the value to get local number
+    const localNumber = value.replace(countryDialCode, "");
 
-  // Handle phone change - IMPROVED
-  const handlePhoneChange = (value, type = "mobile") => {
-    console.log("Phone changed:", { type, value });
+    // Format for backend: (+91)7744998493
+    const formattedNumber = `(+${countryDialCode})${localNumber}`;
 
-    // Format for backend storage
-    const formattedNumber = formatPhoneForBackend(value);
+    // Format for display: +91 7744998493
+    const displayNumber = value;
 
-    console.log("Formatted result:", {
-      input: value,
-      formatted: formattedNumber,
+    console.log("Phone Change Debug:", {
+      inputValue: value,
+      countryCode,
+      countryDialCode,
+      localNumber,
+      formattedNumber,
+      displayNumber,
     });
 
     if (type === "mobile") {
-      setPhoneData((prev) => ({ ...prev, mobileNumber: value }));
+      setPhoneData((prev) => ({
+        ...prev,
+        mobileNumber: displayNumber,
+        primaryCountry: countryCode,
+      }));
       setFormData((prev) => ({
         ...prev,
         mobileNumber: formattedNumber,
       }));
     } else {
-      setPhoneData((prev) => ({ ...prev, phoneNumber: value }));
+      setPhoneData((prev) => ({
+        ...prev,
+        phoneNumber: displayNumber,
+        secondaryCountry: countryCode,
+      }));
       setFormData((prev) => ({
         ...prev,
-        phoneNumber: formattedNumber || "", // Ensure empty string if null
+        phoneNumber: formattedNumber,
       }));
     }
 
-    // Clear errors for the specific field
+    // Clear errors
     if (type === "mobile" && errors.mobileNumber) {
-      setErrors((prev) => ({
-        ...prev,
-        mobileNumber: "",
-      }));
+      setErrors((prev) => ({ ...prev, mobileNumber: "" }));
     } else if (type === "phone" && errors.phoneNumber) {
-      setErrors((prev) => ({
-        ...prev,
-        phoneNumber: "",
-      }));
+      setErrors((prev) => ({ ...prev, phoneNumber: "" }));
     }
   };
 
@@ -1354,17 +1496,9 @@ const formatPhoneForBackend = (phoneString) => {
   }, [id, navigate, role]);
 
   // Validation function - FIXED
+  // UPDATED: Validation for react-phone-input-2 format
   const validateForm = () => {
     const newErrors = {};
-
-    // Add debug logging to see what's happening
-    console.log("Validation debug - phone fields:", {
-      mobileNumber: formData.mobileNumber,
-      phoneNumber: formData.phoneNumber,
-      mobileExists: !!formData.mobileNumber?.trim(),
-      phoneExists: !!formData.phoneNumber?.trim(),
-      phoneTrimmed: formData.phoneNumber?.trim(),
-    });
 
     // Basic field validation
     if (!formData.clientName?.trim())
@@ -1376,92 +1510,47 @@ const formatPhoneForBackend = (phoneString) => {
     if (!formData.mobileNumber?.trim()) {
       newErrors.mobileNumber = "Primary number is required";
     } else {
-      // Check if the stored format contains spaces (invalid format)
-      if (/\s/.test(formData.mobileNumber)) {
-        newErrors.mobileNumber = "Phone number should not contain spaces";
-      } else {
-        // Extract country code and local number from format: (+91)7744998493
-        const match = formData.mobileNumber.match(/\(\+(\d+)\)(\d+)/);
+      const match = formData.mobileNumber.match(/\(\+(\d+)\)(\d+)/);
+      if (match && match[1] && match[2]) {
+        const countryDialCode = match[1];
+        const localNumber = match[2];
+        const requiredLength = getDigitLimit(phoneData.primaryCountry);
 
-        if (match && match[1] && match[2]) {
-          const countryDialCode = match[1];
-          const localNumber = match[2];
+        console.log("Primary validation:", {
+          storedValue: formData.mobileNumber,
+          countryDialCode,
+          localNumber,
+          localNumberLength: localNumber.length,
+          requiredLength,
+          countryCode: phoneData.primaryCountry,
+        });
 
-          // Use the SAME extractCountryCode logic to get country code
-          const countryCode = extractCountryCode(`+${countryDialCode}`);
-          const requiredLength = getDigitLimit(countryCode);
-
-          console.log("Primary validation:", {
-            storedValue: formData.mobileNumber,
-            countryDialCode,
-            localNumber,
-            localNumberLength: localNumber.length,
-            requiredLength,
-            countryCode,
-          });
-
-          if (localNumber.length !== requiredLength) {
-            newErrors.mobileNumber = `Phone number must be exactly ${requiredLength} digits for ${getCountryName(
-              countryCode
-            )}`;
-          }
-        } else {
-          console.log(
-            "Invalid mobile format - actual value:",
-            formData.mobileNumber
-          );
-          newErrors.mobileNumber =
-            "Invalid phone number format. Expected format: (+91)1234567890";
+        if (localNumber.length !== requiredLength) {
+          newErrors.mobileNumber = `Phone number must be exactly ${requiredLength} digits for ${getCountryName(
+            phoneData.primaryCountry
+          )}`;
         }
+      } else {
+        newErrors.mobileNumber = "Invalid phone number format";
       }
     }
 
-    // Secondary number validation - SIMPLIFIED AND FIXED
-    // Only validate if phoneNumber exists and is not empty/whitespace
-    const secondaryPhone = formData.phoneNumber?.trim();
-    if (secondaryPhone && secondaryPhone.length > 0) {
-      console.log("Validating secondary phone:", secondaryPhone);
+    // Secondary number validation
+    if (formData.phoneNumber?.trim()) {
+      const match = formData.phoneNumber.match(/\(\+(\d+)\)(\d+)/);
+      if (match && match[1] && match[2]) {
+        const countryDialCode = match[1];
+        const localNumber = match[2];
+        const requiredLength = getDigitLimit(phoneData.secondaryCountry);
 
-      // Check if the stored format contains spaces (invalid format)
-      if (/\s/.test(formData.phoneNumber)) {
-        newErrors.phoneNumber = "Phone number should not contain spaces";
-      } else {
-        const match = formData.phoneNumber.match(/\(\+(\d+)\)(\d+)/);
-
-        if (match && match[1] && match[2]) {
-          const countryDialCode = match[1];
-          const localNumber = match[2];
-
-          // Use the SAME extractCountryCode logic to get country code
-          const countryCode = extractCountryCode(`+${countryDialCode}`);
-          const requiredLength = getDigitLimit(countryCode);
-
-          console.log("Secondary validation:", {
-            storedValue: formData.phoneNumber,
-            countryDialCode,
-            localNumber,
-            localNumberLength: localNumber.length,
-            requiredLength,
-            countryCode,
-          });
-
-          if (localNumber.length !== requiredLength) {
-            newErrors.phoneNumber = `Phone number must be exactly ${requiredLength} digits for ${getCountryName(
-              countryCode
-            )}`;
-          }
-        } else {
-          console.log(
-            "Invalid phone format - actual value:",
-            formData.phoneNumber
-          );
-          newErrors.phoneNumber =
-            "Invalid phone number format. Expected format: (+91)1234567890";
+        if (localNumber.length !== requiredLength) {
+          newErrors.phoneNumber = `Phone number must be exactly ${requiredLength} digits for ${getCountryName(
+            phoneData.secondaryCountry
+          )}`;
         }
+      } else {
+        newErrors.phoneNumber = "Invalid phone number format";
       }
-    } else {
-      console.log("Secondary phone is empty, skipping validation");
-      // Don't add any error for phoneNumber - it's optional and empty
     }
 
     // Rest of validation
@@ -1978,17 +2067,27 @@ const formatPhoneForBackend = (phoneString) => {
                           }`}
                         >
                           <PhoneInput
-                            defaultCountry="in"
+                            country={phoneData.primaryCountry}
                             value={phoneData.mobileNumber}
-                            onChange={(value) =>
-                              handlePhoneChange(value, "mobile")
+                            onChange={(value, country) =>
+                              handlePhoneChange(value, country, "mobile")
                             }
+                            enableSearch={true}
                             placeholder="Enter primary phone number"
-                            inputClassName={`w-full h-10 px-3 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
-                              errors.mobileNumber
-                                ? "border-red-500"
-                                : "border-gray-300"
-                            }`}
+                            inputClass="w-full"
+                            buttonClass="!border-r-0 !rounded-l"
+                            inputStyle={{
+                              width: "100%",
+                              height: "42px",
+                              borderLeft: "none",
+                              borderTopLeftRadius: "0",
+                              borderBottomLeftRadius: "0",
+                            }}
+                            buttonStyle={{
+                              borderRight: "none",
+                              borderTopRightRadius: "0",
+                              borderBottomRightRadius: "0",
+                            }}
                           />
                         </div>
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 pointer-events-none">
@@ -1999,18 +2098,7 @@ const formatPhoneForBackend = (phoneString) => {
                             {errors.mobileNumber}
                           </p>
                         )}
-                        {formData.mobileNumber && (
-                          <p className="mt-1 text-xs text-gray-500">
-                            {getCountryName(
-                              extractCountryCode(phoneData.mobileNumber)
-                            )}{" "}
-                            format:{" "}
-                            {getDigitLimit(
-                              extractCountryCode(phoneData.mobileNumber)
-                            )}{" "}
-                            digits
-                          </p>
-                        )}
+                      
                       </div>
 
                       {/* Phone Number */}
@@ -2021,17 +2109,27 @@ const formatPhoneForBackend = (phoneString) => {
                           }`}
                         >
                           <PhoneInput
-                            defaultCountry="in"
+                            country={phoneData.secondaryCountry}
                             value={phoneData.phoneNumber}
-                            onChange={(value) =>
-                              handlePhoneChange(value, "phone")
+                            onChange={(value, country) =>
+                              handlePhoneChange(value, country, "phone")
                             }
+                            enableSearch={true}
                             placeholder="Enter secondary phone number"
-                            inputClassName={`w-full h-10 px-3 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
-                              errors.phoneNumber
-                                ? "border-red-500"
-                                : "border-gray-300"
-                            }`}
+                            inputClass="w-full"
+                            buttonClass="!border-r-0 !rounded-l"
+                            inputStyle={{
+                              width: "100%",
+                              height: "42px",
+                              borderLeft: "none",
+                              borderTopLeftRadius: "0",
+                              borderBottomLeftRadius: "0",
+                            }}
+                            buttonStyle={{
+                              borderRight: "none",
+                              borderTopRightRadius: "0",
+                              borderBottomRightRadius: "0",
+                            }}
                           />
                         </div>
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 pointer-events-none">
@@ -2042,18 +2140,7 @@ const formatPhoneForBackend = (phoneString) => {
                             {errors.phoneNumber}
                           </p>
                         )}
-                        {formData.phoneNumber && (
-                          <p className="mt-1 text-xs text-gray-500">
-                            {getCountryName(
-                              extractCountryCode(phoneData.phoneNumber)
-                            )}{" "}
-                            format:{" "}
-                            {getDigitLimit(
-                              extractCountryCode(phoneData.phoneNumber)
-                            )}{" "}
-                            digits
-                          </p>
-                        )}
+                       
                       </div>
 
                       <div className="relative">
@@ -2119,7 +2206,7 @@ const formatPhoneForBackend = (phoneString) => {
                           isSearchable
                           styles={customStyles}
                         />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-1 pointer-events-none">
                           Country
                         </label>
                         {errors.country && (
@@ -2143,7 +2230,7 @@ const formatPhoneForBackend = (phoneString) => {
                           isDisabled={!formData.country}
                           styles={customStyles}
                         />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-1 pointer-events-none">
                           State
                         </label>
                         {errors.state && (
@@ -2167,7 +2254,7 @@ const formatPhoneForBackend = (phoneString) => {
                           isDisabled={!formData.state}
                           styles={customStyles}
                         />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-1 pointer-events-none">
                           City
                         </label>
                         {errors.city && (
