@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Select from "react-select";
 import { Country, State, City } from "country-state-city";
 import { toast } from "react-hot-toast";
-import PhoneInput from 'react-phone-input-2'
-import 'react-phone-input-2/lib/style.css'
+import { PhoneInput } from "react-international-phone";
+import "react-international-phone/style.css";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
 
@@ -33,14 +33,10 @@ function CreateLead() {
     description: "",
   });
 
-  // Separate state for display values (with formatting)
-  const [phoneDisplay, setPhoneDisplay] = useState({
+  // Simplified phone states
+  const [phoneData, setPhoneData] = useState({
     mobileNumber: "",
     phoneNumber: "",
-  });
-  const [phoneData, setPhoneData] = useState({
-    primaryCountry: "in",
-    secondaryCountry: "in",
   });
 
   const [dropdownData, setDropdownData] = useState({
@@ -71,6 +67,56 @@ function CreateLead() {
 
   const getDigitLimit = (countryCode) => {
     return countryDigitLimits[countryCode.toLowerCase()] || 10;
+  };
+
+  // Format phone number for your backend: (+91)7732032039
+  const formatPhoneForBackend = (phoneString) => {
+    if (!phoneString) return "";
+
+    console.log("Formatting for backend:", phoneString);
+
+    // If it's already in our format, return as is
+    if (phoneString.match(/\(\+\d+\)\d+/)) {
+      return phoneString;
+    }
+
+    // Extract country code and local number from international format
+    const match = phoneString.match(/\+(\d+)(\d+)/);
+    if (match && match[1] && match[2]) {
+      const formatted = `(+${match[1]})${match[2]}`;
+      console.log("Formatted for backend:", formatted);
+      return formatted;
+    }
+
+    return phoneString;
+  };
+
+  // Handle phone change - much simpler with react-international-phone
+  const handlePhoneChange = (value, type = "mobile") => {
+    console.log("Phone changed:", { type, value });
+
+    if (type === "mobile") {
+      setPhoneData(prev => ({ ...prev, mobileNumber: value }));
+      setFormData(prev => ({
+        ...prev,
+        mobileNumber: formatPhoneForBackend(value),
+      }));
+    } else {
+      setPhoneData(prev => ({ ...prev, phoneNumber: value }));
+      setFormData(prev => ({
+        ...prev,
+        phoneNumber: formatPhoneForBackend(value),
+      }));
+    }
+
+    // Clear errors
+    if (errors.mobileNumber || errors.phoneNumber) {
+      setErrors(prev => ({
+        ...prev,
+        mobileNumber: "",
+        phoneNumber: "",
+      }));
+    }
   };
 
   useEffect(() => {
@@ -137,64 +183,6 @@ function CreateLead() {
     }
   };
 
-const handlePhoneChange = (value, country, type = "primary") => {
-  const countryCode = country.countryCode;
-  const countryDialCode = country.dialCode;
-
-  // Remove ALL non-digit characters including spaces, dashes, parentheses
-  const digitsOnly = value.replace(/\D/g, "");
-
-  // Extract local number by removing country code
-  const localNumber = digitsOnly.slice(countryDialCode.length);
-
-  // Format as (+91)7744998493 (no space after parentheses)
-  const completeNumber = `(+${countryDialCode})${localNumber}`;
-
-  // Create display value without dashes
-  const displayNumber = `+${countryDialCode} ${localNumber}`;
-
-  console.log("Phone Change Debug:", {
-    inputValue: value,
-    countryCode,
-    countryDialCode,
-    digitsOnly,
-    localNumber,
-    completeNumber,
-    displayNumber,
-  });
-
-  // Update display value (without dashes)
-  if (type === "primary") {
-    setPhoneDisplay((prev) => ({ ...prev, mobileNumber: displayNumber }));
-    setFormData((prev) => ({
-      ...prev,
-      mobileNumber: completeNumber, // Store as (+91)7744998493
-    }));
-    setPhoneData((prev) => ({
-      ...prev,
-      primaryCountry: countryCode,
-    }));
-  } else {
-    setPhoneDisplay((prev) => ({ ...prev, phoneNumber: displayNumber }));
-    setFormData((prev) => ({
-      ...prev,
-      phoneNumber: completeNumber, // Store as (+91)7744998493
-    }));
-    setPhoneData((prev) => ({
-      ...prev,
-      secondaryCountry: countryCode,
-    }));
-  }
-
-  if (errors.mobileNumber || errors.phoneNumber) {
-    setErrors((prev) => ({
-      ...prev,
-      mobileNumber: "",
-      phoneNumber: "",
-    }));
-  }
-};
-  
   const handleSelectChange = (selectedOption, { name }) => {
     setFormData((prev) => ({
       ...prev,
@@ -209,96 +197,96 @@ const handlePhoneChange = (value, country, type = "primary") => {
     }
   };
 
-const validateForm = () => {
-  const newErrors = {};
+  const validateForm = () => {
+    const newErrors = {};
 
-  if (!formData.clientName?.trim())
-    newErrors.clientName = "Client name is required";
-  if (!formData.companyName?.trim())
-    newErrors.companyName = "Company name is required";
+    if (!formData.clientName?.trim())
+      newErrors.clientName = "Client name is required";
+    if (!formData.companyName?.trim())
+      newErrors.companyName = "Company name is required";
 
-  // Primary number validation - UPDATED FOR NEW FORMAT
-  if (!formData.mobileNumber?.trim()) {
-    newErrors.mobileNumber = "Primary number is required";
-  } else {
-    // Extract country code and local number from format: (+91)7744998493
-    const match = formData.mobileNumber.match(/\(\+(\d+)\)(\d+)/);
-
-    if (match && match[1] && match[2]) {
-      const countryDialCode = match[1]; // "91"
-      const localNumber = match[2]; // "7744998493"
-      const requiredLength = getDigitLimit(phoneData.primaryCountry);
-
-      console.log("Primary validation - NEW FORMAT:", {
-        storedValue: formData.mobileNumber,
-        countryDialCode,
-        localNumber,
-        localNumberLength: localNumber.length,
-        requiredLength,
-      });
-
-      if (localNumber.length !== requiredLength) {
-        newErrors.mobileNumber = `Phone number must be exactly ${requiredLength} digits for selected country`;
-      }
+    // Primary number validation - UPDATED FOR NEW FORMAT
+    if (!formData.mobileNumber?.trim()) {
+      newErrors.mobileNumber = "Primary number is required";
     } else {
-      newErrors.mobileNumber = "Invalid phone number format";
-    }
-  }
+      // Extract country code and local number from format: (+91)7744998493
+      const match = formData.mobileNumber.match(/\(\+(\d+)\)(\d+)/);
 
-  // Secondary number validation - UPDATED FOR NEW FORMAT
-  if (formData.phoneNumber?.trim()) {
-    const match = formData.phoneNumber.match(/\(\+(\d+)\)(\d+)/);
+      if (match && match[1] && match[2]) {
+        const countryDialCode = match[1]; // "91"
+        const localNumber = match[2]; // "7744998493"
 
-    if (match && match[1] && match[2]) {
-      const countryDialCode = match[1];
-      const localNumber = match[2];
-      const requiredLength = getDigitLimit(phoneData.secondaryCountry);
+        // For validation, we'll use a default length since we don't have country context
+        const requiredLength = 10; // Default to India's length
 
-      console.log("Secondary validation - NEW FORMAT:", {
-        storedValue: formData.phoneNumber,
-        countryDialCode,
-        localNumber,
-        localNumberLength: localNumber.length,
-        requiredLength,
-      });
+        console.log("Primary validation - NEW FORMAT:", {
+          storedValue: formData.mobileNumber,
+          countryDialCode,
+          localNumber,
+          localNumberLength: localNumber.length,
+          requiredLength,
+        });
 
-      if (localNumber.length !== requiredLength) {
-        newErrors.phoneNumber = `Phone number must be exactly ${requiredLength} digits for selected country`;
+        if (localNumber.length !== requiredLength) {
+          newErrors.mobileNumber = `Phone number must be exactly ${requiredLength} digits`;
+        }
+      } else {
+        newErrors.mobileNumber = "Invalid phone number format";
       }
-    } else {
-      newErrors.phoneNumber = "Invalid phone number format";
     }
-  }
 
-  // Rest of validation remains the same
-  if (formData.state && !formData.country) {
-    newErrors.country = "Country is required when state is selected";
-  }
-  if (formData.city && !formData.state) {
-    newErrors.state = "State is required when city is selected";
-  }
-  if (formData.city && !formData.country) {
-    newErrors.country = "Country is required when city is selected";
-  }
+    // Secondary number validation - UPDATED FOR NEW FORMAT
+    if (formData.phoneNumber?.trim()) {
+      const match = formData.phoneNumber.match(/\(\+(\d+)\)(\d+)/);
 
-  if (formData.street || formData.zipCode) {
-    if (formData.city && !formData.state) {
-      newErrors.state = "State is required when city is provided";
+      if (match && match[1] && match[2]) {
+        const countryDialCode = match[1];
+        const localNumber = match[2];
+        const requiredLength = 10; // Default to India's length
+
+        console.log("Secondary validation - NEW FORMAT:", {
+          storedValue: formData.phoneNumber,
+          countryDialCode,
+          localNumber,
+          localNumberLength: localNumber.length,
+          requiredLength,
+        });
+
+        if (localNumber.length !== requiredLength) {
+          newErrors.phoneNumber = `Phone number must be exactly ${requiredLength} digits`;
+        }
+      } else {
+        newErrors.phoneNumber = "Invalid phone number format";
+      }
     }
+
+    // Rest of validation remains the same
     if (formData.state && !formData.country) {
-      newErrors.country = "Country is required when state is provided";
+      newErrors.country = "Country is required when state is selected";
     }
-  }
+    if (formData.city && !formData.state) {
+      newErrors.state = "State is required when city is selected";
+    }
+    if (formData.city && !formData.country) {
+      newErrors.country = "Country is required when city is selected";
+    }
 
-  if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-    newErrors.email = "Please enter a valid email address";
-  }
+    if (formData.street || formData.zipCode) {
+      if (formData.city && !formData.state) {
+        newErrors.state = "State is required when city is provided";
+      }
+      if (formData.state && !formData.country) {
+        newErrors.country = "Country is required when state is provided";
+      }
+    }
 
-  setErrors(newErrors);
-  return Object.keys(newErrors).length === 0;
-};
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
 
-
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -322,7 +310,7 @@ const validateForm = () => {
         street: formData.street,
         country: formData.country
           ? dropdownData.countries.find((c) => c.value === formData.country)
-              ?.label
+            ?.label
           : "",
         state: formData.state
           ? dropdownData.states.find((s) => s.value === formData.state)?.label
@@ -502,6 +490,7 @@ const validateForm = () => {
     };
     return countryNames[countryCode] || countryCode.toUpperCase();
   };
+
   return (
     <LayoutComponent>
       <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
@@ -619,11 +608,10 @@ const validateForm = () => {
                           name="clientName"
                           value={formData.clientName}
                           onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
-                            errors.clientName
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${errors.clientName
                               ? "border-red-500"
                               : "border-gray-300"
-                          }`}
+                            }`}
                           placeholder=" "
                         />
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
@@ -642,11 +630,10 @@ const validateForm = () => {
                           name="companyName"
                           value={formData.companyName}
                           onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
-                            errors.companyName
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${errors.companyName
                               ? "border-red-500"
                               : "border-gray-300"
-                          }`}
+                            }`}
                           placeholder=" "
                         />
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
@@ -659,39 +646,18 @@ const validateForm = () => {
                         )}
                       </div>
 
-                      {/* Primary Number */}
+                      {/* UPDATED: Primary Number with react-international-phone */}
                       <div className="relative">
-                        <div
-                          className={`phone-input-wrapper ${
-                            errors.mobileNumber
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
-                        >
+                        <div className={`phone-input-wrapper ${errors.mobileNumber ? "border-red-500 rounded" : ""}`}>
                           <PhoneInput
-                            country={"in"}
-                            value={phoneDisplay.mobileNumber} // Use display value
-                            onChange={(value, country) =>
-                              handlePhoneChange(value, country, "primary")
-                            }
+                            defaultCountry="in"
+                            value={phoneData.mobileNumber}
+                            onChange={(value) => handlePhoneChange(value, "mobile")}
                             placeholder="Enter primary phone number"
-                            inputClass="w-full"
-                            buttonClass="!border-r-0 !rounded-l"
-                            inputStyle={{
-                              width: "100%",
-                              height: "42px",
-                              borderLeft: "none",
-                              borderTopLeftRadius: "0",
-                              borderBottomLeftRadius: "0",
-                            }}
-                            buttonStyle={{
-                              borderRight: "none",
-                              borderTopRightRadius: "0",
-                              borderBottomRightRadius: "0",
-                            }}
+                            inputClassName="w-full h-10 px-3 border border-gray-300 rounded "
                           />
                         </div>
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 pointer-events-none">
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
                           Primary Number *
                         </label>
                         {errors.mobileNumber && (
@@ -699,43 +665,22 @@ const validateForm = () => {
                             {errors.mobileNumber}
                           </p>
                         )}
-                        <p className="mt-1 text-xs text-gray-500">
-                          {getCountryName(phoneData.primaryCountry)} format:{" "}
-                          {getDigitLimit(phoneData.primaryCountry)} digits
-                        
-                        </p>
+                        {/* {formData.mobileNumber && (
+                            <p className="mt-1 text-xs text-gray-500">
+                              Stored as: {formData.mobileNumber}
+                            </p>
+                          )} */}
                       </div>
 
-                      {/* Secondary Number */}
+                      {/* UPDATED: Secondary Number with react-international-phone */}
                       <div className="relative">
-                        <div
-                          className={`phone-input-wrapper ${
-                            errors.phoneNumber
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
-                        >
+                        <div className={`phone-input-wrapper ${errors.phoneNumber ? "border-red-500 rounded" : ""}`}>
                           <PhoneInput
-                            country={"in"}
-                            value={phoneDisplay.phoneNumber} // Use display value
-                            onChange={(value, country) =>
-                              handlePhoneChange(value, country, "secondary")
-                            }
+                            defaultCountry="in"
+                            value={phoneData.phoneNumber}
+                            onChange={(value) => handlePhoneChange(value, "phone")}
                             placeholder="Enter secondary phone number"
-                            inputClass="w-full"
-                            buttonClass="!border-r-0 !rounded-l"
-                            inputStyle={{
-                              width: "100%",
-                              height: "42px",
-                              borderLeft: "none",
-                              borderTopLeftRadius: "0",
-                              borderBottomLeftRadius: "0",
-                            }}
-                            buttonStyle={{
-                              borderRight: "none",
-                              borderTopRightRadius: "0",
-                              borderBottomRightRadius: "0",
-                            }}
+                            inputClassName="w-full h-10 px-3 border border-gray-300 roundedz"
                           />
                         </div>
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 pointer-events-none">
@@ -746,26 +691,21 @@ const validateForm = () => {
                             {errors.phoneNumber}
                           </p>
                         )}
-                        {formData.phoneNumber && (
-                          <p className="mt-1 text-xs text-gray-500">
-                            {getCountryName(phoneData.secondaryCountry)} format:{" "}
-                            {getDigitLimit(phoneData.secondaryCountry)} digits
-                            {/* Debug info */}
-                          
-                          </p>
-                        )}
+                        {/* {formData.phoneNumber && (
+                            <p className="mt-1 text-xs text-gray-500">
+                              Stored as: {formData.phoneNumber}
+                            </p>
+                          )} */}
                       </div>
 
-                      {/* Rest of your form fields remain the same */}
                       <div className="relative">
                         <input
                           type="email"
                           name="email"
                           value={formData.email}
                           onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
-                            errors.email ? "border-red-500" : "border-gray-300"
-                          }`}
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${errors.email ? "border-red-500" : "border-gray-300"
+                            }`}
                           placeholder=" "
                         />
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
@@ -930,9 +870,8 @@ const validateForm = () => {
                           name="source"
                           value={formData.source}
                           onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer appearance-none bg-white ${
-                            errors.source ? "border-red-500" : "border-gray-300"
-                          }`}
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer appearance-none bg-white ${errors.source ? "border-red-500" : "border-gray-300"
+                            }`}
                         >
                           <option value="">Select Source</option>
                           <option value="Instagram">Instagram</option>
@@ -1085,13 +1024,21 @@ const validateForm = () => {
           </div>
         </div>
       </div>
+ 
+  <style jsx>{`
+  .react-international-phone-input-container {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    transition: border 0.3s ease;
+  }
 
-      <style jsx>{`
-        // .react-tel-input {
-        //   border: 2px solid black;
-        //   border-radius: 8px;
-        // }
-      `}</style>
+  .react-international-phone-input-container:focus-within {
+    border: 2px solid black;
+    border-radius: 8px;
+  }
+`}</style>
+
+ {/* react-international-phone-input-container */}
     </LayoutComponent>
   );
 }

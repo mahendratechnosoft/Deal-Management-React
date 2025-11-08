@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Select from "react-select";
@@ -5,8 +6,8 @@ import { Country, State, City } from "country-state-city";
 import { useLayout } from "../../Layout/useLayout";
 import { toast } from "react-hot-toast";
 import axiosInstance from "../../BaseComponet/axiosInstance";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
+import { PhoneInput } from "react-international-phone";
+import "react-international-phone/style.css";
 
 function EditLead() {
   const { id } = useParams();
@@ -37,15 +38,10 @@ function EditLead() {
     description: "",
   });
 
-  // PHONE STATES
-  const [phoneDisplay, setPhoneDisplay] = useState({
+  // Simplified phone states
+  const [phoneData, setPhoneData] = useState({
     mobileNumber: "",
     phoneNumber: "",
-  });
-
-  const [phoneData, setPhoneData] = useState({
-    primaryCountry: "in",
-    secondaryCountry: "in",
   });
 
   const [dropdownData, setDropdownData] = useState({
@@ -56,127 +52,98 @@ function EditLead() {
 
   const [errors, setErrors] = useState({});
 
-  // Country-specific digit limits
-  const countryDigitLimits = {
-    in: 10,
-    us: 10,
-    gb: 10,
-    ca: 10,
-    au: 9,
-    de: 10,
-    fr: 9,
-    br: 11,
-    jp: 10,
-    cn: 11,
-    ru: 10,
-    es: 9,
-    it: 10,
-    mx: 10,
-  };
+  // Parse phone number from your format (+91)7732032039
+  const parsePhoneNumber = (phoneString) => {
+    if (!phoneString) return { country: "in", number: "" };
 
-  const getDigitLimit = (countryCode) => {
-    return countryDigitLimits[countryCode.toLowerCase()] || 10;
-  };
+    console.log("Parsing phone:", phoneString);
 
-  // Helper functions
-  const findCountryCodeByName = (countryName) => {
-    const country = Country.getAllCountries().find(
-      (c) => c.name === countryName
-    );
-    return country ? country.isoCode : "";
-  };
+    // Handle format: (+91)7732032039 or (+91) 7732032039
+    const match = phoneString.match(/\(\+(\d+)\)\s*(\d+)/);
+    if (match && match[1] && match[2]) {
+      const countryCode = match[1];
+      const localNumber = match[2];
 
-  const findStateCodeByName = (stateName, countryCode) => {
-    const states = State.getStatesOfCountry(countryCode);
-    const state = states.find((s) => s.name === stateName);
-    return state ? state.isoCode : "";
-  };
-
-  // FIXED: Phone helper functions - USE STRINGS for country codes
-  const extractCountryFromPhoneNumber = (phoneNumber) => {
-    if (!phoneNumber) return "in";
-
-    // Extract country code from format: (+91)7744998493
-    const match = phoneNumber.match(/\(\+(\d+)\)/);
-    if (match && match[1]) {
-      const countryCodeDigits = match[1];
-
-      // USE STRINGS as keys
-      const countryCodes = {
-        91: "in",
-        1: "us",
-        44: "gb",
-        86: "cn",
-        81: "jp",
-        49: "de",
-        33: "fr",
-        55: "br",
-        7: "ru",
-        61: "au",
+      // Map country dial codes to country codes
+      const dialCodeToCountry = {
+        '91': 'in', // India
+        '1': 'us',  // USA
+        '44': 'gb', // UK
+        '49': 'de', // Germany
+        '86': 'cn', // China
+        '81': 'jp', // Japan
+        '33': 'fr', // France
+        '39': 'it', // Italy
+        '34': 'es', // Spain
+        '7': 'ru',  // Russia
+        '55': 'br', // Brazil
+        '61': 'au', // Australia
+        '52': 'mx', // Mexico
       };
 
-      return countryCodes[countryCodeDigits] || "in";
+      const country = dialCodeToCountry[countryCode] || "in";
+      const fullNumber = `+${countryCode}${localNumber}`;
+
+      console.log("Parsed result:", { country, fullNumber, localNumber });
+      return { country, number: fullNumber };
     }
 
-    return "in";
-  };
-
-  const formatPhoneForDisplay = (phoneNumber, countryCode) => {
-    if (!phoneNumber) return "";
-
-    // Extract local number from format: (+91)7744998493
-    const match = phoneNumber.match(/\(\+\d+\)(\d+)/);
-    if (match && match[1]) {
-      return match[1];
+    // If it's already in international format
+    if (phoneString.startsWith('+')) {
+      // Extract country code from the number itself
+      const countryFromNumber = phoneString.startsWith('+91') ? 'in' :
+        phoneString.startsWith('+1') ? 'us' :
+          phoneString.startsWith('+44') ? 'gb' : 'in';
+      return { country: countryFromNumber, number: phoneString };
     }
 
-    return phoneNumber;
+    // Default to India
+    return { country: "in", number: phoneString };
   };
 
-  // Phone change handler
-  const handlePhoneChange = (value, country, type = "primary") => {
-    const countryCode = country.countryCode;
-    const countryDialCode = country.dialCode;
+  // Format phone number for your backend: (+91)7732032039
+  const formatPhoneForBackend = (phoneString) => {
+    if (!phoneString) return "";
 
-    const digitsOnly = value.replace(/\D/g, "");
-    const localNumber = digitsOnly.slice(countryDialCode.length);
-    const completeNumber = `(+${countryDialCode})${localNumber}`;
-    const displayNumber = `+${countryDialCode} ${localNumber}`;
+    console.log("Formatting for backend:", phoneString);
 
-    console.log("Phone Change:", {
-      type,
-      inputValue: value,
-      countryCode,
-      countryDialCode,
-      localNumber,
-      completeNumber,
-      displayNumber,
-    });
+    // If it's already in our format, return as is
+    if (phoneString.match(/\(\+\d+\)\d+/)) {
+      return phoneString;
+    }
 
-    if (type === "primary") {
-      setPhoneDisplay((prev) => ({ ...prev, mobileNumber: displayNumber }));
-      setFormData((prev) => ({
+    // Extract country code and local number from international format
+    const match = phoneString.match(/\+(\d+)(\d+)/);
+    if (match && match[1] && match[2]) {
+      const formatted = `(+${match[1]})${match[2]}`;
+      console.log("Formatted for backend:", formatted);
+      return formatted;
+    }
+
+    return phoneString;
+  };
+
+  // Handle phone change - much simpler with react-international-phone
+  const handlePhoneChange = (value, type = "mobile") => {
+    console.log("Phone changed:", { type, value });
+
+    if (type === "mobile") {
+      setPhoneData(prev => ({ ...prev, mobileNumber: value }));
+      setFormData(prev => ({
         ...prev,
-        mobileNumber: completeNumber,
-      }));
-      setPhoneData((prev) => ({
-        ...prev,
-        primaryCountry: countryCode,
+        mobileNumber: formatPhoneForBackend(value),
       }));
     } else {
-      setPhoneDisplay((prev) => ({ ...prev, phoneNumber: displayNumber }));
-      setFormData((prev) => ({
+      setPhoneData(prev => ({ ...prev, phoneNumber: value }));
+      setFormData(prev => ({
         ...prev,
-        phoneNumber: completeNumber,
-      }));
-      setPhoneData((prev) => ({
-        ...prev,
-        secondaryCountry: countryCode,
+        phoneNumber: formatPhoneForBackend(value),
       }));
     }
 
+    // Clear errors
     if (errors.mobileNumber || errors.phoneNumber) {
-      setErrors((prev) => ({
+      setErrors(prev => ({
         ...prev,
         mobileNumber: "",
         phoneNumber: "",
@@ -184,7 +151,7 @@ function EditLead() {
     }
   };
 
-  // Initialize countries - ONLY ONCE
+  // Initialize countries
   useEffect(() => {
     const countries = Country.getAllCountries().map((country) => ({
       value: country.isoCode,
@@ -199,7 +166,19 @@ function EditLead() {
     }));
   }, []);
 
-  // SINGLE FETCH FUNCTION - REMOVED DUPLICATES
+  const findCountryCodeByName = (countryName) => {
+    const countries = Country.getAllCountries();
+    const country = countries.find((c) => c.name === countryName);
+    return country ? country.isoCode : "";
+  };
+
+  const findStateCodeByName = (stateName, countryCode) => {
+    const states = State.getStatesOfCountry(countryCode);
+    const state = states.find((s) => s.name === stateName);
+    return state ? state.isoCode : "";
+  };
+
+  // Fetch lead data - SIMPLIFIED phone handling
   useEffect(() => {
     const fetchLeadData = async () => {
       if (!id) {
@@ -230,7 +209,7 @@ function EditLead() {
         const mappedFormData = {
           companyName: leadData.companyName || "",
           assignTo: leadData.assignTo || "",
-          status: leadData.status,
+          status: leadData.status || "New Lead",
           source: leadData.source || "",
           clientName: leadData.clientName || "",
           revenue: leadData.revenue ? leadData.revenue.toString() : "",
@@ -252,59 +231,40 @@ function EditLead() {
 
         setFormData(mappedFormData);
 
-        // SET UP PHONE DATA FOR DISPLAY
+        // SIMPLIFIED PHONE SETUP
         console.log("Setting up phone data:", {
           mobileNumber: leadData.mobileNumber,
           phoneNumber: leadData.phoneNumber,
         });
 
+        // Parse and set mobile number
         if (leadData.mobileNumber) {
-          const primaryCountry = extractCountryFromPhoneNumber(
-            leadData.mobileNumber
-          );
-          const primaryDisplay = formatPhoneForDisplay(
-            leadData.mobileNumber,
-            primaryCountry
-          );
-
-          console.log("Primary phone setup:", {
+          const parsedMobile = parsePhoneNumber(leadData.mobileNumber);
+          console.log("Mobile setup:", {
             original: leadData.mobileNumber,
-            country: primaryCountry,
-            display: primaryDisplay,
+            parsed: parsedMobile
           });
-
-          setPhoneData((prev) => ({ ...prev, primaryCountry }));
-          setPhoneDisplay((prev) => ({
-            ...prev,
-            mobileNumber: primaryDisplay,
-          }));
+          setPhoneData(prev => ({ ...prev, mobileNumber: parsedMobile.number }));
         }
 
+        // Parse and set phone number
         if (leadData.phoneNumber) {
-          const secondaryCountry = extractCountryFromPhoneNumber(
-            leadData.phoneNumber
-          );
-          const secondaryDisplay = formatPhoneForDisplay(
-            leadData.phoneNumber,
-            secondaryCountry
-          );
-
-          console.log("Secondary phone setup:", {
+          const parsedPhone = parsePhoneNumber(leadData.phoneNumber);
+          console.log("Phone setup:", {
             original: leadData.phoneNumber,
-            country: secondaryCountry,
-            display: secondaryDisplay,
+            parsed: parsedPhone
           });
-
-          setPhoneData((prev) => ({ ...prev, secondaryCountry }));
-          setPhoneDisplay((prev) => ({
-            ...prev,
-            phoneNumber: secondaryDisplay,
-          }));
+          setPhoneData(prev => ({ ...prev, phoneNumber: parsedPhone.number }));
         }
 
-        // Handle country-state-city dropdowns
+        // Handle country-state-city dropdowns (keep your existing code)
         if (leadData.country) {
           const countryCode = findCountryCodeByName(leadData.country);
+          console.log("Country setup:", {
+            original: leadData.country,
+            code: countryCode
+          });
+
           if (countryCode) {
             const states = State.getStatesOfCountry(countryCode).map(
               (state) => ({
@@ -324,15 +284,14 @@ function EditLead() {
             }));
 
             if (leadData.state) {
-              const stateCode = findStateCodeByName(
-                leadData.state,
-                countryCode
-              );
+              const stateCode = findStateCodeByName(leadData.state, countryCode);
+              console.log("State setup:", {
+                original: leadData.state,
+                code: stateCode
+              });
+
               if (stateCode) {
-                const cities = City.getCitiesOfState(
-                  countryCode,
-                  stateCode
-                ).map((city) => ({
+                const cities = City.getCitiesOfState(countryCode, stateCode).map((city) => ({
                   value: city.name,
                   label: city.name,
                 }));
@@ -373,13 +332,8 @@ function EditLead() {
         return;
       }
 
-      if (
-        error.name === "TypeError" &&
-        error.message.includes("Failed to fetch")
-      ) {
-        toast.error(
-          "Cannot connect to server. Please check if the backend is running."
-        );
+      if (error.name === "TypeError" && error.message.includes("Failed to fetch")) {
+        toast.error("Cannot connect to server. Please check if the backend is running.");
       } else {
         toast.error("Failed to fetch lead data. Please try again.");
       }
@@ -389,43 +343,7 @@ function EditLead() {
     fetchLeadData();
   }, [id, navigate, role]);
 
-  // Update states when country changes
-  useEffect(() => {
-    if (formData.country) {
-      const states = State.getStatesOfCountry(formData.country).map(
-        (state) => ({
-          value: state.isoCode,
-          label: state.name,
-        })
-      );
-
-      setDropdownData((prev) => ({
-        ...prev,
-        states,
-        cities: [],
-      }));
-    }
-  }, [formData.country]);
-
-  // Update cities when state changes
-  useEffect(() => {
-    if (formData.country && formData.state) {
-      const cities = City.getCitiesOfState(
-        formData.country,
-        formData.state
-      ).map((city) => ({
-        value: city.name,
-        label: city.name,
-      }));
-
-      setDropdownData((prev) => ({
-        ...prev,
-        cities,
-      }));
-    }
-  }, [formData.country, formData.state]);
-
-  // Validation function
+  // Update validation to work with new format
   const validateForm = () => {
     const newErrors = {};
 
@@ -434,37 +352,26 @@ function EditLead() {
     if (!formData.companyName?.trim())
       newErrors.companyName = "Company name is required";
 
-    // Primary number validation
+    // Primary number validation - simplified
     if (!formData.mobileNumber?.trim()) {
       newErrors.mobileNumber = "Primary number is required";
     } else {
-      const match = formData.mobileNumber.match(/\(\+(\d+)\)(\d+)/);
-      if (match && match[1] && match[2]) {
-        const localNumber = match[2];
-        const requiredLength = getDigitLimit(phoneData.primaryCountry);
-
-        if (localNumber.length !== requiredLength) {
-          newErrors.mobileNumber = `Phone number must be exactly ${requiredLength} digits for selected country`;
-        }
-      } else {
+      // Check if it's in valid format
+      const isValidFormat = formData.mobileNumber.match(/\(\+\d+\)\d+/);
+      if (!isValidFormat) {
         newErrors.mobileNumber = "Invalid phone number format";
       }
     }
 
     // Secondary number validation
     if (formData.phoneNumber?.trim()) {
-      const match = formData.phoneNumber.match(/\(\+(\d+)\)(\d+)/);
-      if (match && match[1] && match[2]) {
-        const localNumber = match[2];
-        const requiredLength = getDigitLimit(phoneData.secondaryCountry);
-
-        if (localNumber.length !== requiredLength) {
-          newErrors.phoneNumber = `Phone number must be exactly ${requiredLength} digits for selected country`;
-        }
+      const isValidFormat = formData.phoneNumber.match(/\(\+\d+\)\d+/);
+      if (!isValidFormat) {
+        newErrors.phoneNumber = "Invalid phone number format";
       }
     }
 
-    // Rest of validation
+    // Rest of your validation logic...
     if (formData.state && !formData.country) {
       newErrors.country = "Country is required when state is selected";
     }
@@ -480,247 +387,12 @@ function EditLead() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const getCountryName = (countryCode) => {
-    const countryNames = {
-      in: "India",
-      us: "United States",
-      gb: "United Kingdom",
-      ca: "Canada",
-      au: "Australia",
-      de: "Germany",
-      fr: "France",
-      br: "Brazil",
-      jp: "Japan",
-      cn: "China",
-    };
-    return countryNames[countryCode] || countryCode.toUpperCase();
-  };
-  
-
-  // ===========================================================
-
-  // Initialize countries on component mount
-  useEffect(() => {
-    const countries = Country.getAllCountries().map((country) => ({
-      value: country.isoCode,
-      label: country.name,
-      phonecode: country.phonecode,
-      flag: country.flag,
-    }));
-
-    setDropdownData((prev) => ({
-      ...prev,
-      countries,
-    }));
-  }, []);
-
-  // Find country code by country name
-  const findCountryCodeByName = (countryName) => {
-    const country = Country.getAllCountries().find(
-      (c) => c.name === countryName
-    );
-    return country ? country.isoCode : "";
-  };
-
-  // Find state code by state name and country code
-  const findStateCodeByName = (stateName, countryCode) => {
-    const states = State.getStatesOfCountry(countryCode);
-    const state = states.find((s) => s.name === stateName);
-    return state ? state.isoCode : "";
-  };
-
-  // Fetch lead data when component mounts - FIXED API ENDPOINT
-  useEffect(() => {
-    const fetchLeadData = async () => {
-      if (!id) {
-        toast.error("Lead ID not found!");
-        if (role === "ROLE_ADMIN") {
-          navigate("/Admin/LeadList");
-        } else if (role === "ROLE_EMPLOYEE") {
-          navigate("/Employee/LeadList");
-        }
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        // Use common endpoint instead of admin-specific endpoint
-        const response = await axiosInstance.get(`getLeadById/${id}`);
-
-        const apiResponse = response.data;
-        const leadData = apiResponse.lead;
-
-        console.log("Fetched lead data:", leadData);
-
-        if (!leadData) {
-          toast.error("Lead data not found in response!");
-          if (role === "ROLE_ADMIN") {
-            navigate("/Admin/LeadList");
-          } else if (role === "ROLE_EMPLOYEE") {
-            navigate("/Employee/LeadList");
-          }
-          return;
-        }
-        if (leadData.employeeId) {
-          setEmployeeId(leadData.employeeId);
-        }
-
-        // Map API response to form data
-
-        const mappedFormData = {
-          companyName: leadData.companyName || "",
-          assignTo: leadData.assignTo || "",
-          status: leadData.status,
-          source: leadData.source || "",
-          clientName: leadData.clientName || "",
-          revenue: leadData.revenue ? leadData.revenue.toString() : "",
-          mobileNumber: leadData.mobileNumber || "",
-          phoneNumber: leadData.phoneNumber || "",
-          email: leadData.email || "",
-          website: leadData.website || "",
-          industry: leadData.industry || "",
-          priority: leadData.priority || "",
-          street: leadData.street || "",
-          country: leadData.country || "",
-          state: leadData.state || "",
-          city: leadData.city || "",
-          zipCode: leadData.zipCode || "",
-          description: leadData.description || "",
-          // Add these lines to preserve dates
-          createdDate: leadData.createdDate,
-          updatedDate: leadData.updatedDate,
-        };
-
-        setFormData(mappedFormData);
-
-        // Handle country-state-city dropdowns
-        if (leadData.country) {
-          const countryCode = findCountryCodeByName(leadData.country);
-
-          if (countryCode) {
-            const states = State.getStatesOfCountry(countryCode).map(
-              (state) => ({
-                value: state.isoCode,
-                label: state.name,
-              })
-            );
-
-            setDropdownData((prev) => ({
-              ...prev,
-              states,
-            }));
-
-            // Set country code in form data for dropdown selection
-            setFormData((prev) => ({
-              ...prev,
-              country: countryCode,
-            }));
-
-            // If state is set, load cities
-            if (leadData.state) {
-              const stateCode = findStateCodeByName(
-                leadData.state,
-                countryCode
-              );
-
-              if (stateCode) {
-                const cities = City.getCitiesOfState(
-                  countryCode,
-                  stateCode
-                ).map((city) => ({
-                  value: city.name,
-                  label: city.name,
-                }));
-
-                setDropdownData((prev) => ({
-                  ...prev,
-                  cities,
-                }));
-
-                // Set state code in form data for dropdown selection
-                setFormData((prev) => ({
-                  ...prev,
-                  state: stateCode,
-                }));
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching lead:", error);
-        if (error.response?.status === 401) {
-          toast.error("Session expired. Please login again.");
-          navigate("/login");
-          return;
-        }
-
-        if (
-          error.name === "TypeError" &&
-          error.message.includes("Failed to fetch")
-        ) {
-          toast.error(
-            "Cannot connect to server. Please check if the backend is running."
-          );
-        } else {
-          toast.error("Failed to fetch lead data. Please try again.");
-        }
-        if (role === "ROLE_ADMIN") {
-          navigate("/Admin/LeadList");
-        } else if (role === "ROLE_EMPLOYEE") {
-          navigate("/Employee/LeadList");
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchLeadData();
-  }, [id, navigate, role]);
-
-  // Update states when country changes
-  useEffect(() => {
-    if (formData.country) {
-      const states = State.getStatesOfCountry(formData.country).map(
-        (state) => ({
-          value: state.isoCode,
-          label: state.name,
-        })
-      );
-
-      setDropdownData((prev) => ({
-        ...prev,
-        states,
-        cities: [],
-      }));
-    }
-  }, [formData.country]);
-
-  // Update cities when state changes
-  useEffect(() => {
-    if (formData.country && formData.state) {
-      const cities = City.getCitiesOfState(
-        formData.country,
-        formData.state
-      ).map((city) => ({
-        value: city.name,
-        label: city.name,
-      }));
-
-      setDropdownData((prev) => ({
-        ...prev,
-        cities,
-      }));
-    }
-  }, [formData.country, formData.state]);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -734,7 +406,6 @@ function EditLead() {
       ...prev,
       [name]: selectedOption ? selectedOption.value : "",
     }));
-
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -765,8 +436,7 @@ function EditLead() {
         priority: formData.priority || null,
         street: formData.street,
         country: formData.country
-          ? dropdownData.countries.find((c) => c.value === formData.country)
-              ?.label
+          ? dropdownData.countries.find((c) => c.value === formData.country)?.label
           : "",
         state: formData.state
           ? dropdownData.states.find((s) => s.value === formData.state)?.label
@@ -774,9 +444,8 @@ function EditLead() {
         city: formData.city,
         zipCode: formData.zipCode,
         description: formData.description,
-        // Preserve these fields from original data
-        createdDate: formData.createdDate, // Add this line
-        updatedDate: new Date().toISOString(), // Update only this one
+        createdDate: formData.createdDate,
+        updatedDate: new Date().toISOString(),
       };
 
       if (role === "ROLE_EMPLOYEE" && employeeId) {
@@ -785,7 +454,6 @@ function EditLead() {
 
       console.log("Updating lead with data:", submitData);
 
-      // Use common endpoint instead of admin-specific endpoint
       await axiosInstance.put("updateLead", submitData);
 
       toast.success("Lead updated successfully!");
@@ -798,13 +466,8 @@ function EditLead() {
       console.error("Error updating lead:", error);
       if (error.response?.data?.message) {
         toast.error(`Failed to update lead: ${error.response.data.message}`);
-      } else if (
-        error.name === "TypeError" &&
-        error.message.includes("Failed to fetch")
-      ) {
-        toast.error(
-          "Cannot connect to server. Please check if the backend is running."
-        );
+      } else if (error.name === "TypeError" && error.message.includes("Failed to fetch")) {
+        toast.error("Cannot connect to server. Please check if the backend is running.");
       } else {
         toast.error("Failed to update lead. Please try again.");
       }
@@ -946,9 +609,9 @@ function EditLead() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4">
+      <div className="min-h-screen bg-gray-50">
         <LayoutComponent>
-          <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
+          <div className=" bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
             {/* Header Skeleton */}
             <div className="mb-6">
               <div className="skeleton h-4 w-32 mb-2"></div>
@@ -1162,11 +825,10 @@ function EditLead() {
                           name="clientName"
                           value={formData.clientName}
                           onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
-                            errors.clientName
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${errors.clientName
                               ? "border-red-500"
                               : "border-gray-300"
-                          }`}
+                            }`}
                           placeholder=" "
                         />
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
@@ -1185,11 +847,10 @@ function EditLead() {
                           name="companyName"
                           value={formData.companyName}
                           onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
-                            errors.companyName
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${errors.companyName
                               ? "border-red-500"
                               : "border-gray-300"
-                          }`}
+                            }`}
                           placeholder=" "
                         />
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
@@ -1201,99 +862,55 @@ function EditLead() {
                           </p>
                         )}
                       </div>
-                      {/* Replace the current Primary Number input field with: */}
+
+                      {/* UPDATED MOBILE NUMBER FIELD */}
                       <div className="relative">
-                        <div
-                          className={`phone-input-wrapper ${
-                            errors.mobileNumber
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
-                        >
+                        <div className={`phone-input-wrapper ${errors.mobileNumber ? "border-red-500 rounded" : ""}`}>
                           <PhoneInput
-                            country={phoneData.primaryCountry}
-                            value={phoneDisplay.mobileNumber}
-                            onChange={(value, country) =>
-                              handlePhoneChange(value, country, "primary")
-                            }
+                            defaultCountry="in"
+                            value={phoneData.mobileNumber}
+                            onChange={(value) => handlePhoneChange(value, "mobile")}
                             placeholder="Enter primary phone number"
-                            inputClass="w-full"
-                            buttonClass="!border-r-0 !rounded-l"
-                            inputStyle={{
-                              width: "100%",
-                              height: "42px",
-                              borderLeft: "none",
-                              borderTopLeftRadius: "0",
-                              borderBottomLeftRadius: "0",
-                            }}
-                            buttonStyle={{
-                              borderRight: "none",
-                              borderTopRightRadius: "0",
-                              borderBottomRightRadius: "0",
-                            }}
+                            inputClassName="w-full h-10 px-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                           />
                         </div>
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 pointer-events-none">
                           Primary Number *
                         </label>
                         {errors.mobileNumber && (
-                          <p className="mt-1 text-xs text-red-600">
-                            {errors.mobileNumber}
-                          </p>
+                          <p className="mt-1 text-xs text-red-600">{errors.mobileNumber}</p>
                         )}
-                        <p className="mt-1 text-xs text-gray-500">
-                          {getCountryName(phoneData.primaryCountry)} format:{" "}
-                          {getDigitLimit(phoneData.primaryCountry)} digits
-                        </p>
+                        {/* {formData.mobileNumber && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Stored as: {formData.mobileNumber}
+                  </p>
+                )} */}
                       </div>
 
-                      {/* Replace the current Secondary Number input field with: */}
+                      {/* UPDATED PHONE NUMBER FIELD */}
                       <div className="relative">
-                        <div
-                          className={`phone-input-wrapper ${
-                            errors.phoneNumber
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
-                        >
+                        <div className={`phone-input-wrapper ${errors.phoneNumber ? "border-red-500 rounded" : ""}`}>
                           <PhoneInput
-                            country={phoneData.secondaryCountry}
-                            value={phoneDisplay.phoneNumber}
-                            onChange={(value, country) =>
-                              handlePhoneChange(value, country, "secondary")
-                            }
+                            defaultCountry="in"
+                            value={phoneData.phoneNumber}
+                            onChange={(value) => handlePhoneChange(value, "phone")}
                             placeholder="Enter secondary phone number"
-                            inputClass="w-full"
-                            buttonClass="!border-r-0 !rounded-l"
-                            inputStyle={{
-                              width: "100%",
-                              height: "42px",
-                              borderLeft: "none",
-                              borderTopLeftRadius: "0",
-                              borderBottomLeftRadius: "0",
-                            }}
-                            buttonStyle={{
-                              borderRight: "none",
-                              borderTopRightRadius: "0",
-                              borderBottomRightRadius: "0",
-                            }}
+                            inputClassName="w-full h-10 px-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                           />
                         </div>
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 pointer-events-none">
                           Secondary Number
                         </label>
                         {errors.phoneNumber && (
-                          <p className="mt-1 text-xs text-red-600">
-                            {errors.phoneNumber}
-                          </p>
+                          <p className="mt-1 text-xs text-red-600">{errors.phoneNumber}</p>
                         )}
-                        {formData.phoneNumber && (
-                          <p className="mt-1 text-xs text-gray-500">
-                            {getCountryName(phoneData.secondaryCountry)} format:{" "}
-                            {getDigitLimit(phoneData.secondaryCountry)} digits
-                          </p>
-                        )}
+                        {/* {formData.phoneNumber && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Stored as: {formData.phoneNumber}
+                  </p>
+                )} */}
                       </div>
+
 
                       <div className="relative">
                         <input
@@ -1301,9 +918,8 @@ function EditLead() {
                           name="email"
                           value={formData.email}
                           onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
-                            errors.email ? "border-red-500" : "border-gray-300"
-                          }`}
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${errors.email ? "border-red-500" : "border-gray-300"
+                            }`}
                           placeholder=" "
                         />
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
@@ -1497,9 +1113,8 @@ function EditLead() {
                           name="source"
                           value={formData.source}
                           onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer appearance-none bg-white ${
-                            errors.source ? "border-red-500" : "border-gray-300"
-                          }`}
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer appearance-none bg-white ${errors.source ? "border-red-500" : "border-gray-300"
+                            }`}
                         >
                           <option value="">Select Source</option>
                           <option value="Instagram">Instagram</option>
@@ -1651,4 +1266,4 @@ function EditLead() {
   );
 }
 
-export default EditLead;
+export default EditLead;  
