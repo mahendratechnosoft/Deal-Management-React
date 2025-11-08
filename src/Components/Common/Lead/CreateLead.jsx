@@ -1325,7 +1325,7 @@ const getCountryName = (countryCode) => {
                       </div>
 
                       {/* Priority Field with Floating Label */}
-                      <div className="relative">
+                      {/* <div className="relative">
                         <select
                           name="priority"
                           value={formData.priority}
@@ -1341,7 +1341,7 @@ const getCountryName = (countryCode) => {
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600">
                           Priority
                         </label>
-                        {/* Dropdown arrow icon */}
+                    
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                           <svg
                             className="h-4 w-4"
@@ -1357,7 +1357,7 @@ const getCountryName = (countryCode) => {
                             />
                           </svg>
                         </div>
-                      </div>
+                      </div> */}
                     </div>
                   </section>
 

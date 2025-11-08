@@ -2332,7 +2332,7 @@ const formatPhoneForBackend = (phoneString) => {
                         </div>
                       </div>
 
-                      <div className="relative">
+                      {/* <div className="relative">
                         <select
                           name="priority"
                           value={formData.priority}
@@ -2363,7 +2363,7 @@ const formatPhoneForBackend = (phoneString) => {
                             />
                           </svg>
                         </div>
-                      </div>
+                      </div> */}
                     </div>
                   </section>
 
