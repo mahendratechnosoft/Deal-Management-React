@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import { useLayout } from "../../Layout/useLayout";
-import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
 import { ToWords } from "to-words";
 import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
 import ProposalPDF from "./ProposalPDF";
@@ -194,6 +193,97 @@ const IconChevronLeft = ({ className }) => (
     />
   </svg>
 );
+// --- Skeleton Loader Components ---
+
+// Helper component for individual skeleton blocks
+const SkeletonBlock = ({ className }) => (
+  <div className={`bg-gray-200 rounded animate-pulse ${className}`}></div>
+);
+
+// Skeleton for just the preview content area
+function PreviewBodySkeleton() {
+  return (
+    <div className="max-w-7xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start p-6 border-b border-gray-200">
+        <div>
+          <SkeletonBlock className="h-12 w-32 mb-4" /> {/* Logo */}
+          <SkeletonBlock className="h-7 w-48 mb-2" /> {/* Title */}
+          <SkeletonBlock className="h-4 w-64" /> {/* Subject */}
+        </div>
+        <div className="flex gap-2 mt-4 md:mt-0">
+          <SkeletonBlock className="h-8 w-16 rounded" /> {/* PDF Button */}
+        </div>
+      </div>
+
+      {/* Body (2-Column) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3">
+        {/* Main Content (Left) */}
+        <div className="lg:col-span-2 p-6 md:p-8">
+          {/* Items Table */}
+          <div className="overflow-x-auto">
+            <SkeletonBlock className="h-12 w-full rounded-t-lg" />{" "}
+            {/* Table Head */}
+            <SkeletonBlock className="h-16 w-full mt-2 rounded" />{" "}
+            {/* Table Row */}
+            <SkeletonBlock className="h-16 w-full mt-2 rounded" />{" "}
+            {/* Table Row */}
+            <SkeletonBlock className="h-16 w-full mt-2 rounded" />{" "}
+            {/* Table Row */}
+          </div>
+
+          {/* Totals Section */}
+          <div className="flex justify-end mt-6">
+            <div className="w-full md:w-1/2 lg:w-2/5 space-y-2">
+              <SkeletonBlock className="h-5 w-full" /> {/* Subtotal */}
+              <SkeletonBlock className="h-5 w-full" /> {/* Discount */}
+              <SkeletonBlock className="h-5 w-full" /> {/* Taxable */}
+              <SkeletonBlock className="h-5 w-full" /> {/* Tax */}
+              <SkeletonBlock className="h-7 w-full mt-2" /> {/* Total */}
+            </div>
+          </div>
+
+          {/* In Words */}
+          <div className="mt-6 pt-4 border-t border-gray-100">
+            <SkeletonBlock className="h-4 w-3/4" />
+          </div>
+        </div>
+
+        {/* Sidebar (Right) */}
+        <div className="lg:col-span-1 bg-gray-50 p-6 border-t lg:border-t-0 lg:border-l border-gray-200">
+          {/* Tab */}
+          <SkeletonBlock className="h-8 w-1/3 mb-6" />
+
+          {/* Static Company Info */}
+          <div>
+            <SkeletonBlock className="h-5 w-1/2 mb-3" />
+            <div className="space-y-2">
+              <SkeletonBlock className="h-4 w-full" />
+              <SkeletonBlock className="h-4 w-full" />
+              <SkeletonBlock className="h-4 w-full" />
+              <SkeletonBlock className="h-4 w-full" />
+            </div>
+          </div>
+
+          {/* Dynamic Proposal Info */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <SkeletonBlock className="h-5 w-1/2 mb-3" />
+            <div className="mb-4 space-y-1">
+              <SkeletonBlock className="h-5 w-3/4" />
+              <SkeletonBlock className="h-4 w-full" />
+              <SkeletonBlock className="h-4 w-full" />
+            </div>
+            <div className="space-y-2">
+              <SkeletonBlock className="h-4 w-full" />
+              <SkeletonBlock className="h-4 w-full" />
+              <SkeletonBlock className="h-4 w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const formatDate = (dateString) => {
   if (!dateString) return "N/A";
@@ -314,6 +404,11 @@ const TaxRows = ({ taxType, taxPercentage, taxableAmount, currencyType }) => {
   );
 };
 
+const formatProposalNumber = (number) => {
+  const numberString = String(number || 0);
+  return `PROP-${numberString.padStart(6, "0")}`;
+};
+
 function ProposalPreview() {
   const { proposalId } = useParams();
   const navigate = useNavigate();
@@ -321,42 +416,62 @@ function ProposalPreview() {
   const [proposal, setProposal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [adminInformation, setAdminInformation] = useState(null);
 
   useEffect(() => {
-    const fetchProposalData = async () => {
-      if (!proposalId) {
-        toast.error("No proposal ID found.");
-        setLoading(false);
-        return;
-      }
-      try {
-        setLoading(true);
-        const response = await axiosInstance.get(
-          `getProposalById/${proposalId}`
-        );
-        if (
-          response.data.proposalInfo.taxPercentage === undefined &&
-          response.data.proposalInfo.taxRate === undefined
-        ) {
-          console.warn(
-            "API response is missing 'taxPercentage' and 'taxRate'. Tax will be 0."
-          );
-          response.data.proposalInfo.taxPercentage = 0;
-        }
-
-        setProposal(response.data);
-      } catch (error) {
-        console.error("Failed to fetch proposal:", error);
-        toast.error(
-          error.response?.data?.message || "Failed to load proposal data."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProposalData();
+    fetchAdminInformation();
   }, [proposalId]);
+
+  const fetchProposalData = async () => {
+    if (!proposalId) {
+      toast.error("No proposal ID found.");
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get(`getProposalById/${proposalId}`);
+      if (
+        response.data.proposalInfo.taxPercentage === undefined &&
+        response.data.proposalInfo.taxRate === undefined
+      ) {
+        console.warn(
+          "API response is missing 'taxPercentage' and 'taxRate'. Tax will be 0."
+        );
+        response.data.proposalInfo.taxPercentage = 0;
+      }
+
+      setProposal(response.data);
+    } catch (error) {
+      console.error("Failed to fetch proposal:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to load proposal data."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAdminInformation = async () => {
+    try {
+      let adminInformation = null;
+      if (role === "ROLE_ADMIN") {
+        const adminReponce = await axiosInstance.get(`/admin/getAdminInfo`);
+        adminInformation = adminReponce.data;
+      } else if (role === "ROLE_EMPLOYEE") {
+        const employeeReponce = await axiosInstance.get(
+          `/employee/getEmployeeInfo`
+        );
+        const employeeReponceData = employeeReponce.data;
+        adminInformation = employeeReponceData.admin;
+      }
+      console.log("Admin Information:", adminInformation);
+      setAdminInformation(adminInformation);
+    } catch (error) {
+      console.error("Failed to fetch admin information:", error);
+    }
+  };
 
   const {
     subtotal,
@@ -409,10 +524,35 @@ function ProposalPreview() {
     };
   }, [proposal]);
 
+  const pdfData = useMemo(() => {
+    if (!proposal || !adminInformation) {
+      return null;
+    }
+    return {
+      ...proposal,
+      adminInformation: adminInformation,
+    };
+  }, [proposal, adminInformation]);
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-[90vh]">
-        <span className="text-lg text-gray-700">Loading Proposal...</span>
+      <div className="bg-gray-100 min-h-screen p-4 md:p-8">
+        {/* Back Button */}
+        <div className="max-w-7xl mx-auto mb-4">
+          <button
+            onClick={() =>
+              navigate(
+                role === "ROLE_ADMIN" ? "/Proposal" : "/Employee/Proposal"
+              )
+            }
+            className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200"
+          >
+            <IconChevronLeft className="w-4 h-4" />
+            Back to Proposals
+          </button>
+        </div>
+        {/* Skeleton Loader */}
+        <PreviewBodySkeleton />
       </div>
     );
   }
@@ -460,13 +600,13 @@ function ProposalPreview() {
           {/* Logo and Proposal Info */}
           <div>
             <img
-              src={Mtech_logo}
+              src={`data:;base64,${adminInformation.logo}`}
               alt="Mahendra Technosoft"
               className="h-12 mb-4"
             />
             <div>
               <h1 className="text-2xl font-bold text-gray-800">
-                {proposalInfo.proposalNumber}
+                {formatProposalNumber(proposalInfo.proposalNumber)}
               </h1>
               <p className="text-gray-600">{proposalInfo.subject}</p>
             </div>
@@ -476,6 +616,7 @@ function ProposalPreview() {
           <div className="flex gap-2 mt-4 md:mt-0 w-full md:w-auto justify-start md:justify-end">
             <button
               title="View PDF"
+              disabled={!pdfData}
               onClick={() => setIsPdfModalOpen(true)}
               className="flex items-center gap-2 px-1 py-1 border border-gray-300 rounded bg-white text-sm font-medium text-red-600 hover:text-red-900"
             >
@@ -644,32 +785,28 @@ function ProposalPreview() {
             {/* Static Company Info */}
             <div className="mt-6">
               <h3 className="text-sm font-semibold text-gray-800 mb-3">
-                Mahendra Technosoft Pvt. Ltd.
+                {adminInformation.companyName}
               </h3>
               <div className="space-y-2 text-sm text-gray-600">
                 <p className="flex items-start gap-2">
                   <IconMapPin className="w-4 h-4 mt-0.5 shrink-0" />
-                  <span>
-                    Mirajgan, S.No.202/5 Baner Road A Wing, Office No. 201/3rd
-                    Floor Landmark, near KAPIL MALHAR, Baner,, Pune,
-                    Maharashtra, 411045, IND,
-                  </span>
+                  <span>{adminInformation.address}</span>
                 </p>
                 <p className="flex items-center gap-2">
                   <IconFileText className="w-4 h-4 shrink-0" />
-                  <span>GST Number: 27AANCM4515G1ZD</span>
+                  <span>GST Number: {adminInformation.gstNumber},</span>
                 </p>
                 <p className="flex items-center gap-2">
                   <IconFileText className="w-4 h-4 shrink-0" />
-                  <span>PAN: AANCM4515G,</span>
+                  <span>PAN: {adminInformation.panNumber},</span>
                 </p>
                 <p className="flex items-center gap-2">
                   <IconPhone className="w-4 h-4 shrink-0" />
-                  <span>Mobile No: 8485888313,</span>
+                  <span>Mobile No: {adminInformation.phone},</span>
                 </p>
                 <p className="flex items-center gap-2">
                   <IconMail className="w-4 h-4 shrink-0" />
-                  <span>Email: finance@mahendratechnosoft.com,</span>
+                  <span>Email: {adminInformation.companyEmail},</span>
                 </p>
               </div>
             </div>
@@ -739,12 +876,12 @@ function ProposalPreview() {
         <div className="proposal-pdf-modal-backdrop">
           <div className="proposal-pdf-modal-content">
             <div className="proposal-pdf-modal-header">
-              <h3>{proposal.proposalInfo.proposalNumber}</h3>
+              <h3>
+                {formatProposalNumber(proposal.proposalInfo.proposalNumber)}
+              </h3>
               <div style={{ display: "flex", gap: "10px" }}>
-                {/* --- Download Button --- */}
-                {/* No loading state needed, data is already here */}
                 <PDFDownloadLink
-                  document={<ProposalPDF data={proposal} />}
+                  document={<ProposalPDF data={pdfData} />}
                   fileName={
                     `Proposal-${proposal.proposalInfo.proposalNumber}-${proposal.proposalInfo.companyName}.pdf` ||
                     "proposal.pdf"
@@ -808,7 +945,7 @@ function ProposalPreview() {
             <div className="proposal-pdf-viewer-container">
               {/* No loader, just render the PDF */}
               <PDFViewer width="100%" height="100%">
-                <ProposalPDF data={proposal} />
+                <ProposalPDF data={pdfData} />
               </PDFViewer>
             </div>
           </div>

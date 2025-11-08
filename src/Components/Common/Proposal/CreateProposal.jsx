@@ -8,6 +8,7 @@ import { City, Country, State } from "country-state-city";
 import {
   FormInput,
   FormInputWithPrefix,
+  FormNumberInputWithPrefix,
   FormSelect,
   FormTextarea,
 } from "../../BaseComponet/CustomeFormComponents";
@@ -66,6 +67,7 @@ function CreateProposal() {
   const [isAssignToLoading, setIsAssignToLoading] = useState(false);
   const [relatedIdOptions, setRelatedIdOptions] = useState([]);
   const [isRelatedIdLoading, setIsRelatedIdLoading] = useState(false);
+  const [isRecipientLoading, setIsRecipientLoading] = useState(false);
 
   const relatedOptions = [
     { value: "lead", label: "Lead" },
@@ -102,66 +104,155 @@ function CreateProposal() {
         ...c,
       }))
     );
+    getNextProposalNumber();
   }, []);
 
   useEffect(() => {
-    if (selectedCountry) {
-      setStates(
-        State.getStatesOfCountry(selectedCountry.value).map((s) => ({
-          value: s.isoCode,
-          label: s.name,
-          ...s,
-        }))
-      );
-      setCities([]);
-      setSelectedState(null);
-      setSelectedCity(null);
-      setProposalInfo((prev) => ({
-        ...prev,
-        country: selectedCountry.label,
-        state: "",
-        city: "",
-      }));
+    const fetchAndPopulateData = async () => {
+      if (
+        !proposalInfo.relatedId ||
+        !proposalInfo.relatedTo ||
+        countries.length === 0
+      ) {
+        return;
+      }
 
-      if (errors.country)
-        setErrors((prev) => ({ ...prev, country: "", state: "", city: "" }));
-    } else {
-      setStates([]);
-      setCities([]);
-      setSelectedState(null);
-      setSelectedCity(null);
-    }
-  }, [selectedCountry]);
+      setIsRecipientLoading(true);
+      let endpoint = "";
+      let recipientData = {};
 
-  useEffect(() => {
-    if (selectedState) {
-      setCities(
-        City.getCitiesOfState(selectedCountry.value, selectedState.value).map(
-          (c) => ({
-            value: c.name,
-            label: c.name,
-            ...c,
+      try {
+        if (proposalInfo.relatedTo === "lead") {
+          endpoint = `getLeadById/${proposalInfo.relatedId}`;
+          const response = await axiosInstance.get(endpoint);
+          const { lead } = response.data;
+
+          recipientData = {
+            companyName: lead.companyName,
+            email: lead.email,
+            mobile: lead.mobileNumber,
+            street: lead.street,
+            cityStr: lead.city,
+            stateStr: lead.state,
+            countryStr: lead.country,
+            zipCode: lead.zipCode,
+          };
+        } else if (proposalInfo.relatedTo === "customer") {
+          endpoint = `getCustomerById/${proposalInfo.relatedId}`;
+          const response = await axiosInstance.get(endpoint);
+          const customer = response.data;
+
+          recipientData = {
+            companyName: customer.companyName,
+            email: customer.email || null,
+            mobile: customer.mobile,
+            street: customer.billingStreet,
+            cityStr: customer.billingCity,
+            stateStr: customer.billingState,
+            countryStr: customer.billingCountry,
+            zipCode: customer.billingZipCode,
+          };
+        }
+
+        // 1. Populate simple fields
+        setProposalInfo((prev) => ({
+          ...prev,
+          companyName: recipientData.companyName || "",
+          email: recipientData.email || "",
+          mobileNumber: recipientData.mobile || "",
+          street: recipientData.street || "",
+          zipCode: recipientData.zipCode || "",
+          city: "",
+          state: "",
+          country: "",
+        }));
+
+        // 2. Handle Country
+        const countryObj = countries.find(
+          (c) => c.label === recipientData.countryStr
+        );
+
+        if (!countryObj) {
+          setSelectedCountry(null);
+          setSelectedState(null);
+          setSelectedCity(null);
+          setStates([]);
+          setCities([]);
+          setIsRecipientLoading(false);
+          return;
+        }
+
+        setSelectedCountry(countryObj);
+        setProposalInfo((prev) => ({ ...prev, country: countryObj.label }));
+
+        // 3. Handle State
+        const newStates = State.getStatesOfCountry(countryObj.value).map(
+          (s) => ({
+            value: s.isoCode,
+            label: s.name,
+            ...s,
           })
-        )
-      );
-      setSelectedCity(null);
-      setProposalInfo((prev) => ({
-        ...prev,
-        state: selectedState.label,
-        city: "",
-      }));
-      if (errors.state) setErrors((prev) => ({ ...prev, state: "", city: "" }));
-    } else {
-      setCities([]);
-      setSelectedCity(null);
-    }
-  }, [selectedState]);
+        );
+        setStates(newStates); // Set the options
+
+        const stateObj = newStates.find(
+          (s) => s.label === recipientData.stateStr
+        );
+
+        if (!stateObj) {
+          setSelectedState(null);
+          setSelectedCity(null);
+          setCities([]);
+          setIsRecipientLoading(false);
+          return;
+        }
+
+        setSelectedState(stateObj);
+        setProposalInfo((prev) => ({ ...prev, state: stateObj.label }));
+
+        // 4. Handle City
+        const newCities = City.getCitiesOfState(
+          countryObj.value,
+          stateObj.value
+        ).map((c) => ({
+          value: c.name,
+          label: c.name,
+          ...c,
+        }));
+        setCities(newCities); // Set the options
+
+        const cityObj = newCities.find(
+          (c) => c.label === recipientData.cityStr
+        );
+
+        if (cityObj) {
+          setSelectedCity(cityObj);
+          setProposalInfo((prev) => ({ ...prev, city: cityObj.label }));
+        } else {
+          setSelectedCity(null);
+          setProposalInfo((prev) => ({ ...prev, city: "" }));
+        }
+      } catch (error) {
+        console.error("Failed to load recipient data:", error);
+        toast.error("Could not load recipient details.");
+        setSelectedCountry(null);
+        setSelectedState(null);
+        setSelectedCity(null);
+        setStates([]);
+        setCities([]);
+      } finally {
+        setIsRecipientLoading(false);
+      }
+    };
+
+    fetchAndPopulateData();
+  }, [proposalInfo.relatedId, proposalInfo.relatedTo, countries]);
 
   useEffect(() => {
     const fetchCompanyMedia = async () => {
       if (!role) {
         setCompanyMediaLoading(false);
-        return; // Don't fetch if role isn't set
+        return;
       }
 
       setCompanyMediaLoading(true);
@@ -173,7 +264,7 @@ function CreateProposal() {
         endpoint = "getEmployeeInfo";
       } else {
         setCompanyMediaLoading(false);
-        return; // Unknown role
+        return;
       }
 
       try {
@@ -215,6 +306,20 @@ function CreateProposal() {
     fetchCompanyMedia();
   }, [role]);
 
+  const getNextProposalNumber = async () => {
+    try {
+      const responce = await axiosInstance.get("getNextProposalNumber");
+      console.log("Next Proposal Number:", responce);
+      setProposalInfo((prev) => ({
+        ...prev,
+        proposalNumber: responce.data,
+      }));
+    } catch (error) {
+      console.error("Failed to fetch max proposal number:", error);
+      toast.error("Failed to fetch max proposal number.");
+    }
+  };
+
   const handleCancel = () => {
     if (role === "ROLE_ADMIN") {
       navigate("/Proposal");
@@ -228,7 +333,9 @@ function CreateProposal() {
   const handleInfoChange = (e) => {
     const { name, value } = e.target;
     setProposalInfo((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
+    if (name === "proposalNumber") {
+      checkProposalNumberUniqueness(value);
+    } else if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
@@ -237,8 +344,8 @@ function CreateProposal() {
     if (name === "assignTo") {
       setProposalInfo((prev) => ({
         ...prev,
-        assignTo: selectedOption ? selectedOption.label : "", // Set name
-        employeeId: selectedOption ? selectedOption.value : "", // Set ID
+        assignTo: selectedOption ? selectedOption.label : "",
+        employeeId: selectedOption ? selectedOption.value : "",
       }));
 
       if (errors.assignTo) {
@@ -249,8 +356,21 @@ function CreateProposal() {
         ...prev,
         relatedTo: selectedOption ? selectedOption.value : "",
         relatedId: "",
+        companyName: "",
+        mobileNumber: "",
+        email: "",
+        street: "",
+        city: "",
+        state: "",
+        country: "",
+        zipCode: "",
       }));
       setRelatedIdOptions([]);
+      setSelectedCountry(null);
+      setSelectedState(null);
+      setSelectedCity(null);
+      setStates([]);
+      setCities([]);
 
       if (errors.relatedTo) setErrors((prev) => ({ ...prev, relatedTo: "" }));
       if (errors.relatedId) setErrors((prev) => ({ ...prev, relatedId: "" }));
@@ -259,6 +379,26 @@ function CreateProposal() {
         ...prev,
         [name]: selectedOption ? selectedOption.value : "",
       }));
+
+      if (name === "relatedId") {
+        setProposalInfo((prev) => ({
+          ...prev,
+          relatedId: selectedOption ? selectedOption.value : "",
+          companyName: "",
+          mobileNumber: "",
+          email: "",
+          street: "",
+          city: "",
+          state: "",
+          country: "",
+          zipCode: "",
+        }));
+        setSelectedCountry(null);
+        setSelectedState(null);
+        setSelectedCity(null);
+        setStates([]);
+        setCities([]);
+      }
 
       if (errors[name]) {
         setErrors((prev) => ({ ...prev, [name]: "" }));
@@ -312,7 +452,7 @@ function CreateProposal() {
       case "EUR":
         return "€";
       default:
-        return ""; // Fallback
+        return "";
     }
   }, [proposalInfo.currencyType]);
 
@@ -353,7 +493,6 @@ function CreateProposal() {
       if (proposalInfo.relatedTo === "lead") {
         endpoint = "getLeadNameAndId";
         const response = await axiosInstance.get(endpoint);
-        // Map API response (clientName, leadId) to (label, value)
         mappedOptions = response.data.map((lead) => ({
           label: lead.clientName,
           value: lead.leadId,
@@ -361,7 +500,6 @@ function CreateProposal() {
       } else if (proposalInfo.relatedTo === "customer") {
         endpoint = "getCustomerListWithNameAndId";
         const response = await axiosInstance.get(endpoint);
-        // Map API response (companyName, id) to (label, value)
         mappedOptions = response.data.map((customer) => ({
           label: customer.companyName,
           value: customer.id,
@@ -377,9 +515,48 @@ function CreateProposal() {
     }
   };
 
+  const checkProposalNumberUniqueness = async (number) => {
+    // Don't check if the number is empty
+    if (!number || number.trim().length === 0) {
+      setErrors((prev) => ({
+        ...prev,
+        proposalNumber: "Proposal Number is required",
+      }));
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.get(
+        `isProposalNumberUnique/${number}`
+      );
+      if (response.data === false) {
+        // Not unique
+        setErrors((prev) => ({
+          ...prev,
+          proposalNumber:
+            "This proposal number is already taken. Please choose a unique number.",
+        }));
+      } else {
+        // It is unique, clear any errors for this field
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.proposalNumber;
+          return newErrors;
+        });
+      }
+    } catch (error) {
+      console.error("Failed to check proposal number uniqueness:", error);
+      toast.error("Could not verify proposal number uniqueness.");
+      setErrors((prev) => ({
+        ...prev,
+        proposalNumber: "Error checking uniqueness.",
+      }));
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
-    if (!proposalInfo.proposalNumber.trim())
+    if (!proposalInfo.proposalNumber)
       newErrors.proposalNumber = "Proposal Number is required";
     if (!proposalInfo.subject.trim()) newErrors.subject = "Subject is required";
 
@@ -405,8 +582,9 @@ function CreateProposal() {
     if (!proposalInfo.currencyType)
       newErrors.currencyType = "Currency is required";
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const combinedErrors = { ...errors, ...newErrors };
+    setErrors(combinedErrors);
+    return Object.keys(combinedErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
@@ -422,7 +600,7 @@ function CreateProposal() {
     const payload = {
       proposalInfo: {
         ...proposalInfo,
-        proposalNumber: `PROP-${proposalInfo.proposalNumber}`,
+        proposalNumber: parseInt(proposalInfo.proposalNumber),
         discount: Number(proposalInfo.discount),
         totalAmmount: Number(proposalInfo.totalAmmount),
       },
@@ -505,11 +683,11 @@ function CreateProposal() {
               <button
                 type="submit"
                 form="createProposalForm"
-                disabled={loading}
+                disabled={loading || isRecipientLoading}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200 text-sm font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? (
-                  "Creating..."
+                {loading || isRecipientLoading ? (
+                  "Loading..."
                 ) : (
                   <>
                     <svg
@@ -545,8 +723,7 @@ function CreateProposal() {
                     Proposal Information
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* --- MODIFIED SECTION --- */}
-                    <FormInputWithPrefix
+                    <FormNumberInputWithPrefix
                       label="Proposal Number"
                       name="proposalNumber"
                       prefix="PROP-"
@@ -555,6 +732,7 @@ function CreateProposal() {
                       required
                       error={errors.proposalNumber}
                       className="md:col-span-1"
+                      minDigits={6}
                     />
                     <FormInput
                       label="Subject"
@@ -585,7 +763,7 @@ function CreateProposal() {
                       options={relatedIdOptions}
                       error={errors.relatedId}
                       onMenuOpen={loadRelatedIdOptions}
-                      isLoading={isRelatedIdLoading}
+                      isLoading={isRelatedIdLoading || isRecipientLoading}
                       isDisabled={!proposalInfo.relatedTo}
                     />
                     <FormSelect
@@ -615,7 +793,6 @@ function CreateProposal() {
                       value={proposalInfo.dueDate}
                       onChange={handleInfoChange}
                       type="date"
-                      // required // <-- REMOVED
                       error={errors.dueDate}
                     />
                     <FormSelect
@@ -645,6 +822,7 @@ function CreateProposal() {
                       onChange={handleInfoChange}
                       required
                       error={errors.companyName}
+                      disabled={isRecipientLoading}
                     />
                     <FormInput
                       label="Email"
@@ -654,6 +832,7 @@ function CreateProposal() {
                       type="email"
                       required
                       error={errors.email}
+                      disabled={isRecipientLoading}
                     />
                     <FormInput
                       label="Mobile Number"
@@ -661,6 +840,7 @@ function CreateProposal() {
                       value={proposalInfo.mobileNumber}
                       onChange={handleInfoChange}
                       error={errors.mobileNumber}
+                      disabled={isRecipientLoading}
                     />
                     <FormInput
                       label="Street Address"
@@ -669,34 +849,102 @@ function CreateProposal() {
                       onChange={handleInfoChange}
                       required
                       error={errors.street}
+                      disabled={isRecipientLoading}
                     />
+
+                    {/* --- MODIFIED ONCHANGE --- */}
                     <FormSelect
                       label="Country"
                       name="country"
                       value={selectedCountry}
                       onChange={(opt) => {
                         setSelectedCountry(opt);
+                        if (opt) {
+                          const newStates = State.getStatesOfCountry(
+                            opt.value
+                          ).map((s) => ({
+                            value: s.isoCode,
+                            label: s.name,
+                            ...s,
+                          }));
+                          setStates(newStates);
+                          setProposalInfo((prev) => ({
+                            ...prev,
+                            country: opt.label,
+                            state: "",
+                            city: "",
+                          }));
+                        } else {
+                          setStates([]);
+                          setProposalInfo((prev) => ({
+                            ...prev,
+                            country: "",
+                            state: "",
+                            city: "",
+                          }));
+                        }
+                        setSelectedState(null);
+                        setCities([]);
+                        setSelectedCity(null);
                         if (errors.country)
-                          setErrors((prev) => ({ ...prev, country: "" }));
+                          setErrors((prev) => ({
+                            ...prev,
+                            country: "",
+                            state: "",
+                            city: "",
+                          }));
                       }}
                       options={countries}
                       required
                       error={errors.country}
+                      isDisabled={isRecipientLoading}
                     />
+
+                    {/* --- MODIFIED ONCHANGE --- */}
                     <FormSelect
                       label="State"
                       name="state"
                       value={selectedState}
                       onChange={(opt) => {
                         setSelectedState(opt);
+                        if (opt) {
+                          const newCities = City.getCitiesOfState(
+                            selectedCountry.value,
+                            opt.value
+                          ).map((c) => ({
+                            value: c.name,
+                            label: c.name,
+                            ...c,
+                          }));
+                          setCities(newCities);
+                          setProposalInfo((prev) => ({
+                            ...prev,
+                            state: opt.label,
+                            city: "",
+                          }));
+                        } else {
+                          setCities([]);
+                          setProposalInfo((prev) => ({
+                            ...prev,
+                            state: "",
+                            city: "",
+                          }));
+                        }
+                        setSelectedCity(null);
                         if (errors.state)
-                          setErrors((prev) => ({ ...prev, state: "" }));
+                          setErrors((prev) => ({
+                            ...prev,
+                            state: "",
+                            city: "",
+                          }));
                       }}
                       options={states}
                       required
-                      isDisabled={!selectedCountry}
+                      isDisabled={!selectedCountry || isRecipientLoading}
                       error={errors.state}
                     />
+
+                    {/* This was already correct, but just to be clear */}
                     <FormSelect
                       label="City"
                       name="city"
@@ -712,7 +960,7 @@ function CreateProposal() {
                       }}
                       options={cities}
                       required
-                      isDisabled={!selectedState}
+                      isDisabled={!selectedState || isRecipientLoading}
                       error={errors.city}
                     />
                     <FormInput
@@ -722,6 +970,7 @@ function CreateProposal() {
                       onChange={handleInfoChange}
                       required
                       error={errors.zipCode}
+                      disabled={isRecipientLoading}
                     />
                   </div>
                 </div>
@@ -732,7 +981,6 @@ function CreateProposal() {
                 <div className="mb-4 flex items-start justify-between gap-4">
                   <h2 className="text-lg font-semibold text-gray-800">
                     {" "}
-                    {/* Removed mb-4 */}
                     Proposal Items
                   </h2>
                   <FormSelect
@@ -745,7 +993,7 @@ function CreateProposal() {
                     options={currencyOptions}
                     required
                     error={errors.currencyType}
-                    className="w-48" // MODIFIED: Added width class
+                    className="w-48"
                   />
                 </div>
 
@@ -933,7 +1181,6 @@ function CreateProposal() {
                           } else {
                             handleSelectChange("taxType", null);
                             setTaxRateInput("");
-                            // ADD THIS LINE:
                             setProposalInfo((prev) => ({
                               ...prev,
                               taxPercentage: 0,
@@ -1000,7 +1247,7 @@ function CreateProposal() {
                         <img
                           src={signatureUrl}
                           alt="Authorized Signature"
-                          className="max-h-full max-w-full object-contain" // Resized
+                          className="max-h-full max-w-full object-contain"
                         />
                       ) : (
                         <span className="text-gray-400 text-sm text-center px-4">

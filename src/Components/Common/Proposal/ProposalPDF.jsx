@@ -96,6 +96,11 @@ const numberToWords = (num, currency = "INR") => {
   }
 };
 
+const formatProposalNumber = (number) => {
+  const numberString = String(number || 0);
+  return `PROP-${numberString.padStart(6, "0")}`;
+};
+
 // --- PDF Styles ---
 const styles = StyleSheet.create({
   page: {
@@ -295,9 +300,7 @@ const styles = StyleSheet.create({
 
 // --- Main PDF Component ---
 const ProposalPDF = ({ data }) => {
-  const { proposalInfo, proposalContent } = data;
-
-  // --- Calculations (No Changes) ---
+  const { proposalInfo, proposalContent, adminInformation = {} } = data;
   const {
     subtotal,
     discountAmount,
@@ -375,16 +378,23 @@ const ProposalPDF = ({ data }) => {
   };
 
   return (
-    <Document title={proposalInfo.proposalNumber}>
+    <Document title={formatProposalNumber(proposalInfo.proposalNumber)}>
       <Page size="A4" style={styles.page}>
         {/* 1. Header (No Changes) */}
         <View style={styles.header}>
-          <Image style={styles.logo} src={Mtech_logo} />
+          {adminInformation.logo && (
+            <View style={styles.imageBlock}>
+              <Image
+                style={styles.image}
+                src={`data:;base64,${adminInformation.logo}`}
+              />
+            </View>
+          )}
           <View style={styles.headerInfo}>
             <Text style={styles.title}>PROPOSAL</Text>
             <View style={styles.proposalNumber}>
               <Text style={styles.headerText}>
-                # {proposalInfo.proposalNumber}
+                # {formatProposalNumber(proposalInfo.proposalNumber)}
               </Text>
               <Text style={styles.headerText}>
                 Date: {formatDate(proposalInfo.proposalDate)}
@@ -400,19 +410,20 @@ const ProposalPDF = ({ data }) => {
           <View style={styles.addressBlock}>
             <Text style={styles.subHeader}>From:</Text>
             <Text style={styles.companyName}>
-              Mahendra Technosoft Pvt. Ltd.
+              {adminInformation?.companyName || ""}
             </Text>
-            <Text>Mirajgan, S.No.202/5 Baner Road...</Text>
-            <Text>Pune, Maharashtra, 411045, IND</Text>
+            <Text>{adminInformation?.address || ""}</Text>
             <Text>
               <Text style={styles.label}>Email: </Text>
-              finance@mahendratechnosoft.com
+              {adminInformation?.companyEmail || ""}
             </Text>
             <Text>
-              <Text style={styles.label}>Phone: </Text>8485888313
+              <Text style={styles.label}>Phone: </Text>
+              {adminInformation?.phone}
             </Text>
             <Text>
-              <Text style={styles.label}>GST: </Text>27AANCM4515G1ZD
+              <Text style={styles.label}>GST: </Text>
+              {adminInformation?.gstNumber || ""}
             </Text>
           </View>
           <View style={styles.addressBlock}>

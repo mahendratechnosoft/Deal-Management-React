@@ -158,9 +158,10 @@ function General() {
     accountHolderName: "",
     accountNumber: "",
     ifscCode: "",
-    loginEmail: "",
+    companyEmail: "",
     signatureBase64: "",
     stampBase64: "",
+    panNumber: "",
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false); // For submit button
@@ -185,9 +186,10 @@ function General() {
           accountHolderName: data.accountHolderName || "",
           accountNumber: data.accountNumber || "",
           ifscCode: data.ifscCode || "",
-          loginEmail: data.loginEmail || "",
+          companyEmail: data.companyEmail || "",
           signatureBase64: data.companySignature || "",
           stampBase64: data.companyStamp || "",
+          panNumber: data.panNumber || "",
         });
       } catch (error) {
         console.error("Error fetching admin info:", error);
@@ -205,42 +207,6 @@ function General() {
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-  };
-
-  // --- Handle Logo File Change ---
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (!["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
-        setErrors((prev) => ({
-          ...prev,
-          logoBase64: "Invalid file type. Please select a JPG or PNG.",
-        }));
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
-        setErrors((prev) => ({
-          ...prev,
-          logoBase64: "File is too large. Maximum size is 5MB.",
-        }));
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result.toString().split(",")[1];
-        setFormData((prev) => ({
-          ...prev,
-          logoBase64: base64String,
-        }));
-      };
-      reader.readAsDataURL(file);
-
-      if (errors.logoBase64) {
-        setErrors((prev) => ({ ...prev, logoBase64: "" }));
-      }
     }
   };
 
@@ -281,21 +247,20 @@ function General() {
     if (!formData.phone?.trim()) newErrors.phone = "Phone number is required";
     if (!formData.companyName?.trim())
       newErrors.companyName = "Company name is required";
-    if (!formData.gstNumber?.trim())
-      newErrors.gstNumber = "GST number is required";
-    if (!formData.bankName?.trim())
-      newErrors.bankName = "Bank name is required";
-    if (!formData.accountHolderName?.trim())
-      newErrors.accountHolderName = "Account holder name is required";
-    if (!formData.accountNumber?.trim())
-      newErrors.accountNumber = "Account number is required";
-    if (!formData.ifscCode?.trim())
-      newErrors.ifscCode = "IFSC code is required";
-    if (!formData.gstNumber?.trim())
-      newErrors.gstNumber = "Gst number is required";
-    if (!formData.ifscCode?.trim())
-      newErrors.ifscCode = "IFSC code is required";
-
+    // if (!formData.gstNumber?.trim())
+    //   newErrors.gstNumber = "GST number is required";
+    // if (!formData.bankName?.trim())
+    //   newErrors.bankName = "Bank name is required";
+    // if (!formData.accountHolderName?.trim())
+    //   newErrors.accountHolderName = "Account holder name is required";
+    // if (!formData.accountNumber?.trim())
+    //   newErrors.accountNumber = "Account number is required";
+    // if (!formData.ifscCode?.trim())
+    //   newErrors.ifscCode = "IFSC code is required";
+    if (!formData.companyEmail?.trim())
+      newErrors.companyEmail = "Company email is required";
+    // if (!formData.panNumber?.trim())
+    //   newErrors.panNumber = "PAN number is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -325,6 +290,8 @@ function General() {
       logoBase64: formData.logoBase64,
       signatureBase64: formData.signatureBase64,
       stampBase64: formData.stampBase64,
+      companyEmail: formData.companyEmail,
+      panNumber: formData.panNumber,
     };
 
     try {
@@ -381,48 +348,16 @@ function General() {
                 </div>
               </div>
 
-              <div className="flex flex-col items-center">
-                <input
-                  type="file"
-                  id="logoInput"
-                  name="logoBase64"
-                  accept="image/png, image/jpeg, image/jpg"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-                <label htmlFor="logoInput" className="cursor-pointer">
-                  {formData.logoBase64 ? (
-                    <img
-                      src={`data:image/jpeg;base64,${formData.logoBase64}`}
-                      alt="Logo Preview"
-                      className="w-32 h-32 rounded-full object-cover border-4 border-gray-200 shadow-sm"
-                    />
-                  ) : (
-                    <div className="w-32 h-32 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-200 hover:border-gray-400">
-                      <svg
-                        className="w-12 h-12"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1}
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
-                      <span className="text-xs font-medium mt-1">
-                        Upload Logo
-                      </span>
-                    </div>
-                  )}
-                </label>
-                {errors.logoBase64 && (
-                  <p className="mt-2 text-xs text-red-600 text-center">
-                    {errors.logoBase64}
-                  </p>
-                )}
+              <div className="flex justify-center">
+                <div className="w-1/2">
+                  <CustomeImageUploader
+                    name="logoBase64"
+                    onFileChange={(file) =>
+                      handleImageUpload(file, "logoBase64")
+                    }
+                    initialBase64={formData.logoBase64}
+                  />
+                </div>
               </div>
             </section>
 
@@ -469,10 +404,11 @@ function General() {
                   error={errors.name}
                 />
                 <FormInput
-                  name="loginEmail"
-                  label="Login Email (Cannot be changed)"
-                  value={formData.loginEmail}
-                  disabled
+                  name="companyEmail"
+                  label="Company Email *"
+                  value={formData.companyEmail}
+                  onChange={handleChange}
+                  error={errors.companyEmail}
                 />
                 <FormInput
                   name="phone"
@@ -535,35 +471,42 @@ function General() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormInput
                   name="gstNumber"
-                  label="GST Number *"
+                  label="GST Number"
                   value={formData.gstNumber}
                   onChange={handleChange}
                   error={errors.gstNumber}
                 />
                 <FormInput
+                  name="panNumber"
+                  label="PAN Number"
+                  value={formData.panNumber}
+                  onChange={handleChange}
+                  error={errors.panNumber}
+                />
+                <FormInput
                   name="bankName"
-                  label="Bank Name *"
+                  label="Bank Name"
                   value={formData.bankName}
                   onChange={handleChange}
                   error={errors.bankName}
                 />
                 <FormInput
                   name="accountHolderName"
-                  label="Account Holder Name *"
+                  label="Account Holder Name"
                   value={formData.accountHolderName}
                   onChange={handleChange}
                   error={errors.accountHolderName}
                 />
                 <FormInput
                   name="accountNumber"
-                  label="Account Number *"
+                  label="Account Number"
                   value={formData.accountNumber}
                   onChange={handleChange}
                   error={errors.accountNumber}
                 />
                 <FormInput
                   name="ifscCode"
-                  label="IFSC Code *"
+                  label="IFSC Code"
                   value={formData.ifscCode}
                   onChange={handleChange}
                   error={errors.ifscCode}
