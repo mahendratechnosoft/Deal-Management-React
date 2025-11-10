@@ -5,6 +5,7 @@ import { useLayout } from "../../Layout/useLayout";
 import toast from "react-hot-toast";
 import ContactByCustomer from "./ContactByCustomer";
 import Pagination from "../pagination";
+import CreateCustomerModal from "./CreateCustomerModal";
 
 function CustomerList() {
   const navigate = useNavigate();
@@ -22,6 +23,8 @@ function CustomerList() {
   // Contact Modal State
   const [showContactModal, setShowContactModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+ const [showCreateModal, setShowCreateModal] = useState(false);
+
 
   // Predefined industries list
   const allIndustries = [
@@ -104,15 +107,31 @@ function CustomerList() {
     }
   };
 
+  // 🔥 MODAL HANDLERS - Most Important
   const handleCreateCustomer = () => {
-    console.log("Current role:", role);
-
-    if (role === "ROLE_ADMIN") {
-      navigate("/Admin/CreateCustomer");
-    } else if (role === "ROLE_EMPLOYEE") {
-      navigate("/Employee/CreateCustomer");
-    }
+    setShowCreateModal(true); // Open modal instead of navigating
   };
+
+  const handleCloseCreateModal = () => {
+    setShowCreateModal(false);
+  };
+
+  const handleCreateSuccess = () => {
+    setShowCreateModal(false);
+    // toast.success("Customer created successfully!");
+    fetchCustomers(currentPage, searchTerm); // Refresh the list
+  };
+
+
+  // const handleCreateCustomer = () => {
+  //   console.log("Current role:", role);
+
+  //   if (role === "ROLE_ADMIN") {
+  //     navigate("/Admin/CreateCustomer");
+  //   } else if (role === "ROLE_EMPLOYEE") {
+  //     navigate("/Employee/CreateCustomer");
+  //   }
+  // };
   const handleEdit = (customerId) => {
     if (role === "ROLE_ADMIN") {
       navigate(`/Admin/EditCustomer/${customerId}`);
@@ -395,32 +414,87 @@ function CustomerList() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     DESCRIPTION
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ACTIONS
-                  </th>
                 </tr>
               </thead>
               {loading ? (
-                <TableSkeleton rows={6} cols={8} />
+                <TableSkeleton rows={6} cols={7} />
               ) : (
                 <tbody className="bg-white divide-y divide-gray-200 overflow-x-auto">
                   {filteredCustomers.map((customer) => (
                     <tr
                       key={customer.customerId}
-                      className="hover:bg-gray-50 transition-colors duration-150"
+                      className="hover:bg-gray-50 transition-colors duration-150 group cursor-pointer"
+                      onClick={() => handleEdit(customer.customerId)}
                     >
-                      {/* Company Name */}
+                      {/* Company Name with Both Buttons */}
                       <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        <div className="flex items-center gap-2 min-w-[150px]">
-                          <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                            {getInitials(customer.companyName)}
+                        <div className="flex items-center justify-between min-w-[150px]">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                              {getInitials(customer.companyName)}
+                            </div>
+
+                            <div>
+                            <div
+                              className="font-semibold truncate max-w-[120px]"
+                              title={customer.companyName}
+                            >
+                              {customer.companyName || "N/A"}
+                            </div>
+     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                            {/* Contact Button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleContact(customer);
+                              }}
+                              className="text-green-600 hover:text-green-900 hover:bg-green-50 rounded-lg transition-all duration-200 flex items-center gap-1 text-xs bg-white"
+                              title="Manage Contacts"
+                            >
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                              </svg>
+                              
+                            </button>
+
+                            {/* Edit Button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(customer.customerId);
+                              }}
+                              className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-all duration-200 flex items-center gap-1 text-xs bg-white px-2"
+                              title="Edit Customer"
+                            >
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                              </svg>
+                            
+                            </button>
                           </div>
-                          <span
-                            className="font-semibold truncate max-w-[120px]"
-                            title={customer.companyName}
-                          >
-                            {customer.companyName || "N/A"}
-                          </span>
+                            </div>
+                          </div>
+                     
                         </div>
                       </td>
 
@@ -458,7 +532,7 @@ function CustomerList() {
                           <a
                             href={
                               customer.website.startsWith("http://") ||
-                              customer.website.startsWith("https://")
+                                customer.website.startsWith("https://")
                                 ? customer.website
                                 : `https://${customer.website}`
                             }
@@ -466,6 +540,7 @@ function CustomerList() {
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:text-blue-800 text-sm truncate max-w-[80px] block"
                             title={customer.website}
+                            onClick={(e) => e.stopPropagation()}
                           >
                             Visit
                           </a>
@@ -487,53 +562,6 @@ function CustomerList() {
                         >
                           {customer.description || "No description"}
                         </span>
-                      </td>
-
-                      {/* Actions - Icons Only with Hover Tooltips */}
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center gap-3">
-                          {/* Contact Button */}
-                          <button
-                            onClick={() => handleContact(customer)}
-                            className="group relative p-2 text-green-600 hover:text-green-900 hover:bg-green-50 rounded-lg transition-all duration-200"
-                            title="Manage Contacts"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-                              />
-                            </svg>
-                          </button>
-
-                          {/* Edit Button */}
-                          <button
-                            onClick={() => handleEdit(customer.customerId)}
-                            className="group relative p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                            title="Edit Customer"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </button>
-                        </div>
                       </td>
                     </tr>
                   ))}
@@ -594,6 +622,15 @@ function CustomerList() {
           sticky={true}
         />
       </div>
+
+
+   {/* 🔥 CREATE CUSTOMER MODAL */}
+      {showCreateModal && (
+        <CreateCustomerModal
+          onClose={handleCloseCreateModal}
+          onSuccess={handleCreateSuccess}
+        />
+      )}
 
       {/* Contact Modal */}
       {showContactModal && selectedCustomer && (

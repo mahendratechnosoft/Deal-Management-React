@@ -13,7 +13,7 @@ import PageNotFound from "./Components/Pages/PageNotFound";
 import CreateLead from "./Components/Common/Lead/CreateLead";
 import EditLead from "./Components/Common/Lead/EditLead";
 import DealList from "./Components/Common/Deals/DealList.jsx";
-import EmployeeListAdmin from "./Components/Pages/Admin/Employee/EmployeeListAdmin.jsx";
+import EmployeeListAdmin from "./Components/Common/Employee/EmployeeList.jsx";
 import CreateEmployee from "./Components/Common/Employee/CreateEmployee.jsx";
 import EditEmployee from "./Components/Common/Employee/EditEmployee.jsx";
 import CustomToaster from "./Components/Common/Toaster";
