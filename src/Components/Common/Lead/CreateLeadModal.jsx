@@ -70,12 +70,12 @@ function CreateLeadModal({ onClose, onSuccess }) {
     return countryDigitLimits[code] || 10;
   };
 
-  // Navigation items for tabs
-  const navItems = [
-    { id: "basic", label: "Basic Info", icon: "👤" },
-    { id: "details", label: "Lead Details", icon: "📋" },
-    { id: "description", label: "Description", icon: "📝" },
-  ];
+const navItems = [
+  { id: "basic", label: "Basic Information" },
+  { id: "details", label: "Lead Details" },
+  { id: "description", label: "Description" },
+];
+
 
   // Load countries on component mount
   useEffect(() => {
@@ -705,25 +705,24 @@ function CreateLeadModal({ onClose, onSuccess }) {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="border-b border-gray-200 bg-gray-50">
-          <div className="flex space-x-1 p-3">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveSection(item.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
-                  activeSection === item.id
-                    ? "bg-white text-blue-600 shadow-sm border border-blue-100"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-white"
-                }`}
-              >
-                <span className="text-base">{item.icon}</span>
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
+{/* Modern Navigation Tabs */}
+<div className="border-b border-gray-200 bg-white">
+  <div className="flex space-x-1 p-4">
+    {navItems.map((item) => (
+      <button
+        key={item.id}
+        onClick={() => setActiveSection(item.id)}
+        className={`px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 ${
+          activeSection === item.id
+            ? "bg-blue-50 text-blue-700 border border-blue-200"
+            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+        }`}
+      >
+        {item.label}
+      </button>
+    ))}
+  </div>
+</div>
         {/* Modal Body */}
         <div className="overflow-y-auto max-h-[calc(80vh-180px)]" >
           <form onSubmit={handleSubmit} className="p-6">

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import Pagination from "../pagination";
-
+import { useLayout } from "../../Layout/useLayout";
+import CreateEmployeeModal from "./CreateEmployeeModal";
 // Skeleton component for a single table row
 const EmployeeRowSkeleton = () => (
   <tr className="animate-pulse">
@@ -127,10 +128,13 @@ const EmployeeListSkeleton = () => {
         </div>
       </div>
     </div>
+  
   );
 };
 
 function EmployeeList() {
+    const { LayoutComponent, role } = useLayout();
+
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [employees, setEmployees] = useState([]);
@@ -141,6 +145,11 @@ function EmployeeList() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalEmployees, setTotalEmployees] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+
+  // Add modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+
 
   async function fetchEmployeesList(page = 0, search = "") {
     if (!loading) {
@@ -199,9 +208,26 @@ function EmployeeList() {
     setPageSize(newSize);
   };
 
+  // const handleCreateEmployee = () => {
+  //   navigate("/Admin/CreateEmployee");
+  // };
+
+  // Update the create employee handler
   const handleCreateEmployee = () => {
-    navigate("/Admin/CreateEmployee");
+    setShowCreateModal(true);
   };
+
+  // Add success handler for modal
+  const handleCreateSuccess = () => {
+    setShowCreateModal(false);
+    fetchEmployeesList(0, searchTerm); // Refresh the list
+  };
+
+  // Add close handler for modal
+  const handleCloseModal = () => {
+    setShowCreateModal(false);
+  };
+
 
   const handleEdit = (employeeId) => {
     navigate(`/Admin/EditEmployee/${employeeId}`);
@@ -223,10 +249,13 @@ function EmployeeList() {
       .substring(0, 2);
   };
 
-  if (loading) {
-    return <EmployeeListSkeleton />;
-  }
-
+if (loading) {
+  return (
+    <LayoutComponent>
+      <EmployeeListSkeleton />
+    </LayoutComponent>
+  );
+}
   if (error) {
     return (
       <div className="p-6 flex items-center justify-center min-h-screen">
@@ -262,6 +291,8 @@ function EmployeeList() {
   }
 
   return (
+        <LayoutComponent>
+
     <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
       {/* Header Section */}
       <div className="mb-4">
@@ -389,89 +420,83 @@ function EmployeeList() {
       </div>
 
       {/* Table Section */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-        <div className="overflow-x-auto">
-          <div className="relative">
-            <table className="min-w-full divide-y divide-gray-200">
-              <colgroup>
-                <col style={{ width: "5%" }} />
-                <col style={{ width: "25%" }} />
-                <col style={{ width: "30%" }} />
-                <col style={{ width: "20%" }} />
-                <col style={{ width: "10%" }} />
-                <col style={{ width: "10%" }} />
-              </colgroup>
+{/* Table Section */}
+<div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+  <div className="overflow-x-auto">
+    <div className="relative">
+      <table className="min-w-full divide-y divide-gray-200">
+        <colgroup>
+          <col style={{ width: "5%" }} />
+          <col style={{ width: "30%" }} />
+          <col style={{ width: "30%" }} />
+          <col style={{ width: "20%" }} />
+          <col style={{ width: "15%" }} />
+        </colgroup>
 
-              <thead className="bg-gray-50 sticky top-0">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    #
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Employee Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Phone
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Gender
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
+        <thead className="bg-gray-50 sticky top-0">
+          <tr>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              #
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Employee Name
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Email
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Phone
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Gender
+            </th>
+          </tr>
+        </thead>
 
-              <tbody className="bg-white divide-y divide-gray-200">
-                {listLoading
-                  ? Array.from({ length: pageSize }).map((_, index) => (
-                      <EmployeeRowSkeleton key={index} />
-                    ))
-                  : employees.map((employee, index) => (
-                      <tr
-                        key={employee.id}
-                        className="hover:bg-gray-50 transition-colors duration-150"
-                      >
-                        <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-500">
-                          {currentPage * pageSize + index + 1}
-                        </td>
-                        <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
-                          <div className="flex items-center gap-3">
-                            {employee.profileImage ? (
-                              <img
-                                className="w-8 h-8 rounded-full object-cover"
-                                src={`data:image/png;base64,${employee.profileImage}`}
-                                alt={`${employee.name} profile`}
-                              />
-                            ) : (
-                              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                {getInitials(employee.name)}
-                              </div>
-                            )}
-                            <span className="font-semibold">
-                              {employee.name || "N/A"}
-                            </span>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {listLoading
+            ? Array.from({ length: pageSize }).map((_, index) => (
+                <EmployeeRowSkeleton key={index} />
+              ))
+            : employees.map((employee, index) => (
+                <tr
+                  key={employee.id}
+                  className="hover:bg-gray-50 transition-colors duration-150 group cursor-pointer"
+                  onClick={() => handleEdit(employee.employeeId)}
+                >
+                  <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-500">
+                    {currentPage * pageSize + index + 1}
+                  </td>
+                  <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0">
+                        {employee.profileImage ? (
+                          <img
+                            className="w-8 h-8 rounded-full object-cover"
+                            src={`data:image/png;base64,${employee.profileImage}`}
+                            alt={`${employee.name} profile`}
+                          />
+                        ) : (
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                            {getInitials(employee.name)}
                           </div>
-                        </td>
-                        <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
-                          {employee.loginEmail || "N/A"}
-                        </td>
-                        <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
-                          {employee.phone || "N/A"}
-                        </td>
-                        <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
-                          {employee.gender || "N/A"}
-                        </td>
-                        <td className="px-6 py-1 whitespace-nowrap text-sm font-medium">
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="">
+                          <div className="font-semibold text-gray-900">
+                            {employee.name || "N/A"}
+                          </div>
                           <button
-                            onClick={() => handleEdit(employee.employeeId)}
-                            className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(employee.employeeId);
+                            }}
+                            title="Edit"
+                            className="opacity-0 group-hover:opacity-100 text-blue-600 hover:text-blue-900 font-medium transition-all duration-200 flex items-center gap-1 text-xs  "
                           >
                             <svg
-                              className="w-4 h-4"
+                              className="w-3 h-3"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -483,50 +508,62 @@ function EmployeeList() {
                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                               />
                             </svg>
-                            Edit
+                          
                           </button>
-                        </td>
-                      </tr>
-                    ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
+                    {employee.loginEmail || "N/A"}
+                  </td>
+                  <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
+                    {employee.phone || "N/A"}
+                  </td>
+                  <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
+                    {employee.gender || "N/A"}
+                  </td>
+                </tr>
+              ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-        {employees.length === 0 && !listLoading && (
-          <div className="text-center py-12">
-            <svg
-              className="w-16 h-16 mx-auto text-gray-400 mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No employees found
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {searchTerm
-                ? "Try adjusting your search criteria."
-                : "Get started by creating your first employee."}
-            </p>
-            {!searchTerm && (
-              <button
-                onClick={handleCreateEmployee}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
-              >
-                Create Your First Employee
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+  {employees.length === 0 && !listLoading && (
+    <div className="text-center py-12">
+      <svg
+        className="w-16 h-16 mx-auto text-gray-400 mb-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+        />
+      </svg>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        No employees found
+      </h3>
+      <p className="text-gray-600 mb-4">
+        {searchTerm
+          ? "Try adjusting your search criteria."
+          : "Get started by creating your first employee."}
+      </p>
+      {!searchTerm && (
+        <button
+          onClick={handleCreateEmployee}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
+        >
+          Create Your First Employee
+        </button>
+      )}
+    </div>
+  )}
+</div>
 
       {/* Reusable Pagination Component */}
       <Pagination
@@ -538,7 +575,18 @@ function EmployeeList() {
         onPageSizeChange={handlePageSizeChange}
         itemsName="employees"
       />
+    
+    
+    
+        {/* Render the modal */}
+        {showCreateModal && (
+          <CreateEmployeeModal
+            onClose={handleCloseModal}
+            onSuccess={handleCreateSuccess}
+          />
+        )}
     </div>
+    </LayoutComponent>
   );
 }
 

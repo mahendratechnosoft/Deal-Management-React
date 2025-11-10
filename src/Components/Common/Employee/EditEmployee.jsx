@@ -5,6 +5,7 @@ import TopBar from "../../Pages/Admin/TopBarAdmin";
 import Sidebar from "../../Pages/Admin/SidebarAdmin";
 import Select from "react-select"; // Import react-select
 import toast from "react-hot-toast";
+import { useLayout } from "../../Layout/useLayout";
 
 // --- STYLES AND OPTIONS (Copied from CreateEmployee) ---
 const customReactSelectStyles = (hasError) => ({
@@ -16,10 +17,10 @@ const customReactSelectStyles = (hasError) => ({
     borderColor: state.isDisabled
       ? "#d1d5db"
       : hasError
-      ? "#ef4444"
-      : state.isFocused
-      ? "#3b82f6"
-      : "#d1d5db",
+        ? "#ef4444"
+        : state.isFocused
+          ? "#3b82f6"
+          : "#d1d5db",
     borderRadius: "0.5rem",
     borderWidth: state.isFocused ? "2px" : "1px",
     boxShadow: "none",
@@ -27,10 +28,10 @@ const customReactSelectStyles = (hasError) => ({
       borderColor: state.isDisabled
         ? "#d1d5db"
         : hasError
-        ? "#ef4444"
-        : state.isFocused
-        ? "#3b82f6"
-        : "#9ca3af",
+          ? "#ef4444"
+          : state.isFocused
+            ? "#3b82f6"
+            : "#9ca3af",
     },
   }),
   valueContainer: (provided) => ({
@@ -68,6 +69,8 @@ const genderOptions = [
 // --- END STYLES AND OPTIONS ---
 
 function EditEmployee() {
+    const { LayoutComponent, role } = useLayout();
+
   const navigate = useNavigate();
   const { employeeId } = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -300,18 +303,50 @@ function EditEmployee() {
           leadCreate: false,
           leadDelete: false,
           leadEdit: false,
-          accountViewAll: false,
-          accountCreate: false,
-          accountDelete: false,
-          accountEdit: false,
-          dealViewAll: false,
-          dealCreate: false,
-          dealDelete: false,
-          dealEdit: false,
-          contactViewAll: false,
-          contactCreate: false,
-          contactDelete: false,
-          contactEdit: false,
+
+          customerAccess: false,
+          customerViewAll: false,
+          customerCreate: false,
+          customerDelete: false,
+          customerEdit: false,
+
+          proposalAccess: false,
+          proposalViewAll: false,
+          proposalCreate: false,
+          proposalDelete: false,
+          proposalEdit: false,
+
+          proformaInvoiceAccess: false,
+          proformaInvoiceViewAll: false,
+          proformaInvoiceCreate: false,
+          proformaInvoiceDelete: false,
+          proformaInvoiceEdit: false,
+
+          invoiceAccess: false,
+          invoiceViewAll: false,
+          invoiceCreate: false,
+          invoiceDelete: false,
+          invoiceEdit: false,
+
+          paymentAccess: false,
+          paymentViewAll: false,
+          paymentcreate: false,
+          paymentDelete: false,
+          paymentEdit: false,
+          // accountViewAll: false,
+          // accountCreate: false,
+          // accountDelete: false,
+          // accountEdit: false,
+          // dealViewAll: false,
+          // dealCreate: false,
+          // dealDelete: false,
+          // dealEdit: false,
+          // contactViewAll: false,
+          // contactCreate: false,
+          // contactDelete: false,
+          // contactEdit: false,
+
+
           [field]: value, // Set the one that was just toggled
         };
       }
@@ -391,17 +426,8 @@ function EditEmployee() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
-      <TopBar toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
+     <LayoutComponent>
 
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
-
-        <div
-          className={`flex-1 flex flex-col transition-all duration-300 overflow-x-auto w-[88vw] ${
-            sidebarOpen ? "ml-0 lg:ml-5" : "ml-0"
-          }`}
-        >
           <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
               {/* Header */}
@@ -602,20 +628,18 @@ function EditEmployee() {
                               id="name"
                               value={formData.name}
                               onChange={handleChange}
-                              className={`block w-full px-3 py-2.5 bg-transparent border rounded-lg appearance-none focus:outline-none focus:ring-2 peer text-sm ${
-                                errors.name
-                                  ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                  : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                              }`}
+                              className={`block w-full px-3 py-2.5 bg-transparent border rounded-lg appearance-none focus:outline-none focus:ring-2 peer text-sm ${errors.name
+                                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                                : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                }`}
                               placeholder=" "
                             />
                             <label
                               htmlFor="name"
-                              className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2.5 peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none ${
-                                errors.name
-                                  ? "text-red-600"
-                                  : "text-gray-500 peer-focus:text-blue-600"
-                              }`}
+                              className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2.5 peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none ${errors.name
+                                ? "text-red-600"
+                                : "text-gray-500 peer-focus:text-blue-600"
+                                }`}
                             >
                               Full Name *
                             </label>
@@ -654,20 +678,18 @@ function EditEmployee() {
                               id="phone"
                               value={formData.phone}
                               onChange={handleChange}
-                              className={`block w-full px-3 py-2.5 bg-transparent border rounded-lg appearance-none focus:outline-none focus:ring-2 peer text-sm ${
-                                errors.phone
-                                  ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                  : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                              }`}
+                              className={`block w-full px-3 py-2.5 bg-transparent border rounded-lg appearance-none focus:outline-none focus:ring-2 peer text-sm ${errors.phone
+                                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                                : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                }`}
                               placeholder=" "
                             />
                             <label
                               htmlFor="phone"
-                              className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2.5 peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none ${
-                                errors.phone
-                                  ? "text-red-600"
-                                  : "text-gray-500 peer-focus:text-blue-600"
-                              }`}
+                              className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2.5 peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none ${errors.phone
+                                ? "text-red-600"
+                                : "text-gray-500 peer-focus:text-blue-600"
+                                }`}
                             >
                               Phone *
                             </label>
@@ -684,18 +706,16 @@ function EditEmployee() {
                             <label
                               htmlFor="departmentId"
                               className={`absolute text-sm duration-300 transform z-10 origin-[0] bg-white px-2 left-1 pointer-events-none
-                              ${
-                                isDeptFocused || formData.departmentId
+                              ${isDeptFocused || formData.departmentId
                                   ? "scale-75 -translate-y-4 top-2"
                                   : "scale-100 translate-y-0 top-2.5"
-                              }
-                              ${
-                                errors.departmentId
+                                }
+                              ${errors.departmentId
                                   ? "text-red-600"
                                   : isDeptFocused
-                                  ? "text-blue-600"
-                                  : "text-gray-500"
-                              }
+                                    ? "text-blue-600"
+                                    : "text-gray-500"
+                                }
                             `}
                             >
                               Department *
@@ -735,23 +755,20 @@ function EditEmployee() {
                             <label
                               htmlFor="roleId"
                               className={`absolute text-sm duration-300 transform z-10 origin-[0] px-2 left-1 pointer-events-none
-                              ${
-                                isRoleFocused || formData.roleId
+                              ${isRoleFocused || formData.roleId
                                   ? "scale-75 -translate-y-4 top-2"
                                   : "scale-100 translate-y-0 top-2.5"
-                              }
-                              ${
-                                errors.roleId
+                                }
+                              ${errors.roleId
                                   ? "text-red-600"
                                   : isRoleFocused
-                                  ? "text-blue-600"
-                                  : "text-gray-500"
-                              }
-                              ${
-                                !formData.departmentId
+                                    ? "text-blue-600"
+                                    : "text-gray-500"
+                                }
+                              ${!formData.departmentId
                                   ? "text-gray-400 bg-gray-100"
                                   : "bg-white"
-                              }
+                                }
                             `}
                             >
                               Role *
@@ -794,18 +811,16 @@ function EditEmployee() {
                             <label
                               htmlFor="gender"
                               className={`absolute text-sm duration-300 transform z-10 origin-[0] bg-white px-2 left-1 pointer-events-none
-                              ${
-                                isGenderFocused || formData.gender
+                              ${isGenderFocused || formData.gender
                                   ? "scale-75 -translate-y-4 top-2"
                                   : "scale-100 translate-y-0 top-2.5"
-                              }
-                              ${
-                                errors.gender
+                                }
+                              ${errors.gender
                                   ? "text-red-600"
                                   : isGenderFocused
-                                  ? "text-blue-600"
-                                  : "text-gray-500"
-                              }
+                                    ? "text-blue-600"
+                                    : "text-gray-500"
+                                }
                             `}
                             >
                               Gender *
@@ -902,10 +917,13 @@ function EditEmployee() {
                           </div>
                         </div>
 
+
+
+
                         <div className="space-y-4">
-                          {/* Leads Access */}
+                          {/* Leads Permissions */}
                           <ModuleAccessGroup
-                            title="Leads"
+                            title="Leads Permissions"
                             permissions={[
                               { label: "View All", field: "leadViewAll" },
                               { label: "Create", field: "leadCreate" },
@@ -916,44 +934,77 @@ function EditEmployee() {
                             handleAccessChange={handleAccessChange}
                           />
 
-                          {/* Accounts Access */}
+                          {/* Customer Permissions */}
                           <ModuleAccessGroup
-                            title="Accounts"
+                            title="Customer Permissions"
                             permissions={[
-                              { label: "View All", field: "accountViewAll" },
-                              { label: "Create", field: "accountCreate" },
-                              { label: "Edit", field: "accountEdit" },
-                              { label: "Delete", field: "accountDelete" },
+                              { label: "Access", field: "customerAccess" },
+                              { label: "View All", field: "customerViewAll" },
+                              { label: "Create", field: "customerCreate" },
+                              { label: "Edit", field: "customerEdit" },
+                              { label: "Delete", field: "customerDelete" },
                             ]}
                             getAccess={getAccess}
                             handleAccessChange={handleAccessChange}
                           />
 
-                          {/* Deals Access */}
+                          {/* Proposal Permissions */}
                           <ModuleAccessGroup
-                            title="Deals"
+                            title="Proposal Permissions"
                             permissions={[
-                              { label: "View All", field: "dealViewAll" },
-                              { label: "Create", field: "dealCreate" },
-                              { label: "Edit", field: "dealEdit" },
-                              { label: "Delete", field: "dealDelete" },
+                              { label: "Access", field: "proposalAccess" },
+                              { label: "View All", field: "proposalViewAll" },
+                              { label: "Create", field: "proposalCreate" },
+                              { label: "Edit", field: "proposalEdit" },
+                              { label: "Delete", field: "proposalDelete" },
                             ]}
                             getAccess={getAccess}
                             handleAccessChange={handleAccessChange}
                           />
 
-                          {/* Contacts Access */}
+                          {/* Proforma Invoice Permissions */}
                           <ModuleAccessGroup
-                            title="Contacts"
+                            title="Proforma Invoice Permissions"
                             permissions={[
-                              { label: "View All", field: "contactViewAll" },
-                              { label: "Create", field: "contactCreate" },
-                              { label: "Edit", field: "contactEdit" },
-                              { label: "Delete", field: "contactDelete" },
+                              { label: "Access", field: "proformaInvoiceAccess" },
+                              { label: "View All", field: "proformaInvoiceViewAll" },
+                              { label: "Create", field: "proformaInvoiceCreate" },
+                              { label: "Edit", field: "proformaInvoiceEdit" },
+                              { label: "Delete", field: "proformaInvoiceDelete" },
                             ]}
                             getAccess={getAccess}
                             handleAccessChange={handleAccessChange}
                           />
+
+                          {/* Invoice Permissions */}
+                          <ModuleAccessGroup
+                            title="Invoice Permissions"
+                            permissions={[
+                              { label: "Access", field: "invoiceAccess" },
+                              { label: "View All", field: "invoiceViewAll" },
+                              { label: "Create", field: "invoiceCreate" },
+                              { label: "Edit", field: "invoiceEdit" },
+                              { label: "Delete", field: "invoiceDelete" },
+                            ]}
+                            getAccess={getAccess}
+                            handleAccessChange={handleAccessChange}
+                          />
+
+                          {/* Payment Permissions */}
+                          <ModuleAccessGroup
+                            title="Payment Permissions"
+                            permissions={[
+                              { label: "Access", field: "paymentAccess" },
+                              { label: "View All", field: "paymentViewAll" },
+                              { label: "Create", field: "paymentcreate" },
+                              { label: "Edit", field: "paymentEdit" },
+                              { label: "Delete", field: "paymentDelete" },
+                            ]}
+                            getAccess={getAccess}
+                            handleAccessChange={handleAccessChange}
+                          />
+
+
                         </div>
                       </section>
                     </div>
@@ -962,11 +1013,12 @@ function EditEmployee() {
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+    </LayoutComponent>
+     
   );
 }
+
+
 function ModuleAccessGroup({
   title,
   permissions,
@@ -980,7 +1032,7 @@ function ModuleAccessGroup({
         {permissions.map((perm) => (
           <AccessToggle
             key={perm.field}
-            field={perm.field} // <-- **FIX**: Pass the unique field
+            field={perm.field}
             label={perm.label}
             isChecked={getAccess(perm.field)}
             onChange={(isChecked) => handleAccessChange(perm.field, isChecked)}
@@ -1010,18 +1062,17 @@ function AccessToggle({ field, label, isChecked, onChange }) {
           className="sr-only"
         />
         <div
-          className={`block w-10 h-6 rounded-full transition-colors ${
-            isChecked ? "bg-blue-600" : "bg-gray-300"
-          }`}
+          className={`block w-10 h-6 rounded-full transition-colors ${isChecked ? "bg-blue-600" : "bg-gray-300"
+            }`}
         ></div>
         <div
-          className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${
-            isChecked ? "translate-x-4" : "translate-x-0"
-          }`}
+          className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${isChecked ? "translate-x-4" : "translate-x-0"
+            }`}
         ></div>
       </div>
       <span className="ml-2 text-sm text-gray-700">{label}</span>
     </label>
   );
 }
+
 export default EditEmployee;
