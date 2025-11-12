@@ -599,11 +599,17 @@ function ProposalPreview() {
         <div className="flex flex-col md:flex-row justify-between items-start p-6 border-b border-gray-200">
           {/* Logo and Proposal Info */}
           <div>
-            <img
-              src={`data:;base64,${adminInformation.logo}`}
-              alt="Mahendra Technosoft"
-              className="h-12 mb-4"
-            />
+            {adminInformation && adminInformation.logo ? (
+              <img
+                src={`data:;base64,${adminInformation.logo}`}
+                alt="Company Logo"
+                className="h-12 mb-4"
+              />
+            ) : (
+              <div className="h-12 mb-4 flex items-center justify-center rounded-md bg-gray-100 text-gray-500 text-xs px-4">
+                Company logo is not provided
+              </div>
+            )}
             <div>
               <h1 className="text-2xl font-bold text-gray-800">
                 {formatProposalNumber(proposalInfo.proposalNumber)}
@@ -765,7 +771,7 @@ function ProposalPreview() {
             <div className="mt-6 pt-4 border-t border-gray-100">
               <span className="text-sm text-gray-600">With words:</span>
               <span className="text-sm font-medium text-gray-800 ml-2">
-                {numberToWords(total, currencyType)}
+                {numberToWords(total, currencyType)} only
               </span>
             </div>
           </div>

@@ -87,7 +87,10 @@ function FormSkeleton() {
     </div>
   );
 }
-
+const formatProposalNumber = (number) => {
+  const numberString = String(number || 0);
+  return `${numberString.padStart(6, "0")}`;
+};
 function EditProposal() {
   const navigate = useNavigate();
   const { proposalId } = useParams();
@@ -302,6 +305,8 @@ function EditProposal() {
         fetchedInfo.dueDate = fetchedInfo.dueDate
           ? fetchedInfo.dueDate.split("T")[0]
           : "";
+
+        fetchedInfo.proposalNumber = formatProposalNumber(fetchedInfo.proposalNumber);
 
         // 7. Set main states
         setProposalInfo(fetchedInfo);
