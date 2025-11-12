@@ -275,6 +275,21 @@ const styles = StyleSheet.create({
     marginTop: 5,
     paddingTop: 8,
   },
+  logoPlaceholder: {
+    height: "60",
+    width: "130",
+    borderWidth: 1,
+    borderColor: "#eaeaea",
+    backgroundColor: "#f9f9f9",
+    justifyContent: "center",
+    alignItems: "center",     
+    padding: 5,
+  },
+  logoPlaceholderText: {
+    fontSize: 8,
+    color: "#888",
+    textAlign: "center",
+  },
   imageBlock: {
     height: "60",
     width: "130",
@@ -382,14 +397,20 @@ const ProposalPDF = ({ data }) => {
       <Page size="A4" style={styles.page}>
         {/* 1. Header (No Changes) */}
         <View style={styles.header}>
-          {adminInformation.logo && (
-            <View style={styles.imageBlock}>
-              <Image
-                style={styles.image}
-                src={`data:;base64,${adminInformation.logo}`}
-              />
-            </View>
-          )}
+          {adminInformation.logo ? (
+          <View style={styles.imageBlock}>
+            <Image
+              style={styles.image}
+              src={`data:;base64,${adminInformation.logo}`}
+            />
+          </View>
+        ) : (
+          <View style={styles.logoPlaceholder}>
+            <Text style={styles.logoPlaceholderText}>
+              Company logo not provided
+            </Text>
+          </View>
+        )}
           <View style={styles.headerInfo}>
             <Text style={styles.title}>PROPOSAL</Text>
             <View style={styles.proposalNumber}>
