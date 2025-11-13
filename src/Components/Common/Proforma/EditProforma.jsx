@@ -7,157 +7,31 @@ import Select from "react-select";
 import { City, Country, State } from "country-state-city";
 import {
   FormInput,
-  FormInputWithPrefix,
+  FormNumberInputWithPrefix,
   FormSelect,
   FormTextarea,
 } from "../../BaseComponet/CustomeFormComponents";
 
-const SkeletonInput = () => (
-  <div className="space-y-2">
-    <div className="h-4 bg-gray-200 rounded w-1/3 animate-pulse"></div>
-    <div className="h-10 bg-gray-200 rounded w-full animate-pulse"></div>
-  </div>
-);
-
-const SkeletonTextarea = ({ h = "h-24" }) => (
-  <div className="space-y-2">
-    <div className="h-4 bg-gray-200 rounded w-1/3 animate-pulse"></div>
-    <div className={`${h} bg-gray-200 rounded w-full animate-pulse`}></div>
-  </div>
-);
-
-const SkeletonBox = ({ h = "h-40" }) => (
-  <div className="w-full md:w-1/2">
-    <div className="h-4 bg-gray-200 rounded w-1/3 animate-pulse mb-2"></div>
-    <div
-      className={`border-2 border-dashed border-gray-300 rounded-lg ${h} w-full flex items-center justify-center bg-gray-50 p-2`}
-    >
-      <div className="h-8 w-1/2 bg-gray-200 rounded animate-pulse"></div>
-    </div>
-  </div>
-);
-
-function EditProformaSkeleton() {
-  return (
-    <div className="mt-4 h-full overflow-y-auto no-scrollbar">
-      <div className="bg-white p-6 rounded-lg space-y-8 shadow-sm border border-gray-200">
-        {/* --- Section 1: Proforma Details & Recipient --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8">
-          {/* Left Column */}
-          <div className="space-y-6">
-            <div className="h-6 bg-gray-200 rounded w-1/2 animate-pulse mb-4"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <SkeletonInput />
-              <SkeletonInput />
-              <SkeletonInput />
-              <SkeletonInput />
-              <div className="md:col-span-2">
-                <SkeletonInput />
-              </div>
-            </div>
-          </div>
-          {/* Right Column */}
-          <div className="space-y-6 mt-8 lg:mt-0 lg:border-l lg:border-gray-200 lg:pl-8">
-            <div className="h-6 bg-gray-200 rounded w-1/2 animate-pulse mb-4"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <SkeletonInput />
-              <SkeletonInput />
-              <div className="md:col-span-2">
-                <SkeletonInput />
-              </div>
-              <SkeletonInput />
-              <SkeletonInput />
-            </div>
-          </div>
-        </div>
-
-        {/* --- Section 2: Address Information --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8 pt-8 border-t border-gray-200">
-          {/* Billing Column */}
-          <div className="space-y-6">
-            <div className="h-6 bg-gray-200 rounded w-1/3 animate-pulse mb-4"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="md:col-span-2">
-                <SkeletonInput />
-              </div>
-              <SkeletonInput />
-              <SkeletonInput />
-              <SkeletonInput />
-              <SkeletonInput />
-            </div>
-          </div>
-          {/* Shipping Column */}
-          <div className="space-y-6 mt-8 lg:mt-0">
-            <div className="flex justify-between items-center">
-              <div className="h-6 bg-gray-200 rounded w-1/3 animate-pulse"></div>
-              <div className="h-5 w-24 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="md:col-span-2">
-                <SkeletonInput />
-              </div>
-              <SkeletonInput />
-              <SkeletonInput />
-              <SkeletonInput />
-              <SkeletonInput />
-            </div>
-          </div>
-        </div>
-
-        {/* --- Section 3: Proforma Items --- */}
-        <div className="pt-8 border-t border-gray-200">
-          <div className="h-6 bg-gray-200 rounded w-1/4 animate-pulse mb-4"></div>
-          <div className="space-y-2">
-            <div className="h-10 bg-gray-100 rounded w-full animate-pulse"></div>
-            <div className="h-12 bg-gray-200 rounded w-full animate-pulse"></div>
-            <div className="h-12 bg-gray-200 rounded w-full animate-pulse"></div>
-            <div className="h-10 w-32 bg-gray-200 rounded animate-pulse mt-4"></div>
-          </div>
-        </div>
-
-        {/* --- Section 4: Notes, Terms, & Summary --- */}
-        <div className="pt-8 border-t border-gray-200">
-          <div className="flex flex-col md:flex-row justify-between gap-8">
-            <div className="w-full md:w-1/2 lg:flex-1 space-y-4">
-              <SkeletonTextarea h="h-24" />
-              <SkeletonTextarea h="h-32" />
-            </div>
-            <div className="w-full md:w-1/2 lg:w-1/3 space-y-4 bg-gray-50 p-4 rounded-lg">
-              <div className="h-6 bg-gray-200 rounded w-1/2 animate-pulse mb-4"></div>
-              <div className="h-5 bg-gray-200 rounded w-full animate-pulse"></div>
-              <div className="h-5 bg-gray-200 rounded w-full animate-pulse"></div>
-              <div className="h-5 bg-gray-200 rounded w-full animate-pulse"></div>
-              <div className="border-t pt-4 mt-4">
-                <div className="h-8 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* --- Section 5: Signature & Stamp --- */}
-        <div className="pt-8 border-t border-gray-200">
-          <div className="h-6 bg-gray-200 rounded w-1/4 animate-pulse mb-4"></div>
-          <div className="flex flex-col md:flex-row w-1/2 gap-8">
-            <SkeletonBox />
-            <SkeletonBox />
-          </div>
-        </div>
-      </div>
-      <div className="h-6" />
-    </div>
-  );
-}
-
 function EditProforma() {
-  const navigate = useNavigate();
   const { proformaInvoiceId } = useParams();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [pageLoading, setPageLoading] = useState(true);
   const { LayoutComponent, role } = useLayout();
+
+  // Media & UI States
   const [signatureUrl, setSignatureUrl] = useState(null);
   const [stampUrl, setStampUrl] = useState(null);
+  const [companyMediaLoading, setCompanyMediaLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(true);
+  const [errors, setErrors] = useState({});
+  const [isRecipientLoading, setIsRecipientLoading] = useState(false);
 
+  // Track items deleted during editing
+  const [deletedItemIds, setDeletedItemIds] = useState([]);
+
+  // Main Form State
   const [proformaInfo, setProformaInfo] = useState({
+    proformaInvoiceId: "",
     employeeId: "",
     assignTo: "",
     proformaInvoiceNumber: "",
@@ -166,8 +40,8 @@ function EditProforma() {
     taxType: "GST",
     taxPercentage: 18,
     dueDate: "",
-    invoiceDate: new Date().toISOString().split("T")[0],
-    totalAmmount: 0,
+    invoiceDate: "",
+    totalAmount: 0,
     status: "Draft",
     relatedTo: "",
     relatedId: "",
@@ -192,32 +66,34 @@ function EditProforma() {
     companyStamp: "",
   });
 
-  const [isSameAsBilling, setIsSameAsBilling] = useState(true);
+  const [isSameAsBilling, setIsSameAsBilling] = useState(false);
+  const [proformaContent, setProformaContent] = useState([]);
 
-  const [proformaContent, setProformaContent] = useState([
-    { item: "", description: "", quantity: 1, rate: 0, sacCode: "" },
-  ]);
-
+  // Address Select Options
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
+
+  const [shippingStates, setShippingStates] = useState([]);
+  const [shippingCities, setShippingCities] = useState([]);
+
+  // Selected Objects for React-Select
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedState, setSelectedState] = useState(null);
   const [selectedCity, setSelectedCity] = useState(null);
 
-  const [shippingStates, setShippingStates] = useState([]);
-  const [shippingCities, setShippingCities] = useState([]);
   const [selectedShippingCountry, setSelectedShippingCountry] = useState(null);
   const [selectedShippingState, setSelectedShippingState] = useState(null);
   const [selectedShippingCity, setSelectedShippingCity] = useState(null);
 
+  // Other Select Options
   const [taxRateInput, setTaxRateInput] = useState("18");
   const [assignToOptions, setAssignToOptions] = useState([]);
   const [isAssignToLoading, setIsAssignToLoading] = useState(false);
   const [relatedIdOptions, setRelatedIdOptions] = useState([]);
   const [isRelatedIdLoading, setIsRelatedIdLoading] = useState(false);
 
-  // --- Options Constants (Unchanged) ---
+  // Static Options
   const relatedOptions = [
     { value: "lead", label: "Lead" },
     { value: "customer", label: "Customer" },
@@ -243,373 +119,251 @@ function EditProforma() {
     { value: "EUR", label: "EUR" },
   ];
 
-  // --- Initial Data Fetch (useEffect) ---
-  useEffect(() => {
-    const allCountries = Country.getAllCountries().map((c) => ({
-      value: c.isoCode,
+  //Helper: Find Address Objects
+  const findAddressObjects = (
+    countryStr,
+    stateStr,
+    cityStr,
+    allCountriesList
+  ) => {
+    const address = {
+      country: countryStr || "",
+      state: stateStr || "",
+      city: cityStr || "",
+      selectedCountry: null,
+      selectedState: null,
+      selectedCity: null,
+      states: [],
+      cities: [],
+    };
+
+    const countryObj = allCountriesList.find(
+      (c) => c.label.toLowerCase() === countryStr?.toLowerCase().trim()
+    );
+    if (!countryObj) return address;
+
+    address.selectedCountry = countryObj;
+    address.country = countryObj.label;
+    address.states = State.getStatesOfCountry(countryObj.value).map((s) => ({
+      value: s.isoCode,
+      label: s.name,
+      ...s,
+    }));
+
+    const stateObj = address.states.find(
+      (s) => s.label.toLowerCase() === stateStr?.toLowerCase().trim()
+    );
+    if (!stateObj) return address;
+
+    address.selectedState = stateObj;
+    address.state = stateObj.label;
+    address.cities = City.getCitiesOfState(
+      countryObj.value,
+      stateObj.value
+    ).map((c) => ({
+      value: c.name,
       label: c.name,
       ...c,
     }));
-    setCountries(allCountries);
 
-    const fetchProformaData = async () => {
+    const cityObj = address.cities.find(
+      (c) => c.label.toLowerCase() === cityStr?.toLowerCase().trim()
+    );
+
+    if (cityObj) {
+      address.selectedCity = cityObj;
+      address.city = cityObj.label;
+    } else {
+      address.city = cityStr;
+    }
+
+    return address;
+  };
+
+  //Data Population Effect ---
+  useEffect(() => {
+    const loadData = async () => {
+      setIsFetching(true);
       try {
-        setPageLoading(true);
+        // A. Load Countries First
+        const allCountries = Country.getAllCountries().map((c) => ({
+          value: c.isoCode,
+          label: c.name,
+          ...c,
+        }));
+        setCountries(allCountries);
+
+        // B. Fetch Invoice Data
+        if (!proformaInvoiceId) return;
         const response = await axiosInstance.get(
           `getProformaInvoiceById/${proformaInvoiceId}`
         );
         const { proformaInvoiceInfo, proformaInvoiceContents } = response.data;
 
-        // 1. Set simple state
-        const numberPart = (
-          proformaInvoiceInfo.porformaInvoiceNumber || ""
-        ).replace("P_INV-", "");
-        proformaInvoiceInfo.invoiceDate = proformaInvoiceInfo.invoiceDate
-          ? proformaInvoiceInfo.invoiceDate.split("T")[0]
-          : "";
-        proformaInvoiceInfo.dueDate = proformaInvoiceInfo.dueDate
-          ? proformaInvoiceInfo.dueDate.split("T")[0]
-          : "";
+        // C. Resolve Addresses
+        const billingObj = findAddressObjects(
+          proformaInvoiceInfo.billingCountry,
+          proformaInvoiceInfo.billingState,
+          proformaInvoiceInfo.billingCity,
+          allCountries
+        );
 
+        // Determine if Shipping is same as Billing
+        const isAddressSame =
+          proformaInvoiceInfo.shippingStreet ===
+            proformaInvoiceInfo.billingStreet &&
+          proformaInvoiceInfo.shippingCountry ===
+            proformaInvoiceInfo.billingCountry &&
+          proformaInvoiceInfo.shippingState ===
+            proformaInvoiceInfo.billingState &&
+          proformaInvoiceInfo.shippingCity ===
+            proformaInvoiceInfo.billingCity &&
+          proformaInvoiceInfo.shippingZipCode ===
+            proformaInvoiceInfo.billingZipCode;
+
+        setIsSameAsBilling(isAddressSame);
+
+        let shippingObj = {};
+        if (isAddressSame) {
+          shippingObj = { ...billingObj };
+        } else {
+          shippingObj = findAddressObjects(
+            proformaInvoiceInfo.shippingCountry,
+            proformaInvoiceInfo.shippingState,
+            proformaInvoiceInfo.shippingCity,
+            allCountries
+          );
+        }
+
+        // D. Set Dropdown Options & Selections
+        setSelectedCountry(billingObj.selectedCountry);
+        setStates(billingObj.states);
+        setSelectedState(billingObj.selectedState);
+        setCities(billingObj.cities);
+        setSelectedCity(billingObj.selectedCity);
+
+        setSelectedShippingCountry(shippingObj.selectedCountry);
+        setShippingStates(shippingObj.states || []);
+        setSelectedShippingState(shippingObj.selectedState);
+        setShippingCities(shippingObj.cities || []);
+        setSelectedShippingCity(shippingObj.selectedCity);
+
+        // E. Tax Logic
+        setTaxRateInput(String(proformaInvoiceInfo.taxPercentage || 0));
+
+        // F. Set Main State
         setProformaInfo({
           ...proformaInvoiceInfo,
-          proformaInvoiceNumber: numberPart,
+          invoiceDate:
+            proformaInvoiceInfo.proformaInvoiceDate?.split("T")[0] || "",
+          dueDate: proformaInvoiceInfo.dueDate?.split("T")[0] || "",
         });
-        setProformaContent(proformaInvoiceContents);
-        setTaxRateInput(proformaInvoiceInfo.taxPercentage || 0);
 
-        // 2. Set signature/stamp
-        if (proformaInvoiceInfo.companySignature) {
-          setSignatureUrl(
-            `data:;base64,${proformaInvoiceInfo.companySignature}`
-          );
-        }
-        if (proformaInvoiceInfo.companyStamp) {
-          setStampUrl(`data:;base64,${proformaInvoiceInfo.companyStamp}`);
-        }
+        // G. Set Content
+        setProformaContent(proformaInvoiceContents || []);
 
-        // 3. Set Country/State/City Dropdowns
-        // --- Billing ---
-        const bCountry = allCountries.find(
-          (c) => c.label === proformaInvoiceInfo.billingCountry
-        );
-        let bState = null;
-        let bCity = null;
-        let allStates = [];
-        let allCities = [];
-
-        if (bCountry) {
-          allStates = State.getStatesOfCountry(bCountry.value).map((s) => ({
-            value: s.isoCode,
-            label: s.name,
-            ...s,
-          }));
-          bState = allStates.find(
-            (s) => s.label === proformaInvoiceInfo.billingState
-          );
-        }
-        if (bCountry && bState) {
-          allCities = City.getCitiesOfState(bCountry.value, bState.value).map(
-            (c) => ({ value: c.name, label: c.name, ...c })
-          );
-          bCity = allCities.find(
-            (c) => c.label === proformaInvoiceInfo.billingCity
-          );
-        }
-
-        setSelectedCountry(bCountry);
-        setStates(allStates);
-        setSelectedState(bState);
-        setCities(allCities);
-        setSelectedCity(bCity);
-
-        // --- Shipping ---
-        const isSame =
-          proformaInvoiceInfo.billingStreet ===
-            proformaInvoiceInfo.shippingStreet &&
-          proformaInvoiceInfo.billingCity ===
-            proformaInvoiceInfo.shippingCity &&
-          proformaInvoiceInfo.billingCountry ===
-            proformaInvoiceInfo.shippingCountry;
-        setIsSameAsBilling(isSame);
-
-        if (isSame) {
-          // If same, just mirror the billing state
-          setSelectedShippingCountry(bCountry);
-          setShippingStates(allStates);
-          setSelectedShippingState(bState);
-          setShippingCities(allCities);
-          setSelectedShippingCity(bCity);
-        } else {
-          // If different, find shipping values
-          const sCountry = allCountries.find(
-            (c) => c.label === proformaInvoiceInfo.shippingCountry
-          );
-          let sState = null;
-          let sCity = null;
-          let allSStates = [];
-          let allSCities = [];
-
-          if (sCountry) {
-            allSStates = State.getStatesOfCountry(sCountry.value).map((s) => ({
-              value: s.isoCode,
-              label: s.name,
-              ...s,
+        // H. Initial Load of Related Options (to show correct label)
+        if (proformaInvoiceInfo.relatedTo && proformaInvoiceInfo.relatedId) {
+          let endpoint =
+            proformaInvoiceInfo.relatedTo === "lead"
+              ? "getLeadNameAndId"
+              : "getCustomerListWithNameAndId";
+          try {
+            const relRes = await axiosInstance.get(endpoint);
+            const mapped = relRes.data.map((item) => ({
+              label: item.clientName || item.companyName,
+              value: item.leadId || item.id,
             }));
-            sState = allSStates.find(
-              (s) => s.label === proformaInvoiceInfo.shippingState
-            );
+            setRelatedIdOptions(mapped);
+          } catch (e) {
+            console.error("Error loading initial related options", e);
           }
-          if (sCountry && sState) {
-            allSCities = City.getCitiesOfState(
-              sCountry.value,
-              sState.value
-            ).map((c) => ({ value: c.name, label: c.name, ...c }));
-            sCity = allSCities.find(
-              (c) => c.label === proformaInvoiceInfo.shippingCity
-            );
-          }
-          setSelectedShippingCountry(sCountry);
-          setShippingStates(allSStates);
-          setSelectedShippingState(sState);
-          setShippingCities(allSCities);
-          setSelectedShippingCity(sCity);
         }
-        setPageLoading(false);
+
+        // I. Initial Load of Assign To Options
+        if (proformaInvoiceInfo.employeeId) {
+          try {
+            const empRes = await axiosInstance.get("getEmployeeNameAndId");
+            setAssignToOptions(
+              empRes.data.map((emp) => ({
+                label: emp.name,
+                value: emp.employeeId,
+              }))
+            );
+          } catch (e) {
+            console.error("Error loading employee options", e);
+          }
+        }
       } catch (error) {
-        console.error("Failed to fetch proforma data:", error);
-        toast.error("Failed to load proforma invoice data.");
-        setPageLoading(false);
-        navigate("/Proforma");
+        console.error("Error loading proforma:", error);
+        toast.error("Failed to load invoice details");
+      } finally {
+        setIsFetching(false);
       }
     };
 
-    if (proformaInvoiceId) {
-      fetchProformaData();
-    }
-  }, [proformaInvoiceId, navigate]);
+    loadData();
+  }, [proformaInvoiceId]);
 
+  // Kept: Load company signature/stamp
   useEffect(() => {
-    loadAssignToOptions();
-  }, []);
+    const fetchCompanyMedia = async () => {
+      if (!role) {
+        setCompanyMediaLoading(false);
+        return;
+      }
+      setCompanyMediaLoading(true);
+      let endpoint = role === "ROLE_ADMIN" ? "getAdminInfo" : "getEmployeeInfo";
+      if (role !== "ROLE_ADMIN" && role !== "ROLE_EMPLOYEE") {
+        setCompanyMediaLoading(false);
+        return;
+      }
 
-  useEffect(() => {
-    if (proformaInfo.relatedTo) {
-      loadRelatedIdOptions();
-    }
-  }, [proformaInfo.relatedTo]);
+      try {
+        const response = await axiosInstance.get(endpoint);
+        const data = response.data;
+        let sigData =
+          role === "ROLE_ADMIN"
+            ? data.companySignature
+            : data.admin
+            ? data.admin.companySignature
+            : null;
+        let stampData =
+          role === "ROLE_ADMIN"
+            ? data.companyStamp
+            : data.admin
+            ? data.admin.companyStamp
+            : null;
 
-  // --- All cascading useEffects removed ---
+        if (sigData) setSignatureUrl(`data:;base64,${sigData}`);
+        if (stampData) setStampUrl(`data:;base64,${stampData}`);
 
-  const handleCancel = () => {
-    if (role === "ROLE_ADMIN") {
-      navigate("/Proforma");
-    } else if (role === "ROLE_EMPLOYEE") {
-      navigate("/Employee/Proforma");
-    } else {
-      navigate("/login");
-    }
-  };
+        setProformaInfo((prev) => ({
+          ...prev,
+          companySignature: sigData || "",
+          companyStamp: stampData || "",
+        }));
+      } catch (error) {
+        console.error("Failed to load company media:", error);
+      } finally {
+        setCompanyMediaLoading(false);
+      }
+    };
+    fetchCompanyMedia();
+  }, [role]);
 
-  const handleInfoChange = (e) => {
-    const { name, value } = e.target;
-    setProformaInfo((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name, selectedOption) => {
-    if (name === "assignTo") {
-      setProformaInfo((prev) => ({
-        ...prev,
-        assignTo: selectedOption ? selectedOption.label : "",
-        employeeId: selectedOption ? selectedOption.value : "",
-      }));
-    } else if (name === "relatedTo") {
-      setProformaInfo((prev) => ({
-        ...prev,
-        relatedTo: selectedOption ? selectedOption.value : "",
-        relatedId: "",
-      }));
-      setRelatedIdOptions([]);
-    } else {
-      setProformaInfo((prev) => ({
-        ...prev,
-        [name]: selectedOption ? selectedOption.value : "",
-      }));
-    }
-  };
-
-  // --- *** NEW EVENT-DRIVEN LOGIC *** ---
-
-  // --- Billing Handlers ---
-  const handleBillingCountryChange = (opt) => {
-    setSelectedCountry(opt);
-    setStates(
-      opt
-        ? State.getStatesOfCountry(opt.value).map((s) => ({
-            ...s,
-            value: s.isoCode,
-            label: s.name,
-          }))
-        : []
-    );
-    setSelectedState(null);
-    setCities([]);
-    setSelectedCity(null);
-    setProformaInfo((prev) => ({
-      ...prev,
-      billingCountry: opt ? opt.label : "",
-      billingState: "",
-      billingCity: "",
-    }));
-  };
-
-  const handleBillingStateChange = (opt) => {
-    setSelectedState(opt);
-    setCities(
-      opt
-        ? City.getCitiesOfState(selectedCountry.value, opt.value).map((c) => ({
-            ...c,
-            value: c.name,
-            label: c.name,
-          }))
-        : []
-    );
-    setSelectedCity(null);
-    setProformaInfo((prev) => ({
-      ...prev,
-      billingState: opt ? opt.label : "",
-      billingCity: "",
-    }));
-  };
-
-  const handleBillingCityChange = (opt) => {
-    setSelectedCity(opt);
-    setProformaInfo((prev) => ({
-      ...prev,
-      billingCity: opt ? opt.label : "",
-    }));
-  };
-
-  // --- Shipping Handlers ---
-  const handleShippingCountryChange = (opt) => {
-    setSelectedShippingCountry(opt);
-    setShippingStates(
-      opt
-        ? State.getStatesOfCountry(opt.value).map((s) => ({
-            ...s,
-            value: s.isoCode,
-            label: s.name,
-          }))
-        : []
-    );
-    setSelectedShippingState(null);
-    setShippingCities([]);
-    setSelectedShippingCity(null);
-    setProformaInfo((prev) => ({
-      ...prev,
-      shippingCountry: opt ? opt.label : "",
-      shippingState: "",
-      shippingCity: "",
-    }));
-  };
-
-  const handleShippingStateChange = (opt) => {
-    setSelectedShippingState(opt);
-    setShippingCities(
-      opt
-        ? City.getCitiesOfState(selectedShippingCountry.value, opt.value).map(
-            (c) => ({ ...c, value: c.name, label: c.name })
-          )
-        : []
-    );
-    setSelectedShippingCity(null);
-    setProformaInfo((prev) => ({
-      ...prev,
-      shippingState: opt ? opt.label : "",
-      shippingCity: "",
-    }));
-  };
-
-  const handleShippingCityChange = (opt) => {
-    setSelectedShippingCity(opt);
-    setProformaInfo((prev) => ({
-      ...prev,
-      shippingCity: opt ? opt.label : "",
-    }));
-  };
-
-  // --- Checkbox Handler ---
-  const handleSameAsBillingChange = (e) => {
-    const isChecked = e.target.checked;
-    setIsSameAsBilling(isChecked);
-
-    if (isChecked) {
-      // Sync Billing -> Shipping
-      setProformaInfo((prev) => ({
-        ...prev,
-        shippingStreet: prev.billingStreet,
-        shippingCity: prev.billingCity,
-        shippingState: prev.billingState,
-        shippingCountry: prev.billingCountry,
-        shippingZipCode: prev.billingZipCode,
-      }));
-      setSelectedShippingCountry(selectedCountry);
-      setShippingStates(states);
-      setSelectedShippingState(selectedState);
-      setShippingCities(cities);
-      setSelectedShippingCity(selectedCity);
-    } else {
-      // Clear Shipping
-      setProformaInfo((prev) => ({
-        ...prev,
-        shippingStreet: "",
-        shippingCity: "",
-        shippingState: "",
-        shippingCountry: "",
-        shippingZipCode: "",
-      }));
-      setSelectedShippingCountry(null);
-      setShippingStates([]);
-      setSelectedShippingState(null);
-      setShippingCities([]);
-      setSelectedShippingCity(null);
-    }
-  };
-
-  const handleItemChange = (index, e) => {
-    const { name, value } = e.target;
-    const list = [...proformaContent];
-    list[index][name] = value;
-    setProformaContent(list);
-  };
-
-  const handleAddItem = () => {
-    setProformaContent([
-      ...proformaContent,
-      { item: "", description: "", quantity: 1, rate: 0, sacCode: "" },
-    ]);
-  };
-
-  const handleRemoveItem = (index) => {
-    const list = [...proformaContent];
-    list.splice(index, 1);
-    setProformaContent(list);
-  };
-
+  // Calculations
   const { subtotal, taxAmount, total } = useMemo(() => {
     const sub = proformaContent.reduce(
       (acc, item) =>
         acc + (Number(item.quantity) || 0) * (Number(item.rate) || 0),
       0
     );
-
     const discountAmount = (sub * (Number(proformaInfo.discount) || 0)) / 100;
     const taxableAmount = sub - discountAmount;
     const taxRate = (Number(taxRateInput) || 0) / 100;
-
     const tax = taxableAmount * taxRate;
     const grandTotal = taxableAmount;
-
     return { subtotal: sub, taxAmount: tax, total: grandTotal };
   }, [proformaContent, proformaInfo.discount, taxRateInput]);
 
@@ -627,31 +381,282 @@ function EditProforma() {
   }, [proformaInfo.currencyType]);
 
   useEffect(() => {
-    setProformaInfo((prev) => ({ ...prev, totalAmmount: total }));
+    setProformaInfo((prev) => ({ ...prev, totalAmount: total }));
   }, [total]);
 
-  const loadAssignToOptions = async () => {
-    if (isAssignToLoading) {
-      return;
-    }
-    setIsAssignToLoading(true);
-    try {
-      const response = await axiosInstance.get("getEmployeeNameAndId");
-      const mappedOptions = response.data.map((emp) => ({
-        label: emp.name,
-        value: emp.employeeId,
-      }));
-      setAssignToOptions(mappedOptions);
-    } catch (error) {
-      console.error("Failed to load employee options:", error);
-      toast.error("Failed to load employee options.");
-    } finally {
-      setIsAssignToLoading(false);
+  // --- Handlers (Synced with CreateProforma) ---
+
+  const handleCancel = () => {
+    if (role === "ROLE_ADMIN") navigate("/Proforma");
+    else if (role === "ROLE_EMPLOYEE") navigate("/Employee/Proforma");
+    else navigate("/login");
+  };
+
+  const handleInfoChange = (e) => {
+    const { name, value } = e.target;
+    setProformaInfo((prev) => {
+      const newState = { ...prev, [name]: value };
+      // Sync Shipping if Checked
+      if (isSameAsBilling) {
+        if (name === "billingStreet") newState.shippingStreet = value;
+        else if (name === "billingZipCode") newState.shippingZipCode = value;
+      }
+      return newState;
+    });
+    if (errors[name]) {
+      setErrors((prev) => {
+        const n = { ...prev };
+        delete n[name];
+        return n;
+      });
     }
   };
 
-  useEffect(() => {
-    if (isSameAsBilling) {
+  const handleSelectChange = (name, selectedOption) => {
+    if (name === "assignTo") {
+      setProformaInfo((prev) => ({
+        ...prev,
+        assignTo: selectedOption?.label || "",
+        employeeId: selectedOption?.value || "",
+      }));
+    } else if (name === "relatedTo") {
+      // In Edit, changing Related To clears the related ID
+      setProformaInfo((prev) => ({
+        ...prev,
+        relatedTo: selectedOption?.value || "",
+        relatedId: "",
+      }));
+      setRelatedIdOptions([]);
+      resetRecipientFields();
+    } else {
+      setProformaInfo((prev) => ({
+        ...prev,
+        [name]: selectedOption?.value || "",
+      }));
+    }
+  };
+
+  const handleRelatedIdChange = (selectedOption) => {
+    if (selectedOption) {
+      setProformaInfo((prev) => ({
+        ...prev,
+        relatedId: selectedOption.value,
+      }));
+      fetchAndPopulateRecipientData(selectedOption.value);
+    } else {
+      resetRecipientFields();
+    }
+  };
+
+  const resetRecipientFields = () => {
+    setProformaInfo((prev) => ({
+      ...prev,
+      relatedId: "",
+      companyName: "",
+      mobileNumber: "",
+      email: "",
+      gstin: "",
+      panNumber: "",
+      billingStreet: "",
+      billingCity: "",
+      billingState: "",
+      billingCountry: "",
+      billingZipCode: "",
+      shippingStreet: "",
+      shippingCity: "",
+      shippingState: "",
+      shippingCountry: "",
+      shippingZipCode: "",
+    }));
+
+    setIsSameAsBilling(true);
+
+    setSelectedCountry(null);
+    setSelectedState(null);
+    setSelectedCity(null);
+    setStates([]);
+    setCities([]);
+
+    setSelectedShippingCountry(null);
+    setSelectedShippingState(null);
+    setSelectedShippingCity(null);
+    setShippingStates([]);
+    setShippingCities([]);
+  };
+
+  // New function to fetch and populate all recipient data
+  const fetchAndPopulateRecipientData = async (id) => {
+    if (!id || !proformaInfo.relatedTo || countries.length === 0) {
+      return;
+    }
+
+    setIsRecipientLoading(true);
+    let endpoint = "";
+    let recipientData = {};
+
+    try {
+      if (proformaInfo.relatedTo === "lead") {
+        endpoint = `getLeadById/${id}`;
+        const response = await axiosInstance.get(endpoint);
+        const { lead } = response.data;
+        recipientData = {
+          companyName: lead.companyName,
+          email: lead.email,
+          mobile: lead.mobileNumber,
+          street: lead.street,
+          cityStr: lead.city,
+          stateStr: lead.state,
+          countryStr: lead.country,
+          zipCode: lead.zipCode,
+        };
+      } else if (proformaInfo.relatedTo === "customer") {
+        endpoint = `getCustomerById/${id}`;
+        const response = await axiosInstance.get(endpoint);
+        const customer = response.data;
+        recipientData = {
+          companyName: customer.companyName,
+          email: customer.email || null,
+          mobile: customer.mobile,
+          gstin: customer.gstin || "",
+          panNumber: customer.panNumber || "",
+          // Billing
+          street: customer.billingStreet,
+          cityStr: customer.billingCity,
+          stateStr: customer.billingState,
+          countryStr: customer.billingCountry,
+          zipCode: customer.billingZipCode,
+          // Shipping
+          shippingStreetStr: customer.shippingStreet,
+          shippingCityStr: customer.shippingCity,
+          shippingStateStr: customer.shippingState,
+          shippingCountryStr: customer.shippingCountry,
+          shippingZipCodeStr: customer.shippingZipCode,
+        };
+      }
+
+      // 1. Process Billing Address
+      const billingAddress = findAddressObjects(
+        recipientData.countryStr,
+        recipientData.stateStr,
+        recipientData.cityStr,
+        countries
+      );
+
+      // 2. Process Shipping Address (if customer)
+      let shippingAddress = {};
+      let isSame = true;
+
+      if (proformaInfo.relatedTo === "customer") {
+        const {
+          shippingStreetStr,
+          shippingCityStr,
+          shippingStateStr,
+          shippingCountryStr,
+          shippingZipCodeStr,
+          street,
+          cityStr,
+          stateStr,
+          countryStr,
+          zipCode,
+        } = recipientData;
+
+        const areDifferent =
+          (shippingStreetStr || "") !== (street || "") ||
+          (shippingCityStr || "") !== (cityStr || "") ||
+          (shippingStateStr || "") !== (stateStr || "") ||
+          (shippingCountryStr || "") !== (countryStr || "") ||
+          (shippingZipCodeStr || "") !== (zipCode || "");
+
+        if (areDifferent) {
+          isSame = false;
+          shippingAddress = findAddressObjects(
+            shippingCountryStr,
+            shippingStateStr,
+            shippingCityStr,
+            countries
+          );
+        }
+      }
+
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated.companyName;
+        delete updated.email;
+        delete updated.mobileNumber;
+        return updated;
+      });
+
+      // 3. Set all state in one go
+      setProformaInfo((prev) => ({
+        ...prev,
+        companyName: recipientData.companyName || "",
+        email: recipientData.email || "",
+        mobileNumber: recipientData.mobile || "",
+        gstin: recipientData.gstin || "",
+        panNumber: recipientData.panNumber || "",
+
+        // Set billing info from processed address
+        billingStreet: recipientData.street || "",
+        billingZipCode: recipientData.zipCode || "",
+        billingCountry: billingAddress.country,
+        billingState: billingAddress.state,
+        billingCity: billingAddress.city,
+
+        // Set shipping info based on 'isSame' flag
+        shippingStreet: isSame
+          ? recipientData.street || ""
+          : recipientData.shippingStreetStr || "",
+        shippingZipCode: isSame
+          ? recipientData.zipCode || ""
+          : recipientData.shippingZipCodeStr || "",
+        shippingCountry: isSame
+          ? billingAddress.country
+          : shippingAddress.country || "",
+        shippingState: isSame
+          ? billingAddress.state
+          : shippingAddress.state || "",
+        shippingCity: isSame ? billingAddress.city : shippingAddress.city || "",
+      }));
+
+      // Set Billing Selects
+      setSelectedCountry(billingAddress.selectedCountry);
+      setSelectedState(billingAddress.selectedState);
+      setSelectedCity(billingAddress.selectedCity);
+      setStates(billingAddress.states);
+      setCities(billingAddress.cities);
+
+      // Set Shipping Selects
+      setIsSameAsBilling(isSame);
+      if (isSame) {
+        setSelectedShippingCountry(billingAddress.selectedCountry);
+        setSelectedShippingState(billingAddress.selectedState);
+        setSelectedShippingCity(billingAddress.selectedCity);
+        setShippingStates(billingAddress.states);
+        setShippingCities(billingAddress.cities);
+      } else {
+        setSelectedShippingCountry(shippingAddress.selectedCountry);
+        setSelectedShippingState(shippingAddress.selectedState);
+        setSelectedShippingCity(shippingAddress.selectedCity);
+        setShippingStates(shippingAddress.states || []);
+        setShippingCities(shippingAddress.cities || []);
+      }
+    } catch (error) {
+      console.error("Failed to load recipient data:", error);
+      toast.error("Could not load recipient details.");
+      resetRecipientFields(); // Reset on error
+    } finally {
+      setIsRecipientLoading(false);
+    }
+  };
+
+  // --- Address Handlers (Synced) ---
+
+  const handleSameAsBillingChange = (e) => {
+    const isChecked = e.target.checked;
+    setIsSameAsBilling(isChecked);
+
+    if (isChecked) {
+      // Copy Billing -> Shipping State
       setProformaInfo((prev) => ({
         ...prev,
         shippingStreet: prev.billingStreet,
@@ -660,128 +665,328 @@ function EditProforma() {
         shippingCountry: prev.billingCountry,
         shippingZipCode: prev.billingZipCode,
       }));
-    }
-  }, [
-    proformaInfo.billingStreet,
-    proformaInfo.billingCity,
-    proformaInfo.billingState,
-    proformaInfo.billingCountry,
-    proformaInfo.billingZipCode,
-    isSameAsBilling,
-  ]);
-
-  useEffect(() => {
-    if (isSameAsBilling) {
+      // Copy Dropdown Objects
       setSelectedShippingCountry(selectedCountry);
-      setShippingStates(states);
       setSelectedShippingState(selectedState);
-      setShippingCities(cities);
       setSelectedShippingCity(selectedCity);
+      setShippingStates(states);
+      setShippingCities(cities);
+    } else {
+      // Reset Shipping (Optional: You can leave data or clear it.
+      // CreateProforma clears it, so we clear it here for sync)
+      setProformaInfo((prev) => ({
+        ...prev,
+        shippingStreet: "",
+        shippingCity: "",
+        shippingState: "",
+        shippingCountry: "",
+        shippingZipCode: "",
+      }));
+      setSelectedShippingCountry(null);
+      setSelectedShippingState(null);
+      setSelectedShippingCity(null);
+      setShippingStates([]);
+      setShippingCities([]);
     }
-  }, [
-    selectedCountry,
-    selectedState,
-    selectedCity,
-    states,
-    cities,
-    isSameAsBilling,
-  ]);
+  };
+
+  const handleBillingCountryChange = (opt) => {
+    setSelectedCountry(opt);
+    setSelectedState(null);
+    setCities([]);
+    setSelectedCity(null);
+
+    let newStates = opt
+      ? State.getStatesOfCountry(opt.value).map((s) => ({
+          value: s.isoCode,
+          label: s.name,
+          ...s,
+        }))
+      : [];
+    setStates(newStates);
+
+    setProformaInfo((prev) => ({
+      ...prev,
+      billingCountry: opt ? opt.label : "",
+      billingState: "",
+      billingCity: "",
+      ...(isSameAsBilling && {
+        shippingCountry: opt ? opt.label : "",
+        shippingState: "",
+        shippingCity: "",
+      }),
+    }));
+
+    if (isSameAsBilling) {
+      setSelectedShippingCountry(opt);
+      setSelectedShippingState(null);
+      setShippingStates(newStates);
+      setSelectedShippingCity(null);
+      setShippingCities([]);
+    }
+  };
+
+  const handleBillingStateChange = (opt) => {
+    setSelectedState(opt);
+    setSelectedCity(null);
+
+    let newCities =
+      opt && selectedCountry
+        ? City.getCitiesOfState(selectedCountry.value, opt.value).map((c) => ({
+            value: c.name,
+            label: c.name,
+            ...c,
+          }))
+        : [];
+    setCities(newCities);
+
+    setProformaInfo((prev) => ({
+      ...prev,
+      billingState: opt ? opt.label : "",
+      billingCity: "",
+      ...(isSameAsBilling && {
+        shippingState: opt ? opt.label : "",
+        shippingCity: "",
+      }),
+    }));
+
+    if (isSameAsBilling) {
+      setSelectedShippingState(opt);
+      setSelectedShippingCity(null);
+      setShippingCities(newCities);
+    }
+  };
+
+  const handleBillingCityChange = (opt) => {
+    setSelectedCity(opt);
+    setProformaInfo((prev) => ({
+      ...prev,
+      billingCity: opt ? opt.value : "",
+      ...(isSameAsBilling && { shippingCity: opt ? opt.value : "" }),
+    }));
+    if (isSameAsBilling) setSelectedShippingCity(opt);
+  };
+
+  const handleShippingCountryChange = (opt) => {
+    setSelectedShippingCountry(opt);
+    setSelectedShippingState(null);
+    setSelectedShippingCity(null);
+    if (opt) {
+      setShippingStates(
+        State.getStatesOfCountry(opt.value).map((s) => ({
+          value: s.isoCode,
+          label: s.name,
+          ...s,
+        }))
+      );
+      setShippingCities([]);
+      setProformaInfo((prev) => ({
+        ...prev,
+        shippingCountry: opt.label,
+        shippingState: "",
+        shippingCity: "",
+      }));
+    } else {
+      setShippingStates([]);
+      setShippingCities([]);
+      setProformaInfo((prev) => ({
+        ...prev,
+        shippingCountry: "",
+        shippingState: "",
+        shippingCity: "",
+      }));
+    }
+  };
+
+  const handleShippingStateChange = (opt) => {
+    setSelectedShippingState(opt);
+    setSelectedShippingCity(null);
+    if (opt && selectedShippingCountry) {
+      setShippingCities(
+        City.getCitiesOfState(selectedShippingCountry.value, opt.value).map(
+          (c) => ({ value: c.name, label: c.name, ...c })
+        )
+      );
+      setProformaInfo((prev) => ({
+        ...prev,
+        shippingState: opt.label,
+        shippingCity: "",
+      }));
+    } else {
+      setShippingCities([]);
+      setProformaInfo((prev) => ({
+        ...prev,
+        shippingState: "",
+        shippingCity: "",
+      }));
+    }
+  };
+
+  // --- Content Handlers ---
+  const handleItemChange = (index, e) => {
+    const { name, value } = e.target;
+    const list = [...proformaContent];
+    list[index][name] = value;
+    setProformaContent(list);
+  };
+
+  const handleAddItem = () => {
+    setProformaContent([
+      ...proformaContent,
+      { item: "", description: "", quantity: 1, rate: 0, sacCode: "" },
+    ]);
+  };
+
+  const handleRemoveItem = (index) => {
+    const list = [...proformaContent];
+    const itemToRemove = list[index];
+
+    // If item exists in DB (has ID), mark for deletion
+    if (itemToRemove.proformaInvoiceContentId) {
+      setDeletedItemIds((prev) => [
+        ...prev,
+        itemToRemove.proformaInvoiceContentId,
+      ]);
+    }
+
+    list.splice(index, 1);
+    setProformaContent(list);
+  };
+
+  // --- Loaders ---
+  const loadAssignToOptions = async () => {
+    if (isAssignToLoading || assignToOptions.length > 0) return;
+    setIsAssignToLoading(true);
+    try {
+      const response = await axiosInstance.get("getEmployeeNameAndId");
+      setAssignToOptions(
+        response.data.map((emp) => ({ label: emp.name, value: emp.employeeId }))
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsAssignToLoading(false);
+    }
+  };
 
   const loadRelatedIdOptions = async () => {
-    if (isRelatedIdLoading || !proformaInfo.relatedTo) {
+    if (
+      isRelatedIdLoading ||
+      !proformaInfo.relatedTo ||
+      relatedIdOptions.length > 0
+    )
       return;
-    }
-
     setIsRelatedIdLoading(true);
-    let endpoint = "";
-    let mappedOptions = [];
-
+    let endpoint =
+      proformaInfo.relatedTo === "lead"
+        ? "getLeadNameAndId"
+        : "getCustomerListWithNameAndId";
     try {
-      if (proformaInfo.relatedTo === "lead") {
-        endpoint = "getLeadNameAndId";
-        const response = await axiosInstance.get(endpoint);
-        mappedOptions = response.data.map((lead) => ({
-          label: lead.clientName,
-          value: lead.leadId,
-        }));
-      } else if (proformaInfo.relatedTo === "customer") {
-        endpoint = "getCustomerListWithNameAndId";
-        const response = await axiosInstance.get(endpoint);
-        mappedOptions = response.data.map((customer) => ({
-          label: customer.companyName,
-          value: customer.id,
-        }));
-      }
-
-      setRelatedIdOptions(mappedOptions);
+      const response = await axiosInstance.get(endpoint);
+      setRelatedIdOptions(
+        response.data.map((item) => ({
+          label: item.clientName || item.companyName,
+          value: item.leadId || item.id,
+        }))
+      );
     } catch (error) {
-      console.error(`Failed to load ${proformaInfo.relatedTo} list:`, error);
-      toast.error(`Failed to load ${proformaInfo.relatedTo} list.`);
+      console.error(error);
     } finally {
       setIsRelatedIdLoading(false);
     }
   };
+  const validateForm = () => {
+    const newErrors = {};
 
+    // 1. Proforma Number Validation (Required & 6 digits)
+    if (!proformaInfo.proformaInvoiceNumber) {
+      newErrors.proformaInvoiceNumber = "Proforma Number is required";
+    }
+
+    // 2. Invoice Date Validation
+    if (!proformaInfo.invoiceDate) {
+      newErrors.invoiceDate = "Invoice Date is required";
+    }
+
+    // 3. Company Name Validation
+    if (!proformaInfo.companyName.trim()) {
+      newErrors.companyName = "Company Name is required";
+    }
+
+    // 4. Email Validation
+    if (!proformaInfo.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(proformaInfo.email)) {
+      newErrors.email = "Email address is invalid";
+    }
+
+    // 5. Mobile Number Validation
+    if (!proformaInfo.mobileNumber) {
+      newErrors.mobileNumber = "Mobile Number is required";
+    }
+
+    const combinedErrors = { ...errors, ...newErrors };
+    setErrors(combinedErrors);
+    return Object.keys(combinedErrors).length === 0;
+  };
+
+  // --- Submit ---
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      toast.error("Please fix the errors in the form.");
+      return;
+    }
+
     setLoading(true);
-
-    const formattedDueDate = proformaInfo.dueDate
-      ? `${proformaInfo.dueDate}T00:00:00`
-      : null;
-    const formattedInvoiceDate = proformaInfo.invoiceDate
-      ? `${proformaInfo.invoiceDate}T00:00:00`
-      : null;
-
-    const payload = {
-      proformaInvoiceInfo: {
-        ...proformaInfo,
-        proformaInvoiceNumber: `P_INV-${proformaInfo.proformaInvoiceNumber}`,
-        porformaInvoiceNumber: `P_INV-${proformaInfo.proformaInvoiceNumber}`,
-        discount: Number(proformaInfo.discount),
-        totalAmmount: Number(proformaInfo.totalAmmount),
-        invoiceDate: formattedInvoiceDate,
-        dueDate: formattedDueDate,
-
-        street: proformaInfo.billingStreet,
-        city: proformaInfo.billingCity,
-        state: proformaInfo.billingState,
-        country: proformaInfo.billingCountry,
-        zipCode: proformaInfo.billingZipCode,
-      },
-      proformaInvoiceContents: proformaContent.map((item) => ({
-        ...item,
-        quantity: Number(item.quantity),
-        rate: Number(item.rate),
-        sacCode: item.sacCode || "",
-      })),
-    };
-
     try {
+      const formattedDueDate = proformaInfo.dueDate
+        ? `${proformaInfo.dueDate}T00:00:00`
+        : null;
+      const formattedInvoiceDate = `${proformaInfo.invoiceDate}T00:00:00`;
+
+      const payload = {
+        proformaInvoiceInfo: {
+          ...proformaInfo,
+          discount: Number(proformaInfo.discount),
+          totalAmount: Number(proformaInfo.totalAmount),
+          proformaInvoiceDate: formattedInvoiceDate,
+          dueDate: formattedDueDate,
+        },
+        proformaInvoiceContents: proformaContent.map((item) => ({
+          proformaInvoiceContentId: item.proformaInvoiceContentId || null, // Null for new items
+          proformaInvoiceId: proformaInfo.proformaInvoiceId,
+          item: item.item,
+          description: item.description,
+          quantity: Number(item.quantity),
+          rate: Number(item.rate),
+          sacCode: item.sacCode || "",
+        })),
+      };
+
       await axiosInstance.put("updateProformaInvoice", payload);
-
-      toast.success("Proforma Invoice updated successfully!");
-      setLoading(false);
-
-      if (role === "ROLE_ADMIN") {
-        navigate("/Proforma");
-      } else if (role === "ROLE_EMPLOYEE") {
-        navigate("/Employee/Proforma");
+      if (deletedItemIds.length > 0) {
+        await axiosInstance.delete(
+          "deleteProformaInvoiceContent",
+          deletedItemIds
+        );
       }
+      toast.success("Proforma Invoice updated successfully!");
+
+      if (role === "ROLE_ADMIN") navigate("/Proforma");
+      else if (role === "ROLE_EMPLOYEE") navigate("/Employee/Proforma");
     } catch (error) {
-      console.error("Failed to update proforma invoice:", error);
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to update proforma invoice. Please check the form."
-      );
+      console.error("Failed to update:", error);
+      toast.error(error.response?.data?.message || "Update failed.");
+    } finally {
       setLoading(false);
     }
   };
-  // [REPLACE your final return with this]
+
   return (
     <LayoutComponent>
       <div className="p-4 bg-gray-50 h-[90vh] overflow-y-auto">
-        {/* --- Header --- */}
         <div className="p-2 bg-gray-50 border-b border-gray-200">
           <div className="flex items-center gap-2 mb-2">
             <button
@@ -810,9 +1015,7 @@ function EditProforma() {
                 Edit Proforma Invoice
               </h1>
               <p className="text-gray-600 text-sm">
-                {pageLoading
-                  ? "Loading details..."
-                  : `Update the details for ${proformaInfo.porformaInvoiceNumber}`}
+                Update existing proforma details
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -826,7 +1029,7 @@ function EditProforma() {
               <button
                 type="submit"
                 form="editProformaForm"
-                disabled={loading || pageLoading} // Also disable while page is loading
+                disabled={loading}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200 text-sm font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Updating..." : "Update Proforma"}
@@ -835,10 +1038,62 @@ function EditProforma() {
           </div>
         </div>
 
-        {/* --- Form or Skeleton --- */}
+        {/* --- Form --- */}
         <div className="h-[72vh] overflow-hidden ">
-          {pageLoading ? (
-            <EditProformaSkeleton />
+          {isFetching ? (
+            <div className="mt-4 h-full overflow-hidden animate-pulse bg-white p-6 rounded-lg border border-gray-200 space-y-8">
+              {/* Skeleton: Details & Recipient */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8">
+                <div className="space-y-6">
+                  <div className="h-5 bg-gray-300 rounded w-1/3 mb-4"></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 rounded md:col-span-2"></div>
+                  </div>
+                </div>
+                <div className="space-y-6 mt-8 lg:mt-0 lg:border-l lg:border-gray-200 lg:pl-8">
+                  <div className="h-5 bg-gray-300 rounded w-1/3 mb-4"></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 rounded md:col-span-2"></div>
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Skeleton: Addresses */}
+              <div className="pt-8 border-t border-gray-100 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="h-5 bg-gray-300 rounded w-1/3"></div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2 h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="h-5 bg-gray-300 rounded w-1/3"></div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2 h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Skeleton: Table */}
+              <div className="pt-8 border-t border-gray-100">
+                <div className="h-6 bg-gray-300 rounded w-32 mb-4"></div>
+                <div className="h-10 bg-gray-200 rounded w-full mb-2"></div>
+                <div className="h-12 bg-gray-50 rounded w-full mb-2"></div>
+                <div className="h-12 bg-gray-50 rounded w-full mb-2"></div>
+                <div className="h-12 bg-gray-50 rounded w-full"></div>
+              </div>
+            </div>
           ) : (
             <form
               onSubmit={handleSubmit}
@@ -846,20 +1101,21 @@ function EditProforma() {
               className="mt-4 h-full overflow-y-auto no-scrollbar"
             >
               <div className="bg-white p-6 rounded-lg space-y-8 shadow-sm border border-gray-200">
-                {/* --- Section 1: Proforma Details & Recipient (Side-by-Side) --- */}
+                {/* Section 1: Details */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8">
-                  {/* --- Left Column: Proforma Details --- */}
                   <div className="space-y-6">
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">
                       Proforma Details
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormInputWithPrefix
+                      <FormNumberInputWithPrefix
                         label="Proforma Number"
                         name="proformaInvoiceNumber"
                         prefix="P_INV-"
                         value={proformaInfo.proformaInvoiceNumber}
-                        onChange={handleInfoChange}
+                        onChange={() => {}}
+                        disabled={true}
+                        className="cursor-not-allowed"
                       />
                       <FormInput
                         label="Invoice Date"
@@ -867,6 +1123,8 @@ function EditProforma() {
                         value={proformaInfo.invoiceDate}
                         onChange={handleInfoChange}
                         type="date"
+                        required
+                        error={errors.invoiceDate}
                       />
                       <FormInput
                         label="Due Date"
@@ -899,7 +1157,7 @@ function EditProforma() {
                     </div>
                   </div>
 
-                  {/* --- Right Column: Recipient Info --- */}
+                  {/* Section 1b: Recipient */}
                   <div className="space-y-6 mt-8 lg:mt-0 lg:border-l lg:border-gray-200 lg:pl-8">
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">
                       Recipient Information
@@ -920,7 +1178,7 @@ function EditProforma() {
                         value={relatedIdOptions.find(
                           (o) => o.value === proformaInfo.relatedId
                         )}
-                        onChange={(opt) => handleSelectChange("relatedId", opt)}
+                        onChange={handleRelatedIdChange}
                         options={relatedIdOptions}
                         onMenuOpen={loadRelatedIdOptions}
                         isLoading={isRelatedIdLoading}
@@ -932,19 +1190,25 @@ function EditProforma() {
                         value={proformaInfo.companyName}
                         onChange={handleInfoChange}
                         className="md:col-span-2"
+                        required
+                        error={errors.companyName}
                       />
                       <FormInput
                         label="Email"
                         name="email"
                         value={proformaInfo.email}
                         onChange={handleInfoChange}
-                        type="email"
+                        type="text"
+                        required
+                        error={errors.email}
                       />
                       <FormInput
                         label="Mobile Number"
                         name="mobileNumber"
                         value={proformaInfo.mobileNumber}
                         onChange={handleInfoChange}
+                        required
+                        error={errors.mobileNumber}
                       />
                       <FormInput
                         label="GSTIN"
@@ -962,9 +1226,9 @@ function EditProforma() {
                   </div>
                 </div>
 
-                {/* --- Section 2: Address Information (Side-by-Side) --- */}
+                {/* Section 2: Address */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8 pt-8 border-t border-gray-200">
-                  {/* --- Billing Column --- */}
+                  {/* Billing */}
                   <div className="space-y-6">
                     <h2 className="text-lg font-semibold text-gray-800">
                       Billing Address
@@ -981,14 +1245,14 @@ function EditProforma() {
                         label="Country"
                         name="billingCountry"
                         value={selectedCountry}
-                        onChange={handleBillingCountryChange} // <-- New Handler
+                        onChange={handleBillingCountryChange}
                         options={countries}
                       />
                       <FormSelect
                         label="State"
                         name="billingState"
                         value={selectedState}
-                        onChange={handleBillingStateChange} // <-- New Handler
+                        onChange={handleBillingStateChange}
                         options={states}
                         isDisabled={!selectedCountry}
                       />
@@ -996,7 +1260,7 @@ function EditProforma() {
                         label="City"
                         name="billingCity"
                         value={selectedCity}
-                        onChange={handleBillingCityChange} // <-- New Handler
+                        onChange={handleBillingCityChange}
                         options={cities}
                         isDisabled={!selectedState}
                       />
@@ -1009,7 +1273,7 @@ function EditProforma() {
                     </div>
                   </div>
 
-                  {/* --- Shipping Column --- */}
+                  {/* Shipping */}
                   <div className="space-y-6 mt-8 lg:mt-0">
                     <div className="flex justify-between items-center">
                       <h2 className="text-lg font-semibold text-gray-800">
@@ -1020,7 +1284,7 @@ function EditProforma() {
                           type="checkbox"
                           id="sameAsBilling"
                           checked={isSameAsBilling}
-                          onChange={handleSameAsBillingChange} // <-- New Handler
+                          onChange={handleSameAsBillingChange}
                           className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
                         <label
@@ -1031,7 +1295,6 @@ function EditProforma() {
                         </label>
                       </div>
                     </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <FormInput
                         label="Shipping Street Address"
@@ -1045,7 +1308,7 @@ function EditProforma() {
                         label="Country"
                         name="shippingCountry"
                         value={selectedShippingCountry}
-                        onChange={handleShippingCountryChange} // <-- New Handler
+                        onChange={handleShippingCountryChange}
                         options={countries}
                         isDisabled={isSameAsBilling}
                       />
@@ -1053,7 +1316,7 @@ function EditProforma() {
                         label="State"
                         name="shippingState"
                         value={selectedShippingState}
-                        onChange={handleShippingStateChange} // <-- New Handler
+                        onChange={handleShippingStateChange}
                         options={shippingStates}
                         isDisabled={isSameAsBilling || !selectedShippingCountry}
                       />
@@ -1061,7 +1324,13 @@ function EditProforma() {
                         label="City"
                         name="shippingCity"
                         value={selectedShippingCity}
-                        onChange={handleShippingCityChange} // <-- New Handler
+                        onChange={(opt) => {
+                          setSelectedShippingCity(opt);
+                          setProformaInfo((prev) => ({
+                            ...prev,
+                            shippingCity: opt ? opt.value : "",
+                          }));
+                        }}
                         options={shippingCities}
                         isDisabled={isSameAsBilling || !selectedShippingState}
                       />
@@ -1076,7 +1345,7 @@ function EditProforma() {
                   </div>
                 </div>
 
-                {/* --- Section 3: Proforma Items --- */}
+                {/* Section 3: Items */}
                 <div className="pt-8 border-t border-gray-200">
                   <div className="mb-4 flex items-start justify-between gap-4">
                     <h2 className="text-lg font-semibold text-gray-800">
@@ -1100,32 +1369,32 @@ function EditProforma() {
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-1/4">
                             Item
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-1/4">
                             Description
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                             SAC Code
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                             Qty
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                             Rate ({currencySymbol})
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                             Total
                           </th>
-                          <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
                             Action
                           </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {proformaContent.map((item, index) => (
-                          <tr key={item.proformaInvoiceContentId || index}>
+                          <tr key={index} className="hover:bg-gray-50">
                             <td className="px-2 py-2 align-middle">
                               <input
                                 type="text"
@@ -1162,7 +1431,7 @@ function EditProforma() {
                                 name="quantity"
                                 value={item.quantity}
                                 onChange={(e) => handleItemChange(index, e)}
-                                className="w-20 border-gray-300 rounded-lg shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                                className="w-20 border-gray-300 rounded-lg shadow-sm sm:text-sm px-3 py-2"
                                 min="1"
                               />
                             </td>
@@ -1172,7 +1441,7 @@ function EditProforma() {
                                 name="rate"
                                 value={item.rate}
                                 onChange={(e) => handleItemChange(index, e)}
-                                className="w-32 border-gray-300 rounded-lg shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                                className="w-32 border-gray-300 rounded-lg shadow-sm sm:text-sm px-3 py-2"
                                 min="0"
                                 step="0.01"
                               />
@@ -1183,9 +1452,8 @@ function EditProforma() {
                             </td>
                             <td className="px-4 py-2 whitespace-nowrap text-center align-middle">
                               <button
-                                className="text-red-600 hover:text-red-900 font-medium transition-colors duration-200 flex items-center gap-1 text-xs"
+                                className="text-red-600 hover:text-red-900"
                                 onClick={() => handleRemoveItem(index)}
-                                title="Remove Item"
                                 type="button"
                               >
                                 <svg
@@ -1195,9 +1463,9 @@ function EditProforma() {
                                   viewBox="0 0 24 24"
                                 >
                                   <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
                                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                   ></path>
                                 </svg>
@@ -1211,30 +1479,15 @@ function EditProforma() {
                   <button
                     type="button"
                     onClick={handleAddItem}
-                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                   >
-                    <svg
-                      className="w-5 h-5 text-gray-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                      />
-                    </svg>
                     Add New Item
                   </button>
                 </div>
 
-                {/* --- Section 4: Notes, Terms, & Summary --- */}
+                {/* Section 4: Summary */}
                 <div className="pt-8 border-t border-gray-200">
                   <div className="flex flex-col md:flex-row justify-between gap-8">
-                    {/* Left Column: Notes & Terms */}
                     <div className="w-full md:w-1/2 lg:flex-1 space-y-4">
                       <FormTextarea
                         label="Notes"
@@ -1242,7 +1495,6 @@ function EditProforma() {
                         value={proformaInfo.notes}
                         onChange={handleInfoChange}
                         rows={5}
-                        placeholder="Enter any notes here..."
                       />
                       <FormTextarea
                         label="Terms & Conditions"
@@ -1250,11 +1502,8 @@ function EditProforma() {
                         value={proformaInfo.termsAndConditions}
                         onChange={handleInfoChange}
                         rows={8}
-                        placeholder="Enter terms and conditions..."
                       />
                     </div>
-
-                    {/* Right Column: Summary */}
                     <div className="w-full md:w-1/2 lg:w-1/3 space-y-4 bg-gray-50 p-4 rounded-lg">
                       <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">
                         Summary
@@ -1283,32 +1532,19 @@ function EditProforma() {
                       </div>
                       <div className="grid grid-cols-2 gap-2 items-center">
                         <Select
-                          id="taxType"
-                          name="taxType"
                           value={taxOptions.find(
                             (o) => o.value === proformaInfo.taxType
                           )}
                           onChange={(opt) => {
-                            if (opt) {
-                              handleSelectChange("taxType", opt);
-                              setTaxRateInput(opt.defaultRate);
-                              setProformaInfo((prev) => ({
-                                ...prev,
-                                taxPercentage: Number(opt.defaultRate) || 0,
-                              }));
-                            } else {
-                              handleSelectChange("taxType", null);
-                              setTaxRateInput("");
-                              setProformaInfo((prev) => ({
-                                ...prev,
-                                taxPercentage: 0,
-                              }));
-                            }
+                            handleSelectChange("taxType", opt);
+                            if (opt) setTaxRateInput(String(opt.defaultRate));
+                            else setTaxRateInput("0");
+                            setProformaInfo((p) => ({
+                              ...p,
+                              taxPercentage: opt ? opt.defaultRate : 0,
+                            }));
                           }}
                           options={taxOptions}
-                          className="w-full"
-                          classNamePrefix="select"
-                          menuPlacement="auto"
                         />
                         <FormInput
                           label="Tax %"
@@ -1316,15 +1552,13 @@ function EditProforma() {
                           type="number"
                           value={taxRateInput}
                           onChange={(e) => {
-                            const value = e.target.value;
-                            setTaxRateInput(value);
-                            setProformaInfo((prev) => ({
-                              ...prev,
-                              taxPercentage: Number(value) || 0,
+                            setTaxRateInput(e.target.value);
+                            setProformaInfo((p) => ({
+                              ...p,
+                              taxPercentage: Number(e.target.value) || 0,
                             }));
                           }}
                           disabled={proformaInfo.taxType === "No Tax"}
-                          className="w-full"
                         />
                       </div>
                       <div className="flex justify-between text-gray-600">
@@ -1334,7 +1568,6 @@ function EditProforma() {
                           {taxAmount.toFixed(2)}
                         </span>
                       </div>
-
                       <div className="border-t pt-4 mt-4">
                         <div className="flex justify-between text-xl font-bold">
                           <span>Grand Total:</span>
@@ -1348,7 +1581,7 @@ function EditProforma() {
                   </div>
                 </div>
 
-                {/* --- Section 5: Signature & Stamp --- */}
+                {/* Section 5: Signature */}
                 <div className="pt-8 border-t border-gray-200">
                   <h2 className="text-lg font-semibold text-gray-800 mb-4">
                     Signature & Stamp
@@ -1359,15 +1592,19 @@ function EditProforma() {
                         Authorized Signature
                       </label>
                       <div className="border-2 border-dashed border-gray-300 rounded-lg h-40 w-full flex items-center justify-center bg-gray-50 p-2">
-                        {signatureUrl ? (
+                        {companyMediaLoading ? (
+                          <span className="text-gray-400 text-sm">
+                            Loading...
+                          </span>
+                        ) : signatureUrl ? (
                           <img
                             src={signatureUrl}
-                            alt="Authorized Signature"
+                            alt="Signature"
                             className="max-h-full max-w-full object-contain"
                           />
                         ) : (
-                          <span className="text-gray-400 text-sm text-center px-4">
-                            No Signature Saved
+                          <span className="text-gray-400 text-sm">
+                            No Signature
                           </span>
                         )}
                       </div>
@@ -1377,15 +1614,19 @@ function EditProforma() {
                         Company Stamp
                       </label>
                       <div className="border-2 border-dashed border-gray-300 rounded-lg h-40 w-full flex items-center justify-center bg-gray-50 p-2">
-                        {stampUrl ? (
+                        {companyMediaLoading ? (
+                          <span className="text-gray-400 text-sm">
+                            Loading...
+                          </span>
+                        ) : stampUrl ? (
                           <img
                             src={stampUrl}
-                            alt="Company Stamp"
+                            alt="Stamp"
                             className="max-h-full max-w-full object-contain"
                           />
                         ) : (
                           <span className="text-gray-400 text-sm">
-                            No Stamp Saved
+                            No Stamp
                           </span>
                         )}
                       </div>

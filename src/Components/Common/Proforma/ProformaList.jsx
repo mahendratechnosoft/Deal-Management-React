@@ -62,6 +62,11 @@ const ProformaListSkeleton = () => {
   );
 };
 
+const formatProformaNumber = (number) => {
+  const numberString = String(number || 0);
+  return `P_INV-${numberString.padStart(6, "0")}`;
+};
+
 function ProformaList() {
   const { LayoutComponent, role } = useLayout();
   const navigate = useNavigate();
@@ -93,13 +98,10 @@ function ProformaList() {
       const response = await axiosInstance.get(url);
       const data = response.data;
 
-      // Updated to match new API response structure
       setProformaInvoices(data.ProformaInvoiceList || []);
       setTotalPages(data.totalPages || 1);
-      setCurrentPage(data.currentPage || page); // Use API's current page if available
-      setTotalItems(data.totalItems || 100); // Or use totalItems from API if it exists, else fallback to old logic
-
-      // console.log("Fetched proforma invoices:", data);
+      setCurrentPage(data.currentPage || page);
+      setTotalItems(data.totalItems || 100);
     } catch (err) {
       console.error("Error fetching proforma invoices:", err);
       toast.error("Failed to fetch proforma invoices. Please try again.");
@@ -243,24 +245,22 @@ function ProformaList() {
                         <ProformaListSkeleton key={index} />
                       ))
                     : proformaInvoices.map((proforma) => (
-                        // Updated key
                         <tr key={proforma.proformaInvoiceId}>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
-                            {/* Updated field, with fallback for null */}
-                            {proforma.porformaInvoiceNumber || "N/A"}
+                            {formatProformaNumber(
+                              proforma.proformaInvoiceNumber
+                            )}
                           </td>
-                          {/* "Subject" <td> removed */}
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {proforma.companyName}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {formatCurrency(
-                              proforma.totalAmmount,
+                              proforma.totalAmount,
                               proforma.currencyType
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {/* Updated field */}
                             {proforma.invoiceDate}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -273,7 +273,6 @@ function ProformaList() {
                             <div className="flex items-center gap-3">
                               <button
                                 title="Edit"
-                                // Updated handler and ID
                                 onClick={() =>
                                   handleEdit(proforma.proformaInvoiceId)
                                 }
@@ -294,9 +293,8 @@ function ProformaList() {
                                 </svg>
                               </button>
 
-                              <button
+                              {/* <button
                                 title="Preview"
-                                // Updated handler and ID
                                 onClick={() =>
                                   handlePreview(proforma.proformaInvoiceId)
                                 }
@@ -321,7 +319,7 @@ function ProformaList() {
                                     d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                                   />
                                 </svg>
-                              </button>
+                              </button> */}
                               {/* PDF Button Removed */}
                             </div>
                           </td>
