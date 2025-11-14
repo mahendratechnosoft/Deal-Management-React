@@ -35,6 +35,9 @@ import CreateProforma from "./Components/Common/Proforma/CreateProforma.jsx";
 import EditProforma from "./Components/Common/Proforma/EditProforma.jsx";
 import DynamicFormBase from "./Components/Common/Settings/DynamicForm/DynamicFormBase.jsx";
 import PublicForm from "./Components/Common/Settings/DynamicForm/PublicForm.jsx";
+import PaymentList from "./Components/Common/Payment/PaymentList.jsx";
+import PaymentPreview from "./Components/Common/Payment/PaymentPreview.jsx";
+import EditPayment from "./Components/Common/Payment/EditPayment.jsx";
 import ProformaPreview from "./Components/Common/Proforma/ProformaPreview.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -156,6 +159,34 @@ function App() {
             }
           />
 
+          <Route
+            path="/Admin/Payment"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <PaymentList />
+              </RoleBasedRoute>
+            }
+          />
+
+
+          <Route
+            path="/Admin/EditPayment/:paymentId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <EditPayment />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Admin/ViewPayment/:paymentId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <PaymentPreview />
+              </RoleBasedRoute>
+            }
+          />
+
           {/* Employee Routes - Individual routes with layout */}
           <Route
             path="/Employee/LeadList"
@@ -234,6 +265,27 @@ function App() {
               </RoleBasedRoute>
             }
           />
+
+
+          <Route
+            path="/Employee/Payment"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                <PaymentList />
+              </RoleBasedRoute>
+            }
+          />
+
+
+
+          <Route
+            path="/Employee/EditPayment/:paymentId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                <EditPayment />
+              </RoleBasedRoute>
+            }
+          />
           <Route
             path="/Proposal/Create"
             element={
@@ -272,7 +324,7 @@ function App() {
           <Route
             path="/Proforma"
             element={
-              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
                 <ProformaList />
               </RoleBasedRoute>
             }
