@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm ci  # safer, faster, uses package-lock.json
+RUN npm ci --loglevel verbose  # safer, faster, uses package-lock.json
 
 # Copy the rest of the app
 COPY . .
