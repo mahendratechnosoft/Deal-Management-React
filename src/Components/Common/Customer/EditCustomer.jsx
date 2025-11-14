@@ -808,9 +808,7 @@ const handleSubmit = async (e) => {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-gray-900">Edit Customer</h1>
-              <p className="text-gray-600 text-sm">
-                Update customer information
-              </p>
+             
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -851,7 +849,7 @@ const handleSubmit = async (e) => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto h-[72vh] overflow-y-auto CRM-scroll-width-none">
           <div className="p-4">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
               <form
@@ -1034,7 +1032,7 @@ const handleSubmit = async (e) => {
                           placeholder=" "
                         />
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                          Phone Number
+                          Primary Number
                         </label>
                         {errors.phone && (
                           <p className="mt-1 text-xs text-red-600">
@@ -1055,7 +1053,7 @@ const handleSubmit = async (e) => {
                           placeholder=" "
                         />
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                          Mobile Number
+                          Secondary Number
                         </label>
                         {errors.mobile && (
                           <p className="mt-1 text-xs text-red-600">

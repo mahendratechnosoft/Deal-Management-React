@@ -657,7 +657,7 @@ const navItems = [
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden border border-gray-200">
         {/* Modal Header */}
-        <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-6">
+        <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-3">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -1234,7 +1234,7 @@ const navItems = [
 <div className="border-t border-gray-200 bg-gray-50 p-4">
   <div className="flex items-center justify-between">
     <div className="flex items-center gap-2">
-      <button
+      {/* <button
         type="button"
         onClick={handleCancel}
         className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 font-medium flex items-center gap-2 hover:shadow-sm text-sm"
@@ -1253,7 +1253,7 @@ const navItems = [
           />
         </svg>
         Cancel
-      </button>
+      </button> */}
     </div>
 
     <div className="flex items-center gap-2">

@@ -429,11 +429,11 @@ function EditEmployee() {
   return (
     <LayoutComponent>
 
-      <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
-        <div className="p-4 bg-gray-50 border-b border-gray-200">
+      <div className="p-4 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
+        <div className="p-2 bg-gray-50 border-b border-gray-200">
           {/* Header */}
           {/* ... (Header JSX is unchanged) ... */}
-          <div className="mb-4">
+          <div className="">
             <div className="flex items-center gap-2 mb-2">
               <button
                 onClick={() => navigate("/Admin/EmployeeList")}
@@ -460,9 +460,7 @@ function EditEmployee() {
                 <h1 className="text-xl font-bold text-gray-900">
                   Edit Employee {/* Changed Title */}
                 </h1>
-                <p className="text-gray-600 text-sm">
-                  Update employee details
-                </p>
+          
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -506,7 +504,7 @@ function EditEmployee() {
         </div>
 
         {/* Form Container */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto h-[72vh] overflow-y-auto CRM-scroll-width-none">
           <div className="p-4">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
               <form
