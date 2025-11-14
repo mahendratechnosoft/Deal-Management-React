@@ -112,13 +112,13 @@ function PaymentList() {
         fetchPayments(currentPage, searchTerm);
     };
 
-    const handleView = (paymentId) => {
-        if (role === "ROLE_ADMIN") {
-            navigate(`/Admin/ViewPayment/${paymentId}`);
-        } else if (role === "ROLE_EMPLOYEE") {
-            navigate(`/Employee/ViewPayment/${paymentId}`);
-        }
-    };
+ const handleView = (paymentId) => {
+    if (role === "ROLE_ADMIN") {
+        navigate(`/Admin/EditPayment/${paymentId}`);
+    } else if (role === "ROLE_EMPLOYEE") {
+        navigate(`/Employee/EditPayment/${paymentId}`);
+    }
+};
 
     const handleRefresh = () => {
         fetchPayments(currentPage, searchTerm);
