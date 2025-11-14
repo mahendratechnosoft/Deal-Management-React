@@ -35,6 +35,7 @@ import CreateProforma from "./Components/Common/Proforma/CreateProforma.jsx";
 import EditProforma from "./Components/Common/Proforma/EditProforma.jsx";
 import DynamicFormBase from "./Components/Common/Settings/DynamicForm/DynamicFormBase.jsx";
 import PublicForm from "./Components/Common/Settings/DynamicForm/PublicForm.jsx";
+import ProformaPreview from "./Components/Common/Proforma/ProformaPreview.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -291,6 +292,15 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
                 <EditProforma />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Proforma/Preview/:proformaInvoiceId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
+                <ProformaPreview />
               </RoleBasedRoute>
             }
           />
