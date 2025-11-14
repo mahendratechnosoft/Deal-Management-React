@@ -4,6 +4,9 @@ import Pagination from "../pagination";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { PDFViewer } from "@react-pdf/renderer";
+import ProposalPDF from "../Proposal/ProposalPDF";
+import ProformaPDF from "./ProformaPDF";
 
 // This currency formatter utility is reused
 const formatCurrency = (amount, currencyCode) => {
@@ -78,6 +81,10 @@ function ProformaList() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0); // Kept your logic, though API sample didn't show totalItems
   const [pageSize, setPageSize] = useState(10);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [selectedProformaData, setSelectedProformaData] = useState(null);
+  const [adminInformation, setAdminInformation] = useState(null);
 
   // Removed PDF-related state
 
@@ -131,6 +138,43 @@ function ProformaList() {
 
   const handlePageChange = (newPage) => {
     fetchProformaList(newPage, searchTerm); // Call the renamed fetch function
+  };
+
+  const handleOpenPdfPreview = async (proformaInvoiceId) => {
+    setIsPdfLoading(true);
+    setIsPdfModalOpen(true);
+    setSelectedProformaData(null);
+
+    try {
+      let adminInformation = null;
+      if (role === "ROLE_ADMIN") {
+        const adminReponce = await axiosInstance.get(`/admin/getAdminInfo`);
+        adminInformation = adminReponce.data;
+      } else if (role === "ROLE_EMPLOYEE") {
+        const employeeReponce = await axiosInstance.get(
+          `/employee/getEmployeeInfo`
+        );
+
+        const employeeReponceData = employeeReponce.data;
+        adminInformation = employeeReponceData.admin;
+      }
+      setAdminInformation(adminInformation);
+      const response = await axiosInstance.get(
+        `/admin/getProformaInvoiceById/${proformaInvoiceId}`
+      );
+
+      if (response.data) {
+        setSelectedProformaData(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch proforma data for PDF:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to load proforma data."
+      );
+      setIsPdfModalOpen(false);
+    } finally {
+      setIsPdfLoading(false);
+    }
   };
 
   return (
@@ -339,6 +383,30 @@ function ProformaList() {
                                   />
                                 </svg>
                               </button>
+                              <button
+                                title="View PDF"
+                                onClick={() =>
+                                  handleOpenPdfPreview(
+                                    proforma.proformaInvoiceId
+                                  )
+                                }
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                  ></path>
+                                </svg>
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -394,6 +462,98 @@ function ProformaList() {
           itemsName="proforma invoices"
         />
       </div>
+
+      {isPdfModalOpen && (
+        <div className="proposal-pdf-modal-backdrop">
+          <div className="proposal-pdf-modal-content">
+            <div className="proposal-pdf-modal-header">
+              <h3>
+                {selectedProformaData
+                  ? formatProformaNumber(selectedProformaData.proformaInvoiceId)
+                  : "Loading..."}
+              </h3>
+              <div style={{ display: "flex", gap: "10px" }}>
+                {/* --- Download Button --- */}
+                {/* {!isPdfLoading && selectedProposalData && (
+                  <PDFDownloadLink
+                    document={<ProposalPDF data={selectedProposalData} />}
+                    fileName={
+                      `Proposal-${selectedProposalData.proposalInfo.proposalNumber}-${selectedProposalData.proposalInfo.companyName}.pdf` ||
+                      "proposal.pdf"
+                    }
+                    title="Download PDF"
+                    className="download-button-icon-wrapper"
+                    style={{
+                      padding: "0.25rem",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                      background: "#f9f9f9",
+                      cursor: "pointer",
+                      textDecoration: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {({ loading }) =>
+                      loading ? (
+                        <span style={{ padding: "0 4px", color: "#333" }}>
+                          ...
+                        </span>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="1.5"
+                          stroke="currentColor"
+                          style={{ width: "20px", height: "16px" }}
+                          className="proposal-download-button-icon"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                          />
+                        </svg>
+                      )
+                    }
+                  </PDFDownloadLink>
+                )} */}
+
+                {/* --- Close Button --- */}
+                <button
+                  onClick={() => setIsPdfModalOpen(false)}
+                  style={{
+                    padding: "0.25rem 0.75rem",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    background: "#f9f9f9",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            <div className="proposal-pdf-viewer-container">
+              {isPdfLoading || !selectedProformaData ? (
+                <div style={{ padding: "2rem", textAlign: "center" }}>
+                  Loading PDF...
+                </div>
+              ) : (
+                <PDFViewer width="100%" height="100%">
+                  <ProformaPDF
+                    data={{ selectedProformaData, adminInformation }}
+                  />
+                </PDFViewer>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* PDF Modal Removed */}
     </LayoutComponent>
