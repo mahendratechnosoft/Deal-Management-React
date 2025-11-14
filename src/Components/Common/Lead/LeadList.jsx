@@ -5,8 +5,11 @@ import { useLayout } from "../../Layout/useLayout";
 import toast from "react-hot-toast";
 import PreviewLead from "./PreviewLead";
 import Select from "react-select";
-import { components } from "react-select";
+
 import CreateLeadModal from "./CreateLeadModal";
+import ImportLeadModal from "./ImportLeadModal";
+import { components } from "react-select";
+
 // Table Body Skeleton Component (for search operations)
 const TableBodySkeleton = ({ rows = 5, columns = 7 }) => {
   return (
@@ -126,7 +129,7 @@ function LeadList() {
   const navigate = useNavigate();
   const abortControllerRef = useRef(null);
   const { LayoutComponent, role } = useLayout();
-
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [showColumnPopup, setShowColumnPopup] = useState(false);
   const [viewMode, setViewMode] = useState("table");
   const [searchTerm, setSearchTerm] = useState("");
@@ -1261,6 +1264,25 @@ function LeadList() {
                 </svg>
                 Create Lead
               </button>
+                  <button
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
+                onClick={() => setIsImportOpen(true)}
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Import Lead
+              </button>
             </div>
           </div>
         </div>
@@ -2040,6 +2062,13 @@ function LeadList() {
           onConvert={handleLeadConverted}
         />
       )}
+
+     {/* Modal Component */}
+      <ImportLeadModal
+        open={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+      />
+
     </LayoutComponent>
   );
 }
