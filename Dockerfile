@@ -7,6 +7,9 @@ WORKDIR /app
 COPY package*.json ./
 #RUN npm ci --loglevel verbose  # safer, faster, uses package-lock.json
 
+RUN npm install
+
+
 # Copy the rest of the app
 COPY . .
 
