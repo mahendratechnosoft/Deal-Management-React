@@ -383,14 +383,7 @@ function PreviewLead({ leadId, onClose, onEdit, onConvert }) {
                             {leadData.companyName || "N/A"}
                           </p>
                         </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-500">
-                            Revenue
-                          </label>
-                          <p className="text-gray-900">
-                            {formatCurrency(leadData.revenue)}
-                          </p>
-                        </div>
+                 
                         <div>
                           <label className="text-sm font-medium text-gray-500">
                             Source
@@ -426,7 +419,7 @@ function PreviewLead({ leadId, onClose, onEdit, onConvert }) {
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-500">
-                            Mobile
+                            Primary Number
                           </label>
                           <p className="text-gray-900">
                             {leadData.mobileNumber || "N/A"}
@@ -434,7 +427,7 @@ function PreviewLead({ leadId, onClose, onEdit, onConvert }) {
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-500">
-                            Phone
+                            Secondary Number
                           </label>
                           <p className="text-gray-900">
                             {leadData.phoneNumber || "N/A"}
@@ -551,16 +544,15 @@ function PreviewLead({ leadId, onClose, onEdit, onConvert }) {
                   </div>
 
                   {/* Description */}
-                  {leadData.description && (
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
                         Description
                       </h3>
                       <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">
-                        {leadData.description}
+                    {leadData.description || "N/A"}
                       </p>
                     </div>
-                  )}
+                  
                 </>
               ) : (
                 <div className="text-center text-gray-500 py-8">

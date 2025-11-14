@@ -1884,10 +1884,10 @@ function LeadList() {
                                   {lead.status}
                                 </span>
                               </div>
-
+{/* 
                               <p className="text-xs text-gray-600 mb-2">
                                 {formatCurrency(lead.revenue)}
-                              </p>
+                              </p> */}
 
                               <div className="flex items-center justify-between text-xs text-gray-500">
                                 <span>{formatDate(lead.createdDate)}</span>

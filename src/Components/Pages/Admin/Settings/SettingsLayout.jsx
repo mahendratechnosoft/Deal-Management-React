@@ -161,7 +161,7 @@ const SettingsLayout = () => {
             </div>
 
             {/* Main Settings Container */}
-            <div className="flex flex-row flex-1 bg-white shadow-lg h-[85vh] lg:h-[90vh] overflow-hidden CRM-scroll-width-none">
+            <div className="flex flex-row flex-1 bg-white shadow-lg h-[85vh] lg:h-[86vh] overflow-hidden CRM-scroll-width-none">
               {/* Settings Sidebar with responsive behavior */}
               {settingsSidebarOpen && (
                 <>
