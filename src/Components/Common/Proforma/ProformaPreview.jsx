@@ -125,7 +125,6 @@ function ProformaPreview() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // 1. Fetch User/Admin Info (Your existing logic)
         let adminInfo = null;
         if (role === "ROLE_ADMIN") {
           const adminRes = await axiosInstance.get(`/admin/getAdminInfo`);
@@ -136,8 +135,6 @@ function ProformaPreview() {
         }
         setAdminInformation(adminInfo);
 
-        // 2. Fetch Proforma Invoice Data
-        // Note: Assuming proformaInvoiceId from params maps to the number or ID required by API
         const response = await axiosInstance.get(
           `/admin/getProformaInvoiceById/${proformaInvoiceId}`
         );
