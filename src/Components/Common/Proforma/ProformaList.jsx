@@ -225,6 +225,9 @@ function ProformaList() {
                       Total
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Paid
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -261,13 +264,29 @@ function ProformaList() {
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {proforma.invoiceDate}
+                            {formatCurrency(
+                              proforma.paidAmount,
+                              proforma.currencyType
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {proforma.proformaInvoiceDate}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {proforma.dueDate}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {proforma.status}
+                            <span
+                              className={`ml-2 inline-block px-3 py-1 rounded text-xs font-semibold uppercase tracking-wide ${
+                                proforma.status === "Paid"
+                                  ? "bg-green-100 text-green-600"
+                                  : proforma.status === "Partially Paid"
+                                  ? "bg-yellow-100 text-yellow-600"
+                                  : "bg-red-100 text-red-600"
+                              }`}
+                            >
+                              {proforma.status?.toUpperCase()}
+                            </span>
                           </td>
                           <td className="px-6 py-1 whitespace-nowrap text-sm font-medium">
                             <div className="flex items-center gap-3">
@@ -293,7 +312,7 @@ function ProformaList() {
                                 </svg>
                               </button>
 
-                              {/* <button
+                              <button
                                 title="Preview"
                                 onClick={() =>
                                   handlePreview(proforma.proformaInvoiceId)
@@ -319,8 +338,7 @@ function ProformaList() {
                                     d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                                   />
                                 </svg>
-                              </button> */}
-                              {/* PDF Button Removed */}
+                              </button>
                             </div>
                           </td>
                         </tr>

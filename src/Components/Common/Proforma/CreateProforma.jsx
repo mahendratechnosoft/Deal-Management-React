@@ -32,7 +32,7 @@ function CreateProforma() {
     dueDate: "",
     invoiceDate: new Date().toISOString().split("T")[0],
     totalAmount: 0,
-    status: "Draft",
+    status: "Unpaid",
     relatedTo: "",
     relatedId: "",
     companyName: "",
@@ -95,8 +95,6 @@ function CreateProforma() {
     { value: "Custom", label: "Custom", defaultRate: "" },
   ];
   const statusOptions = [
-    { value: "Draft", label: "Draft" },
-    { value: "Sent", label: "Sent" },
     { value: "UNPAID", label: "Unpaid" },
     { value: "PARTIALLY_PAID", label: "Partially Paid" },
     { value: "PAID", label: "Paid" },
@@ -451,7 +449,7 @@ function CreateProforma() {
     const taxRate = (Number(taxRateInput) || 0) / 100;
 
     const tax = taxableAmount * taxRate;
-    const grandTotal = taxableAmount;
+    const grandTotal = taxableAmount + tax;
 
     return { subtotal: sub, taxAmount: tax, total: grandTotal };
   }, [proformaContent, proformaInfo.discount, taxRateInput]);
@@ -1055,7 +1053,7 @@ function CreateProforma() {
                       onChange={handleInfoChange}
                       type="date"
                     />
-                    <FormSelect
+                    {/* <FormSelect
                       label="Status"
                       name="status"
                       value={statusOptions.find(
@@ -1063,7 +1061,7 @@ function CreateProforma() {
                       )}
                       onChange={(opt) => handleSelectChange("status", opt)}
                       options={statusOptions}
-                    />
+                    /> */}
                     <FormSelect
                       label="Assign To (Optional)"
                       name="assignTo"
@@ -1074,7 +1072,7 @@ function CreateProforma() {
                       options={assignToOptions}
                       onMenuOpen={loadAssignToOptions}
                       isLoading={isAssignToLoading}
-                      className="md:col-span-2"
+                      // className="md:col-span-2"
                     />
                   </div>
                 </div>

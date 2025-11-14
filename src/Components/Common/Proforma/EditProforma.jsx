@@ -42,7 +42,7 @@ function EditProforma() {
     dueDate: "",
     invoiceDate: "",
     totalAmount: 0,
-    status: "Draft",
+    status: "Unpaid",
     relatedTo: "",
     relatedId: "",
     companyName: "",
@@ -105,13 +105,6 @@ function EditProforma() {
     { value: "GST", label: "GST", defaultRate: 18 },
     { value: "IGST", label: "IGST", defaultRate: 18 },
     { value: "Custom", label: "Custom", defaultRate: "" },
-  ];
-  const statusOptions = [
-    { value: "Draft", label: "Draft" },
-    { value: "Sent", label: "Sent" },
-    { value: "UNPAID", label: "Unpaid" },
-    { value: "PARTIALLY_PAID", label: "Partially Paid" },
-    { value: "PAID", label: "Paid" },
   ];
   const currencyOptions = [
     { value: "INR", label: "INR" },
@@ -363,7 +356,7 @@ function EditProforma() {
     const taxableAmount = sub - discountAmount;
     const taxRate = (Number(taxRateInput) || 0) / 100;
     const tax = taxableAmount * taxRate;
-    const grandTotal = taxableAmount;
+    const grandTotal = taxableAmount + tax;
     return { subtotal: sub, taxAmount: tax, total: grandTotal };
   }, [proformaContent, proformaInfo.discount, taxRateInput]);
 
@@ -967,10 +960,9 @@ function EditProforma() {
 
       await axiosInstance.put("updateProformaInvoice", payload);
       if (deletedItemIds.length > 0) {
-        await axiosInstance.delete(
-          "deleteProformaInvoiceContent",
-          deletedItemIds
-        );
+        await axiosInstance.delete("deleteProformaInvoiceContent", {
+          data: deletedItemIds,
+        });
       }
       toast.success("Proforma Invoice updated successfully!");
 
@@ -1134,15 +1126,6 @@ function EditProforma() {
                         type="date"
                       />
                       <FormSelect
-                        label="Status"
-                        name="status"
-                        value={statusOptions.find(
-                          (o) => o.value === proformaInfo.status
-                        )}
-                        onChange={(opt) => handleSelectChange("status", opt)}
-                        options={statusOptions}
-                      />
-                      <FormSelect
                         label="Assign To (Optional)"
                         name="assignTo"
                         value={assignToOptions.find(
@@ -1152,7 +1135,6 @@ function EditProforma() {
                         options={assignToOptions}
                         onMenuOpen={loadAssignToOptions}
                         isLoading={isAssignToLoading}
-                        className="md:col-span-2"
                       />
                     </div>
                   </div>
@@ -1161,7 +1143,19 @@ function EditProforma() {
                   <div className="space-y-6 mt-8 lg:mt-0 lg:border-l lg:border-gray-200 lg:pl-8">
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">
                       Recipient Information
+                      <span
+                        className={`ml-2 inline-block px-3 py-1 rounded text-xs font-semibold uppercase tracking-wide ${
+                          proformaInfo.status === "Paid"
+                            ? "bg-green-100 text-green-600"
+                            : proformaInfo.status === "Partially Paid"
+                            ? "bg-yellow-100 text-yellow-600"
+                            : "bg-red-100 text-red-600"
+                        }`}
+                      >
+                        {proformaInfo.status?.toUpperCase()}
+                      </span>
                     </h2>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <FormSelect
                         label="Related To"
