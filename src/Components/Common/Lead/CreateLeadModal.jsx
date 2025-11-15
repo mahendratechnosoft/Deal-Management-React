@@ -32,6 +32,7 @@ function CreateLeadModal({ onClose, onSuccess }) {
     city: "",
     zipCode: "",
     description: "",
+    followUp: "",
   });
 
   // Separate state for display values
@@ -70,11 +71,11 @@ function CreateLeadModal({ onClose, onSuccess }) {
     return countryDigitLimits[code] || 10;
   };
 
-const navItems = [
-  { id: "basic", label: "Basic Information" },
-  { id: "details", label: "Lead Details" },
-  { id: "description", label: "Description" },
-];
+  const navItems = [
+    { id: "basic", label: "Basic Information" },
+    { id: "details", label: "Lead Details" },
+    { id: "description", label: "Description" },
+  ];
 
 
   // Load countries on component mount
@@ -508,6 +509,13 @@ const navItems = [
       showValidationToast();
       return;
     }
+    let followUpFormatted = null;
+
+if (formData.followUp) {
+  const dt = formData.followUp; // example: "2025-11-15T10:13"
+  followUpFormatted = dt + ":00.000000000";
+}
+
 
     setLoading(true);
     try {
@@ -527,7 +535,7 @@ const navItems = [
         street: formData.street,
         country: formData.country
           ? dropdownData.countries.find((c) => c.value === formData.country)
-              ?.label
+            ?.label
           : "",
         state: formData.state
           ? dropdownData.states.find((s) => s.value === formData.state)?.label
@@ -535,6 +543,7 @@ const navItems = [
         city: formData.city,
         zipCode: formData.zipCode,
         description: formData.description,
+          followUp: followUpFormatted,
       };
 
       await axiosInstance.post("createLead", submitData);
@@ -575,7 +584,7 @@ const navItems = [
       showValidationToast();
       return;
     }
-    
+
     const currentIndex = navItems.findIndex(
       (item) => item.id === activeSection
     );
@@ -602,8 +611,8 @@ const navItems = [
       borderColor: state.isFocused
         ? "#3b82f6"
         : errors.country || errors.state || errors.city
-        ? "#ef4444"
-        : "#e5e7eb",
+          ? "#ef4444"
+          : "#e5e7eb",
       borderWidth: "1px",
       borderRadius: "6px",
       boxShadow: state.isFocused ? "0 0 0 3px rgba(59, 130, 246, 0.1)" : "none",
@@ -623,8 +632,8 @@ const navItems = [
       backgroundColor: state.isSelected
         ? "#3b82f6"
         : state.isFocused
-        ? "#f3f4f6"
-        : "white",
+          ? "#f3f4f6"
+          : "white",
       color: state.isSelected ? "white" : "#1f2937",
       "&:active": {
         backgroundColor: "#3b82f6",
@@ -705,24 +714,23 @@ const navItems = [
         </div>
 
         {/* Navigation Tabs */}
-{/* Modern Navigation Tabs */}
-<div className="border-b border-gray-200 bg-white">
-  <div className="flex space-x-1 p-4">
-    {navItems.map((item) => (
-      <button
-        key={item.id}
-        onClick={() => setActiveSection(item.id)}
-        className={`px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 ${
-          activeSection === item.id
-            ? "bg-blue-50 text-blue-700 border border-blue-200"
-            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-        }`}
-      >
-        {item.label}
-      </button>
-    ))}
-  </div>
-</div>
+        {/* Modern Navigation Tabs */}
+        <div className="border-b border-gray-200 bg-white">
+          <div className="flex space-x-1 p-4">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveSection(item.id)}
+                className={`px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 ${activeSection === item.id
+                    ? "bg-blue-50 text-blue-700 border border-blue-200"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
         {/* Modal Body */}
         <div className="overflow-y-auto max-h-[calc(80vh-180px)]" >
           <form onSubmit={handleSubmit} className="p-6">
@@ -741,9 +749,8 @@ const navItems = [
                       name="clientName"
                       value={formData.clientName}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
-                        errors.clientName ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.clientName ? "border-red-500" : "border-gray-300"
+                        }`}
                       placeholder="Enter client name"
                     />
                     {errors.clientName && (
@@ -777,11 +784,10 @@ const navItems = [
                       name="companyName"
                       value={formData.companyName}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
-                        errors.companyName
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.companyName
                           ? "border-red-500"
                           : "border-gray-300"
-                      }`}
+                        }`}
                       placeholder="Enter company name"
                     />
                     {errors.companyName && (
@@ -811,9 +817,8 @@ const navItems = [
                       <span className="text-red-500">*</span>
                     </label>
                     <div
-                      className={`phone-input-wrapper ${
-                        errors.mobileNumber ? "border-red-500 rounded-lg" : ""
-                      }`}
+                      className={`phone-input-wrapper ${errors.mobileNumber ? "border-red-500 rounded-lg" : ""
+                        }`}
                     >
                       <PhoneInput
                         country={"in"}
@@ -870,9 +875,8 @@ const navItems = [
                       Secondary Number
                     </label>
                     <div
-                      className={`phone-input-wrapper ${
-                        errors.phoneNumber ? "border-red-500 rounded-lg" : ""
-                      }`}
+                      className={`phone-input-wrapper ${errors.phoneNumber ? "border-red-500 rounded-lg" : ""
+                        }`}
                     >
                       <PhoneInput
                         country={"in"}
@@ -935,9 +939,8 @@ const navItems = [
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
-                        errors.email ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.email ? "border-red-500" : "border-gray-300"
+                        }`}
                       placeholder="Enter email address"
                     />
                     {errors.email && (
@@ -1134,9 +1137,8 @@ const navItems = [
                       name="source"
                       value={formData.source}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none bg-white ${
-                        errors.source ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none bg-white ${errors.source ? "border-red-500" : "border-gray-300"
+                        }`}
                     >
                       <option value="">Select Source</option>
                       <option value="Instagram">Instagram</option>
@@ -1189,21 +1191,26 @@ const navItems = [
                     </select>
                   </div>
 
-           
-                  {/* Revenue */}
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-gray-700">
-                      Revenue
+                      Follow-Up Date & Time
                     </label>
+
                     <input
-                      type="number"
-                      name="revenue"
-                      value={formData.revenue}
+                      type="datetime-local"
+                      name="followUp"
+                      value={formData.followUp}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                      placeholder="Enter revenue amount"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg
+               focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
+
+                    {errors.followUp && (
+                      <p className="text-red-500 text-xs">{errors.followUp}</p>
+                    )}
                   </div>
+
+
                 </div>
               </div>
             )}
@@ -1230,114 +1237,95 @@ const navItems = [
         </div>
 
         {/* Modal Footer */}
-     {/* Modal Footer */}
-<div className="border-t border-gray-200 bg-gray-50 p-4">
-  <div className="flex items-center justify-between">
-    <div className="flex items-center gap-2">
-      {/* <button
-        type="button"
-        onClick={handleCancel}
-        className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 font-medium flex items-center gap-2 hover:shadow-sm text-sm"
-      >
-        <svg
-          className="w-4 h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-        Cancel
-      </button> */}
-    </div>
+        {/* Modal Footer */}
+        <div className="border-t border-gray-200 bg-gray-50 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
 
-    <div className="flex items-center gap-2">
-      {/* Previous Button - Show in all tabs except first */}
-      {activeSection !== "basic" && (
-        <button
-          type="button"
-          onClick={handlePrevious}
-          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 font-medium flex items-center gap-2 text-sm"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Previous
-        </button>
-      )}
+            </div>
 
-      {/* Next Button - Show in all tabs except last */}
-      {activeSection !== "description" ? (
-        <button
-          type="button"
-          onClick={handleNext}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium flex items-center gap-2 text-sm"
-        >
-          Next
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={loading}
-          className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl text-sm"
-        >
-          {loading ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              Creating...
-            </>
-          ) : (
-            <>
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              Create Lead
-            </>
-          )}
-        </button>
-      )}
-    </div>
-  </div>
-</div>
+            <div className="flex items-center gap-2">
+              {/* Previous Button - Show in all tabs except first */}
+              {activeSection !== "basic" && (
+                <button
+                  type="button"
+                  onClick={handlePrevious}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 font-medium flex items-center gap-2 text-sm"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  Previous
+                </button>
+              )}
+
+              {/* Next Button - Show in all tabs except last */}
+              {activeSection !== "description" ? (
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium flex items-center gap-2 text-sm"
+                >
+                  Next
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl text-sm"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      Create Lead
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
