@@ -34,6 +34,7 @@ function EditLead() {
     city: "",
     zipCode: "",
     description: "",
+    followUp: "",
   });
 
   // Updated phone states for react-phone-input-2
@@ -1364,6 +1365,11 @@ function EditLead() {
           description: leadData.description || "",
           createdDate: leadData.createdDate,
           updatedDate: leadData.updatedDate,
+          followUp: leadData.followUp
+            ? leadData.followUp.substring(0, 16)
+            : "",
+
+
         };
 
         setFormData(mappedFormData);
@@ -1606,6 +1612,11 @@ function EditLead() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
+    let followUpFormatted = null;
+
+    if (formData.followUp) {
+      followUpFormatted = formData.followUp + ":00.000000000";
+    }
 
     setLoading(true);
     try {
@@ -1626,7 +1637,7 @@ function EditLead() {
         street: formData.street,
         country: formData.country
           ? dropdownData.countries.find((c) => c.value === formData.country)
-              ?.label
+            ?.label
           : "",
         state: formData.state
           ? dropdownData.states.find((s) => s.value === formData.state)?.label
@@ -1636,6 +1647,11 @@ function EditLead() {
         description: formData.description,
         createdDate: formData.createdDate,
         updatedDate: new Date().toISOString(),
+        followUp: formData.followUp
+          ? formData.followUp + ":00.000000000"
+          : null,
+
+
       };
 
       if (role === "ROLE_EMPLOYEE" && employeeId) {
@@ -2019,11 +2035,10 @@ function EditLead() {
                           name="clientName"
                           value={formData.clientName}
                           onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
-                            errors.clientName
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${errors.clientName
+                            ? "border-red-500"
+                            : "border-gray-300"
+                            }`}
                           placeholder=" "
                         />
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
@@ -2042,11 +2057,10 @@ function EditLead() {
                           name="companyName"
                           value={formData.companyName}
                           onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
-                            errors.companyName
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${errors.companyName
+                            ? "border-red-500"
+                            : "border-gray-300"
+                            }`}
                           placeholder=" "
                         />
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
@@ -2062,9 +2076,8 @@ function EditLead() {
                       {/* Mobile Number */}
                       <div className="relative">
                         <div
-                          className={`phone-input-wrapper ${
-                            errors.mobileNumber ? "border-red-500 rounded" : ""
-                          }`}
+                          className={`phone-input-wrapper ${errors.mobileNumber ? "border-red-500 rounded" : ""
+                            }`}
                         >
                           <PhoneInput
                             country={phoneData.primaryCountry}
@@ -2098,15 +2111,14 @@ function EditLead() {
                             {errors.mobileNumber}
                           </p>
                         )}
-                      
+
                       </div>
 
                       {/* Phone Number */}
                       <div className="relative">
                         <div
-                          className={`phone-input-wrapper ${
-                            errors.phoneNumber ? "border-red-500 rounded" : ""
-                          }`}
+                          className={`phone-input-wrapper ${errors.phoneNumber ? "border-red-500 rounded" : ""
+                            }`}
                         >
                           <PhoneInput
                             country={phoneData.secondaryCountry}
@@ -2140,7 +2152,7 @@ function EditLead() {
                             {errors.phoneNumber}
                           </p>
                         )}
-                       
+
                       </div>
 
                       <div className="relative">
@@ -2149,9 +2161,8 @@ function EditLead() {
                           name="email"
                           value={formData.email}
                           onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
-                            errors.email ? "border-red-500" : "border-gray-300"
-                          }`}
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${errors.email ? "border-red-500" : "border-gray-300"
+                            }`}
                           placeholder=" "
                         />
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
@@ -2345,9 +2356,8 @@ function EditLead() {
                           name="source"
                           value={formData.source}
                           onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer appearance-none bg-white ${
-                            errors.source ? "border-red-500" : "border-gray-300"
-                          }`}
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer appearance-none bg-white ${errors.source ? "border-red-500" : "border-gray-300"
+                            }`}
                         >
                           <option value="">Select Source</option>
                           <option value="Instagram">Instagram</option>
@@ -2419,6 +2429,34 @@ function EditLead() {
                         </div>
                       </div>
 
+                      {/* Follow-Up Date & Time */}
+                      <div className="relative">
+                        <input
+                          type="datetime-local"
+                          name="followUp"
+                          value={formData.followUp}
+                          onChange={handleChange}
+                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500
+      focus:border-blue-500 text-sm peer ${errors.followUp ? "border-red-500" : "border-gray-300"
+                            }`}
+                          placeholder=" "
+                        />
+
+                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm
+    text-gray-600 transition-all duration-200
+    peer-placeholder-shown:top-2 peer-placeholder-shown:text-base
+    peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5
+    peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
+                          Follow-Up Date & Time
+                        </label>
+
+                        {errors.followUp && (
+                          <p className="mt-1 text-xs text-red-600">{errors.followUp}</p>
+                        )}
+                      </div>
+
+
+
                       {/* <div className="relative">
                         <select
                           name="priority"
@@ -2452,6 +2490,8 @@ function EditLead() {
                         </div>
                       </div> */}
                     </div>
+
+
                   </section>
 
                   <section>
