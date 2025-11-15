@@ -10,46 +10,41 @@ import {
 } from "@react-pdf/renderer";
 import { ToWords } from "to-words";
 
-// --- Font Registration for Rupee Symbol (₹) ---
-// We register Roboto from Google's CDN. This font supports the Rupee symbol.
+import RobotoRegular from "../../../../public/fonts/Roboto-Regular.ttf";
+import RobotoBold from "../../../../public/fonts/Roboto-Bold.ttf";
+import RobotoItalic from "../../../../public/fonts/Roboto-Italic.ttf";
+import RobotoBoldItalic from "../../../../public/fonts/Roboto-BoldItalic.ttf";
 Font.register({
   family: "Roboto",
   fonts: [
-    {
-      src: "https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.ttf", // Regular
-    },
-    {
-      src: "https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlfBBc4.ttf", // Italic
-      fontStyle: "italic",
-    },
-    {
-      src: "https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlvAx04.ttf", // Bold
-      fontWeight: "bold",
-    },
+    { src: RobotoRegular, fontWeight: "normal" },
+    { src: RobotoBold, fontWeight: "bold" },
+    { src: RobotoItalic, fontWeight: "italic" },
+    { src: RobotoBoldItalic, fontWeight: "bold", fontStyle: "italic" },
   ],
 });
 
-// --- Styles ---
-// This is the translation of your TailwindCSS classes into react-pdf's styling
 const styles = StyleSheet.create({
   page: {
-    fontFamily: "Roboto", // Use the registered font
+    fontFamily: "Roboto",
     fontSize: 9,
-    padding: 40,
+    paddingTop: 40,
+    paddingHorizontal: 40,
+    paddingBottom: 65,
     backgroundColor: "#ffffff",
-    color: "#374151", // text-gray-700
+    color: "#374151",
   },
-  // Header
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    paddingBottom: 16,
+    paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6", // border-gray-100
+    borderBottomColor: "#f3f4f6",
   },
   companyLogo: {
-    height: 48, // h-16 in HTML is larger, 48px is safer for PDF
+    height: 48,
     objectFit: "contain",
   },
   logoPlaceholder: {
@@ -64,27 +59,27 @@ const styles = StyleSheet.create({
     color: "#6b7280",
   },
   headerRight: {
-    textAlign: "right",
+    alignItems: "flex-end",
   },
   proformaTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#111827", // text-gray-900
+    color: "#111827",
   },
   proformaNumber: {
     fontSize: 10,
-    fontWeight: "bold", // font-semibold
+    fontWeight: "bold",
   },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,
     fontSize: 8,
-    fontWeight: "bold", // font-semibold
+    fontWeight: "bold",
     textTransform: "uppercase",
     marginTop: 4,
   },
-  // Address Section
+
   addressSection: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -117,14 +112,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   dateBox: {
-    backgroundColor: "#f9fafb", // bg-gray-50
+    backgroundColor: "#f9fafb",
     padding: 8,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: "#f3f4f6",
     marginTop: 10,
     width: 200,
-    marginLeft: "auto", // Aligns right in the right block
+    marginLeft: "auto",
   },
   dateRow: {
     flexDirection: "row",
@@ -132,12 +127,12 @@ const styles = StyleSheet.create({
     fontSize: 9,
   },
   dateLabel: {
-    color: "#6b7280", // text-gray-500
+    color: "#6b7280",
   },
   dateValue: {
-    fontWeight: "bold", // font-medium
+    fontWeight: "bold",
   },
-  // Table
+
   table: {
     width: "100%",
     borderWidth: 1,
@@ -154,7 +149,7 @@ const styles = StyleSheet.create({
   tableRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6", // divide-gray-100
+    borderBottomColor: "#f3f4f6",
   },
   th: {
     padding: 6,
@@ -178,7 +173,7 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     marginTop: 1,
   },
-  // Calculation
+
   calculationSection: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -233,14 +228,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   amountPaid: {
-    color: "#16a34a", // text-green-600
+    color: "#16a34a",
     fontWeight: "bold",
   },
   amountDue: {
-    color: "#dc2626", // text-red-600
+    color: "#dc2626",
     fontWeight: "bold",
   },
-  // Footer (Terms, Notes, Auth)
+
   footerSection: {
     marginTop: 20,
   },
@@ -260,16 +255,17 @@ const styles = StyleSheet.create({
   },
   authorizationSection: {
     flexDirection: "row",
-    gap: 20,
-    marginTop: 20,
+    gap: 1,
+    marginTop: 10,
   },
   authBox: {
-    textAlign: "center",
+    height: "60",
+    width: "130",
+    // textAlign: "center",
   },
   signatureImage: {
-    height: 40,
-    width: 100,
     objectFit: "contain",
+    alignSelf: "flex-start",
   },
   signaturePlaceholder: {
     height: 40,
@@ -280,23 +276,25 @@ const styles = StyleSheet.create({
   },
   signatureLabel: {
     fontSize: 8,
-    color: "#a1a1aa", // text-gray-400
+    color: "#a1a1aa",
     textTransform: "uppercase",
     marginTop: 2,
   },
-  // Fixed Page Footer
+
   pageFooter: {
     position: "absolute",
-    bottom: 20,
+    bottom: 30,
     left: 40,
     right: 40,
     textAlign: "center",
     fontSize: 9,
-    color: "#888888",
+    color: "#888",
+    borderTopWidth: 1,
+    borderTopColor: "#eaeaea",
+    paddingTop: 8,
   },
 });
 
-// --- Helper Functions (Copied from your component) ---
 const formatDate = (dateString) => {
   if (!dateString) return "N/A";
   try {
@@ -314,7 +312,7 @@ const getCurrencySymbol = (currencyType = "INR") => {
     case "EUR":
       return "€";
     default:
-      return "₹"; // This will now render correctly with Roboto
+      return "₹";
   }
 };
 
@@ -344,15 +342,14 @@ const formatProformaNumber = (number) => {
   return `P_INV-${numberString.padStart(6, "0")}`;
 };
 
-// Helper to get a safe Base64 string for <Image> src
 const getSafeImageSrc = (base64String) => {
   if (!base64String) return null;
   if (base64String.startsWith("data:image")) return base64String;
-  return `data:image/png;base64,${base64String}`; // Assume PNG
+  return `data:image/png;base64,${base64String}`;
 };
 
-// --- The PDF Document Component ---
 const ProformaPDF = ({ invoiceData, adminInformation }) => {
+  console.log("Invoice Data:", invoiceData);
   const calculation = useMemo(() => {
     if (!invoiceData || !invoiceData.proformaInvoiceContents) {
       return {
@@ -407,28 +404,27 @@ const ProformaPDF = ({ invoiceData, adminInformation }) => {
   const items = invoiceData.proformaInvoiceContents;
   const currency = info.currencyType || "INR";
 
-  // Dynamic styles for status
+  let s = { ...styles.statusBadge };
   const getStatusStyles = (status) => {
-    let s = { ...styles.statusBadge };
     switch (status) {
       case "Paid":
-        s.backgroundColor = "#dcfce7"; // bg-green-100
-        s.color = "#16a34a"; // text-green-600
+        s.backgroundColor = "#dcfce7";
+        s.color = "#16a34a";
         break;
       case "Partially Paid":
-        s.backgroundColor = "#fef9c3"; // bg-yellow-100
-        s.color = "#ca8a04"; // text-yellow-600
+        s.backgroundColor = "#fef9c3";
+        s.color = "#ca8a04";
         break;
-      default: // Unpaid
-        s.backgroundColor = "#fee2e2"; // bg-red-100
-        s.color = "#dc2626"; // text-red-600
+      default:
+        s.backgroundColor = "#fee2e2";
+        s.color = "#dc2626";
         break;
     }
     return s;
   };
 
   return (
-    <Document>
+    <Document title={formatProformaNumber(info.proformaInvoiceNumber)}>
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
@@ -562,7 +558,7 @@ const ProformaPDF = ({ invoiceData, adminInformation }) => {
         </View>
 
         {/* Calculation Section */}
-        <View style={styles.calculationSection}>
+        <View style={styles.calculationSection} wrap={false}>
           <View style={styles.wordsSection}>
             <Text style={styles.sectionTitle}>Amount in Words</Text>
             <Text style={styles.wordsText}>
@@ -620,7 +616,7 @@ const ProformaPDF = ({ invoiceData, adminInformation }) => {
         </View>
 
         {/* Footer (Terms, Notes, Auth) */}
-        <View style={styles.footerSection} break>
+        <View style={styles.footerSection}>
           {info.termsAndConditions && (
             <View>
               <Text style={[styles.sectionTitle, { color: "#111827" }]}>
@@ -637,35 +633,34 @@ const ProformaPDF = ({ invoiceData, adminInformation }) => {
               <Text style={styles.notesText}>{info.notes}</Text>
             </View>
           )}
-
-          <Text
-            style={[styles.sectionTitle, { color: "#111827", marginTop: 16 }]}
-          >
-            Authorization
-          </Text>
-          <View style={styles.authorizationSection}>
-            <View style={styles.authBox}>
-              {info.companySignature ? (
-                <Image
-                  src={getSafeImageSrc(info.companySignature)}
-                  style={styles.signatureImage}
-                />
-              ) : (
-                <View style={styles.signaturePlaceholder}>
-                  <Text style={styles.logoPlaceholderText}>No Signature</Text>
+          <View wrap={false}>
+            <Text
+              style={[styles.sectionTitle, { color: "#111827", marginTop: 16 }]}
+            >
+              Authorization
+            </Text>
+            <View style={styles.authorizationSection}>
+              <View style={styles.authBox}>
+                {info.companySignature ? (
+                  <Image
+                    src={getSafeImageSrc(info.companySignature)}
+                    style={styles.signatureImage}
+                  />
+                ) : (
+                  <View style={styles.signaturePlaceholder}>
+                    <Text style={styles.logoPlaceholderText}>No Signature</Text>
+                  </View>
+                )}
+              </View>
+              {info.companyStamp && (
+                <View style={styles.authBox}>
+                  <Image
+                    src={getSafeImageSrc(info.companyStamp)}
+                    style={styles.signatureImage}
+                  />
                 </View>
               )}
-              <Text style={styles.signatureLabel}>Authorized Signature</Text>
             </View>
-            {info.companyStamp && (
-              <View style={styles.authBox}>
-                <Image
-                  src={getSafeImageSrc(info.companyStamp)}
-                  style={styles.signatureImage}
-                />
-                <Text style={styles.signatureLabel}>Company Stamp</Text>
-              </View>
-            )}
           </View>
         </View>
 
@@ -673,7 +668,7 @@ const ProformaPDF = ({ invoiceData, adminInformation }) => {
         <View style={styles.pageFooter} fixed>
           <Text>Thank you for your business!</Text>
           <Text style={{ fontWeight: "bold" }}>
-            Mahendra Technosoft Pvt. Ltd.
+            {adminInformation?.companyName}
           </Text>
         </View>
       </Page>

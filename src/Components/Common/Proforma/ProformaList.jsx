@@ -4,7 +4,7 @@ import Pagination from "../pagination";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { PDFViewer } from "@react-pdf/renderer";
+import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
 import ProposalPDF from "../Proposal/ProposalPDF";
 import ProformaPDF from "./ProformaPDF";
 
@@ -319,15 +319,16 @@ function ProformaList() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {proforma.dueDate}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <td className="py-4 whitespace-nowrap text-sm text-gray-900">
                             <span
-                              className={`ml-2 inline-block px-3 py-1 rounded text-xs font-semibold uppercase tracking-wide ${
+                              className={`ml-2 inline-block px-3 py-1 rounded text-xs text-center font-semibold uppercase tracking-wide ${
                                 proforma.status === "Paid"
                                   ? "bg-green-100 text-green-600"
                                   : proforma.status === "Partially Paid"
                                   ? "bg-yellow-100 text-yellow-600"
                                   : "bg-red-100 text-red-600"
                               }`}
+                              style={{ minWidth: 120 }}
                             >
                               {proforma.status?.toUpperCase()}
                             </span>
@@ -469,17 +470,29 @@ function ProformaList() {
             <div className="proposal-pdf-modal-header">
               <h3>
                 {selectedProformaData
-                  ? formatProformaNumber(selectedProformaData.proformaInvoiceId)
+                  ? formatProformaNumber(
+                      selectedProformaData.proformaInvoiceInfo
+                        .proformaInvoiceNumber
+                    )
                   : "Loading..."}
               </h3>
               <div style={{ display: "flex", gap: "10px" }}>
                 {/* --- Download Button --- */}
-                {/* {!isPdfLoading && selectedProposalData && (
+                {!isPdfLoading && selectedProformaData && (
                   <PDFDownloadLink
-                    document={<ProposalPDF data={selectedProposalData} />}
+                    document={
+                      <ProformaPDF
+                        invoiceData={selectedProformaData}
+                        adminInformation={adminInformation}
+                      />
+                    }
                     fileName={
-                      `Proposal-${selectedProposalData.proposalInfo.proposalNumber}-${selectedProposalData.proposalInfo.companyName}.pdf` ||
-                      "proposal.pdf"
+                      `${formatProformaNumber(
+                        selectedProformaData.proformaInvoiceInfo
+                          .proformaInvoiceNumber
+                      )}-${
+                        selectedProformaData.proformaInvoiceInfo.companyName
+                      }.pdf` || "proforma.pdf"
                     }
                     title="Download PDF"
                     className="download-button-icon-wrapper"
@@ -520,7 +533,7 @@ function ProformaList() {
                       )
                     }
                   </PDFDownloadLink>
-                )} */}
+                )}
 
                 {/* --- Close Button --- */}
                 <button
@@ -546,7 +559,8 @@ function ProformaList() {
               ) : (
                 <PDFViewer width="100%" height="100%">
                   <ProformaPDF
-                    data={{ selectedProformaData, adminInformation }}
+                    invoiceData={selectedProformaData}
+                    adminInformation={adminInformation}
                   />
                 </PDFViewer>
               )}

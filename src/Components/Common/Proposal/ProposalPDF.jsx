@@ -10,7 +10,6 @@ import {
   Font,
 } from "@react-pdf/renderer";
 import { ToWords } from "to-words";
-import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
 import RobotoRegular from "../../../../public/fonts/Roboto-Regular.ttf";
 import RobotoBold from "../../../../public/fonts/Roboto-Bold.ttf";
 
@@ -282,7 +281,7 @@ const styles = StyleSheet.create({
     borderColor: "#eaeaea",
     backgroundColor: "#f9f9f9",
     justifyContent: "center",
-    alignItems: "center",     
+    alignItems: "center",
     padding: 5,
   },
   logoPlaceholderText: {
@@ -398,19 +397,19 @@ const ProposalPDF = ({ data }) => {
         {/* 1. Header (No Changes) */}
         <View style={styles.header}>
           {adminInformation.logo ? (
-          <View style={styles.imageBlock}>
-            <Image
-              style={styles.image}
-              src={`data:;base64,${adminInformation.logo}`}
-            />
-          </View>
-        ) : (
-          <View style={styles.logoPlaceholder}>
-            <Text style={styles.logoPlaceholderText}>
-              Company logo not provided
-            </Text>
-          </View>
-        )}
+            <View style={styles.imageBlock}>
+              <Image
+                style={styles.image}
+                src={`data:;base64,${adminInformation.logo}`}
+              />
+            </View>
+          ) : (
+            <View style={styles.logoPlaceholder}>
+              <Text style={styles.logoPlaceholderText}>
+                Company logo not provided
+              </Text>
+            </View>
+          )}
           <View style={styles.headerInfo}>
             <Text style={styles.title}>PROPOSAL</Text>
             <View style={styles.proposalNumber}>
@@ -600,7 +599,9 @@ const ProposalPDF = ({ data }) => {
         {/* 9. Footer (No Changes) */}
         <View style={styles.footer} fixed>
           <Text>Thank you for your business!</Text>
-          <Text>Mahendra Technosoft Pvt. Ltd.</Text>
+          <Text style={{ fontWeight: "bold" }}>
+            {adminInformation?.companyName}
+          </Text>
         </View>
       </Page>
     </Document>
