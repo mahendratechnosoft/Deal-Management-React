@@ -169,7 +169,6 @@ function App() {
             }
           />
 
-
           <Route
             path="/Admin/EditPayment/:paymentId"
             element={
@@ -184,6 +183,78 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                 <PaymentPreview />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Proposal"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <ProposalList />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Proposal/Create"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
+                <CreateProposal />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Proposal/Edit/:proposalId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
+                <EditProposal />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Proposal/Preview/:proposalId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
+                <ProposalPreview />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Proforma"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <ProformaList />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Proforma/Create"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
+                <CreateProforma />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Proforma/Edit/:proformaInvoiceId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
+                <EditProforma />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Proforma/Preview/:proformaInvoiceId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
+                <ProformaPreview />
               </RoleBasedRoute>
             }
           />
@@ -268,16 +339,6 @@ function App() {
           />
 
           <Route
-            path="/Proposal"
-            element={
-              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
-                <ProposalList />
-              </RoleBasedRoute>
-            }
-          />
-
-
-          <Route
             path="/Employee/Payment"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
@@ -286,39 +347,11 @@ function App() {
             }
           />
 
-
-
           <Route
             path="/Employee/EditPayment/:paymentId"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
                 <EditPayment />
-              </RoleBasedRoute>
-            }
-          />
-          <Route
-            path="/Proposal/Create"
-            element={
-              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
-                <CreateProposal />
-              </RoleBasedRoute>
-            }
-          />
-
-          <Route
-            path="/Proposal/Edit/:proposalId"
-            element={
-              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
-                <EditProposal />
-              </RoleBasedRoute>
-            }
-          />
-
-          <Route
-            path="/Proposal/Preview/:proposalId"
-            element={
-              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
-                <ProposalPreview />
               </RoleBasedRoute>
             }
           />
@@ -332,41 +365,14 @@ function App() {
             }
           />
           <Route
-            path="/Proforma"
+            path="/Employee/Proforma"
             element={
-              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
                 <ProformaList />
               </RoleBasedRoute>
             }
           />
 
-          <Route
-            path="/Proforma/Create"
-            element={
-              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
-                <CreateProforma />
-              </RoleBasedRoute>
-            }
-          />
-
-          <Route
-            path="/Proforma/Edit/:proformaInvoiceId"
-            element={
-              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
-                <EditProforma />
-              </RoleBasedRoute>
-            }
-          />
-
-          <Route
-            path="/Proforma/Preview/:proformaInvoiceId"
-            element={
-              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
-                <ProformaPreview />
-              </RoleBasedRoute>
-            }
-          />
-          
           <Route
             path="/Employee/TimesheetList"
             element={
@@ -375,7 +381,6 @@ function App() {
               </RoleBasedRoute>
             }
           />
-
 
           {/* Settings Routes */}
           <Route

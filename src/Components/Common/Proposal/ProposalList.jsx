@@ -238,149 +238,198 @@ function ProposalList() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-          <div className="overflow-x-auto">
-            <div className="relative">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50 sticky top-0">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Proposal #
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Subject
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      To
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Total
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Valid Till
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <table className="min-w-full divide-y divide-gray-200 table-fixed w-full">
+            <thead className="bg-gray-50 sticky top-0">
+              <tr>
+                <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Proposal #
+                </th>
+                <th className="w-[28%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Subject
+                </th>
+                <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  To
+                </th>
+                <th className="w-[12%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Total
+                </th>
+                <th className="w-[10%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="w-[10%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Valid Till
+                </th>
+                <th className="w-[10%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+              </tr>
+            </thead>
 
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {listLoading
-                    ? [...Array(pageSize)].map((_, index) => (
-                        <SkeletonRow key={index} />
-                      ))
-                    : proposals.map((proposal) => (
-                        <tr key={proposal.id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
-                            {formatProposalNumber(proposal.proposalNumber)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {proposal.subject}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {proposal.companyName}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {formatCurrency(
-                              proposal.totalAmmount,
-                              proposal.currencyType
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {proposal.proposalDate}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {proposal.dueDate}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {proposal.status}
-                          </td>
-                          <td className="px-6 py-1 whitespace-nowrap text-sm font-medium">
-                            <div className="flex items-center gap-3">
-                              <button
-                                title="Edit"
-                                onClick={() => handleEdit(proposal.proposalId)}
-                                className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
-                              >
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                  />
-                                </svg>
-                              </button>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {listLoading
+                ? [...Array(pageSize)].map((_, index) => (
+                    <SkeletonRow key={index} />
+                  ))
+                : proposals.map((proposal) => (
+                    <tr
+                      key={proposal.id}
+                      className="hover:bg-gray-50 transition-colors duration-150 group cursor-pointer"
+                      onClick={() => handlePreview(proposal.proposalId)}
+                    >
+                      <td
+                        className="px-4 py-1 truncate text-sm text-gray-900 font-bold relative"
+                        title={formatProposalNumber(proposal.proposalNumber)}
+                      >
+                        {formatProposalNumber(proposal.proposalNumber)}
 
-                              <button
-                                title="Preview"
-                                onClick={() =>
-                                  handlePreview(proposal.proposalId)
-                                }
-                                className="text-blue-600 hover:text-blue-900 font-medium transition-colors duration-200 flex items-center gap-1"
-                              >
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                  />
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                  />
-                                </svg>
-                              </button>
-                              <button
-                                title="View PDF"
-                                onClick={() =>
-                                  handleOpenPdfPreview(proposal.proposalId)
-                                }
-                                className="text-red-600 hover:text-red-900"
-                              >
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                  ></path>
-                                </svg>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                        <div className="flex items-center gap-3 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          {/* Edit Button */}
+                          <button
+                            title="Edit"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(proposal.proposalId);
+                            }}
+                            className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
+                          >
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                            Edit
+                          </button>
+
+                          {/* Preview Button */}
+                          <button
+                            title="Preview"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePreview(proposal.proposalId);
+                            }}
+                            className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
+                          >
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                              />
+                            </svg>
+                            Preview
+                          </button>
+
+                          {/* PDF Button */}
+                          <button
+                            title="View PDF"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenPdfPreview(proposal.proposalId);
+                            }}
+                            className="text-gray-500 hover:text-red-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
+                          >
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              ></path>
+                            </svg>
+                            PDF
+                          </button>
+                        </div>
+                      </td>
+                      <td
+                        className="px-4 py-4 truncate text-sm text-gray-900"
+                        title={proposal.subject}
+                      >
+                        {proposal.subject}
+                      </td>
+                      <td
+                        className="px-4 py-4 truncate text-sm text-gray-900"
+                        title={proposal.companyName}
+                      >
+                        {proposal.companyName}
+                      </td>
+                      <td
+                        className="px-4 py-4 truncate text-sm text-gray-900 "
+                        title={formatCurrency(
+                          proposal.totalAmmount,
+                          proposal.currencyType
+                        )}
+                      >
+                        {formatCurrency(
+                          proposal.totalAmmount,
+                          proposal.currencyType
+                        )}
+                      </td>
+                      <td
+                        className="px-4 py-4 truncate text-sm text-gray-900 "
+                        title={proposal.proposalDate}
+                      >
+                        {proposal.proposalDate}
+                      </td>
+                      <td
+                        className="px-4 py-4 truncate text-sm text-gray-900 "
+                        title={proposal.dueDate}
+                      >
+                        {proposal.dueDate}
+                      </td>
+                      <td
+                        className="px-4 py-4 text-sm text-gray-900"
+                        title={proposal.status}
+                      >
+                        <span
+                          className={`inline-block w-24 truncate px-3 py-1 rounded text-xs text-center font-semibold uppercase tracking-wide ${
+                            proposal.status === "Accepted"
+                              ? "bg-green-100 text-green-600"
+                              : proposal.status === "Declined"
+                              ? "bg-red-100 text-red-600"
+                              : proposal.status === "Sent" ||
+                                proposal.status === "Open"
+                              ? "bg-blue-100 text-blue-600"
+                              : proposal.status === "Revised"
+                              ? "bg-yellow-100 text-yellow-600"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                          title={proposal.status?.toUpperCase()}
+                        >
+                          {proposal.status?.toUpperCase()}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+            </tbody>
+          </table>
+
           {proposals.length === 0 && !listLoading && (
             <div className="text-center py-12">
               <svg
