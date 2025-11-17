@@ -39,6 +39,7 @@ import PaymentList from "./Components/Common/Payment/PaymentList.jsx";
 import PaymentPreview from "./Components/Common/Payment/PaymentPreview.jsx";
 import EditPayment from "./Components/Common/Payment/EditPayment.jsx";
 import ProformaPreview from "./Components/Common/Proforma/ProformaPreview.jsx";
+import TimeSheetList from "./Components/Common/Timesheet/TimeSheetList.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -183,6 +184,15 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                 <PaymentPreview />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Admin/TimesheetList"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <TimeSheetList />
               </RoleBasedRoute>
             }
           />
@@ -356,6 +366,16 @@ function App() {
               </RoleBasedRoute>
             }
           />
+          
+          <Route
+            path="/Employee/TimesheetList"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                <TimeSheetList />
+              </RoleBasedRoute>
+            }
+          />
+
 
           {/* Settings Routes */}
           <Route
