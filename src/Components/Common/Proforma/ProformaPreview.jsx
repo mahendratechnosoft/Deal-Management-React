@@ -139,7 +139,7 @@ function ProformaPreview() {
         setAdminInformation(adminInfo);
 
         const response = await axiosInstance.get(
-          `/admin/getProformaInvoiceById/${proformaInvoiceId}`
+          `getProformaInvoiceById/${proformaInvoiceId}`
         );
 
         if (response.data) {

@@ -23,7 +23,7 @@ function CreateProposal() {
   const [companyMediaLoading, setCompanyMediaLoading] = useState(true);
 
   const [proposalInfo, setProposalInfo] = useState({
-    employeeId: "",
+    employeeId: null,
     assignTo: "",
     proposalNumber: "",
     currencyType: "INR",
