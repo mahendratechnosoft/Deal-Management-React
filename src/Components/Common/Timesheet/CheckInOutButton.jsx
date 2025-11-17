@@ -103,10 +103,10 @@ const CheckInOutButton = () => {
 
   return (
     <div className="flex items-center space-x-3">
-      {/* SIMPLIFIED TIMER BLOCK - No Icon */}
+      {/* SIMPLIFIED TIMER BLOCK - No Title, Only Time */}
       <div className="
-        flex items-center
-        px-4 py-2.5
+        flex items-center justify-center
+        px-4
         bg-white/10
         backdrop-blur-2xl 
         rounded-xl
@@ -114,20 +114,15 @@ const CheckInOutButton = () => {
         shadow-[0px_4px_20px_rgba(0,0,0,0.15)]
         transition-all duration-300
         hover:bg-white/15
-        h-12
+        h-8  /* Reduced height to match profile */
       ">
-        {/* Time Display Only */}
-        <div className="flex flex-col items-center justify-center min-w-[100px]">
-          <div className="text-xs font-medium text-blue-100 uppercase tracking-wider mb-0.5">
-            {isCheckedIn ? "Active" : "Today"}
-          </div>
-          <div className="text-lg font-mono font-bold tracking-wider text-white drop-shadow-lg">
-            {formatTime(totalSeconds)}
-          </div>
+        {/* Time Display Only - No Status Text */}
+        <div className="text-lg font-mono font-bold tracking-wider text-white drop-shadow-lg">
+          {formatTime(totalSeconds)}
         </div>
       </div>
 
-      {/* ICON-ONLY CHECK IN / OUT BUTTON */}
+      {/* ICON-ONLY CHECK IN / OUT BUTTON - Height adjusted to match profile */}
       <div className="relative">
         <button
           onClick={toggleCheck}
@@ -137,7 +132,7 @@ const CheckInOutButton = () => {
           className={`
             relative
             flex items-center justify-center
-            w-12 h-12
+            w-8 h-8  /* Reduced to match profile height */
             rounded-xl
             font-semibold 
             text-white 
@@ -163,17 +158,17 @@ const CheckInOutButton = () => {
           {/* Loading Spinner */}
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm rounded-xl">
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             </div>
           )}
 
-          {/* Animated Play/Pause Icons */}
+          {/* Animated Play/Pause Icons - Adjusted size */}
           <div className="relative z-10 transform transition-all duration-300 group-hover:scale-110">
             {isCheckedIn ? (
               // Pause Icon (Check Out)
               <svg 
-                width="20" 
-                height="20" 
+                width="16" 
+                height="16" 
                 viewBox="0 0 24 24" 
                 fill="none" 
                 className="transform transition-transform duration-300 group-hover:scale-110"
@@ -184,8 +179,8 @@ const CheckInOutButton = () => {
             ) : (
               // Play Icon (Check In)
               <svg 
-                width="20" 
-                height="20" 
+                width="16" 
+                height="16" 
                 viewBox="0 0 24 24" 
                 fill="none" 
                 className="transform transition-transform duration-300 group-hover:scale-110 ml-0.5"
@@ -199,12 +194,12 @@ const CheckInOutButton = () => {
             )}
           </div>
 
-          {/* Status Indicator Dot */}
+          {/* Status Indicator Dot - Adjusted size and position */}
           <div className={`
-            absolute -top-1 -right-1
-            w-2.5 h-2.5 
+            absolute -top-0.5 -right-0.5
+            w-2 h-2 
             rounded-full 
-            border-2 border-white
+            border border-white
             transition-all duration-300
             ${isCheckedIn ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}
             ${isLoading ? 'opacity-50' : ''}
