@@ -19,3 +19,18 @@
 
 }
 }
+
+
+@media (max-width: 800px) {
+  .timesheet-responsive {
+    overflow-x: scroll !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent content from shrinking */
+  .timesheet-responsive table,
+  .timesheet-responsive .grid,
+  .timesheet-responsive .min-w-override {
+    min-width: 900px !important;
+  }
+}

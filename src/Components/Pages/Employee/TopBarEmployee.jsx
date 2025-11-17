@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
+import CheckInOutButton from "../../Common/Timesheet/CheckInOutButton";
 
 function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -119,8 +120,8 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
                 </div>
               )}
             </div>
-          </div>
-
+          </div> 
+            <CheckInOutButton />
           {/* User Profile */}
           <div className="relative">
             <button

@@ -132,6 +132,27 @@ function Sidebar({ isOpen, toggleSidebar }) {
   ),
   color: "from-emerald-500 to-lime-500",
 },
+{
+  name: "Timesheet",
+  path: "/Admin/TimesheetList",
+  icon: (
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+  ),
+color: "from-fuchsia-500 to-purple-600",
+},
+
     {
     name: "Settings",
     path: "/Admin/Settings",
