@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
 import toast from "react-hot-toast";
@@ -145,10 +145,7 @@ function TimeSheetList() {
     const [attendance, setAttendance] = useState({});
     const [loading, setLoading] = useState(false);
 
-    const [hoverPopup, setHoverPopup] = useState(null);
-    const hoverTimeoutRef = useRef(null);
-    const popupRef = useRef(null);
-
+    const [clickPopup, setClickPopup] = useState(null);
     const [employeeOptions, setEmployeeOptions] = useState([]);
     const [selectedEmployee, setSelectedEmployee] = useState({ value: "all", label: "All Employees" });
 
@@ -352,51 +349,20 @@ function TimeSheetList() {
         };
     };
 
-    const onDayBoxEnter = (e, employeeName, dateKey, records) => {
-        // Clear any existing timeout
-        if (hoverTimeoutRef.current) {
-            clearTimeout(hoverTimeoutRef.current);
-        }
 
-        if (!records || records.length === 0) {
-            setHoverPopup(null);
-            return;
-        }
 
-        const rect = e.currentTarget.getBoundingClientRect();
+    const onDayBoxClick = (employeeName, dateKey, records) => {
+        if (!records || records.length === 0) return;
 
-        const position = calculatePopupPosition(rect);
-
-        hoverTimeoutRef.current = setTimeout(() => {
-            setHoverPopup({
-                employeeName,
-                dateKey,
-                records,
-                position,
-            });
-        }, 150); // Slight delay for stability
+        setClickPopup({
+            employeeName,
+            dateKey,
+            records,
+        });
     };
 
-    const onDayBoxLeave = () => {
-        if (hoverTimeoutRef.current) {
-            clearTimeout(hoverTimeoutRef.current);
-        }
-
-        hoverTimeoutRef.current = setTimeout(() => {
-            setHoverPopup(null);
-        }, 200); // Delay hiding for better UX
-    };
-
-    const onPopupEnter = () => {
-        if (hoverTimeoutRef.current) {
-            clearTimeout(hoverTimeoutRef.current);
-        }
-    };
-
-    const onPopupLeave = () => {
-        hoverTimeoutRef.current = setTimeout(() => {
-            setHoverPopup(null);
-        }, 200);
+    const closePopup = () => {
+        setClickPopup(null);
     };
 
     // Get color for a day cell
@@ -425,14 +391,6 @@ function TimeSheetList() {
 
     const periodLabel = getPeriodLabel(viewType, currentDate);
 
-    // Cleanup timeout on unmount
-    useEffect(() => {
-        return () => {
-            if (hoverTimeoutRef.current) {
-                clearTimeout(hoverTimeoutRef.current);
-            }
-        };
-    }, []);
 
     // ------------------------------------------------
     // RENDER
@@ -499,14 +457,16 @@ function TimeSheetList() {
             <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
 
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-                    {/* LEFT SECTION - Main Titles */}
-                    <div className="flex-shrink-0">
-                        <div className="mb-2">
-                            <h1 className="text-2xl font-bold text-gray-900">Timesheets</h1>
-                            <p className="text-gray-600 text-sm mt-1">Professional Suite</p>
+                    <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-900">Timesheets</h1>
+                                <p className="text-gray-600 text-sm mt-1">Professional Suite</p>
+                            </div>
                         </div>
-
                     </div>
+
 
                     {/* RIGHT SECTION - All Controls */}
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1 ml-auto">
@@ -607,365 +567,538 @@ function TimeSheetList() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
-                                            {/* ---- NO DATA MESSAGE ---- */}
-                {noData && (
-                    <tr>
-                        <td colSpan={5} className="text-center py-6 text-gray-500 text-sm">
-                            No attendance records found
-                        </td>
-                    </tr>
-                )}
+                                        {/* ---- NO DATA MESSAGE ---- */}
+                                        {noData && (
+                                            <tr>
+                                                <td colSpan={5} className="text-center py-6 text-gray-500 text-sm">
+                                                    No attendance records found
+                                                </td>
+                                            </tr>
+                                        )}
 
-                {/* ---- EMPLOYEE ROWS ---- */}
-                {!noData &&
-                    employeeNames.map((emp) => {
-                        const empData = attendance[emp] || {};
-                        const records = empData[range.from] || [];
+                                        {/* ---- EMPLOYEE ROWS ---- */}
+                                        {!noData &&
+                                            employeeNames.map((emp) => {
+                                                const empData = attendance[emp] || {};
+                                                const records = empData[range.from] || [];
 
-                        const pairs = buildTimePairs(records);
-                        const totalMs = getTotalTimeFromPairs(pairs);
+                                                const pairs = buildTimePairs(records);
+                                                const totalMs = getTotalTimeFromPairs(pairs);
 
-                        const firstIn =
-                            pairs.length > 0 ? new Date(pairs[0].in.timeStamp) : null;
+                                                const firstIn =
+                                                    pairs.length > 0 ? new Date(pairs[0].in.timeStamp) : null;
 
-                        const lastPair = pairs[pairs.length - 1];
-                        const lastOut = lastPair?.out
-                            ? new Date(lastPair.out.timeStamp)
-                            : null;
+                                                const lastPair = pairs[pairs.length - 1];
+                                                const lastOut = lastPair?.out
+                                                    ? new Date(lastPair.out.timeStamp)
+                                                    : null;
 
-                        return (
-                            <tr
-                                key={emp}
-                                className="hover:bg-gray-50 transition-colors duration-150"
-                            >
-                                <td className="px-6 py-4 flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-sm font-semibold text-blue-700">
+                                                return (
+                                                    <tr
+                                                        key={emp}
+                                                        className="hover:bg-gray-50 transition-colors duration-150"
+                                                    >
+                                                        <td className="px-6 py-4 flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-sm font-semibold text-blue-700">
+                                                                {emp?.trim()?.charAt(0)?.toUpperCase() || "?"}
+                                                            </div>
+                                                            <span className="font-medium text-gray-900">{emp}</span>
+                                                        </td>
+
+                                                        <td className="px-6 py-4 text-gray-700">
+                                                            {firstIn ? formatTime(firstIn) : "-"}
+                                                        </td>
+
+                                                        <td className="px-6 py-4 text-gray-700">
+                                                            {lastOut ? formatTime(lastOut) : "-"}
+                                                        </td>
+
+                                                        <td className="px-6 py-4">
+                                                            {records.length > 0 ? (
+                                                                <button
+                                                                    onClick={() => onDayBoxClick(emp, range.from, records)}
+                                                                    className="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
+                                                                >
+                                                                    View Logs
+                                                                </button>
+                                                            ) : (
+                                                                <span className="text-gray-400 text-xs">No logs</span>
+                                                            )}
+                                                        </td>
+
+                                                        <td className="px-6 py-4 font-semibold text-gray-900">
+                                                            {formatDuration(totalMs)}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <>
+                                    {/* ---- NO DATA MESSAGE FOR WEEKLY / MONTHLY ---- */}
+                                    {noData && (
+                                        <div className="py-8 text-center text-gray-500 text-sm">
+                                            No attendance records found
+                                        </div>
+                                    )}
+
+                                  {/* ---------------------- MONTHLY VIEW ---------------------- */}
+{viewType === "monthly" && !noData && (
+    <div className="w-full">
+        {/* Desktop View (md and above) */}
+        <div className="hidden md:block overflow-x-auto">
+            <div className="flex border-b border-gray-200 bg-gray-50 min-w-max">
+                <div className="px-6 py-4 w-60 text-sm font-semibold text-gray-900 sticky left-0 bg-gray-50 z-10">
+                    Member
+                </div>
+
+                <div className="flex flex-1">
+                    {dateList.map(({ key, date }) => (
+                        <div key={key} className="text-center py-2 min-w-[30px] flex-1">
+                            <div className="text-gray-500 text-xs font-medium mb-1">
+                                {DAY_LETTERS[date.getDay()]}
+                            </div>
+                            <div className="font-semibold text-gray-900 text-sm">
+                                {date.getDate()}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="px-6 py-4 w-24 text-right text-sm font-semibold text-gray-900 sticky right-0 bg-gray-50">
+                    Total
+                </div>
+            </div>
+
+            {/* Employee rows - Desktop */}
+            {employeeNames.map((emp) => {
+                const empData = attendance[emp] || {};
+                let totalMs = 0;
+
+                dateList.forEach(({ key }) => {
+                    const records = empData[key] || [];
+                    totalMs += getTotalTimeFromPairs(buildTimePairs(records));
+                });
+
+                return (
+                    <div
+                        key={emp}
+                        className="flex items-stretch border-b border-gray-200 hover:bg-gray-50 min-w-max"
+                    >
+                        <div className="px-6 py-4 w-60 flex items-center gap-3 sticky left-0 bg-white z-10">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-sm font-semibold text-blue-700 flex-shrink-0">
+                                {emp?.trim()?.charAt(0)?.toUpperCase() || "?"}
+                            </div>
+                            <span className="text-sm font-medium text-gray-900 whitespace-nowrap truncate">
+                                {emp}
+                            </span>
+                        </div>
+
+                        <div className="flex flex-1 py-4">
+                            {dateList.map(({ key }) => {
+                                const records = empData[key] || [];
+                                const color = getDayColor(key, emp, false);
+
+                                return (
+                                    <div
+                                        key={key}
+                                        className="flex justify-center items-center min-w-[30px] flex-1"
+                                    >
+                                        <div
+                                            className="w-5 h-5 rounded-lg cursor-pointer border-2 border-gray-100 hover:border-gray-300 transition-all duration-200 hover:scale-110"
+                                            style={{ backgroundColor: color }}
+                                            onClick={() => onDayBoxClick(emp, key, records)}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <div className="px-6 py-4 w-24 text-right text-sm font-semibold text-gray-900 sticky right-0 bg-white">
+                            {formatDuration(totalMs)}
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+
+        {/* Mobile View (below md) */}
+        <div className="md:hidden">
+            {/* Mobile Header */}
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
+                <div className="text-sm font-semibold text-gray-900">Monthly View</div>
+                <div className="text-xs text-gray-600 text-right">
+                    {periodLabel}
+                </div>
+            </div>
+
+            {/* Mobile Employee Cards */}
+            <div className="divide-y divide-gray-200">
+                {employeeNames.map((emp) => {
+                    const empData = attendance[emp] || {};
+                    let totalMs = 0;
+                    let presentDays = 0;
+                    let absentDays = 0;
+
+                    dateList.forEach(({ key }) => {
+                        const records = empData[key] || [];
+                        totalMs += getTotalTimeFromPairs(buildTimePairs(records));
+                        if (records.length > 0) {
+                            presentDays++;
+                        } else {
+                            absentDays++;
+                        }
+                    });
+
+                    return (
+                        <div key={emp} className="p-4 hover:bg-gray-50">
+                            {/* Employee Header Mobile */}
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-sm font-semibold text-blue-700 flex-shrink-0">
                                         {emp?.trim()?.charAt(0)?.toUpperCase() || "?"}
                                     </div>
-                                    <span className="font-medium text-gray-900">{emp}</span>
-                                </td>
-
-                                <td className="px-6 py-4 text-gray-700">
-                                    {firstIn ? formatTime(firstIn) : "-"}
-                                </td>
-
-                                <td className="px-6 py-4 text-gray-700">
-                                    {lastOut ? formatTime(lastOut) : "-"}
-                                </td>
-
-                                <td className="px-6 py-4">
-                                    {records.length > 0 ? (
-                                        <button
-                                            onMouseEnter={(e) =>
-                                                onDayBoxEnter(e, emp, range.from, records)
-                                            }
-                                            onMouseLeave={onDayBoxLeave}
-                                            className="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
-                                        >
-                                            View Logs
-                                        </button>
-                                    ) : (
-                                        <span className="text-gray-400 text-xs">No logs</span>
-                                    )}
-                                </td>
-
-                                <td className="px-6 py-4 font-semibold text-gray-900">
-                                    {formatDuration(totalMs)}
-                                </td>
-                            </tr>
-                        );
-                    })}
-            </tbody>
-        </table>
-    ) : (
-        <>
-            {/* ---- NO DATA MESSAGE FOR WEEKLY / MONTHLY ---- */}
-            {noData && (
-                <div className="py-8 text-center text-gray-500 text-sm">
-                    No attendance records found
-                </div>
-            )}
-
-            {/* ---------------------- MONTHLY VIEW ---------------------- */}
-            {viewType === "monthly" && !noData && (
-                <div className="w-full">
-                    <div className="flex border-b border-gray-200 bg-gray-50">
-                        <div className="px-6 py-4 w-60 text-sm font-semibold text-gray-900">
-                            Member
-                        </div>
-
-                        <div
-                            className="grid flex-1"
-                            style={{
-                                gridTemplateColumns: `repeat(${dateList.length}, 1fr)`
-                            }}
-                        >
-                            {dateList.map(({ key, date }) => (
-                                <div key={key} className="text-center text-[10px] py-2">
-                                    <div className="text-gray-500 font-medium mb-1">
-                                        {DAY_LETTERS[date.getDay()]}
-                                    </div>
-                                    <div className="font-semibold text-gray-900 text-sm">
-                                        {date.getDate()}
+                                    <div className="min-w-0 flex-1">
+                                        <div className="text-sm font-medium text-gray-900 truncate">
+                                            {emp}
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                            Total: {formatDuration(totalMs)}
+                                        </div>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                            </div>
 
-                        <div className="px-6 py-4 w-24 text-right text-sm font-semibold text-gray-900">
-                            Total
-                        </div>
-                    </div>
-
-                    {/* Employee rows */}
-                    {employeeNames.map((emp) => {
-                        const empData = attendance[emp] || {};
-                        let totalMs = 0;
-
-                        dateList.forEach(({ key }) => {
-                            const records = empData[key] || [];
-                            totalMs += getTotalTimeFromPairs(buildTimePairs(records));
-                        });
-
-                        return (
-                            <div
-                                key={emp}
-                                className="flex items-stretch border-b border-gray-200 hover:bg-gray-50"
-                            >
-                                <div className="px-6 py-4 w-60 flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-sm font-semibold text-blue-700">
-                                        {emp.trim().charAt(0).toUpperCase()}
-                                    </div>
-                                    <span className="text-sm font-medium text-gray-900">
-                                        {emp}
-                                    </span>
+                            {/* Monthly Summary Stats */}
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div className="text-center p-2 bg-green-50 rounded-lg">
+                                    <div className="text-green-700 font-semibold text-sm">{presentDays}</div>
+                                    <div className="text-green-600 text-xs">Present</div>
                                 </div>
+                                <div className="text-center p-2 bg-red-50 rounded-lg">
+                                    <div className="text-red-700 font-semibold text-sm">{absentDays}</div>
+                                    <div className="text-red-600 text-xs">Absent</div>
+                                </div>
+                            </div>
 
-                                <div
-                                    className="grid flex-1 py-4"
-                                    style={{
-                                        gridTemplateColumns: `repeat(${dateList.length}, 1fr)`
-                                    }}
-                                >
-                                    {dateList.map(({ key }) => {
+                            {/* Monthly Calendar Grid Mobile */}
+                            <div className="mb-3">
+                                <div className="grid grid-cols-7 gap-1 mb-2">
+                                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                                        <div key={index} className="text-center text-xs font-medium text-gray-500 py-1">
+                                            {day}
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                <div className="grid grid-cols-7 gap-1">
+                                    {dateList.map(({ key, date }) => {
                                         const records = empData[key] || [];
                                         const color = getDayColor(key, emp, false);
 
                                         return (
                                             <div
                                                 key={key}
-                                                className="flex justify-center items-center"
+                                                className="aspect-square flex items-center justify-center relative"
+                                                onClick={() => onDayBoxClick(emp, key, records)}
                                             >
                                                 <div
-                                                    className="w-5 h-5 rounded-lg cursor-pointer border-2 border-gray-100 hover:border-gray-300 transition-all duration-200 hover:scale-110"
+                                                    className="w-6 h-6 rounded-md cursor-pointer border border-gray-200 flex items-center justify-center text-xs font-medium"
                                                     style={{ backgroundColor: color }}
-                                                    onMouseEnter={(e) =>
-                                                        onDayBoxEnter(e, emp, key, records)
-                                                    }
-                                                    onMouseLeave={onDayBoxLeave}
-                                                />
+                                                >
+                                                    {date.getDate()}
+                                                </div>
                                             </div>
                                         );
                                     })}
                                 </div>
+                            </div>
 
-                                <div className="px-6 py-4 w-24 text-right text-sm font-semibold text-gray-900">
-                                    {formatDuration(totalMs)}
+                            {/* Legend */}
+                            <div className="flex justify-center gap-4 text-xs">
+                                <div className="flex items-center gap-1">
+                                    <div className="w-3 h-3 rounded bg-red-200"></div>
+                                    <span className="text-gray-600">Absent</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <div className="w-3 h-3 rounded bg-blue-200"></div>
+                                    <span className="text-gray-600">Present</span>
                                 </div>
                             </div>
-                        );
-                    })}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    </div>
+)}
+{/* ---------------------- WEEKLY VIEW ---------------------- */}
+{viewType === "weekly" && !noData && (
+    <div className="w-full">
+        {/* Desktop View (md and above) */}
+        <div className="hidden md:block overflow-x-auto">
+            <div className="flex border-b border-gray-200 bg-gray-50 min-w-max">
+                <div className="px-6 py-4 w-60 text-sm font-semibold text-gray-900 sticky left-0 bg-gray-50 z-10">
+                    Member
                 </div>
-            )}
-
-            {/* ---------------------- WEEKLY VIEW ---------------------- */}
-            {viewType === "weekly" && !noData && (
-                <div className="w-full">
-
-                    <div className="flex border-b border-gray-200 bg-gray-50">
-                        <div className="px-6 py-4 w-60 text-sm font-semibold text-gray-900">
-                            Member
-                        </div>
-
-                        <div
-                            className="grid flex-1"
-                            style={{ gridTemplateColumns: "repeat(7, 1fr)" }}
+                
+                <div className="flex flex-1">
+                    {dateList.map(({ key, date }) => (
+                        <div 
+                            key={key} 
+                            className="text-center py-2 min-w-[100px] flex-1"
                         >
-                            {dateList.map(({ key, date }) => (
-                                <div key={key} className="text-center py-2">
-                                    <div className="text-gray-500 text-xs">
-                                        {DAY_LETTERS[date.getDay()]}
-                                    </div>
-                                    <div className="font-semibold text-gray-900 text-sm">
-                                        {date.getDate()}
-                                    </div>
-                                </div>
-                            ))}
+                            <div className="text-gray-500 text-xs font-medium">
+                                {DAY_LETTERS[date.getDay()]}
+                            </div>
+                            <div className="font-semibold text-gray-900 text-sm">
+                                {date.getDate()}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="px-6 py-4 w-24 text-right text-sm font-semibold text-gray-900 sticky right-0 bg-gray-50">
+                    Total
+                </div>
+            </div>
+
+            {/* Employee Rows - Desktop */}
+            {employeeNames.map((emp) => {
+                const empData = attendance[emp] || {};
+                let totalMs = 0;
+
+                dateList.forEach(({ key }) => {
+                    const records = empData[key] || [];
+                    totalMs += getTotalTimeFromPairs(buildTimePairs(records));
+                });
+
+                return (
+                    <div
+                        key={emp}
+                        className="flex border-b border-gray-200 hover:bg-gray-50 min-w-max"
+                    >
+                        {/* Employee Profile - Desktop */}
+                        <div className="px-6 py-4 w-60 flex items-center gap-3 sticky left-0 bg-white z-10">
+                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-700 flex-shrink-0">
+                                {emp?.trim()?.charAt(0)?.toUpperCase() || "?"}
+                            </div>
+                            <span className="text-sm font-medium text-gray-900 whitespace-nowrap truncate">
+                                {emp}
+                            </span>
                         </div>
 
-                        <div className="px-6 py-4 w-24 text-right text-sm font-semibold text-gray-900">
-                            Total
+                        {/* Days Grid - Desktop */}
+                        <div className="flex flex-1">
+                            {dateList.map(({ key }) => {
+                                const records = empData[key] || [];
+                                const pairs = buildTimePairs(records);
+                                const { firstIn, lastOut } = calculateDayStats(records);
+                                const color = getDayColor(key, emp, false);
+
+                                return (
+                                    <div
+                                        key={key}
+                                        className="border border-gray-200 rounded-md flex flex-col items-center justify-center text-center p-1 min-w-[100px] flex-1 mx-1 my-2"
+                                        style={{
+                                            backgroundColor: color,
+                                            minHeight: "60px"
+                                        }}
+                                        onClick={() => onDayBoxClick(emp, key, records)}
+                                    >
+                                        {records.length > 0 ? (
+                                            <div className="space-y-1">
+                                                <div className="text-[10px] text-gray-800 font-medium">
+                                                    {firstIn ? formatTimeSimple(firstIn) : "-"}
+                                                </div>
+                                                <div className="text-[10px] text-gray-600">
+                                                    {lastOut ? formatTimeSimple(lastOut) : "-"}
+                                                </div>
+                                                <div className="text-[9px] text-gray-500 font-medium">
+                                                    {formatDuration(getTotalTimeFromPairs(pairs))}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <span className="text-[10px] text-gray-400">—</span>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Total - Desktop */}
+                        <div className="px-6 py-4 w-24 text-right text-sm font-semibold text-gray-900 sticky right-0 bg-white">
+                            {formatDuration(totalMs)}
                         </div>
                     </div>
+                );
+            })}
+        </div>
 
-                    {employeeNames.map((emp) => {
-                        const empData = attendance[emp] || {};
-                        let totalMs = 0;
+        {/* Mobile View (below md) */}
+        <div className="md:hidden">
+            {/* Mobile Header */}
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
+                <div className="text-sm font-semibold text-gray-900">Weekly View</div>
+                <div className="text-xs text-gray-600 text-right">
+                    {periodLabel}
+                </div>
+            </div>
 
-                        dateList.forEach(({ key }) => {
-                            const records = empData[key] || [];
-                            totalMs += getTotalTimeFromPairs(buildTimePairs(records));
-                        });
+            {/* Mobile Employee Cards */}
+            <div className="divide-y divide-gray-200">
+                {employeeNames.map((emp) => {
+                    const empData = attendance[emp] || {};
+                    let totalMs = 0;
 
-                        return (
-                            <div
-                                key={emp}
-                                className="flex border-b border-gray-200 hover:bg-gray-50"
-                            >
-                                <div className="px-6 py-4 w-60 flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-sm text-blue-700">
-                                        {emp.charAt(0)}
+                    dateList.forEach(({ key }) => {
+                        const records = empData[key] || [];
+                        totalMs += getTotalTimeFromPairs(buildTimePairs(records));
+                    });
+
+                    return (
+                        <div key={emp} className="p-4 hover:bg-gray-50">
+                            {/* Employee Header Mobile */}
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-700 flex-shrink-0">
+                                        {emp?.trim()?.charAt(0)?.toUpperCase() || "?"}
                                     </div>
-                                    <span className="text-sm font-medium text-gray-900">
-                                        {emp}
-                                    </span>
-                                </div>
-
-                                <div
-                                    className="grid flex-1 py-2"
-                                    style={{ gridTemplateColumns: "repeat(7, 1fr)" }}
-                                >
-                                    {dateList.map(({ key }) => {
-                                        const records = empData[key] || [];
-                                        const { firstIn, lastOut } =
-                                            calculateDayStats(records);
-                                        const color = getDayColor(key, emp, false);
-
-                                        return (
-                                            <div
-                                                key={key}
-                                                className="border border-gray-200 rounded-md flex flex-col items-center justify-center text-[10px]"
-                                                style={{
-                                                    backgroundColor: color,
-                                                    height: "42px",
-                                                    margin: "2px"
-                                                }}
-                                                onMouseEnter={(e) =>
-                                                    onDayBoxEnter(e, emp, key, records)
-                                                }
-                                                onMouseLeave={onDayBoxLeave}
-                                            >
-                                                {records.length > 0 ? (
-                                                    <>
-                                                        <span className="text-[10px] text-gray-800">
-                                                            {formatTimeSimple(firstIn)}
-                                                        </span>
-                                                        <span className="text-[10px] font-medium text-gray-900">
-                                                            {formatTimeSimple(lastOut)}
-                                                        </span>
-                                                    </>
-                                                ) : (
-                                                    <span className="text-[9px] text-gray-500">
-                                                        —
-                                                    </span>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-
-                                <div className="px-6 py-4 w-24 text-right text-sm font-semibold text-gray-900">
-                                    {formatDuration(totalMs)}
+                                    <div className="min-w-0 flex-1">
+                                        <div className="text-sm font-medium text-gray-900 truncate">
+                                            {emp}
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                            Total: {formatDuration(totalMs)}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        );
-                    })}
-                </div>
-            )}
-        </>
-    )}
+
+                            {/* Weekly Days Grid Mobile */}
+                            <div className="grid grid-cols-7 gap-2">
+                                {dateList.map(({ key, date }) => {
+                                    const records = empData[key] || [];
+                                    const pairs = buildTimePairs(records);
+                                    const { firstIn, lastOut } = calculateDayStats(records);
+                                    const color = getDayColor(key, emp, false);
+
+                                    return (
+                                        <div
+                                            key={key}
+                                            className="flex flex-col items-center p-2 rounded-md border border-gray-200 min-h-[70px] justify-center"
+                                            style={{ backgroundColor: color }}
+                                            onClick={() => onDayBoxClick(emp, key, records)}
+                                        >
+                                            {/* Day Header */}
+                                            <div className="text-[10px] font-medium text-gray-500">
+                                                {DAY_LETTERS[date.getDay()]}
+                                            </div>
+                                            <div className="text-xs font-semibold text-gray-900 mb-1">
+                                                {date.getDate()}
+                                            </div>
+
+                                            {/* Times */}
+                                            {records.length > 0 ? (
+                                                <div className="text-center space-y-0.5">
+                                                    <div className="text-[9px] text-gray-800 leading-tight font-medium">
+                                                        {firstIn ? formatTimeSimple(firstIn) : "-"}
+                                                    </div>
+                                                    <div className="text-[9px] text-gray-600 leading-tight">
+                                                        {lastOut ? formatTimeSimple(lastOut) : "-"}
+                                                    </div>
+                                                    <div className="text-[8px] text-gray-500 font-medium">
+                                                        {formatDuration(getTotalTimeFromPairs(pairs))}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="text-[9px] text-gray-400 mt-1">—</div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    </div>
+)}
+                                </>
+                            )}
 
 
                             {/* ADVANCED HOVER POPUP WITH SMART UI */}
-                            {hoverPopup && (() => {
-
-                                const pairs = buildTimePairs(hoverPopup.records);
+                            {clickPopup && (() => {
+                                const pairs = buildTimePairs(clickPopup.records);
                                 const totalMs = getTotalTimeFromPairs(pairs);
                                 const totalText = formatDuration(totalMs);
 
                                 return (
-                                    <div
-                                        ref={popupRef}
-                                        className="
-                fixed bg-white border border-gray-200 rounded-lg 
-                shadow-lg text-xs z-50 w-60 transition-all duration-150
-            "
-                                        style={{
-                                            top: `${hoverPopup.position.y}px`,
-                                            left: `${hoverPopup.position.x - 190}px`,
-                                        }}
-                                        onMouseEnter={onPopupEnter}
-                                        onMouseLeave={onPopupLeave}
-                                    >
-                                        <div className="p-3">
-
-                                            {/* Header */}
-                                            <div className="font-semibold text-gray-900 text-sm mb-1">
-                                                {hoverPopup.employeeName}
-                                            </div>
-                                            <div className="text-gray-500 text-[11px] mb-2 pb-1 border-b border-gray-200">
-                                                {hoverPopup.dateKey}
-                                            </div>
-
-                                            {/* Timeline */}
-                                            {pairs.length > 0 ? (
-                                                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-
-                                                    {pairs.map((p, idx) => (
-                                                        <div key={idx} className="flex gap-3">
-
-                                                            {/* Timeline dots */}
-                                                            <div className="flex flex-col items-center pt-1">
-                                                                <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                                                                <div className="w-px h-5 bg-gray-300"></div>
-                                                                <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                                            </div>
-
-                                                            {/* Times */}
-                                                            <div className="text-xs space-y-0.5">
-
-                                                                {/* Start */}
-                                                                <div className="text-gray-800">
-                                                                    <span className="font-medium">Start:</span>{" "}
-                                                                    {formatTimeSimple(new Date(p.in.timeStamp))}
-                                                                </div>
-
-                                                                {/* End */}
-                                                                <div className="text-gray-800">
-                                                                    <span className="font-medium">End:</span>{" "}
-                                                                    {p.out
-                                                                        ? formatTimeSimple(new Date(p.out.timeStamp))
-                                                                        : "—"}
-                                                                </div>
-
-                                                            </div>
-                                                        </div>
-                                                    ))}
-
-
+                                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                                        <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+                                            {/* Header with close button */}
+                                            <div className="flex justify-between items-center p-4 border-b border-gray-200">
+                                                <div>
+                                                    <h3 className="font-semibold text-gray-900 text-lg">
+                                                        {clickPopup.employeeName}
+                                                    </h3>
+                                                    <p className="text-gray-500 text-sm">
+                                                        {clickPopup.dateKey}
+                                                    </p>
                                                 </div>
-                                            ) : (
-                                                <div className="text-red-500 text-xs py-2 text-center">
-                                                    No check-in / check-out records
-                                                </div>
-                                            )}
-
-                                            {/* Total Work */}
-                                            <div className="border-t border-gray-200 mt-3 pt-2 text-xs">
-                                                <span className="font-semibold text-gray-900">Total Work:</span>{" "}
-                                                <span className="text-green-700 font-medium">{totalText}</span>
+                                                <button
+                                                    onClick={closePopup}
+                                                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                                                >
+                                                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
                                             </div>
 
+                                            {/* Content */}
+                                            <div className="p-4 max-h-96 overflow-y-auto">
+                                                {pairs.length > 0 ? (
+                                                    <div className="space-y-3">
+                                                        {pairs.map((p, idx) => (
+                                                            <div key={idx} className="flex gap-3">
+                                                                <div className="flex flex-col items-center pt-1">
+                                                                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                                                    <div className="w-px h-5 bg-gray-300"></div>
+                                                                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                                                </div>
+                                                                <div className="text-sm space-y-1">
+                                                                    <div className="text-gray-800">
+                                                                        <span className="font-medium">Start:</span>{" "}
+                                                                        {formatTimeSimple(new Date(p.in.timeStamp))}
+                                                                    </div>
+                                                                    <div className="text-gray-800">
+                                                                        <span className="font-medium">End:</span>{" "}
+                                                                        {p.out
+                                                                            ? formatTimeSimple(new Date(p.out.timeStamp))
+                                                                            : "—"}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-red-500 text-sm py-4 text-center">
+                                                        No check-in / check-out records
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Footer with total */}
+                                            <div className="p-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+                                                <div className="text-sm">
+                                                    <span className="font-semibold text-gray-900">Total Work:</span>{" "}
+                                                    <span className="text-green-700 font-medium">{totalText}</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 );
