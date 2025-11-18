@@ -39,6 +39,11 @@ import PaymentList from "./Components/Common/Payment/PaymentList.jsx";
 import PaymentPreview from "./Components/Common/Payment/PaymentPreview.jsx";
 import EditPayment from "./Components/Common/Payment/EditPayment.jsx";
 import ProformaPreview from "./Components/Common/Proforma/ProformaPreview.jsx";
+import DonorList from "./Components/Common/Donor/DonorList.jsx";
+import EditDonar from "./Components/Common/Donor/EditDonar.jsx";
+import SelectedDonarList from "./Components/Common/Donor/SelectedDonarList.jsx";
+import SampleReport from "./Components/Common/Donor/SampleReport.jsx";
+import SampleList from "./Components/Common/Donor/SampleList.jsx";
 import TimeSheetList from "./Components/Common/Timesheet/TimeSheetList.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -186,6 +191,56 @@ function App() {
               </RoleBasedRoute>
             }
           />
+
+
+
+          <Route
+            path="/Admin/DonarList"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <DonorList />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Admin/DonarEdit/:donorId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <EditDonar />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Admin/SelectedDonarList"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <SelectedDonarList />
+              </RoleBasedRoute>
+            }
+          />
+
+
+            <Route
+            path="/Admin/SampleList/:donorId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <SampleList />
+              </RoleBasedRoute>
+            }
+          />
+
+                <Route
+            path="/Admin/SampleReport/:sampleId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <SampleReport />
+              </RoleBasedRoute>
+            }
+          />
+
+
 
           <Route
             path="/Proposal"
@@ -352,6 +407,42 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
                 <EditPayment />
+              </RoleBasedRoute>
+            }
+          />
+
+           <Route
+            path="/Employee/DonarList"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                <DonorList />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Proposal/Create"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
+                <CreateProposal />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Proposal/Edit/:proposalId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
+                <EditProposal />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Proposal/Preview/:proposalId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
+                <ProposalPreview />
               </RoleBasedRoute>
             }
           />
