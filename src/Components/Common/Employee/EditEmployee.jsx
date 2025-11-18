@@ -6,7 +6,7 @@ import Sidebar from "../../Pages/Admin/SidebarAdmin";
 import Select from "react-select"; // Import react-select
 import toast from "react-hot-toast";
 import { useLayout } from "../../Layout/useLayout";
-
+import { Country, State, City } from "country-state-city";
 // --- STYLES AND OPTIONS (Copied from CreateEmployee) ---
 const customReactSelectStyles = (hasError) => ({
   control: (provided, state) => ({
@@ -88,12 +88,24 @@ function EditEmployee() {
   const [isRoleLoading, setIsRoleLoading] = useState(false);
 
   const [moduleAccess, setModuleAccess] = useState(null);
+  // Add these to your existing focus state declarations
+  const [isCountryFocused, setIsCountryFocused] = useState(false);
+  const [isStateFocused, setIsStateFocused] = useState(false);
+  const [isCityFocused, setIsCityFocused] = useState(false);
 
+  const [dropdownData, setDropdownData] = useState({
+    countries: [],
+    states: [],
+    cities: [],
+  });
   const [formData, setFormData] = useState({
     loginEmail: "",
     name: "",
     phone: "",
     address: "",
+    country: "",
+    state: "",
+    city: "",
     gender: "",
     description: "",
     profileImageBase64: "",
@@ -125,6 +137,9 @@ function EditEmployee() {
           name: employeeData.name || "",
           phone: employeeData.phone || "",
           address: employeeData.address || "",
+          country: employeeData.country || "",
+          state: employeeData.state || "",
+          city: employeeData.city || "",
           gender: employeeData.gender || "",
           description: employeeData.description || "",
           profileImageBase64: employeeData.profileImage || "",
@@ -170,6 +185,93 @@ function EditEmployee() {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
+
+
+  // =======================================COUNTrY STATE CITY DROPDOWN===================================
+  // Add these useEffect hooks after your existing state declarations
+
+  // Load countries on component mount
+  useEffect(() => {
+    const countries = Country.getAllCountries().map((country) => ({
+      value: country.isoCode,
+      label: country.name,
+    }));
+
+    setDropdownData((prev) => ({
+      ...prev,
+      countries,
+    }));
+  }, []);
+
+  // Load states when country changes
+  useEffect(() => {
+    if (formData.country) {
+      const states = State.getStatesOfCountry(formData.country).map((state) => ({
+        value: state.isoCode,
+        label: state.name,
+      }));
+
+      setDropdownData((prev) => ({
+        ...prev,
+        states,
+        cities: [], // Clear cities when country changes
+      }));
+    }
+  }, [formData.country]);
+
+  // Load cities when state changes
+  useEffect(() => {
+    if (formData.country && formData.state) {
+      const cities = City.getCitiesOfState(formData.country, formData.state).map((city) => ({
+        value: city.name,
+        label: city.name,
+      }));
+
+      setDropdownData((prev) => ({
+        ...prev,
+        cities,
+      }));
+    }
+  }, [formData.country, formData.state]);
+
+
+
+  // Add these handlers after your existing change handlers
+
+  // Country change handler
+  const handleCountryChange = (selectedOption) => {
+    const countryCode = selectedOption ? selectedOption.value : "";
+
+    setFormData((prev) => ({
+      ...prev,
+      country: countryCode,
+      state: "", // Reset state when country changes
+      city: "",  // Reset city when country changes
+    }));
+  };
+
+  // State change handler
+  const handleStateChange = (selectedOption) => {
+    const stateCode = selectedOption ? selectedOption.value : "";
+
+    setFormData((prev) => ({
+      ...prev,
+      state: stateCode,
+      city: "", // Reset city when state changes
+    }));
+  };
+
+  // City change handler
+  const handleCityChange = (selectedOption) => {
+    const cityName = selectedOption ? selectedOption.value : "";
+
+    setFormData((prev) => ({
+      ...prev,
+      city: cityName,
+    }));
+  };
+  // =======================================COUNTrY STATE CITY DROPDOWN===================================
+
 
   const handleFileChange = (e) => {
     // ... (This function is unchanged)
@@ -460,7 +562,7 @@ function EditEmployee() {
                 <h1 className="text-xl font-bold text-gray-900">
                   Edit Employee {/* Changed Title */}
                 </h1>
-          
+
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -698,7 +800,121 @@ function EditEmployee() {
                           </p>
                         )}
                       </div>
-                      <div></div>
+
+                      {/* --- Country Dropdown --- */}
+                      <div className="relative">
+                        <label
+                          htmlFor="country"
+                          className={`absolute text-sm duration-300 transform z-10 origin-[0] bg-white px-2 left-1 pointer-events-none
+        ${isCountryFocused || formData.country
+                              ? "scale-75 -translate-y-4 top-2"
+                              : "scale-100 translate-y-0 top-2.5"
+                            }
+        text-gray-500
+    `}
+                        >
+                          Country
+                        </label>
+                        <Select
+                          id="country"
+                          name="country"
+                          options={dropdownData.countries}
+                          value={
+                            dropdownData.countries.find(
+                              (option) => option.value === formData.country
+                            ) || null
+                          }
+                          onChange={handleCountryChange}
+                          onFocus={() => setIsCountryFocused(true)}
+                          onBlur={() => setIsCountryFocused(false)}
+                          menuPlacement="auto"
+                          maxMenuHeight={150}
+                          styles={customReactSelectStyles(false)}
+                          placeholder=" "
+                          isClearable
+                          isSearchable
+                        />
+                      </div>
+
+                      {/* --- State Dropdown --- */}
+                      <div className="relative">
+                        <label
+                          htmlFor="state"
+                          className={`absolute text-sm duration-300 transform z-10 origin-[0] px-2 left-1 pointer-events-none
+        ${isStateFocused || formData.state
+                              ? "scale-75 -translate-y-4 top-2"
+                              : "scale-100 translate-y-0 top-2.5"
+                            }
+        ${!formData.country
+                              ? "text-gray-400 bg-gray-100"
+                              : "text-gray-500 bg-white"
+                            }
+    `}
+                        >
+                          State
+                        </label>
+                        <Select
+                          id="state"
+                          name="state"
+                          options={dropdownData.states}
+                          value={
+                            dropdownData.states.find(
+                              (option) => option.value === formData.state
+                            ) || null
+                          }
+                          onChange={handleStateChange}
+                          onFocus={() => setIsStateFocused(true)}
+                          onBlur={() => setIsStateFocused(false)}
+                          isDisabled={!formData.country}
+                          menuPlacement="auto"
+                          maxMenuHeight={150}
+                          styles={customReactSelectStyles(false)}
+                          placeholder=" "
+                          isClearable
+                          isSearchable
+                        />
+                      </div>
+
+                      {/* --- City Dropdown --- */}
+                      <div className="relative">
+                        <label
+                          htmlFor="city"
+                          className={`absolute text-sm duration-300 transform z-10 origin-[0] px-2 left-1 pointer-events-none
+        ${isCityFocused || formData.city
+                              ? "scale-75 -translate-y-4 top-2"
+                              : "scale-100 translate-y-0 top-2.5"
+                            }
+        ${!formData.state
+                              ? "text-gray-400 bg-gray-100"
+                              : "text-gray-500 bg-white"
+                            }
+    `}
+                        >
+                          City
+                        </label>
+                        <Select
+                          id="city"
+                          name="city"
+                          options={dropdownData.cities}
+                          value={
+                            dropdownData.cities.find(
+                              (option) => option.value === formData.city
+                            ) || null
+                          }
+                          onChange={handleCityChange}
+                          onFocus={() => setIsCityFocused(true)}
+                          onBlur={() => setIsCityFocused(false)}
+                          isDisabled={!formData.state}
+                          menuPlacement="auto"
+                          maxMenuHeight={150}
+                          styles={customReactSelectStyles(false)}
+                          placeholder=" "
+                          isClearable
+                          isSearchable
+                        />
+                      </div>
+
+              
 
                       {/* --- Department Dropdown --- */}
                       <div className="relative">

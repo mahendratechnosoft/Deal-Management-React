@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../../BaseComponet/axiosInstance";
+
 import Pagination from "../pagination";
 import { useLayout } from "../../Layout/useLayout";
 import CreateEmployeeModal from "./CreateEmployeeModal";
+import axiosInstance from "../../BaseComponet/axiosInstance";
 // Skeleton component for a single table row
 const EmployeeRowSkeleton = () => (
   <tr className="animate-pulse">
@@ -128,12 +129,12 @@ const EmployeeListSkeleton = () => {
         </div>
       </div>
     </div>
-  
+
   );
 };
 
 function EmployeeList() {
-    const { LayoutComponent, role } = useLayout();
+  const { LayoutComponent, role } = useLayout();
 
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -157,7 +158,7 @@ function EmployeeList() {
     }
 
     try {
-      let url = `/admin/getAllEmployees/${page}/${pageSize}`;
+      let url = `getAllEmployees/${page}/${pageSize}`;
       if (search.trim()) {
         url += `?search=${encodeURIComponent(search)}`;
       }
@@ -249,13 +250,43 @@ function EmployeeList() {
       .substring(0, 2);
   };
 
-if (loading) {
-  return (
-    <LayoutComponent>
-      <EmployeeListSkeleton />
-    </LayoutComponent>
-  );
-}
+
+
+  const handleDelete = async (employeeId, e) => {
+    e.stopPropagation(); // Prevent clicking row edit
+
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this employee?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await axiosInstance.delete(`admin/deleteEmployee/${employeeId}`);
+      // Remove deleted employee from UI instantly
+      setEmployees((prev) =>
+        prev.filter((emp) => emp.employeeId !== employeeId)
+      );
+
+      // Update total count instantly
+      setTotalEmployees((prev) => prev - 1);
+
+      toast.success("Employee deleted successfully!");
+    } catch (error) {
+      console.error("Delete employee failed:", error);
+      toast.error("Failed to delete employee");
+    }
+  };
+
+
+
+  if (loading) {
+    return (
+      <LayoutComponent>
+        <EmployeeListSkeleton />
+      </LayoutComponent>
+    );
+  }
   if (error) {
     return (
       <div className="p-6 flex items-center justify-center min-h-screen">
@@ -291,30 +322,58 @@ if (loading) {
   }
 
   return (
-        <LayoutComponent>
+    <LayoutComponent>
 
-    <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
-      {/* Header Section */}
-      <div className="mb-4">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
-                <p className="text-gray-600 text-sm mt-1">
-                  Manage and track all your employees in one place
-                </p>
+      <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
+        {/* Header Section */}
+        <div className="mb-4">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
+                  <p className="text-gray-600 text-sm mt-1">
+                    Manage and track all your employees in one place
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-            {/* Search Input */}
-            <div className="relative flex-1 sm:max-w-64">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+              {/* Search Input */}
+              <div className="relative flex-1 sm:max-w-64">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg
+                    className="w-4 h-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search employees..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white transition-colors duration-200"
+                />
+              </div>
+
+              {/* Create Button */}
+              <button
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
+                onClick={handleCreateEmployee}
+              >
                 <svg
-                  className="w-4 h-4 text-gray-400"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -323,78 +382,202 @@ if (loading) {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Create Employee
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-4">
+          <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-gray-100">
+                <svg
+                  className="w-3 h-3 text-gray-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                   />
                 </svg>
               </div>
-              <input
-                type="text"
-                placeholder="Search employees..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white transition-colors duration-200"
-              />
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-500 text-[12px] font-medium truncate">
+                  Total Employees
+                </p>
+                <p className="text-gray-900 text-sm font-bold truncate">
+                  {totalEmployees.toLocaleString()}
+                </p>
+              </div>
             </div>
-
-            {/* Create Button */}
-            <button
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
-              onClick={handleCreateEmployee}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              Create Employee
-            </button>
           </div>
-        </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-4">
-        <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-gray-100">
-              <svg
-                className="w-3 h-3 text-gray-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-gray-500 text-[12px] font-medium truncate">
-                Total Employees
-              </p>
-              <p className="text-gray-900 text-sm font-bold truncate">
-                {totalEmployees.toLocaleString()}
-              </p>
+          <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-blue-100">
+                <svg
+                  className="w-3 h-3 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-500 text-[12px] font-medium truncate">
+                  Showing
+                </p>
+                <p className="text-gray-900 text-sm font-bold truncate">
+                  {employees.length} of {totalEmployees}
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-blue-100">
+        {/* Table Section */}
+        {/* Table Section */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+          <div className="overflow-x-auto">
+            <div className="relative">
+              <table className="min-w-full divide-y divide-gray-200">
+                <colgroup>
+                  <col style={{ width: "5%" }} />
+                  <col style={{ width: "30%" }} />
+                  <col style={{ width: "30%" }} />
+                  <col style={{ width: "20%" }} />
+                  <col style={{ width: "15%" }} />
+                </colgroup>
+
+                <thead className="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      #
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Employee Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Phone
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Gender
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {listLoading
+                    ? Array.from({ length: pageSize }).map((_, index) => (
+                      <EmployeeRowSkeleton key={index} />
+                    ))
+                    : employees.map((employee, index) => (
+                      <tr
+                        key={employee.id}
+                        className="hover:bg-gray-50 transition-colors duration-150 group cursor-pointer"
+                        onClick={() => handleEdit(employee.employeeId)}
+                      >
+                        <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-500">
+                          {currentPage * pageSize + index + 1}
+                        </td>
+                        <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0">
+                              {employee.profileImage ? (
+                                <img
+                                  className="w-8 h-8 rounded-full object-cover"
+                                  src={`data:image/png;base64,${employee.profileImage}`}
+                                  alt={`${employee.name} profile`}
+                                />
+                              ) : (
+                                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                  {getInitials(employee.name)}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="">
+                                <div className="font-semibold text-gray-900">
+                                  {employee.name || "N/A"}
+                                </div>
+                                <span className="flex">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEdit(employee.employeeId);
+                                    }}
+                                    title="Edit"
+                                    className="opacity-0 group-hover:opacity-100 text-blue-600 hover:text-blue-900 font-medium transition-all duration-200 flex items-center gap-1 text-xs  "
+                                  >
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                      />
+                                    </svg>
+
+                                  </button>
+                                  <button
+                                    onClick={(e) => handleDelete(employee.employeeId, e)}
+                                    title="Delete"
+                                    className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-900 font-medium transition-all duration-200 flex items-center gap-1 mx-2 text-xs"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 
+           01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a1 1 0 
+           011-1h4a1 1 0 011 1m-7 0h10" />
+                                    </svg>
+                                  </button></span>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
+                          {employee.loginEmail || "N/A"}
+                        </td>
+                        <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
+                          {employee.phone || "N/A"}
+                        </td>
+                        <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
+                          {employee.gender || "N/A"}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {employees.length === 0 && !listLoading && (
+            <div className="text-center py-12">
               <svg
-                className="w-3 h-3 text-blue-600"
+                className="w-16 h-16 mx-auto text-gray-400 mb-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -406,178 +589,39 @@ if (loading) {
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-gray-500 text-[12px] font-medium truncate">
-                Showing
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No employees found
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {searchTerm
+                  ? "Try adjusting your search criteria."
+                  : "Get started by creating your first employee."}
               </p>
-              <p className="text-gray-900 text-sm font-bold truncate">
-                {employees.length} of {totalEmployees}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Table Section */}
-{/* Table Section */}
-<div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-  <div className="overflow-x-auto">
-    <div className="relative">
-      <table className="min-w-full divide-y divide-gray-200">
-        <colgroup>
-          <col style={{ width: "5%" }} />
-          <col style={{ width: "30%" }} />
-          <col style={{ width: "30%" }} />
-          <col style={{ width: "20%" }} />
-          <col style={{ width: "15%" }} />
-        </colgroup>
-
-        <thead className="bg-gray-50 sticky top-0">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              #
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Employee Name
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Email
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Phone
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Gender
-            </th>
-          </tr>
-        </thead>
-
-        <tbody className="bg-white divide-y divide-gray-200">
-          {listLoading
-            ? Array.from({ length: pageSize }).map((_, index) => (
-                <EmployeeRowSkeleton key={index} />
-              ))
-            : employees.map((employee, index) => (
-                <tr
-                  key={employee.id}
-                  className="hover:bg-gray-50 transition-colors duration-150 group cursor-pointer"
-                  onClick={() => handleEdit(employee.employeeId)}
+              {!searchTerm && (
+                <button
+                  onClick={handleCreateEmployee}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
                 >
-                  <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-500">
-                    {currentPage * pageSize + index + 1}
-                  </td>
-                  <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0">
-                        {employee.profileImage ? (
-                          <img
-                            className="w-8 h-8 rounded-full object-cover"
-                            src={`data:image/png;base64,${employee.profileImage}`}
-                            alt={`${employee.name} profile`}
-                          />
-                        ) : (
-                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                            {getInitials(employee.name)}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="">
-                          <div className="font-semibold text-gray-900">
-                            {employee.name || "N/A"}
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEdit(employee.employeeId);
-                            }}
-                            title="Edit"
-                            className="opacity-0 group-hover:opacity-100 text-blue-600 hover:text-blue-900 font-medium transition-all duration-200 flex items-center gap-1 text-xs  "
-                          >
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
-                    {employee.loginEmail || "N/A"}
-                  </td>
-                  <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
-                    {employee.phone || "N/A"}
-                  </td>
-                  <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
-                    {employee.gender || "N/A"}
-                  </td>
-                </tr>
-              ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
+                  Create Your First Employee
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
-  {employees.length === 0 && !listLoading && (
-    <div className="text-center py-12">
-      <svg
-        className="w-16 h-16 mx-auto text-gray-400 mb-4"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+        {/* Reusable Pagination Component */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalEmployees}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          itemsName="employees"
         />
-      </svg>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-        No employees found
-      </h3>
-      <p className="text-gray-600 mb-4">
-        {searchTerm
-          ? "Try adjusting your search criteria."
-          : "Get started by creating your first employee."}
-      </p>
-      {!searchTerm && (
-        <button
-          onClick={handleCreateEmployee}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
-        >
-          Create Your First Employee
-        </button>
-      )}
-    </div>
-  )}
-</div>
 
-      {/* Reusable Pagination Component */}
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={totalEmployees}
-        pageSize={pageSize}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
-        itemsName="employees"
-      />
-    
-    
-    
+
+
         {/* Render the modal */}
         {showCreateModal && (
           <CreateEmployeeModal
@@ -585,7 +629,7 @@ if (loading) {
             onSuccess={handleCreateSuccess}
           />
         )}
-    </div>
+      </div>
     </LayoutComponent>
   );
 }
