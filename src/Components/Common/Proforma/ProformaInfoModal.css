@@ -1,0 +1,128 @@
+/* The dark background overlay */
+.info-modal-backdrop {
+  position: fixed;
+  inset: 0; /* (top: 0, left: 0, right: 0, bottom: 0) */
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+/* The main modal content box */
+.info-modal-content {
+  background-color: white;
+  width: 90%;
+  height: 90vh; /* Takes 90% of the viewport height */
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Important for the body to scroll correctly */
+  z-index: 51;
+}
+
+/* The header section */
+.info-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.info-modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* The icon-only close button */
+.info-modal-close-btn {
+  background: transparent;
+  border: none;
+  padding: 0.5rem; /* 8px padding to make it easier to click */
+  margin: -0.5rem; /* Negative margin to keep alignment */
+  border-radius: 999px; /* circular hover effect area */
+  cursor: pointer;
+  line-height: 1; /* Aligns icon */
+}
+
+.info-modal-close-btn svg {
+  width: 1.25rem; /* 20px */
+  height: 1.25rem; /* 20px */
+  color: #9ca3af; /* gray-400 */
+  transition: color 0.15s ease-in-out;
+}
+
+.info-modal-close-btn:hover svg {
+  color: #111827; /* gray-900 */
+}
+
+/* Removes the focus "square" outline */
+.info-modal-close-btn:focus {
+  outline: none;
+}
+
+/* The main body for your content */
+.info-modal-body {
+  flex-grow: 1; /* This makes the body fill all available space */
+  overflow-y: auto; /* Adds a scrollbar if the content is too tall */
+  height: 100%; /* Required for flex-grow to work properly */
+}
+.info-modal-tabs {
+  display: flex;
+  padding: 0.75rem 1.5rem 0 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #ffffff;
+}
+
+.info-modal-tab {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  margin-bottom: -1px; /* Overlaps border-bottom */
+  transition: all 0.2s ease;
+}
+
+.info-modal-tab:hover {
+  color: #374151;
+}
+
+.info-modal-tab.active {
+  color: #2563eb; /* blue-600 */
+  border-bottom-color: #2563eb;
+}
+
+.info-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* 12px */
+}
+
+.info-modal-add-payment-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* 8px */
+  background-color: #10b981; /* green-500 */
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem; /* 8px 16px */
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.info-modal-add-payment-btn:hover {
+  background-color: #059669; /* green-600 */
+}
+.info-modal-add-payment-btn svg {
+  width: 1.125rem; /* 18px */
+  height: 1.125rem;
+}
