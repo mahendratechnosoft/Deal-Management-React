@@ -5,8 +5,8 @@ import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
-import ProposalPDF from "../Proposal/ProposalPDF";
 import ProformaPDF from "./ProformaPDF";
+import ProposalInfoModal from "./ProformaInfoModal";
 
 // This currency formatter utility is reused
 const formatCurrency = (amount, currencyCode) => {
@@ -75,16 +75,18 @@ function ProformaList() {
   const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [proformaInvoices, setProformaInvoices] = useState([]); // Renamed from proposals
+  const [proformaInvoices, setProformaInvoices] = useState([]);
   const [listLoading, setListLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0); // Kept your logic, though API sample didn't show totalItems
+  const [totalItems, setTotalItems] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [selectedProformaData, setSelectedProformaData] = useState(null);
   const [adminInformation, setAdminInformation] = useState(null);
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+  const [selectedProformaForInfo, setSelectedProformaForInfo] = useState(null);
 
   // Removed PDF-related state
 
@@ -175,6 +177,11 @@ function ProformaList() {
     } finally {
       setIsPdfLoading(false);
     }
+  };
+
+  const handleOpenInfoModal = async (proforma) => {
+    setSelectedProformaForInfo(proforma);
+    setIsInfoModalOpen(true);
   };
 
   return (
@@ -288,7 +295,7 @@ function ProformaList() {
                     <tr
                       key={proforma.proformaInvoiceId}
                       className="hover:bg-gray-50 transition-colors duration-150 group cursor-pointer"
-                      onClick={() => handlePreview(proforma.proformaInvoiceId)}
+                      onClick={() => handleOpenInfoModal(proforma)}
                     >
                       <td
                         className="px-4 py-1 truncate text-sm text-gray-900 font-bold relative"
@@ -598,6 +605,14 @@ function ProformaList() {
             </div>
           </div>
         </div>
+      )}
+
+      {isInfoModalOpen && (
+        <ProposalInfoModal
+          isOpen={isInfoModalOpen}
+          onClose={() => setIsInfoModalOpen(false)}
+          proforma={selectedProformaForInfo}
+        />
       )}
 
       {/* PDF Modal Removed */}

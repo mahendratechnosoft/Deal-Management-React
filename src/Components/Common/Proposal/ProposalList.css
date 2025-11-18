@@ -54,3 +54,26 @@
 .proposal-download-button-icon:hover {
   color: #1f2937; /* Darker black (gray-900 equivalent) */
 }
+
+.modal-close-btn {
+  padding: 0.5rem; /* 8px */
+  border-radius: 8px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.modal-close-btn svg {
+  width: 1.25rem; /* 20px */
+  height: 1.25rem; /* 20px */
+  color: #9ca3af; /* Tailwind gray-400 */
+}
+
+.modal-close-btn:hover {
+  background-color: #f3f4f6; /* Tailwind gray-100 */
+}
+
+.modal-close-btn:hover svg {
+  color: #1f2937; /* Tailwind gray-800 */
+}
