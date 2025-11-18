@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
 import toast from "react-hot-toast";
 import Select from "react-select";
+import EditTimesheetModal from "./EditTimesheetModal";
 
 
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
@@ -149,6 +150,7 @@ function TimeSheetList() {
     const [employeeOptions, setEmployeeOptions] = useState([]);
     const [selectedEmployee, setSelectedEmployee] = useState({ value: "all", label: "All Employees" });
 
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
     // ------------------------------------------------
     // Calculate date range when viewType or currentDate changes
     // ------------------------------------------------
@@ -214,6 +216,7 @@ function TimeSheetList() {
             ? `employeeId=${selectedEmployee.value}&`
             : "";
 
+
         axiosInstance
             .get(`getAttendanceBetween?${empQuery}fromDate=${range.from}&toDate=${range.to}`)
             .then((res) => {
@@ -240,7 +243,17 @@ function TimeSheetList() {
                 setAttendance({});
             })
             .finally(() => setLoading(false));
-    }, [range, selectedEmployee]);
+    }, [range, selectedEmployee, refreshTrigger]);
+
+
+
+    // Close the EditTimeSHeet Modal
+    const handleModalClose = (refreshNeeded = false) => {
+        setClickPopup(null);
+        if (refreshNeeded) {
+            setRefreshTrigger(prev => prev + 1); // This will trigger re-fetch
+        }
+    };
 
 
     const dateList = buildDateList(range.from, range.to);
@@ -350,14 +363,11 @@ function TimeSheetList() {
     };
 
 
-
     const onDayBoxClick = (employeeName, dateKey, records) => {
-        if (!records || records.length === 0) return;
-
         setClickPopup({
             employeeName,
             dateKey,
-            records,
+            records: records || [], // This ensures records is always defined
         });
     };
 
@@ -456,152 +466,152 @@ function TimeSheetList() {
         <LayoutComponent>
             <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
 
-           <div className="flex flex-col gap-4 mb-2">
-    {/* For screens larger than 768px (md and above) */}
-    <div className="hidden md:flex md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex-1">
-            <div className="flex items-center gap-3">
-                <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Timesheets</h1>
-                </div>
-            </div>
-        </div>
+                <div className="flex flex-col gap-4 mb-2">
+                    {/* For screens larger than 768px (md and above) */}
+                    <div className="hidden md:flex md:flex-row md:items-center md:justify-between gap-4">
+                        <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                                <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
+                                <div>
+                                    <h1 className="text-2xl font-bold text-gray-900">Timesheets</h1>
+                                </div>
+                            </div>
+                        </div>
 
-        {/* RIGHT SECTION - All Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1 ml-auto">
-            {/* View Controls */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                {/* View dropdown */}
-                <div className="relative">
-                    <select
-                        className="border border-gray-300 rounded-xl px-4 py-2.5 bg-white text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none pr-10"
-                        value={viewType}
-                        onChange={(e) => setViewType(e.target.value)}
-                    >
-                        <option value="monthly">Monthly View</option>
-                        <option value="weekly">Weekly View</option>
-                        <option value="daily">Daily View</option>
-                    </select>
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
+                        {/* RIGHT SECTION - All Controls */}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1 ml-auto">
+                            {/* View Controls */}
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                {/* View dropdown */}
+                                <div className="relative">
+                                    <select
+                                        className="border border-gray-300 rounded-xl px-4 py-2.5 bg-white text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none pr-10"
+                                        value={viewType}
+                                        onChange={(e) => setViewType(e.target.value)}
+                                    >
+                                        <option value="monthly">Monthly View</option>
+                                        <option value="weekly">Weekly View</option>
+                                        <option value="daily">Daily View</option>
+                                    </select>
+                                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                {/* Navigation */}
+                                <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+                                    <button
+                                        onClick={handlePrev}
+                                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-gray-200 transition-colors duration-200"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    </button>
+                                    <div className="px-3 py-1 text-sm font-medium text-gray-700 min-w-[140px] text-center">
+                                        {periodLabel}
+                                    </div>
+                                    <button
+                                        onClick={handleNext}
+                                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-gray-200 transition-colors duration-200"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                <div className="w-64">
+                                    <Select
+                                        className="basic-single"
+                                        classNamePrefix="select"
+                                        options={employeeOptions}
+                                        value={selectedEmployee}
+                                        onChange={setSelectedEmployee}
+                                        placeholder="Select Employee"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* For screens 768px and below (mobile) */}
+                    <div className="md:hidden flex flex-col gap-4">
+                        {/* First Row: Title + View Dropdown */}
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
+                                <div>
+                                    <h1 className="text-2xl font-bold text-gray-900">Timesheets</h1>
+                                </div>
+                            </div>
+
+                            {/* View Dropdown on right side */}
+                            <div className="relative">
+                                <select
+                                    className="border border-gray-300 rounded-xl px-4 py-2.5 bg-white text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none pr-10"
+                                    value={viewType}
+                                    onChange={(e) => setViewType(e.target.value)}
+                                >
+                                    <option value="monthly">Monthly</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="daily">Daily</option>
+                                </select>
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Second Row: Navigation buttons (left) + Employee dropdown (right) */}
+                        <div className="flex items-center justify-between gap-4">
+                            {/* Navigation buttons on left */}
+                            <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+                                <button
+                                    onClick={handlePrev}
+                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-gray-200 transition-colors duration-200"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                                <div className="px-3 py-1 text-sm font-medium text-gray-700 min-w-[120px] text-center">
+                                    {periodLabel}
+                                </div>
+                                <button
+                                    onClick={handleNext}
+                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-gray-200 transition-colors duration-200"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            {/* Employee dropdown on right */}
+                            <div className="w-48">
+                                <Select
+                                    className="basic-single"
+                                    classNamePrefix="select"
+                                    options={employeeOptions}
+                                    value={selectedEmployee}
+                                    onChange={setSelectedEmployee}
+                                    placeholder="Select Employee"
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                {/* Navigation */}
-                <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
-                    <button
-                        onClick={handlePrev}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-gray-200 transition-colors duration-200"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </button>
-                    <div className="px-3 py-1 text-sm font-medium text-gray-700 min-w-[140px] text-center">
-                        {periodLabel}
-                    </div>
-                    <button
-                        onClick={handleNext}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-gray-200 transition-colors duration-200"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <div className="w-64">
-                    <Select
-                        className="basic-single"
-                        classNamePrefix="select"
-                        options={employeeOptions}
-                        value={selectedEmployee}
-                        onChange={setSelectedEmployee}
-                        placeholder="Select Employee"
-                    />
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {/* For screens 768px and below (mobile) */}
-    <div className="md:hidden flex flex-col gap-4">
-        {/* First Row: Title + View Dropdown */}
-        <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-                <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Timesheets</h1>
-                </div>
-            </div>
-            
-            {/* View Dropdown on right side */}
-            <div className="relative">
-                <select
-                    className="border border-gray-300 rounded-xl px-4 py-2.5 bg-white text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none pr-10"
-                    value={viewType}
-                    onChange={(e) => setViewType(e.target.value)}
-                >
-                    <option value="monthly">Monthly</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="daily">Daily</option>
-                </select>
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        {/* Second Row: Navigation buttons (left) + Employee dropdown (right) */}
-        <div className="flex items-center justify-between gap-4">
-            {/* Navigation buttons on left */}
-            <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
-                <button
-                    onClick={handlePrev}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-gray-200 transition-colors duration-200"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                </button>
-                <div className="px-3 py-1 text-sm font-medium text-gray-700 min-w-[120px] text-center">
-                    {periodLabel}
-                </div>
-                <button
-                    onClick={handleNext}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-gray-200 transition-colors duration-200"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                </button>
-            </div>
-
-            {/* Employee dropdown on right */}
-            <div className="w-48">
-                <Select
-                    className="basic-single"
-                    classNamePrefix="select"
-                    options={employeeOptions}
-                    value={selectedEmployee}
-                    onChange={setSelectedEmployee}
-                    placeholder="Select Employee"
-                />
-            </div>
-        </div>
-    </div>
-</div>
 
 
                 {/* MAIN CARD */}
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 flex-1 overflow-y-auto h-[72vh] overflow-y-auto CRM-scroll-width-none">
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 flex-1 overflow-y-auto overflow-y-auto CRM-scroll-width-none">
                     {/* CONTENT SECTION */}
                     <div className="p-1">
                         {loading && (
@@ -677,16 +687,16 @@ function TimeSheetList() {
                                                                 </td>
 
                                                                 <td className="px-6 py-4">
-                                                                    {records.length > 0 ? (
+                                                                   
                                                                         <button
                                                                             onClick={() => onDayBoxClick(emp, range.from, records)}
                                                                             className="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
                                                                         >
                                                                             View Logs
                                                                         </button>
-                                                                    ) : (
-                                                                        <span className="text-gray-400 text-xs">No logs</span>
-                                                                    )}
+                                                                  
+                                                                        {/* <span className="text-gray-400 text-xs">No logs</span> */}
+                                                                 
                                                                 </td>
 
                                                                 <td className="px-6 py-4 font-semibold text-gray-900">
@@ -769,16 +779,16 @@ function TimeSheetList() {
                                                                 <div className="text-xs text-gray-500">
                                                                     {records.length} record{records.length !== 1 ? 's' : ''}
                                                                 </div>
-                                                                {records.length > 0 ? (
+                                                              
                                                                     <button
                                                                         onClick={() => onDayBoxClick(emp, range.from, records)}
                                                                         className="px-3 py-2 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium"
                                                                     >
                                                                         View All Logs
                                                                     </button>
-                                                                ) : (
-                                                                    <span className="text-gray-400 text-xs">No logs available</span>
-                                                                )}
+                                                           
+                                                                    {/* <span className="text-gray-400 text-xs">No logs available</span> */}
+                                                               
                                                             </div>
                                                         </div>
                                                     );
@@ -1184,79 +1194,16 @@ function TimeSheetList() {
                             )}
 
 
-                         {/* ADVANCED HOVER POPUP WITH SMART UI */}
-{clickPopup && (() => {
-    const pairs = buildTimePairs(clickPopup.records);
-    const totalMs = getTotalTimeFromPairs(pairs);
-    const totalText = formatDuration(totalMs);
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-                {/* Header with close button and total time */}
-                <div className="flex justify-between items-center p-4 border-b border-gray-200">
-                    <div className="flex items-center gap-3">
-                        <div>
-                            <h3 className="font-semibold text-gray-900 text-lg">
-                                {clickPopup.employeeName}
-                            </h3>
-                            <div className="flex items-center gap-2 text-gray-500 text-sm">
-                                <span>{clickPopup.dateKey}</span>
-                                <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-md">
-                                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span className="font-medium text-gray-900">{totalText}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <button
-                        onClick={closePopup}
-                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-                    >
-                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                {/* Content */}
-                <div className="p-4 max-h-96 overflow-y-auto">
-                    {pairs.length > 0 ? (
-                        <div className="space-y-3">
-                            {pairs.map((p, idx) => (
-                                <div key={idx} className="flex gap-3">
-                                    <div className="flex flex-col items-center pt-1">
-                                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                                        <div className="w-px h-5 bg-gray-300"></div>
-                                        <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                    </div>
-                                    <div className="text-sm space-y-1">
-                                        <div className="text-gray-800">
-                                            <span className="font-medium">Start:</span>{" "}
-                                            {formatTimeSimple(new Date(p.in.timeStamp))}
-                                        </div>
-                                        <div className="text-gray-800">
-                                            <span className="font-medium">End:</span>{" "}
-                                            {p.out
-                                                ? formatTimeSimple(new Date(p.out.timeStamp))
-                                                : "—"}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-red-500 text-sm py-4 text-center">
-                            No check-in / check-out records
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-})()}
+                            {/* ADVANCED HOVER POPUP WITH SMART UI */}
+                            {clickPopup && (
+                                <EditTimesheetModal
+                                    clickPopup={clickPopup}
+                                    onClose={handleModalClose}
+                                    buildTimePairs={buildTimePairs}
+                                    formatDuration={formatDuration}
+                                    formatTimeSimple={formatTimeSimple}
+                                />
+                            )}
 
 
 
