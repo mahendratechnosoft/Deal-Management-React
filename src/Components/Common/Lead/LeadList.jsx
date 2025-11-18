@@ -19,7 +19,7 @@ const TableBodySkeleton = ({ rows = 5, columns = 7 }) => {
               <div className="h-4 bg-gray-200 rounded w-full"></div>
             </td>
           ))}
-     
+
         </tr>
       ))}
     </tbody>
@@ -248,8 +248,8 @@ function LeadList() {
       backgroundColor: state.isSelected
         ? "#d4e3f6" // bright blue for selected
         : state.isFocused
-        ? "#f3f4f6" // light gray hover
-        : "#fff", // normal
+          ? "#f3f4f6" // light gray hover
+          : "#fff", // normal
       color: state.isSelected ? "#2563eb" : "#111827",
       cursor: "pointer",
       transition: "background-color 0.2s ease",
@@ -620,9 +620,9 @@ function LeadList() {
         isSearchable={false}
         menuPlacement="auto"
         classNamePrefix="react-select"
-        onMenuOpen={() => {}}
-        onMenuClose={() => {}}
-        onInputChange={() => {}}
+        onMenuOpen={() => { }}
+        onMenuClose={() => { }}
+        onInputChange={() => { }}
         menuPortalTarget={document.body} // This renders dropdown in body
         menuPosition="fixed" // Use fixed positioning
         components={{
@@ -658,7 +658,7 @@ function LeadList() {
   // Handle successful lead creation
   const handleLeadCreated = () => {
     setShowCreateLeadModal(false);
- 
+
     refreshLeadsData(); // Refresh the leads list
   };
 
@@ -667,17 +667,17 @@ function LeadList() {
     setShowCreateLeadModal(false);
   };
 
- const handleCreateLead = () => {
-   console.log("Create Lead button clicked");
-   console.log("showCreateLeadModal before:", showCreateLeadModal);
-   setShowCreateLeadModal(true);
-   console.log("showCreateLeadModal after:", showCreateLeadModal);
- };
+  const handleCreateLead = () => {
+    console.log("Create Lead button clicked");
+    console.log("showCreateLeadModal before:", showCreateLeadModal);
+    setShowCreateLeadModal(true);
+    console.log("showCreateLeadModal after:", showCreateLeadModal);
+  };
 
- // Add this useEffect to monitor state changes
- useEffect(() => {
-   console.log("showCreateLeadModal state changed:", showCreateLeadModal);
- }, [showCreateLeadModal]);
+  // Add this useEffect to monitor state changes
+  useEffect(() => {
+    console.log("showCreateLeadModal state changed:", showCreateLeadModal);
+  }, [showCreateLeadModal]);
   // const handleCreateLead = () => {
   //   console.log("Current role:", role);
 
@@ -1060,6 +1060,37 @@ function LeadList() {
     leads: leads.filter((lead) => lead.status?.toLowerCase() === column.id),
   }));
 
+
+
+  // Delete lead function
+  const deleteLead = async (leadId, leadName) => {
+    if (!window.confirm(`Are you sure you want to delete lead "${leadName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.delete(`deleteLead/${leadId}`);
+
+      if (response.data) {
+        toast.success("Lead deleted successfully!");
+
+        // Remove from local state
+        setLeads(prevLeads => prevLeads.filter(lead => lead.id !== leadId));
+
+        // Refresh status counts
+        await fetchStatusCounts();
+
+        // If in kanban view, refresh kanban data
+        if (viewMode === "kanban") {
+          fetchAllKanbanColumns();
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting lead:", error);
+      toast.error("Failed to delete lead. Please try again.");
+    }
+  };
+
   // Use TableSkeleton instead of loading spinner
   if (loading) {
     return (
@@ -1107,6 +1138,9 @@ function LeadList() {
     );
   }
 
+
+
+
   return (
     <LayoutComponent>
       <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
@@ -1126,11 +1160,10 @@ function LeadList() {
               <div className="flex bg-gray-100 rounded-lg p-0.5">
                 <button
                   onClick={() => setViewMode("table")}
-                  className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-200 ${
-                    viewMode === "table"
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-200 ${viewMode === "table"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   <div className="flex items-center gap-1.5">
                     <svg
@@ -1151,11 +1184,10 @@ function LeadList() {
                 </button>
                 <button
                   onClick={() => setViewMode("kanban")}
-                  className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-200 ${
-                    viewMode === "kanban"
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-200 ${viewMode === "kanban"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   <div className="flex items-center gap-1.5">
                     <svg
@@ -1262,7 +1294,7 @@ function LeadList() {
                 </svg>
                 Create Lead
               </button>
-                  <button
+              <button
                 className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
                 onClick={() => setIsImportOpen(true)}
               >
@@ -1291,16 +1323,14 @@ function LeadList() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8 gap-2 mb-4">
             {/* Total Leads Card */}
             <div
-              className={`bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer ${
-                statusFilter === "all" ? "ring-2 ring-blue-500" : ""
-              }`}
+              className={`bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer ${statusFilter === "all" ? "ring-2 ring-blue-500" : ""
+                }`}
               onClick={() => handleCardFilter("all")}
             >
               <div className="flex items-center gap-2">
                 <div
-                  className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
-                    statusFilter === "all" ? "bg-gray-200" : "bg-gray-100"
-                  }`}
+                  className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${statusFilter === "all" ? "bg-gray-200" : "bg-gray-100"
+                    }`}
                 >
                   <svg
                     className="w-3 h-3 text-gray-600"
@@ -1412,18 +1442,16 @@ function LeadList() {
               return (
                 <div
                   key={statusCount.status}
-                  className={`bg-white rounded-lg p-2 shadow-sm border hover:shadow-md transition-all duration-200 cursor-pointer ${
-                    isActive ? config.activeBorderColor : config.borderColor
-                  } ${isActive ? `ring-2 ${config.ringColor}` : ""}`}
+                  className={`bg-white rounded-lg p-2 shadow-sm border hover:shadow-md transition-all duration-200 cursor-pointer ${isActive ? config.activeBorderColor : config.borderColor
+                    } ${isActive ? `ring-2 ${config.ringColor}` : ""}`}
                   onClick={() =>
                     handleCardFilter(statusCount.status.toLowerCase())
                   }
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
-                        isActive ? config.activeBgColor : config.bgColor
-                      }`}
+                      className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${isActive ? config.activeBgColor : config.bgColor
+                        }`}
                     >
                       <svg
                         className={`w-3 h-3 ${config.iconColor}`}
@@ -1592,6 +1620,21 @@ function LeadList() {
                                               />
                                             </svg>
                                             Edit
+                                          </button>
+
+                                          {/* Delete Button */}
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              deleteLead(lead.id, lead.clientName || "this lead");
+                                            }}
+                                            className="text-gray-500 hover:text-red-600 transition-colors duration-200 flex items-center gap-1 text-xs"
+                                            title="Delete Lead"
+                                          >
+                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                            Delete
                                           </button>
                                         </div>
                                       </div>
@@ -1762,11 +1805,10 @@ function LeadList() {
                         <button
                           key={page}
                           onClick={() => handlePageChange(page)}
-                          className={`px-2 py-1 rounded text-xs font-medium min-w-8 ${
-                            currentPage === page
-                              ? "bg-blue-600 text-white"
-                              : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                          }`}
+                          className={`px-2 py-1 rounded text-xs font-medium min-w-8 ${currentPage === page
+                            ? "bg-blue-600 text-white"
+                            : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            }`}
                         >
                           {page + 1}
                         </button>
@@ -1813,11 +1855,10 @@ function LeadList() {
                   return (
                     <div key={column.id} className="w-80 flex-shrink-0">
                       <div
-                        className={`bg-white rounded-xl shadow-sm border border-gray-200 h-full transition-all duration-200 ${
-                          dragOverColumn === column.id
-                            ? "ring-2 ring-blue-400 bg-blue-50"
-                            : ""
-                        }`}
+                        className={`bg-white rounded-xl shadow-sm border border-gray-200 h-full transition-all duration-200 ${dragOverColumn === column.id
+                          ? "ring-2 ring-blue-400 bg-blue-50"
+                          : ""
+                          }`}
                         onDragOver={(e) => handleKanbanDragOver(e, column.id)}
                         onDragLeave={handleKanbanDragLeave}
                         onDrop={(e) => handleKanbanDrop(e, column.id)}
@@ -1882,7 +1923,7 @@ function LeadList() {
                                   {lead.status}
                                 </span>
                               </div>
-{/* 
+                              {/* 
                               <p className="text-xs text-gray-600 mb-2">
                                 {formatCurrency(lead.revenue)}
                               </p> */}
@@ -1920,6 +1961,13 @@ function LeadList() {
                                     className="text-blue-600 hover:text-blue-800 font-medium"
                                   >
                                     Edit
+                                  </button>
+                                  <button
+                                    onClick={() => deleteLead(lead.id, lead.clientName || "this lead")}
+                                    className="text-red-600 hover:text-red-800 font-medium"
+                                    title="Delete Lead"
+                                  >
+                                    Delete
                                   </button>
                                 </div>
                               </div>
@@ -2061,7 +2109,7 @@ function LeadList() {
         />
       )}
 
-     {/* Modal Component */}
+      {/* Modal Component */}
       <ImportLeadModal
         open={isImportOpen}
         onClose={() => setIsImportOpen(false)}

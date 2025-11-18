@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useLayout } from "../../Layout/useLayout";
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import { Country, State, City } from "country-state-city";
 
 const customReactSelectStyles = (hasError) => ({
     control: (provided, state) => ({
@@ -64,6 +65,12 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
     const [isDeptLoading, setIsDeptLoading] = useState(false);
     const [isRoleLoading, setIsRoleLoading] = useState(false);
 
+    const [dropdownData, setDropdownData] = useState({
+        countries: [],
+        states: [],
+        cities: [],
+    });
+
     // Separate state for phone display and data
     const [phoneDisplay, setPhoneDisplay] = useState("");
     const [phoneData, setPhoneData] = useState({
@@ -77,6 +84,9 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
         name: "",
         phone: "",
         address: "",
+        country: "",
+        state: "",
+        city: "",
         gender: "",
         description: "",
         profileImageBase64: "",
@@ -87,6 +97,95 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
     });
 
     const [errors, setErrors] = useState({});
+
+
+    // =======================================COUNTrY STATE CITY DROPDOWN START__>===================================
+
+    // Load countries on component mount
+    useEffect(() => {
+        const countries = Country.getAllCountries().map((country) => ({
+            value: country.isoCode,
+            label: country.name,
+        }));
+
+        setDropdownData((prev) => ({
+            ...prev,
+            countries,
+        }));
+    }, []);
+
+    // Load states when country changes
+    useEffect(() => {
+        if (formData.country) {
+            const states = State.getStatesOfCountry(formData.country).map((state) => ({
+                value: state.isoCode,
+                label: state.name,
+            }));
+
+            setDropdownData((prev) => ({
+                ...prev,
+                states,
+                cities: [], // Clear cities when country changes
+            }));
+        }
+    }, [formData.country]);
+
+    // Load cities when state changes
+    useEffect(() => {
+        if (formData.country && formData.state) {
+            const cities = City.getCitiesOfState(formData.country, formData.state).map((city) => ({
+                value: city.name,
+                label: city.name,
+            }));
+
+            setDropdownData((prev) => ({
+                ...prev,
+                cities,
+            }));
+        }
+    }, [formData.country, formData.state]);
+
+
+
+
+    // Add these handlers after your existing change handlers
+
+    // Country change handler
+    const handleCountryChange = (selectedOption) => {
+        const countryCode = selectedOption ? selectedOption.value : "";
+
+        setFormData((prev) => ({
+            ...prev,
+            country: countryCode,
+            state: "", // Reset state when country changes
+            city: "",  // Reset city when country changes
+        }));
+    };
+
+    // State change handler
+    const handleStateChange = (selectedOption) => {
+        const stateCode = selectedOption ? selectedOption.value : "";
+
+        setFormData((prev) => ({
+            ...prev,
+            state: stateCode,
+            city: "", // Reset city when state changes
+        }));
+    };
+
+    // City change handler
+    const handleCityChange = (selectedOption) => {
+        const cityName = selectedOption ? selectedOption.value : "";
+
+        setFormData((prev) => ({
+            ...prev,
+            city: cityName,
+        }));
+    };
+
+
+
+    // =======================================COUNTrY STATE CITY DROPDOWN===================================
 
     const checkEmailAvailability = async (email) => {
         if (!/\S+@\S+\.\S+/.test(email)) {
@@ -661,6 +760,81 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                                     )}
                                 </div>
 
+
+                                {/* Country */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-gray-700">
+                                        Country
+                                    </label>
+                                    <Select
+                                        name="country"
+                                        value={dropdownData.countries.find(
+                                            (option) => option.value === formData.country
+                                        )}
+                                        onChange={handleCountryChange}
+                                        options={dropdownData.countries}
+                                        placeholder="Select country"
+                                        isSearchable
+                                        styles={customReactSelectStyles(false)}
+                                           menuPosition="fixed"
+                                    />
+                                </div>
+
+                                {/* State */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-gray-700">
+                                        State
+                                    </label>
+                                    <Select
+                                        name="state"
+                                        value={dropdownData.states.find(
+                                            (option) => option.value === formData.state
+                                        )}
+                                        onChange={handleStateChange}
+                                        options={dropdownData.states}
+                                        placeholder="Select state"
+                                        isSearchable
+                                        isDisabled={!formData.country}
+                                        styles={customReactSelectStyles(false)}
+                                           menuPosition="fixed"
+                                    />
+                                </div>
+
+                                {/* City */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-gray-700">
+                                        City
+                                    </label>
+                                    <Select
+                                        name="city"
+                                        value={dropdownData.cities.find(
+                                            (option) => option.value === formData.city
+                                        )}
+                                        onChange={handleCityChange}
+                                        options={dropdownData.cities}
+                                        placeholder="Select city"
+                                        isSearchable
+                                        isDisabled={!formData.state}
+                                        styles={customReactSelectStyles(false)}
+                                           menuPosition="fixed"
+                                    />
+                                </div>
+
+                                {/* Address - Keep your existing address field but update the label */}
+                                <div className="lg:col-span-2 space-y-2">
+                                    <label className="text-sm font-semibold text-gray-700">
+                                        Full Address
+                                    </label>
+                                    <textarea
+                                        name="address"
+                                        value={formData.address}
+                                        onChange={handleChange}
+                                        rows={3}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"
+                                        placeholder="Enter complete address (street, area, landmark, etc.)"
+                                    />
+                                </div>
+
                                 {/* Gender */}
                                 <div className="space-y-2">
                                     <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
@@ -677,6 +851,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                                         placeholder="Select gender"
                                         isSearchable
                                         styles={customReactSelectStyles(!!errors.gender)}
+                                           menuPosition="fixed"
                                     />
                                     {errors.gender && (
                                         <p className="text-red-500 text-xs flex items-center gap-1">
@@ -716,6 +891,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                                         isSearchable
                                         isLoading={isDeptLoading}
                                         styles={customReactSelectStyles(!!errors.departmentId)}
+                                           menuPosition="fixed"
                                     />
                                     {errors.departmentId && (
                                         <p className="text-red-500 text-xs flex items-center gap-1">
@@ -756,6 +932,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                                         isLoading={isRoleLoading}
                                         isDisabled={!formData.departmentId}
                                         styles={customReactSelectStyles(!!errors.roleId)}
+                                           menuPosition="fixed"
                                     />
                                     {errors.roleId && (
                                         <p className="text-red-500 text-xs flex items-center gap-1">
@@ -777,7 +954,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                                     )}
                                 </div>
 
-                                {/* Address */}
+                                {/* Address
                                 <div className="lg:col-span-2 space-y-2">
                                     <label className="text-sm font-semibold text-gray-700">
                                         Address
@@ -790,7 +967,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"
                                         placeholder="Enter address"
                                     />
-                                </div>
+                                </div> */}
 
                                 {/* Description */}
                                 <div className="lg:col-span-2 space-y-2">
@@ -839,8 +1016,8 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                             type="button"
                             onClick={handleSubmit}
                             disabled={loading}
-                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium flex items-center gap-2 text-sm"
-        >
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium flex items-center gap-2 text-sm"
+                        >
                             {loading ? (
                                 <>
                                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
