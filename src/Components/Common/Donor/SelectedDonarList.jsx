@@ -32,7 +32,7 @@ function SelectedDonarList() {
             <tbody>
                 {r.map((_, i) => (
 
-                    
+
                     <tr key={i} className="animate-pulse">
                         {c.map((_, j) => (
                             <td key={j} className="px-4 py-3">
@@ -47,7 +47,7 @@ function SelectedDonarList() {
 
     // Fetch Donors with search functionality - using useCallback to prevent unnecessary recreations
     // Fetch Donors with dummy records (no API call)
-     const fetchDonors = useCallback(
+    const fetchDonors = useCallback(
         async (page = 0, search = "") => {
             setLoading(true);
 
@@ -119,11 +119,22 @@ function SelectedDonarList() {
 
 
 
-    const handleEdit = (DonorId) => {
+    const handleEdit = (DonorId, uin) => {
         if (role === "ROLE_ADMIN") {
-            navigate(`/Admin/SampleList/${DonorId}`);
+            navigate(`/Admin/SampleList/${DonorId}/${uin}`);
         } else if (role === "ROLE_EMPLOYEE") {
-            navigate(`/Employee/SampleList/${DonorId}`);
+            navigate(`/Employee/SampleList/${DonorId}/${uin}`);
+        }
+    };
+
+
+
+
+    const donorInfo = (donorId) => {
+        if (role === "ROLE_ADMIN") {
+            navigate(`/Admin/DonarEdit/${donorId}`);
+        } else if (role === "ROLE_EMPLOYEE") {
+            navigate(`/Employee/DonarEdit/${donorId}`);
         }
     };
 
@@ -245,7 +256,7 @@ function SelectedDonarList() {
                                 <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
                                 <div>
                                     <h1 className="text-2xl font-bold text-gray-900">
-                                      Selected  Donors List
+                                        Selected  Donors List
                                     </h1>
                                 </div>
                             </div>
@@ -350,13 +361,13 @@ function SelectedDonarList() {
                                         <tr
                                             key={Donor.donorId}
                                             className="hover:bg-gray-50 transition-colors duration-150 group cursor-pointer"
-                                            onClick={() => handleEdit(Donor.donorId)}
+                                            onClick={() => donorInfo(Donor.donorId)}
                                         >
                                             {/* AGE */}
                                             <td className="px-4 py-3 whitespace-nowrap text-sm">
                                                 {Donor.uin || "N/A"}
                                             </td>
-                                          
+
                                             <td className="px-4 py-3 whitespace-nowrap text-sm">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 
@@ -399,9 +410,15 @@ function SelectedDonarList() {
                                             <td className="px-4 py-3 whitespace-nowrap text-sm truncate max-w-[150px]">
                                                 {Donor.address || "N/A"}
                                             </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm truncate max-w-[150px]">
-                                               <button className="text-blue-600 hover:text-blue-800 font-medium"> Open Sample</button>
-                                            </td>
+                                            <button
+                                                className="text-blue-600 hover:text-blue-800 font-medium"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEdit(Donor.donorId, Donor.uin);
+                                                }}
+                                            >
+                                                Open Sample
+                                            </button>
 
                                         </tr>
                                     ))}

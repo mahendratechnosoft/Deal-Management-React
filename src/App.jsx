@@ -47,6 +47,8 @@ import SampleList from "./Components/Common/Donor/SampleList.jsx";
 import TimeSheetList from "./Components/Common/Timesheet/TimeSheetList.jsx";
 import InvoiceList from "./Components/Common/Invoice/InvoiceList.jsx";
 import InvoicePreview from "./Components/Common/Invoice/InvoicePreview.jsx";
+import FamilyList from "./Components/Common/Donor/FamilyList.jsx";
+import DonorMatchingFilter from "./Components/Common/Donor/DonorMatchingFilter.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -225,7 +227,7 @@ function App() {
 
 
             <Route
-            path="/Admin/SampleList/:donorId"
+            path="/Admin/SampleList/:donorId/:uin"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                 <SampleList />
@@ -238,6 +240,27 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                 <SampleReport />
+              </RoleBasedRoute>
+            }
+          />
+
+          
+            <Route
+            path="/Admin/FamilyList"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <FamilyList />
+              </RoleBasedRoute>
+            }
+          />
+
+
+           
+            <Route
+            path="/Admin/PreviewMatchingDonors/:familyId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <DonorMatchingFilter />
               </RoleBasedRoute>
             }
           />
