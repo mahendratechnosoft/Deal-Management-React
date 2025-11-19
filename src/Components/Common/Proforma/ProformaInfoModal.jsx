@@ -241,7 +241,7 @@ const PaymentTabContent = ({ proformaId, currencyType }) => {
   );
 };
 
-const ProposalInfoModal = ({ isOpen, onClose, proforma }) => {
+const ProformaInfoModal = ({ isOpen, onClose, proforma }) => {
   const [activeTab, setActiveTab] = useState("invoice");
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentRefreshKey, setPaymentRefreshKey] = useState(Date.now());
@@ -360,7 +360,7 @@ const ProposalInfoModal = ({ isOpen, onClose, proforma }) => {
             <div className="info-modal-actions">
               <button
                 type="button"
-                className="info-modal-add-payment-btn disabled:cursor-not-allowed"
+                className="px-2 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200 text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoading || isFullyPaid}
                 onClick={handleOpenPaymentModal}
                 title={
@@ -447,4 +447,4 @@ const ProposalInfoModal = ({ isOpen, onClose, proforma }) => {
   );
 };
 
-export default ProposalInfoModal;
+export default ProformaInfoModal;
