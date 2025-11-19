@@ -312,7 +312,7 @@ function CustomerList() {
                 </div>
 
                 {/* Industry Filter */}
-                <div className="flex-1 sm:flex-none">
+                {/* <div className="flex-1 sm:flex-none">
                   <select
                     value={industryFilter}
                     onChange={(e) => setIndustryFilter(e.target.value)}
@@ -325,7 +325,7 @@ function CustomerList() {
                       </option>
                     ))}
                   </select>
-                </div>
+                </div> */}
               </div>
 
               {/* Create Button */}

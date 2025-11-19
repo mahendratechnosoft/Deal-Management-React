@@ -246,7 +246,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
             : "-translate-x-full lg:translate-x-0 lg:w-20"
         }`}
       >
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-[90vh] overflow-y-auto CRM-scroll-width-none">
           {/* Sidebar Header */}
           <div
             className={`p-4 border-b border-gray-700/50 ${
