@@ -99,6 +99,52 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
     const [errors, setErrors] = useState({});
 
 
+
+    // Add Module Access State
+    const [moduleAccess, setModuleAccess] = useState({
+        leadAccess: false,
+        leadViewAll: false,
+        leadCreate: false,
+        leadDelete: false,
+        leadEdit: false,
+
+        customerAccess: false,
+        customerViewAll: false,
+        customerCreate: false,
+        customerDelete: false,
+        customerEdit: false,
+
+        proposalAccess: false,
+        proposalViewAll: false,
+        proposalCreate: false,
+        proposalDelete: false,
+        proposalEdit: false,
+
+        proformaInvoiceAccess: false,
+        proformaInvoiceViewAll: false,
+        proformaInvoiceCreate: false,
+        proformaInvoiceDelete: false,
+        proformaInvoiceEdit: false,
+
+        invoiceAccess: false,
+        invoiceViewAll: false,
+        invoiceCreate: false,
+        invoiceDelete: false,
+        invoiceEdit: false,
+
+        paymentAccess: false,
+        paymentViewAll: false,
+        paymentcreate: false,
+        paymentDelete: false,
+        paymentEdit: false,
+
+        timeSheetAccess: false,
+        timeSheetViewAll: false,
+        timeSheetCreate: false,
+        timeSheetDelete: false,
+        timeSheetEdit: false
+    });
+
     // =======================================COUNTrY STATE CITY DROPDOWN START__>===================================
 
     // Load countries on component mount
@@ -348,58 +394,242 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
         }
     };
 
-    const loadRoles = async () => {
-        if (!formData.departmentId) {
-            return;
-        }
-        setIsRoleLoading(true);
-        try {
-            const response = await axiosInstance.get(
-                `/admin/getRoleByDepartment/${formData.departmentId}`
-            );
-            const options = response.data.map((role) => ({
-                value: role.roleId,
-                label: role.name,
-            }));
-            setRoleOptions(options);
-        } catch (error) {
-            console.error("Failed to fetch roles", error);
-            setRoleOptions([]);
-            toast.error("Failed to load roles");
-        } finally {
-            setIsRoleLoading(false);
-        }
-    };
+   const loadRoles = async () => {
+    if (!formData.departmentId) {
+        return;
+    }
+    setIsRoleLoading(true);
+    try {
+        const response = await axiosInstance.get(
+            `/admin/getRoleByDepartment/${formData.departmentId}`
+        );
+        // Include all permission fields in the role options
+        const options = response.data.map((role) => ({
+            value: role.roleId,
+            label: role.name,
+            // Include all permission fields
+            leadAccess: role.leadAccess,
+            leadViewAll: role.leadViewAll,
+            leadCreate: role.leadCreate,
+            leadDelete: role.leadDelete,
+            leadEdit: role.leadEdit,
+            customerAccess: role.customerAccess,
+            customerViewAll: role.customerViewAll,
+            customerCreate: role.customerCreate,
+            customerDelete: role.customerDelete,
+            customerEdit: role.customerEdit,
+            proposalAccess: role.proposalAccess,
+            proposalViewAll: role.proposalViewAll,
+            proposalCreate: role.proposalCreate,
+            proposalDelete: role.proposalDelete,
+            proposalEdit: role.proposalEdit,
+            proformaInvoiceAccess: role.proformaInvoiceAccess,
+            proformaInvoiceViewAll: role.proformaInvoiceViewAll,
+            proformaInvoiceCreate: role.proformaInvoiceCreate,
+            proformaInvoiceDelete: role.proformaInvoiceDelete,
+            proformaInvoiceEdit: role.proformaInvoiceEdit,
+            invoiceAccess: role.invoiceAccess,
+            invoiceViewAll: role.invoiceViewAll,
+            invoiceCreate: role.invoiceCreate,
+            invoiceDelete: role.invoiceDelete,
+            invoiceEdit: role.invoiceEdit,
+            paymentAccess: role.paymentAccess,
+            paymentViewAll: role.paymentViewAll,
+            paymentcreate: role.paymentcreate,
+            paymentDelete: role.paymentDelete,
+            paymentEdit: role.paymentEdit,
+            timeSheetAccess: role.timeSheetAccess,
+            timeSheetViewAll: role.timeSheetViewAll,
+            timeSheetCreate: role.timeSheetCreate,
+            timeSheetDelete: role.timeSheetDelete,
+            timeSheetEdit: role.timeSheetEdit
+        }));
+        setRoleOptions(options);
+    } catch (error) {
+        console.error("Failed to fetch roles", error);
+        setRoleOptions([]);
+        toast.error("Failed to load roles");
+    } finally {
+        setIsRoleLoading(false);
+    }
+};
 
-    const handleDepartmentChange = (selectedOption) => {
+   const handleDepartmentChange = (selectedOption) => {
+    setFormData((prev) => ({
+        ...prev,
+        departmentId: selectedOption ? selectedOption.value : "",
+        departmentName: selectedOption ? selectedOption.label : "",
+        roleId: "",
+        roleName: "",
+    }));
+    setRoleOptions([]);
+
+    // Reset module access when department changes
+    setModuleAccess({
+        leadAccess: false,
+        leadViewAll: false,
+        leadCreate: false,
+        leadDelete: false,
+        leadEdit: false,
+        customerAccess: false,
+        customerViewAll: false,
+        customerCreate: false,
+        customerDelete: false,
+        customerEdit: false,
+        proposalAccess: false,
+        proposalViewAll: false,
+        proposalCreate: false,
+        proposalDelete: false,
+        proposalEdit: false,
+        proformaInvoiceAccess: false,
+        proformaInvoiceViewAll: false,
+        proformaInvoiceCreate: false,
+        proformaInvoiceDelete: false,
+        proformaInvoiceEdit: false,
+        invoiceAccess: false,
+        invoiceViewAll: false,
+        invoiceCreate: false,
+        invoiceDelete: false,
+        invoiceEdit: false,
+        paymentAccess: false,
+        paymentViewAll: false,
+        paymentcreate: false,
+        paymentDelete: false,
+        paymentEdit: false,
+        timeSheetAccess: false,
+        timeSheetViewAll: false,
+        timeSheetCreate: false,
+        timeSheetDelete: false,
+        timeSheetEdit: false
+    });
+
+    if (errors.departmentId) {
+        setErrors((prev) => ({ ...prev, departmentId: "" }));
+    }
+    if (errors.roleId) {
+        setErrors((prev) => ({ ...prev, roleId: "" }));
+    }
+};
+
+const handleRoleChange = (selectedOption) => {
+    if (selectedOption) {
+        // Find the selected role from roleOptions to get all permissions
+        const selectedRole = roleOptions.find(role => role.value === selectedOption.value);
+        
+        console.log("Selected Role:", selectedRole); // Debug log
+        
         setFormData((prev) => ({
             ...prev,
-            departmentId: selectedOption ? selectedOption.value : "",
-            departmentName: selectedOption ? selectedOption.label : "",
+            roleId: selectedOption.value,
+            roleName: selectedOption.label,
+        }));
+
+        // Update module access based on selected role permissions
+        if (selectedRole) {
+            setModuleAccess({
+                leadAccess: selectedRole.leadAccess || false,
+                leadViewAll: selectedRole.leadViewAll || false,
+                leadCreate: selectedRole.leadCreate || false,
+                leadDelete: selectedRole.leadDelete || false,
+                leadEdit: selectedRole.leadEdit || false,
+                
+                customerAccess: selectedRole.customerAccess || false,
+                customerViewAll: selectedRole.customerViewAll || false,
+                customerCreate: selectedRole.customerCreate || false,
+                customerDelete: selectedRole.customerDelete || false,
+                customerEdit: selectedRole.customerEdit || false,
+                
+                proposalAccess: selectedRole.proposalAccess || false,
+                proposalViewAll: selectedRole.proposalViewAll || false,
+                proposalCreate: selectedRole.proposalCreate || false,
+                proposalDelete: selectedRole.proposalDelete || false,
+                proposalEdit: selectedRole.proposalEdit || false,
+                
+                proformaInvoiceAccess: selectedRole.proformaInvoiceAccess || false,
+                proformaInvoiceViewAll: selectedRole.proformaInvoiceViewAll || false,
+                proformaInvoiceCreate: selectedRole.proformaInvoiceCreate || false,
+                proformaInvoiceDelete: selectedRole.proformaInvoiceDelete || false,
+                proformaInvoiceEdit: selectedRole.proformaInvoiceEdit || false,
+                
+                invoiceAccess: selectedRole.invoiceAccess || false,
+                invoiceViewAll: selectedRole.invoiceViewAll || false,
+                invoiceCreate: selectedRole.invoiceCreate || false,
+                invoiceDelete: selectedRole.invoiceDelete || false,
+                invoiceEdit: selectedRole.invoiceEdit || false,
+                
+                paymentAccess: selectedRole.paymentAccess || false,
+                paymentViewAll: selectedRole.paymentViewAll || false,
+                paymentcreate: selectedRole.paymentcreate || false,
+                paymentDelete: selectedRole.paymentDelete || false,
+                paymentEdit: selectedRole.paymentEdit || false,
+                
+                timeSheetAccess: selectedRole.timeSheetAccess || false,
+                timeSheetViewAll: selectedRole.timeSheetViewAll || false,
+                timeSheetCreate: selectedRole.timeSheetCreate || false,
+                timeSheetDelete: selectedRole.timeSheetDelete || false,
+                timeSheetEdit: selectedRole.timeSheetEdit || false
+            });
+            
+            // Show success message
+            // toast.success(`Permissions loaded from "${selectedOption.label}" role`);
+        } else {
+            console.error("Selected role not found in roleOptions");
+            toast.error("Failed to load role permissions");
+        }
+    } else {
+        // If role is cleared, reset module access
+        setFormData((prev) => ({
+            ...prev,
             roleId: "",
             roleName: "",
         }));
-        setRoleOptions([]);
+        
+        // Reset module access when role is cleared
+        setModuleAccess({
+            leadAccess: false,
+            leadViewAll: false,
+            leadCreate: false,
+            leadDelete: false,
+            leadEdit: false,
+            customerAccess: false,
+            customerViewAll: false,
+            customerCreate: false,
+            customerDelete: false,
+            customerEdit: false,
+            proposalAccess: false,
+            proposalViewAll: false,
+            proposalCreate: false,
+            proposalDelete: false,
+            proposalEdit: false,
+            proformaInvoiceAccess: false,
+            proformaInvoiceViewAll: false,
+            proformaInvoiceCreate: false,
+            proformaInvoiceDelete: false,
+            proformaInvoiceEdit: false,
+            invoiceAccess: false,
+            invoiceViewAll: false,
+            invoiceCreate: false,
+            invoiceDelete: false,
+            invoiceEdit: false,
+            paymentAccess: false,
+            paymentViewAll: false,
+            paymentcreate: false,
+            paymentDelete: false,
+            paymentEdit: false,
+            timeSheetAccess: false,
+            timeSheetViewAll: false,
+            timeSheetCreate: false,
+            timeSheetDelete: false,
+            timeSheetEdit: false
+        });
+        
+        toast.success("Permissions reset");
+    }
 
-        if (errors.departmentId) {
-            setErrors((prev) => ({ ...prev, departmentId: "" }));
-        }
-        if (errors.roleId) {
-            setErrors((prev) => ({ ...prev, roleId: "" }));
-        }
-    };
-
-    const handleRoleChange = (selectedOption) => {
-        setFormData((prev) => ({
-            ...prev,
-            roleId: selectedOption ? selectedOption.value : "",
-            roleName: selectedOption ? selectedOption.label : "",
-        }));
-        if (errors.roleId) {
-            setErrors((prev) => ({ ...prev, roleId: "" }));
-        }
-    };
-
+    if (errors.roleId) {
+        setErrors((prev) => ({ ...prev, roleId: "" }));
+    }
+};
     const validateForm = () => {
         const newErrors = {};
 
@@ -438,7 +668,16 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
 
         setLoading(true);
         try {
-            await axiosInstance.post("/admin/createEmployee", formData);
+            const payload = {
+                ...formData,
+                ...moduleAccess
+            };
+
+              console.log("Form Data:", formData);
+        console.log("Module Access:", moduleAccess);
+        console.log("Final Payload:", payload);
+
+            await axiosInstance.post("/admin/createEmployee", payload);
 
             toast.success("Employee created successfully!");
             if (onSuccess) {
@@ -474,6 +713,126 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
 
     const togglePasswordVisibility = () => {
         setIsPasswordVisible(!isPasswordVisible);
+    };
+
+
+
+    // Access Toggle Component
+    const AccessToggle = ({ field, label, isChecked, onChange }) => {
+        const handleToggle = () => {
+            onChange(!isChecked);
+        };
+
+        return (
+            <label
+                htmlFor={field}
+                className="flex items-center cursor-pointer select-none"
+            >
+                <div className="relative">
+                    <input
+                        type="checkbox"
+                        id={field}
+                        checked={isChecked}
+                        onChange={handleToggle}
+                        className="sr-only"
+                    />
+                    <div
+                        className={`block w-10 h-6 rounded-full transition-colors ${isChecked ? "bg-blue-600" : "bg-gray-300"
+                            }`}
+                    ></div>
+                    <div
+                        className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${isChecked ? "translate-x-4" : "translate-x-0"
+                            }`}
+                    ></div>
+                </div>
+                <span className="ml-2 text-sm text-gray-700">{label}</span>
+            </label>
+        );
+    };
+
+
+
+
+
+
+    // Handle Access Change
+    const handleAccessChange = (field, value) => {
+        setModuleAccess((prev) => ({
+            ...prev,
+            [field]: value,
+        }));
+    };
+
+    // Get Access State
+    const getAccess = (field) => {
+        return moduleAccess[field] || false;
+    };
+
+    // Select All Access
+    const handleSelectAllAccess = () => {
+        const allAccessTrue = Object.keys(moduleAccess).reduce((acc, key) => {
+            acc[key] = true;
+            return acc;
+        }, {});
+        setModuleAccess(allAccessTrue);
+    };
+
+    // Clear All Access
+    const handleClearAllAccess = () => {
+        const allAccessFalse = Object.keys(moduleAccess).reduce((acc, key) => {
+            acc[key] = false;
+            return acc;
+        }, {});
+        setModuleAccess(allAccessFalse);
+    };
+
+    // Module Access Group Component
+    const ModuleAccessGroup = ({
+        title,
+        permissions,
+        getAccess,
+        handleAccessChange,
+    }) => {
+        return (
+            <div className="p-4 border border-gray-200 rounded-lg">
+                <h3 className="text-lg font-medium text-gray-800 mb-3">{title}</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {permissions.map((perm) => (
+                        <AccessToggle
+                            key={perm.field}
+                            field={perm.field}
+                            label={perm.label}
+                            isChecked={getAccess(perm.field)}
+                            onChange={(isChecked) => handleAccessChange(perm.field, isChecked)}
+                        />
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
+    // Select All Access Button Component
+    const SelectAllAccessButton = ({ onSelectAll, onClearAll, getAccess }) => {
+        return (
+            <div className="flex justify-end mb-4">
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        onClick={onClearAll}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                    >
+                        Clear All
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onSelectAll}
+                        className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 transition-colors duration-200"
+                    >
+                        Select All Access
+                    </button>
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -776,7 +1135,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                                         placeholder="Select country"
                                         isSearchable
                                         styles={customReactSelectStyles(false)}
-                                           menuPosition="fixed"
+                                        menuPosition="fixed"
                                     />
                                 </div>
 
@@ -796,7 +1155,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                                         isSearchable
                                         isDisabled={!formData.country}
                                         styles={customReactSelectStyles(false)}
-                                           menuPosition="fixed"
+                                        menuPosition="fixed"
                                     />
                                 </div>
 
@@ -816,7 +1175,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                                         isSearchable
                                         isDisabled={!formData.state}
                                         styles={customReactSelectStyles(false)}
-                                           menuPosition="fixed"
+                                        menuPosition="fixed"
                                     />
                                 </div>
 
@@ -851,7 +1210,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                                         placeholder="Select gender"
                                         isSearchable
                                         styles={customReactSelectStyles(!!errors.gender)}
-                                           menuPosition="fixed"
+                                        menuPosition="fixed"
                                     />
                                     {errors.gender && (
                                         <p className="text-red-500 text-xs flex items-center gap-1">
@@ -891,7 +1250,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                                         isSearchable
                                         isLoading={isDeptLoading}
                                         styles={customReactSelectStyles(!!errors.departmentId)}
-                                           menuPosition="fixed"
+                                        menuPosition="fixed"
                                     />
                                     {errors.departmentId && (
                                         <p className="text-red-500 text-xs flex items-center gap-1">
@@ -932,7 +1291,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                                         isLoading={isRoleLoading}
                                         isDisabled={!formData.departmentId}
                                         styles={customReactSelectStyles(!!errors.roleId)}
-                                           menuPosition="fixed"
+                                        menuPosition="fixed"
                                     />
                                     {errors.roleId && (
                                         <p className="text-red-500 text-xs flex items-center gap-1">
@@ -984,6 +1343,144 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                                     />
                                 </div>
                             </div>
+
+
+
+                            {/* Module Access Section */}
+<div className="lg:col-span-2 space-y-4">
+    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="w-8 h-8 bg-cyan-600 rounded flex items-center justify-center">
+            <svg
+                className="w-4 h-4 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+            >
+                <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                ></path>
+            </svg>
+        </div>
+        <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-800">
+                Module Access Permissions
+            </h3>
+            <p className="text-gray-600 text-sm">
+                Set permissions for CRM modules
+            </p>
+        </div>
+    </div>
+
+    {/* Select All Button */}
+    <SelectAllAccessButton
+        onSelectAll={handleSelectAllAccess}
+        onClearAll={handleClearAllAccess}
+        getAccess={getAccess}
+    />
+
+    <div className="space-y-4">
+        {/* Leads Permissions */}
+        <ModuleAccessGroup
+            title="Leads Permissions"
+            permissions={[
+                { label: "Access", field: "leadAccess" },
+                { label: "View All", field: "leadViewAll" },
+                { label: "Create", field: "leadCreate" },
+                { label: "Edit", field: "leadEdit" },
+                { label: "Delete", field: "leadDelete" },
+            ]}
+            getAccess={getAccess}
+            handleAccessChange={handleAccessChange}
+        />
+
+        {/* Customer Permissions */}
+        <ModuleAccessGroup
+            title="Customer Permissions"
+            permissions={[
+                { label: "Access", field: "customerAccess" },
+                { label: "View All", field: "customerViewAll" },
+                { label: "Create", field: "customerCreate" },
+                { label: "Edit", field: "customerEdit" },
+                { label: "Delete", field: "customerDelete" },
+            ]}
+            getAccess={getAccess}
+            handleAccessChange={handleAccessChange}
+        />
+
+        {/* Proposal Permissions */}
+        <ModuleAccessGroup
+            title="Proposal Permissions"
+            permissions={[
+                { label: "Access", field: "proposalAccess" },
+                { label: "View All", field: "proposalViewAll" },
+                { label: "Create", field: "proposalCreate" },
+                { label: "Edit", field: "proposalEdit" },
+                { label: "Delete", field: "proposalDelete" },
+            ]}
+            getAccess={getAccess}
+            handleAccessChange={handleAccessChange}
+        />
+
+        {/* Proforma Invoice Permissions */}
+        <ModuleAccessGroup
+            title="Proforma Invoice Permissions"
+            permissions={[
+                { label: "Access", field: "proformaInvoiceAccess" },
+                { label: "View All", field: "proformaInvoiceViewAll" },
+                { label: "Create", field: "proformaInvoiceCreate" },
+                { label: "Edit", field: "proformaInvoiceEdit" },
+                { label: "Delete", field: "proformaInvoiceDelete" },
+            ]}
+            getAccess={getAccess}
+            handleAccessChange={handleAccessChange}
+        />
+
+        {/* Invoice Permissions */}
+        <ModuleAccessGroup
+            title="Invoice Permissions"
+            permissions={[
+                { label: "Access", field: "invoiceAccess" },
+                { label: "View All", field: "invoiceViewAll" },
+                { label: "Create", field: "invoiceCreate" },
+                { label: "Edit", field: "invoiceEdit" },
+                { label: "Delete", field: "invoiceDelete" },
+            ]}
+            getAccess={getAccess}
+            handleAccessChange={handleAccessChange}
+        />
+
+        {/* Payment Permissions */}
+        <ModuleAccessGroup
+            title="Payment Permissions"
+            permissions={[
+                { label: "Access", field: "paymentAccess" },
+                { label: "View All", field: "paymentViewAll" },
+                { label: "Create", field: "paymentcreate" },
+                { label: "Edit", field: "paymentEdit" },
+                { label: "Delete", field: "paymentDelete" },
+            ]}
+            getAccess={getAccess}
+            handleAccessChange={handleAccessChange}
+        />
+
+        {/* Timesheet Permissions */}
+        <ModuleAccessGroup
+            title="Timesheet Permissions"
+            permissions={[
+                { label: "Access", field: "timeSheetAccess" },
+                { label: "View All", field: "timeSheetViewAll" },
+                { label: "Create", field: "timeSheetCreate" },
+                { label: "Edit", field: "timeSheetEdit" },
+                { label: "Delete", field: "timeSheetDelete" },
+            ]}
+            getAccess={getAccess}
+            handleAccessChange={handleAccessChange}
+        />
+    </div>
+</div>
                         </div>
                     </form>
                 </div>
