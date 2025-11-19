@@ -137,7 +137,7 @@ function getPeriodLabel(viewType, currentDate) {
 
 
 function TimeSheetList() {
-    const { LayoutComponent } = useLayout();
+    const { LayoutComponent, role } = useLayout();
 
     const [viewType, setViewType] = useState("monthly"); // monthly | weekly | daily
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -367,31 +367,31 @@ function TimeSheetList() {
     };
 
 
-  const onDayBoxClick = (employeeName, dateKey, records) => {
-    // Find the employee ID from the selected employee or from records
-    let employeeId;
-    
-    if (selectedEmployee.value !== "all") {
-        // If a specific employee is selected, use that ID
-        employeeId = selectedEmployee.value;
-    } else if (records && records.length > 0) {
-        // If records exist, get from first record
-        employeeId = records[0].employeeId;
-    } else {
-        // Try to find employee ID from employeeOptions by name
-        const employee = employeeOptions.find(emp => 
-            emp.label === employeeName || emp.value === employeeName
-        );
-        employeeId = employee ? employee.value : null;
-    }
-    
-    setCurrentEmployeeId(employeeId);
-    setClickPopup({
-        employeeName,
-        dateKey,
-        records: records || [],
-    });
-};
+    const onDayBoxClick = (employeeName, dateKey, records) => {
+        // Find the employee ID from the selected employee or from records
+        let employeeId;
+
+        if (selectedEmployee.value !== "all") {
+            // If a specific employee is selected, use that ID
+            employeeId = selectedEmployee.value;
+        } else if (records && records.length > 0) {
+            // If records exist, get from first record
+            employeeId = records[0].employeeId;
+        } else {
+            // Try to find employee ID from employeeOptions by name
+            const employee = employeeOptions.find(emp =>
+                emp.label === employeeName || emp.value === employeeName
+            );
+            employeeId = employee ? employee.value : null;
+        }
+
+        setCurrentEmployeeId(employeeId);
+        setClickPopup({
+            employeeName,
+            dateKey,
+            records: records || [],
+        });
+    };
     const closePopup = () => {
         setClickPopup(null);
     };
@@ -485,22 +485,22 @@ function TimeSheetList() {
 
 
     function getMonthlyGrid(dateList) {
-    if (dateList.length === 0) return [];
+        if (dateList.length === 0) return [];
 
-    const firstDay = dateList[0].date.getDay(); // 0=Sun, 6=Sat
+        const firstDay = dateList[0].date.getDay(); // 0=Sun, 6=Sat
 
-    const emptyCells = Array.from({ length: firstDay }).map((_, i) => ({
-        empty: true,
-        key: "empty-" + i
-    }));
+        const emptyCells = Array.from({ length: firstDay }).map((_, i) => ({
+            empty: true,
+            key: "empty-" + i
+        }));
 
-    const dateCells = dateList.map(d => ({
-        empty: false,
-        ...d
-    }));
+        const dateCells = dateList.map(d => ({
+            empty: false,
+            ...d
+        }));
 
-    return [...emptyCells, ...dateCells];
-}
+        return [...emptyCells, ...dateCells];
+    }
 
 
     return (
@@ -566,16 +566,18 @@ function TimeSheetList() {
                             </div>
 
                             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                <div className="w-64">
-                                    <Select
-                                        className="basic-single"
-                                        classNamePrefix="select"
-                                        options={employeeOptions}
-                                        value={selectedEmployee}
-                                        onChange={setSelectedEmployee}
-                                        placeholder="Select Employee"
-                                    />
-                                </div>
+                                {role !== "ROLE_EMPLOYEE" && (
+                                    <div className="w-64">
+                                        <Select
+                                            className="basic-single"
+                                            classNamePrefix="select"
+                                            options={employeeOptions}
+                                            value={selectedEmployee}
+                                            onChange={setSelectedEmployee}
+                                            placeholder="Select Employee"
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -857,18 +859,18 @@ function TimeSheetList() {
                                                     <div className="px-6 py-4 w-60 text-sm font-semibold text-gray-900 sticky left-0 bg-gray-50 z-10">
                                                         Member
                                                     </div>
-<div className="flex flex-1">
-    {dateList.map(({ key, date }) => (
-        <div key={key} className="text-center py-2 min-w-[30px] flex-1">
-            <div className="text-gray-500 text-xs font-medium mb-1">
-                {DAY_LETTERS[date.getDay()]}
-            </div>
-            <div className="font-semibold text-gray-900 text-sm">
-                {date.getDate()}
-            </div>
-        </div>
-    ))}
-</div>
+                                                    <div className="flex flex-1">
+                                                        {dateList.map(({ key, date }) => (
+                                                            <div key={key} className="text-center py-2 min-w-[30px] flex-1">
+                                                                <div className="text-gray-500 text-xs font-medium mb-1">
+                                                                    {DAY_LETTERS[date.getDay()]}
+                                                                </div>
+                                                                <div className="font-semibold text-gray-900 text-sm">
+                                                                    {date.getDate()}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
 
 
                                                     <div className="px-6 py-4 w-24 text-right text-sm font-semibold text-gray-900 sticky right-0 bg-gray-50">
@@ -997,30 +999,30 @@ function TimeSheetList() {
                                                                         ))}
                                                                     </div>
 
-<div className="grid grid-cols-7 gap-1">
-    {monthlyGrid.map((item) => {
-        if (item.empty) return <div key={item.key} className="aspect-square"></div>;
+                                                                    <div className="grid grid-cols-7 gap-1">
+                                                                        {monthlyGrid.map((item) => {
+                                                                            if (item.empty) return <div key={item.key} className="aspect-square"></div>;
 
-        const { key, date } = item;
-        const records = empData[key] || [];
-        const color = getDayColor(key, emp, false);
+                                                                            const { key, date } = item;
+                                                                            const records = empData[key] || [];
+                                                                            const color = getDayColor(key, emp, false);
 
-        return (
-            <div
-                key={key}
-                className="aspect-square flex items-center justify-center"
-                onClick={() => onDayBoxClick(emp, key, records)}
-            >
-                <div
-                    className="w-6 h-6 rounded-md border border-gray-200 flex items-center justify-center text-xs font-medium"
-                    style={{ backgroundColor: color }}
-                >
-                    {date.getDate()}
-                </div>
-            </div>
-        );
-    })}
-</div>
+                                                                            return (
+                                                                                <div
+                                                                                    key={key}
+                                                                                    className="aspect-square flex items-center justify-center"
+                                                                                    onClick={() => onDayBoxClick(emp, key, records)}
+                                                                                >
+                                                                                    <div
+                                                                                        className="w-6 h-6 rounded-md border border-gray-200 flex items-center justify-center text-xs font-medium"
+                                                                                        style={{ backgroundColor: color }}
+                                                                                    >
+                                                                                        {date.getDate()}
+                                                                                    </div>
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                    </div>
 
                                                                 </div>
 
