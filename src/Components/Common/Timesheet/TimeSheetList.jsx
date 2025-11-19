@@ -151,6 +151,9 @@ function TimeSheetList() {
     const [selectedEmployee, setSelectedEmployee] = useState({ value: "all", label: "All Employees" });
 
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [currentEmployeeId, setCurrentEmployeeId] = useState(null);
+
+
     // ------------------------------------------------
     // Calculate date range when viewType or currentDate changes
     // ------------------------------------------------
@@ -258,6 +261,7 @@ function TimeSheetList() {
 
     const dateList = buildDateList(range.from, range.to);
 
+    const monthlyGrid = getMonthlyGrid(dateList);
     // Filter employees based on search query
     const employeeNames = Object.keys(attendance || {});
 
@@ -363,14 +367,31 @@ function TimeSheetList() {
     };
 
 
-    const onDayBoxClick = (employeeName, dateKey, records) => {
-        setClickPopup({
-            employeeName,
-            dateKey,
-            records: records || [], // This ensures records is always defined
-        });
-    };
-
+  const onDayBoxClick = (employeeName, dateKey, records) => {
+    // Find the employee ID from the selected employee or from records
+    let employeeId;
+    
+    if (selectedEmployee.value !== "all") {
+        // If a specific employee is selected, use that ID
+        employeeId = selectedEmployee.value;
+    } else if (records && records.length > 0) {
+        // If records exist, get from first record
+        employeeId = records[0].employeeId;
+    } else {
+        // Try to find employee ID from employeeOptions by name
+        const employee = employeeOptions.find(emp => 
+            emp.label === employeeName || emp.value === employeeName
+        );
+        employeeId = employee ? employee.value : null;
+    }
+    
+    setCurrentEmployeeId(employeeId);
+    setClickPopup({
+        employeeName,
+        dateKey,
+        records: records || [],
+    });
+};
     const closePopup = () => {
         setClickPopup(null);
     };
@@ -460,6 +481,26 @@ function TimeSheetList() {
         return getTotalTimeFromPairs(pairs);
     }
 
+
+
+
+    function getMonthlyGrid(dateList) {
+    if (dateList.length === 0) return [];
+
+    const firstDay = dateList[0].date.getDay(); // 0=Sun, 6=Sat
+
+    const emptyCells = Array.from({ length: firstDay }).map((_, i) => ({
+        empty: true,
+        key: "empty-" + i
+    }));
+
+    const dateCells = dateList.map(d => ({
+        empty: false,
+        ...d
+    }));
+
+    return [...emptyCells, ...dateCells];
+}
 
 
     return (
@@ -687,16 +728,16 @@ function TimeSheetList() {
                                                                 </td>
 
                                                                 <td className="px-6 py-4">
-                                                                   
-                                                                        <button
-                                                                            onClick={() => onDayBoxClick(emp, range.from, records)}
-                                                                            className="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
-                                                                        >
-                                                                            View Logs
-                                                                        </button>
-                                                                  
-                                                                        {/* <span className="text-gray-400 text-xs">No logs</span> */}
-                                                                 
+
+                                                                    <button
+                                                                        onClick={() => onDayBoxClick(emp, range.from, records)}
+                                                                        className="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
+                                                                    >
+                                                                        View Logs
+                                                                    </button>
+
+                                                                    {/* <span className="text-gray-400 text-xs">No logs</span> */}
+
                                                                 </td>
 
                                                                 <td className="px-6 py-4 font-semibold text-gray-900">
@@ -779,16 +820,16 @@ function TimeSheetList() {
                                                                 <div className="text-xs text-gray-500">
                                                                     {records.length} record{records.length !== 1 ? 's' : ''}
                                                                 </div>
-                                                              
-                                                                    <button
-                                                                        onClick={() => onDayBoxClick(emp, range.from, records)}
-                                                                        className="px-3 py-2 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium"
-                                                                    >
-                                                                        View All Logs
-                                                                    </button>
-                                                           
-                                                                    {/* <span className="text-gray-400 text-xs">No logs available</span> */}
-                                                               
+
+                                                                <button
+                                                                    onClick={() => onDayBoxClick(emp, range.from, records)}
+                                                                    className="px-3 py-2 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium"
+                                                                >
+                                                                    View All Logs
+                                                                </button>
+
+                                                                {/* <span className="text-gray-400 text-xs">No logs available</span> */}
+
                                                             </div>
                                                         </div>
                                                     );
@@ -816,19 +857,19 @@ function TimeSheetList() {
                                                     <div className="px-6 py-4 w-60 text-sm font-semibold text-gray-900 sticky left-0 bg-gray-50 z-10">
                                                         Member
                                                     </div>
+<div className="flex flex-1">
+    {dateList.map(({ key, date }) => (
+        <div key={key} className="text-center py-2 min-w-[30px] flex-1">
+            <div className="text-gray-500 text-xs font-medium mb-1">
+                {DAY_LETTERS[date.getDay()]}
+            </div>
+            <div className="font-semibold text-gray-900 text-sm">
+                {date.getDate()}
+            </div>
+        </div>
+    ))}
+</div>
 
-                                                    <div className="flex flex-1">
-                                                        {dateList.map(({ key, date }) => (
-                                                            <div key={key} className="text-center py-2 min-w-[30px] flex-1">
-                                                                <div className="text-gray-500 text-xs font-medium mb-1">
-                                                                    {DAY_LETTERS[date.getDay()]}
-                                                                </div>
-                                                                <div className="font-semibold text-gray-900 text-sm">
-                                                                    {date.getDate()}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
 
                                                     <div className="px-6 py-4 w-24 text-right text-sm font-semibold text-gray-900 sticky right-0 bg-gray-50">
                                                         Total
@@ -956,27 +997,31 @@ function TimeSheetList() {
                                                                         ))}
                                                                     </div>
 
-                                                                    <div className="grid grid-cols-7 gap-1">
-                                                                        {dateList.map(({ key, date }) => {
-                                                                            const records = empData[key] || [];
-                                                                            const color = getDayColor(key, emp, false);
+<div className="grid grid-cols-7 gap-1">
+    {monthlyGrid.map((item) => {
+        if (item.empty) return <div key={item.key} className="aspect-square"></div>;
 
-                                                                            return (
-                                                                                <div
-                                                                                    key={key}
-                                                                                    className="aspect-square flex items-center justify-center relative"
-                                                                                    onClick={() => onDayBoxClick(emp, key, records)}
-                                                                                >
-                                                                                    <div
-                                                                                        className="w-6 h-6 rounded-md cursor-pointer border border-gray-200 flex items-center justify-center text-xs font-medium"
-                                                                                        style={{ backgroundColor: color }}
-                                                                                    >
-                                                                                        {date.getDate()}
-                                                                                    </div>
-                                                                                </div>
-                                                                            );
-                                                                        })}
-                                                                    </div>
+        const { key, date } = item;
+        const records = empData[key] || [];
+        const color = getDayColor(key, emp, false);
+
+        return (
+            <div
+                key={key}
+                className="aspect-square flex items-center justify-center"
+                onClick={() => onDayBoxClick(emp, key, records)}
+            >
+                <div
+                    className="w-6 h-6 rounded-md border border-gray-200 flex items-center justify-center text-xs font-medium"
+                    style={{ backgroundColor: color }}
+                >
+                    {date.getDate()}
+                </div>
+            </div>
+        );
+    })}
+</div>
+
                                                                 </div>
 
                                                                 <div className="flex justify-center gap-4 text-xs">
@@ -1202,6 +1247,7 @@ function TimeSheetList() {
                                     buildTimePairs={buildTimePairs}
                                     formatDuration={formatDuration}
                                     formatTimeSimple={formatTimeSimple}
+                                    employeeId={currentEmployeeId}
                                 />
                             )}
 
