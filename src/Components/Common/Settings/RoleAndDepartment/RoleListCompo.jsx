@@ -44,6 +44,93 @@ const SkeletonRow = () => (
   </tr>
 );
 
+// Access Toggle Component
+const AccessToggle = ({ field, label, isChecked, onChange }) => {
+  const handleToggle = () => {
+    onChange(!isChecked);
+  };
+
+  return (
+    <label
+      htmlFor={field}
+      className="flex items-center cursor-pointer select-none"
+    >
+      <div className="relative">
+        <input
+          type="checkbox"
+          id={field}
+          checked={isChecked}
+          onChange={handleToggle}
+          className="sr-only"
+        />
+        <div
+          className={`block w-10 h-6 rounded-full transition-colors ${isChecked ? "bg-blue-600" : "bg-gray-300"
+            }`}
+        ></div>
+        <div
+          className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${isChecked ? "translate-x-4" : "translate-x-0"
+            }`}
+        ></div>
+      </div>
+      <span className="ml-2 text-sm text-gray-700">{label}</span>
+    </label>
+  );
+};
+
+// Module Access Group Component
+const ModuleAccessGroup = ({
+  title,
+  permissions,
+  getAccess,
+  handleAccessChange,
+}) => {
+  return (
+    <div className="p-4 border border-gray-200 rounded-lg">
+      <h3 className="text-lg font-medium text-gray-800 mb-3">{title}</h3>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {permissions.map((perm) => (
+          <AccessToggle
+            key={perm.field}
+            field={perm.field}
+            label={perm.label}
+            isChecked={getAccess(perm.field)}
+            onChange={(isChecked) => handleAccessChange(perm.field, isChecked)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+
+// Select All Access Button Component
+const SelectAllAccessButton = ({ onSelectAll, onClearAll, getAccess }) => {
+  const hasSomeAccess = Object.keys(getAccess).some(key =>
+    key.includes('Access') && getAccess(key)
+  );
+
+  return (
+    <div className="flex justify-end mb-4">
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onClearAll}
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+        >
+          Clear All
+        </button>
+        <button
+          type="button"
+          onClick={onSelectAll}
+          className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 transition-colors duration-200"
+        >
+          Select All Access
+        </button>
+      </div>
+    </div>
+  );
+};
+
 function RoleListCompo() {
   const [roles, setRoles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,6 +152,96 @@ function RoleListCompo() {
   const [updateModalError, setUpdateModalError] = useState(null);
 
   const [deletingId, setDeletingId] = useState(null);
+
+  // Module Access State for Create Modal
+  const [moduleAccess, setModuleAccess] = useState({
+    leadAccess: false,
+    leadViewAll: false,
+    leadCreate: false,
+    leadDelete: false,
+    leadEdit: false,
+
+    customerAccess: false,
+    customerViewAll: false,
+    customerCreate: false,
+    customerDelete: false,
+    customerEdit: false,
+
+    proposalAccess: false,
+    proposalViewAll: false,
+    proposalCreate: false,
+    proposalDelete: false,
+    proposalEdit: false,
+
+    proformaInvoiceAccess: false,
+    proformaInvoiceViewAll: false,
+    proformaInvoiceCreate: false,
+    proformaInvoiceDelete: false,
+    proformaInvoiceEdit: false,
+
+    invoiceAccess: false,
+    invoiceViewAll: false,
+    invoiceCreate: false,
+    invoiceDelete: false,
+    invoiceEdit: false,
+
+    paymentAccess: false,
+    paymentViewAll: false,
+    paymentcreate: false,
+    paymentDelete: false,
+    paymentEdit: false,
+
+    timeSheetAccess: false,
+    timeSheetViewAll: false,
+    timeSheetCreate: false,
+    timeSheetDelete: false,
+    timeSheetEdit: false
+  });
+
+  // Module Access State for Update Modal
+  const [updateModuleAccess, setUpdateModuleAccess] = useState({
+    leadAccess: false,
+    leadViewAll: false,
+    leadCreate: false,
+    leadDelete: false,
+    leadEdit: false,
+
+    customerAccess: false,
+    customerViewAll: false,
+    customerCreate: false,
+    customerDelete: false,
+    customerEdit: false,
+
+    proposalAccess: false,
+    proposalViewAll: false,
+    proposalCreate: false,
+    proposalDelete: false,
+    proposalEdit: false,
+
+    proformaInvoiceAccess: false,
+    proformaInvoiceViewAll: false,
+    proformaInvoiceCreate: false,
+    proformaInvoiceDelete: false,
+    proformaInvoiceEdit: false,
+
+    invoiceAccess: false,
+    invoiceViewAll: false,
+    invoiceCreate: false,
+    invoiceDelete: false,
+    invoiceEdit: false,
+
+    paymentAccess: false,
+    paymentViewAll: false,
+    paymentcreate: false,
+    paymentDelete: false,
+    paymentEdit: false,
+
+    timeSheetAccess: false,
+    timeSheetViewAll: false,
+    timeSheetCreate: false,
+    timeSheetDelete: false,
+    timeSheetEdit: false
+  });
 
   useEffect(() => {
     if (departmentId) {
@@ -88,6 +265,73 @@ function RoleListCompo() {
     }
   };
 
+  // Handle Access Change for Create Modal
+  const handleAccessChange = (field, value) => {
+    setModuleAccess((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  // Handle Access Change for Update Modal
+  const handleUpdateAccessChange = (field, value) => {
+    setUpdateModuleAccess((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  // Get Access State for Create Modal
+  const getAccess = (field) => {
+    return moduleAccess[field] || false;
+  };
+
+  // Get Access State for Update Modal
+  const getUpdateAccess = (field) => {
+    return updateModuleAccess[field] || false;
+  };
+
+  // Reset Module Access when modal closes
+  const resetModuleAccess = () => {
+    setModuleAccess({
+      leadAccess: false,
+      leadViewAll: false,
+      leadCreate: false,
+      leadDelete: false,
+      leadEdit: false,
+      customerAccess: false,
+      customerViewAll: false,
+      customerCreate: false,
+      customerDelete: false,
+      customerEdit: false,
+      proposalAccess: false,
+      proposalViewAll: false,
+      proposalCreate: false,
+      proposalDelete: false,
+      proposalEdit: false,
+      proformaInvoiceAccess: false,
+      proformaInvoiceViewAll: false,
+      proformaInvoiceCreate: false,
+      proformaInvoiceDelete: false,
+      proformaInvoiceEdit: false,
+      invoiceAccess: false,
+      invoiceViewAll: false,
+      invoiceCreate: false,
+      invoiceDelete: false,
+      invoiceEdit: false,
+      paymentAccess: false,
+      paymentViewAll: false,
+      paymentcreate: false,
+      paymentDelete: false,
+      paymentEdit: false,
+      timeSheetAccess: false,
+      timeSheetViewAll: false,
+      timeSheetCreate: false,
+      timeSheetDelete: false,
+      timeSheetEdit: false
+    });
+  };
+
   // Create Role
   const handleCreateRole = async (e) => {
     e.preventDefault();
@@ -101,6 +345,7 @@ function RoleListCompo() {
       await axiosInstance.post("/admin/createRole", {
         name: newRoleName,
         departmentId: departmentId,
+        ...moduleAccess
       });
       handleCloseCreateModal();
       fetchRoles();
@@ -120,11 +365,60 @@ function RoleListCompo() {
     setIsCreateModalOpen(false);
     setNewRoleName("");
     setCreateModalError(null);
+    resetModuleAccess();
   };
 
   // Update Role
   const handleOpenUpdateModal = (role) => {
     setEditingRole(role);
+
+    // Set current role permissions for update modal
+    if (role) {
+      setUpdateModuleAccess({
+        leadAccess: role.leadAccess || false,
+        leadViewAll: role.leadViewAll || false,
+        leadCreate: role.leadCreate || false,
+        leadDelete: role.leadDelete || false,
+        leadEdit: role.leadEdit || false,
+
+        customerAccess: role.customerAccess || false,
+        customerViewAll: role.customerViewAll || false,
+        customerCreate: role.customerCreate || false,
+        customerDelete: role.customerDelete || false,
+        customerEdit: role.customerEdit || false,
+
+        proposalAccess: role.proposalAccess || false,
+        proposalViewAll: role.proposalViewAll || false,
+        proposalCreate: role.proposalCreate || false,
+        proposalDelete: role.proposalDelete || false,
+        proposalEdit: role.proposalEdit || false,
+
+        proformaInvoiceAccess: role.proformaInvoiceAccess || false,
+        proformaInvoiceViewAll: role.proformaInvoiceViewAll || false,
+        proformaInvoiceCreate: role.proformaInvoiceCreate || false,
+        proformaInvoiceDelete: role.proformaInvoiceDelete || false,
+        proformaInvoiceEdit: role.proformaInvoiceEdit || false,
+
+        invoiceAccess: role.invoiceAccess || false,
+        invoiceViewAll: role.invoiceViewAll || false,
+        invoiceCreate: role.invoiceCreate || false,
+        invoiceDelete: role.invoiceDelete || false,
+        invoiceEdit: role.invoiceEdit || false,
+
+        paymentAccess: role.paymentAccess || false,
+        paymentViewAll: role.paymentViewAll || false,
+        paymentcreate: role.paymentcreate || false,
+        paymentDelete: role.paymentDelete || false,
+        paymentEdit: role.paymentEdit || false,
+
+        timeSheetAccess: role.timeSheetAccess || false,
+        timeSheetViewAll: role.timeSheetViewAll || false,
+        timeSheetCreate: role.timeSheetCreate || false,
+        timeSheetDelete: role.timeSheetDelete || false,
+        timeSheetEdit: role.timeSheetEdit || false
+      });
+    }
+
     setIsUpdateModalOpen(true);
     setUpdateModalError(null);
   };
@@ -150,6 +444,7 @@ function RoleListCompo() {
         name: editingRole.name,
         roleId: editingRole.roleId,
         departmentId: editingRole.departmentId,
+        ...updateModuleAccess
       });
       handleCloseUpdateModal();
       fetchRoles();
@@ -200,6 +495,47 @@ function RoleListCompo() {
       }
     });
   };
+
+
+
+  // Select All Access for Create Modal
+  const handleSelectAllAccess = () => {
+    const allAccessTrue = Object.keys(moduleAccess).reduce((acc, key) => {
+      acc[key] = true;
+      return acc;
+    }, {});
+    setModuleAccess(allAccessTrue);
+  };
+
+  // Clear All Access for Create Modal
+  const handleClearAllAccess = () => {
+    const allAccessFalse = Object.keys(moduleAccess).reduce((acc, key) => {
+      acc[key] = false;
+      return acc;
+    }, {});
+    setModuleAccess(allAccessFalse);
+  };
+
+  // Select All Access for Update Modal
+  const handleUpdateSelectAllAccess = () => {
+    const allAccessTrue = Object.keys(updateModuleAccess).reduce((acc, key) => {
+      acc[key] = true;
+      return acc;
+    }, {});
+    setUpdateModuleAccess(allAccessTrue);
+  };
+
+  // Clear All Access for Update Modal
+  const handleUpdateClearAllAccess = () => {
+    const allAccessFalse = Object.keys(updateModuleAccess).reduce((acc, key) => {
+      acc[key] = false;
+      return acc;
+    }, {});
+    setUpdateModuleAccess(allAccessFalse);
+  };
+
+
+
 
   const renderTableBody = () => {
     if (isLoading) {
@@ -314,7 +650,7 @@ function RoleListCompo() {
 
   return (
     <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
-      {/* Header Section - Consistent with other list pages */}
+      {/* Header Section */}
       <div className="mb-4">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div className="flex-1">
@@ -330,7 +666,6 @@ function RoleListCompo() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-            {/* Back Button */}
             <button
               onClick={() => navigate("/Admin/Settings/Department")}
               className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
@@ -351,7 +686,6 @@ function RoleListCompo() {
               Back to Departments
             </button>
 
-            {/* Create Button */}
             <button
               onClick={() => setIsCreateModalOpen(true)}
               className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
@@ -377,7 +711,6 @@ function RoleListCompo() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-4">
-        {/* Total Roles Card */}
         <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-gray-100">
@@ -440,41 +773,187 @@ function RoleListCompo() {
       {/* Create Role Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity">
-          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 transform transition-all">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Create New Role
-              </h3>
-              <button
-                onClick={handleCloseCreateModal}
-                className="text-gray-400 hover:text-gray-600 text-2xl font-light transition-colors duration-200"
-                disabled={isSubmitting}
-              >
-                ×
-              </button>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 transform transition-all max-h-[90vh] flex flex-col">
+            {/* Fixed Header */}
+            <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Create New Role
+                </h3>
+                <button
+                  onClick={handleCloseCreateModal}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-light transition-colors duration-200"
+                  disabled={isSubmitting}
+                >
+                  ×
+                </button>
+              </div>
             </div>
 
-            <form onSubmit={handleCreateRole}>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Role Name
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                  placeholder="Enter role name"
-                  value={newRoleName}
-                  onChange={(e) => setNewRoleName(e.target.value)}
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              {createModalError && (
-                <div className="mb-4 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
-                  {createModalError}
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              <form onSubmit={handleCreateRole}>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Role Name
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="Enter role name"
+                    value={newRoleName}
+                    onChange={(e) => setNewRoleName(e.target.value)}
+                    disabled={isSubmitting}
+                  />
                 </div>
-              )}
 
+                {/* Module Access Section */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-6 h-6 bg-cyan-600 rounded flex items-center justify-center">
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                        ></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800">
+                        Module Access Permissions
+                      </h3>
+                      <p className="text-gray-600 text-sm">
+                        Set permissions for CRM modules
+                      </p>
+                    </div>
+                  </div>
+
+                  <SelectAllAccessButton
+                    onSelectAll={handleSelectAllAccess}
+                    onClearAll={handleClearAllAccess}
+                    getAccess={getAccess}
+                  />
+
+                  <div className="space-y-4">
+                    {/* Rest of the ModuleAccessGroup components remain the same */}
+             
+                    {/* Leads Permissions */}
+                    <ModuleAccessGroup
+                      title="Leads Permissions"
+                      permissions={[
+                        { label: "Access", field: "leadAccess" },
+                        { label: "View All", field: "leadViewAll" },
+                        { label: "Create", field: "leadCreate" },
+                        { label: "Edit", field: "leadEdit" },
+                        { label: "Delete", field: "leadDelete" },
+                      ]}
+                      getAccess={getAccess}
+                      handleAccessChange={handleAccessChange}
+                    />
+
+                    {/* Customer Permissions */}
+                    <ModuleAccessGroup
+                      title="Customer Permissions"
+                      permissions={[
+                        { label: "Access", field: "customerAccess" },
+                        { label: "View All", field: "customerViewAll" },
+                        { label: "Create", field: "customerCreate" },
+                        { label: "Edit", field: "customerEdit" },
+                        { label: "Delete", field: "customerDelete" },
+                      ]}
+                      getAccess={getAccess}
+                      handleAccessChange={handleAccessChange}
+                    />
+
+                    {/* Proposal Permissions */}
+                    <ModuleAccessGroup
+                      title="Proposal Permissions"
+                      permissions={[
+                        { label: "Access", field: "proposalAccess" },
+                        { label: "View All", field: "proposalViewAll" },
+                        { label: "Create", field: "proposalCreate" },
+                        { label: "Edit", field: "proposalEdit" },
+                        { label: "Delete", field: "proposalDelete" },
+                      ]}
+                      getAccess={getAccess}
+                      handleAccessChange={handleAccessChange}
+                    />
+
+                    {/* Proforma Invoice Permissions */}
+                    <ModuleAccessGroup
+                      title="Proforma Invoice Permissions"
+                      permissions={[
+                        { label: "Access", field: "proformaInvoiceAccess" },
+                        { label: "View All", field: "proformaInvoiceViewAll" },
+                        { label: "Create", field: "proformaInvoiceCreate" },
+                        { label: "Edit", field: "proformaInvoiceEdit" },
+                        { label: "Delete", field: "proformaInvoiceDelete" },
+                      ]}
+                      getAccess={getAccess}
+                      handleAccessChange={handleAccessChange}
+                    />
+
+                    {/* Invoice Permissions */}
+                    <ModuleAccessGroup
+                      title="Invoice Permissions"
+                      permissions={[
+                        { label: "Access", field: "invoiceAccess" },
+                        { label: "View All", field: "invoiceViewAll" },
+                        { label: "Create", field: "invoiceCreate" },
+                        { label: "Edit", field: "invoiceEdit" },
+                        { label: "Delete", field: "invoiceDelete" },
+                      ]}
+                      getAccess={getAccess}
+                      handleAccessChange={handleAccessChange}
+                    />
+
+                    {/* Payment Permissions */}
+                    <ModuleAccessGroup
+                      title="Payment Permissions"
+                      permissions={[
+                        { label: "Access", field: "paymentAccess" },
+                        { label: "View All", field: "paymentViewAll" },
+                        { label: "Create", field: "paymentcreate" },
+                        { label: "Edit", field: "paymentEdit" },
+                        { label: "Delete", field: "paymentDelete" },
+                      ]}
+                      getAccess={getAccess}
+                      handleAccessChange={handleAccessChange}
+                    />
+
+                    {/* Timesheet Permissions */}
+                    <ModuleAccessGroup
+                      title="Timesheet Permissions"
+                      permissions={[
+                        { label: "Access", field: "timeSheetAccess" },
+                        { label: "View All", field: "timeSheetViewAll" },
+                        { label: "Create", field: "timeSheetCreate" },
+                        { label: "Edit", field: "timeSheetEdit" },
+                        { label: "Delete", field: "timeSheetDelete" },
+                      ]}
+                      getAccess={getAccess}
+                      handleAccessChange={handleAccessChange}
+                    />
+                  </div>
+                </div>
+
+                {createModalError && (
+                  <div className="mb-4 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                    {createModalError}
+                  </div>
+                )}
+              </form>
+            </div>
+
+            {/* Fixed Footer */}
+            <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
               <div className="flex gap-3">
                 <button
                   type="button"
@@ -486,6 +965,7 @@ function RoleListCompo() {
                 </button>
                 <button
                   type="submit"
+                  onClick={handleCreateRole}
                   disabled={isSubmitting}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-lg transition-colors duration-200 font-medium flex items-center justify-center gap-2 disabled:opacity-50"
                 >
@@ -518,7 +998,7 @@ function RoleListCompo() {
                   )}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
@@ -526,46 +1006,192 @@ function RoleListCompo() {
       {/* Update Role Modal */}
       {isUpdateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity">
-          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 transform transition-all">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Update Role
-              </h3>
-              <button
-                onClick={handleCloseUpdateModal}
-                className="text-gray-400 hover:text-gray-600 text-2xl font-light transition-colors duration-200"
-                disabled={isUpdating}
-              >
-                ×
-              </button>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 transform transition-all max-h-[90vh] flex flex-col">
+            {/* Fixed Header */}
+            <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Update Role
+                </h3>
+                <button
+                  onClick={handleCloseUpdateModal}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-light transition-colors duration-200"
+                  disabled={isUpdating}
+                >
+                  ×
+                </button>
+              </div>
             </div>
 
-            <form onSubmit={handleUpdateRole}>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Role Name
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                  placeholder="Enter role name"
-                  value={editingRole?.name || ""}
-                  onChange={(e) =>
-                    setEditingRole({
-                      ...editingRole,
-                      name: e.target.value,
-                    })
-                  }
-                  disabled={isUpdating}
-                />
-              </div>
-
-              {updateModalError && (
-                <div className="mb-4 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
-                  {updateModalError}
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              <form onSubmit={handleUpdateRole}>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Role Name
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="Enter role name"
+                    value={editingRole?.name || ""}
+                    onChange={(e) =>
+                      setEditingRole({
+                        ...editingRole,
+                        name: e.target.value,
+                      })
+                    }
+                    disabled={isUpdating}
+                  />
                 </div>
-              )}
 
+                {/* Module Access Section for Update */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-6 h-6 bg-cyan-600 rounded flex items-center justify-center">
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                        ></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800">
+                        Module Access Permissions
+                      </h3>
+                      <p className="text-gray-600 text-sm">
+                        Update permissions for CRM modules
+                      </p>
+                    </div>
+                  </div>
+
+                  <SelectAllAccessButton
+                    onSelectAll={handleUpdateSelectAllAccess}
+                    onClearAll={handleUpdateClearAllAccess}
+                    getAccess={getUpdateAccess}
+                  />
+
+                  <div className="space-y-4">
+                    {/* Rest of the ModuleAccessGroup components remain the same */}
+                 
+                    {/* Leads Permissions */}
+                    <ModuleAccessGroup
+                      title="Leads Permissions"
+                      permissions={[
+                        { label: "Access", field: "leadAccess" },
+                        { label: "View All", field: "leadViewAll" },
+                        { label: "Create", field: "leadCreate" },
+                        { label: "Edit", field: "leadEdit" },
+                        { label: "Delete", field: "leadDelete" },
+                      ]}
+                      getAccess={getUpdateAccess}
+                      handleAccessChange={handleUpdateAccessChange}
+                    />
+
+                    {/* Customer Permissions */}
+                    <ModuleAccessGroup
+                      title="Customer Permissions"
+                      permissions={[
+                        { label: "Access", field: "customerAccess" },
+                        { label: "View All", field: "customerViewAll" },
+                        { label: "Create", field: "customerCreate" },
+                        { label: "Edit", field: "customerEdit" },
+                        { label: "Delete", field: "customerDelete" },
+                      ]}
+                      getAccess={getUpdateAccess}
+                      handleAccessChange={handleUpdateAccessChange}
+                    />
+
+                    {/* Proposal Permissions */}
+                    <ModuleAccessGroup
+                      title="Proposal Permissions"
+                      permissions={[
+                        { label: "Access", field: "proposalAccess" },
+                        { label: "View All", field: "proposalViewAll" },
+                        { label: "Create", field: "proposalCreate" },
+                        { label: "Edit", field: "proposalEdit" },
+                        { label: "Delete", field: "proposalDelete" },
+                      ]}
+                      getAccess={getUpdateAccess}
+                      handleAccessChange={handleUpdateAccessChange}
+                    />
+
+                    {/* Proforma Invoice Permissions */}
+                    <ModuleAccessGroup
+                      title="Proforma Invoice Permissions"
+                      permissions={[
+                        { label: "Access", field: "proformaInvoiceAccess" },
+                        { label: "View All", field: "proformaInvoiceViewAll" },
+                        { label: "Create", field: "proformaInvoiceCreate" },
+                        { label: "Edit", field: "proformaInvoiceEdit" },
+                        { label: "Delete", field: "proformaInvoiceDelete" },
+                      ]}
+                      getAccess={getUpdateAccess}
+                      handleAccessChange={handleUpdateAccessChange}
+                    />
+
+                    {/* Invoice Permissions */}
+                    <ModuleAccessGroup
+                      title="Invoice Permissions"
+                      permissions={[
+                        { label: "Access", field: "invoiceAccess" },
+                        { label: "View All", field: "invoiceViewAll" },
+                        { label: "Create", field: "invoiceCreate" },
+                        { label: "Edit", field: "invoiceEdit" },
+                        { label: "Delete", field: "invoiceDelete" },
+                      ]}
+                      getAccess={getUpdateAccess}
+                      handleAccessChange={handleUpdateAccessChange}
+                    />
+
+                    {/* Payment Permissions */}
+                    <ModuleAccessGroup
+                      title="Payment Permissions"
+                      permissions={[
+                        { label: "Access", field: "paymentAccess" },
+                        { label: "View All", field: "paymentViewAll" },
+                        { label: "Create", field: "paymentcreate" },
+                        { label: "Edit", field: "paymentEdit" },
+                        { label: "Delete", field: "paymentDelete" },
+                      ]}
+                      getAccess={getUpdateAccess}
+                      handleAccessChange={handleUpdateAccessChange}
+                    />
+
+                    {/* Timesheet Permissions */}
+                    <ModuleAccessGroup
+                      title="Timesheet Permissions"
+                      permissions={[
+                        { label: "Access", field: "timeSheetAccess" },
+                        { label: "View All", field: "timeSheetViewAll" },
+                        { label: "Create", field: "timeSheetCreate" },
+                        { label: "Edit", field: "timeSheetEdit" },
+                        { label: "Delete", field: "timeSheetDelete" },
+                      ]}
+                      getAccess={getUpdateAccess}
+                      handleAccessChange={handleUpdateAccessChange}
+                    />
+                  </div>
+                </div>
+
+                {updateModalError && (
+                  <div className="mb-4 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                    {updateModalError}
+                  </div>
+                )}
+              </form>
+            </div>
+
+            {/* Fixed Footer */}
+            <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
               <div className="flex gap-3">
                 <button
                   type="button"
@@ -577,6 +1203,7 @@ function RoleListCompo() {
                 </button>
                 <button
                   type="submit"
+                  onClick={handleUpdateRole}
                   disabled={isUpdating}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-lg transition-colors duration-200 font-medium flex items-center justify-center gap-2 disabled:opacity-50"
                 >
@@ -609,7 +1236,7 @@ function RoleListCompo() {
                   )}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
