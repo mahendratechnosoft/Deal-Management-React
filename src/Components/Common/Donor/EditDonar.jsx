@@ -26,7 +26,7 @@ function EditDonar() {
         kidsFemale: "",
         height: "",
         weight: "",
-        region: "",
+        religion: "",
         bloodGroup: "",
 
         // Medical Information
@@ -100,7 +100,7 @@ function EditDonar() {
                 height: d.height || "",
                 weight: d.weight || "",
                 region: d.religion || "",
-                bloodGroup: d.booldGroup || "",
+                bloodGroup: d.bloodGroup || "",
 
                 // Medical
                 bsl: d.bsl || "",

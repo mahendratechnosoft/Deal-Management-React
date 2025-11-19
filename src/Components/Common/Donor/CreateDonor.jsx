@@ -155,6 +155,11 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
         { value: false, label: "No" },
     ];
 
+      const statusOptionsMarried = [
+        { value: "Yes", label: "Yes" },
+        { value: "No", label: "No" },
+    ];
+
       const handleSelectChange = (selectedOption, { name }) => {
         setFormData((prev) => ({
             ...prev,
@@ -216,13 +221,13 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
             <FormSelect
               label="Marital Status Yes/No"
               name="maritalStatus"
-              value={statusOptions.find(
+              value={statusOptionsMarried.find(
                 (o) => o.value === formData.maritalStatus
               )}
               onChange={(option) =>
                 handleSelectChange(option, { name: "maritalStatus" })
               }
-              options={statusOptions}
+              options={statusOptionsMarried}
             />
 
             {/* Age */}

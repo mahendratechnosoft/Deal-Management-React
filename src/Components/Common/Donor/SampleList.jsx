@@ -4,12 +4,13 @@ import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
 import toast from "react-hot-toast";
 import Pagination from "../pagination";
-import CreateDonar from "./CreateDonor";
+
 import CreateSample from "./CreateSample";
 
 function SampleList() {
     const navigate = useNavigate();
     const { donorId } = useParams();
+    const { uin } = useParams();
     const { LayoutComponent, role } = useLayout();
     const [searchTerm, setSearchTerm] = useState("");
     const [samples, setSamples] = useState([]);
@@ -178,7 +179,7 @@ function SampleList() {
                                 <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
                                 <div>
                                     <h1 className="text-2xl font-bold text-gray-900">
-                                        Donor ID: {donorId} (Sample List)
+                                     Sample List |  {uin}
                                     </h1>
                                     {!loading && (
                                         <p className="text-sm text-gray-600 mt-1">
