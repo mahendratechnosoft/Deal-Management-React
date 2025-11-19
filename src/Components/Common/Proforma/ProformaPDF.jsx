@@ -14,6 +14,7 @@ import RobotoRegular from "../../../../public/fonts/Roboto-Regular.ttf";
 import RobotoBold from "../../../../public/fonts/Roboto-Bold.ttf";
 import RobotoItalic from "../../../../public/fonts/Roboto-Italic.ttf";
 import RobotoBoldItalic from "../../../../public/fonts/Roboto-BoldItalic.ttf";
+import { formatInvoiceNumber } from "../../BaseComponet/UtilFunctions";
 Font.register({
   family: "Roboto",
   fonts: [
@@ -348,8 +349,7 @@ const getSafeImageSrc = (base64String) => {
   return `data:image/png;base64,${base64String}`;
 };
 
-const ProformaPDF = ({ invoiceData, adminInformation }) => {
-  console.log("Invoice Data:", invoiceData);
+const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
   const calculation = useMemo(() => {
     if (!invoiceData || !invoiceData.proformaInvoiceContents) {
       return {
@@ -424,7 +424,13 @@ const ProformaPDF = ({ invoiceData, adminInformation }) => {
   };
 
   return (
-    <Document title={formatProformaNumber(info.proformaInvoiceNumber)}>
+    <Document
+      title={
+        isInvoice
+          ? formatInvoiceNumber(info.invoiceNumber)
+          : formatProformaNumber(info.proformaInvoiceNumber)
+      }
+    >
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
@@ -443,9 +449,13 @@ const ProformaPDF = ({ invoiceData, adminInformation }) => {
             )}
           </View>
           <View style={styles.headerRight}>
-            <Text style={styles.proformaTitle}>PROFORMA</Text>
+            <Text style={styles.proformaTitle}>
+              {isInvoice ? "INVOICE" : "PROFORMA"}
+            </Text>
             <Text style={styles.proformaNumber}>
-              {formatProformaNumber(info.proformaInvoiceNumber)}
+              {isInvoice
+                ? formatInvoiceNumber(info.invoiceNumber)
+                : formatProformaNumber(info.proformaInvoiceNumber)}
             </Text>
             <Text style={getStatusStyles(info.status)}>
               {info.status?.toUpperCase()}

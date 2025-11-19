@@ -45,6 +45,8 @@ import SelectedDonarList from "./Components/Common/Donor/SelectedDonarList.jsx";
 import SampleReport from "./Components/Common/Donor/SampleReport.jsx";
 import SampleList from "./Components/Common/Donor/SampleList.jsx";
 import TimeSheetList from "./Components/Common/Timesheet/TimeSheetList.jsx";
+import InvoiceList from "./Components/Common/Invoice/InvoiceList.jsx";
+import InvoicePreview from "./Components/Common/Invoice/InvoicePreview.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -323,6 +325,24 @@ function App() {
             }
           />
 
+          <Route
+            path="/Admin/Invoice"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <InvoiceList />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Invoice/Preview/:proformaInvoiceId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
+                <InvoicePreview />
+              </RoleBasedRoute>
+            }
+          />
+
           {/* Employee Routes - Individual routes with layout */}
           <Route
             path="/Employee/LeadList"
@@ -469,6 +489,15 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
                 <TimeSheetList />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Employee/Invoice"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                <InvoiceList />
               </RoleBasedRoute>
             }
           />

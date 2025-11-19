@@ -1,5 +1,6 @@
 import React from "react";
 import { ToWords } from "to-words";
+import { formatInvoiceNumber } from "../../BaseComponet/UtilFunctions";
 
 const formatDate = (dateString) => {
   if (!dateString) return "N/A";
@@ -68,6 +69,7 @@ const ProformaInvoiceDisplay = ({
   invoiceData,
   adminInformation,
   calculation,
+  isInvoice = false,
 }) => {
   if (!invoiceData || !adminInformation || !calculation) {
     return null;
@@ -98,9 +100,13 @@ const ProformaInvoiceDisplay = ({
           </div>
 
           <div className="text-right">
-            <h1 className="text-3xl font-bold text-gray-900">PROFORMA</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {isInvoice ? "INVOICE" : "PROFORMA"}
+            </h1>
             <div className="font-semibold text-gray-700">
-              {formatProformaNumber(info.proformaInvoiceNumber)}
+              {isInvoice
+                ? formatInvoiceNumber(info.proformaInvoiceNumber)
+                : formatProformaNumber(info.proformaInvoiceNumber)}
             </div>
             <span
               className={`inline-block px-3 py-1 rounded text-xs font-semibold uppercase tracking-wide ${

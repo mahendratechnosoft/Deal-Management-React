@@ -65,6 +65,7 @@ function CreatePaymentModal({ onClose, onSuccess, proformaId }) {
     paymentMode: "",
     totalAmount: "",
     paidAmount: "",
+    note: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -270,9 +271,9 @@ function CreatePaymentModal({ onClose, onSuccess, proformaId }) {
         transactionId: formData.transactionId,
         companyName: formData.companyName,
         amount: Number(formData.amount || 0),
-
         paymentDate: formData.paymentDate,
         paymentMode: formData.paymentMode,
+        note: formData.note,
       };
 
       // console.log("Submitting payment:", submitData);
@@ -507,6 +508,22 @@ function CreatePaymentModal({ onClose, onSuccess, proformaId }) {
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                     <span>Amount (₹)</span>
                     <span className="text-red-500">*</span>
+                    {selectedInvoice && (
+                      <span className="text-[10px] text-gray-700">
+                        Total:
+                        <span className="font-semibold">
+                          ₹{Number(formData.totalAmount || 0).toLocaleString()}
+                        </span>{" "}
+                        | Paid:
+                        <span className="font-semibold">
+                          ₹{Number(formData.paidAmount || 0).toLocaleString()}
+                        </span>{" "}
+                        | Rem:
+                        <span className="font-semibold">
+                          ₹{remainingAmount.toLocaleString()}
+                        </span>
+                      </span>
+                    )}
                   </label>
                   <input
                     type="number"
@@ -537,34 +554,6 @@ function CreatePaymentModal({ onClose, onSuccess, proformaId }) {
                       </svg>
                       {errors.amount}
                     </p>
-                  )}
-                  {selectedInvoice && (
-                    <div className="text-xs text-gray-700 space-y-1 mt-1">
-                      <p>
-                        Total Amount:{" "}
-                        <span className="font-semibold text-gray-900">
-                          ₹
-                          {parseFloat(
-                            formData.totalAmount || 0
-                          ).toLocaleString()}
-                        </span>
-                      </p>
-                      <p>
-                        Paid Amount:{" "}
-                        <span className="font-semibold text-gray-900">
-                          ₹
-                          {parseFloat(
-                            formData.paidAmount || 0
-                          ).toLocaleString()}
-                        </span>
-                      </p>
-                      <p>
-                        Remaining Amount:{" "}
-                        <span className="font-semibold text-gray-900">
-                          ₹{remainingAmount.toLocaleString()}
-                        </span>
-                      </p>
-                    </div>
                   )}
                 </div>
 
@@ -644,6 +633,19 @@ function CreatePaymentModal({ onClose, onSuccess, proformaId }) {
                       {errors.paymentMode}
                     </p>
                   )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Note
+                  </label>
+                  <input
+                    name="note"
+                    value={formData.note}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    placeholder="Enter note"
+                  />
                 </div>
               </div>
             </div>
