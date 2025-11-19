@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
 import ProformaPDF from "./ProformaPDF";
-import ProposalInfoModal from "./ProformaInfoModal";
+import ProformaInfoModal from "./ProformaInfoModal";
 
 // This currency formatter utility is reused
 const formatCurrency = (amount, currencyCode) => {
@@ -342,7 +342,7 @@ function ProformaList() {
                             title="Preview"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handlePreview(proforma.proformaInvoiceId);
+                              handleOpenInfoModal(proforma);
                             }}
                             className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
                           >
@@ -613,7 +613,7 @@ function ProformaList() {
       )}
 
       {isInfoModalOpen && (
-        <ProposalInfoModal
+        <ProformaInfoModal
           isOpen={isInfoModalOpen}
           onClose={handleInfoModalClose}
           proforma={selectedProformaForInfo}

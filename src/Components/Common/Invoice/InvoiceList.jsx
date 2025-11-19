@@ -242,7 +242,7 @@ function InvoiceList() {
                             title="Preview"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handlePreview(proforma.proformaInvoiceId);
+                              handleOpenInfoModal(proforma);
                             }}
                             className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
                           >

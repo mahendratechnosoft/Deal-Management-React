@@ -7,35 +7,12 @@ import { useNavigate } from "react-router-dom";
 import ProposalPDF from "./ProposalPDF";
 import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
 import "./ProposalList.css";
-const formatCurrency = (amount, currencyCode) => {
-  const value = Number(amount) || 0;
-  const code = currencyCode || "INR";
 
-  try {
-    const formatter = new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: code,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-
-    const parts = formatter.formatToParts(value);
-    const symbol = parts.find((part) => part.type === "currency")?.value || "";
-    const number = parts
-      .filter((part) => part.type !== "currency")
-      .map((part) => part.value)
-      .join("");
-
-    return `${symbol} ${number}`;
-  } catch (e) {
-    return `${code} ${value.toFixed(2)}`;
-  }
-};
-
-const formatProposalNumber = (number) => {
-  const numberString = String(number || 0);
-  return `PROP-${numberString.padStart(6, "0")}`;
-};
+import ProposalInfoModal from "./ProposalInfoModal";
+import {
+  formatCurrency,
+  formatProposalNumber,
+} from "../../BaseComponet/UtilFunctions";
 
 function ProposalList() {
   const { LayoutComponent, role } = useLayout();
@@ -51,6 +28,8 @@ function ProposalList() {
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [selectedProposalData, setSelectedProposalData] = useState(null);
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(null);
+  const [selectedProposalForInfo, setSelectedProposalForInfo] = useState(null);
 
   useEffect(() => {
     fetchProposalList(0, searchTerm);
@@ -135,6 +114,17 @@ function ProposalList() {
     } finally {
       setIsPdfLoading(false);
     }
+  };
+
+  const handleOpenInfoModal = async (proposal) => {
+    setSelectedProposalForInfo(proposal);
+    setIsInfoModalOpen(true);
+  };
+
+  const handleInfoModalClose = () => {
+    setIsInfoModalOpen(false);
+    setSelectedProposalForInfo(null);
+    fetchProposalList(currentPage, searchTerm);
   };
 
   const SkeletonRow = () => (
@@ -275,7 +265,7 @@ function ProposalList() {
                     <tr
                       key={proposal.id}
                       className="hover:bg-gray-50 transition-colors duration-150 group cursor-pointer"
-                      onClick={() => handlePreview(proposal.proposalId)}
+                      onClick={() => handleOpenInfoModal(proposal)}
                     >
                       <td
                         className="px-4 py-1 truncate text-sm text-gray-900 font-bold relative"
@@ -314,7 +304,7 @@ function ProposalList() {
                             title="Preview"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handlePreview(proposal.proposalId);
+                              handleOpenInfoModal(proposal);
                             }}
                             className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
                           >
@@ -566,6 +556,14 @@ function ProposalList() {
             </div>
           </div>
         </div>
+      )}
+
+      {isInfoModalOpen && (
+        <ProposalInfoModal
+          isOpen={isInfoModalOpen}
+          onClose={handleInfoModalClose}
+          proposal={selectedProposalForInfo}
+        />
       )}
     </LayoutComponent>
   );
