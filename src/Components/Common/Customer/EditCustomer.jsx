@@ -5,6 +5,9 @@ import { Country, State, City } from "country-state-city";
 import { toast } from "react-hot-toast";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
+import { FormInput, FormPhoneInputFloating, FormSelect, FormTextarea } from "../../BaseComponet/CustomeFormComponents";
+
+
 
 function EditCustomer() {
   const navigate = useNavigate();
@@ -513,6 +516,13 @@ function EditCustomer() {
     }));
   };
 
+  // Add this function to your EditCustomer component, right after the handleChange function
+  const handlePhoneChange = (fieldName, phone) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: phone
+    }));
+  };
   const validateForm = () => {
     const newErrors = {};
 
@@ -520,86 +530,79 @@ function EditCustomer() {
       newErrors.companyName = "Company name is required";
 
 
-    if (formData.phone && !/^[0-9+\-\s()]{10,}$/.test(formData.phone)) {
-      newErrors.phone = "Please enter a valid phone number";
-    }
 
-    if (formData.mobile && !/^[0-9+\-\s()]{10,}$/.test(formData.mobile)) {
-      newErrors.mobile = "Please enter a valid mobile number";
+    if (formData.website && !/^(https?:\/\/)?.+\..+/.test(formData.website)) {
+      newErrors.website = "Please enter a valid website URL";
     }
-
- if (formData.website && !/^(https?:\/\/)?.+\..+/.test(formData.website)) {
-   newErrors.website = "Please enter a valid website URL";
- }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!validateForm()) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
 
-  setLoading(true);
-  try {
-    const submitData = {
-      customerId: customerId,
-      companyName: formData.companyName,
-      phone: formData.phone || null,
-      mobile: formData.mobile || null,
-      website: formData.website || null,
-      industry: formData.industry,
-      revenue: formData.revenue ? parseFloat(formData.revenue) : 0,
-      gstin: formData.gstin || null,
-      panNumber: formData.panNumber || null,
-      billingStreet: formData.billingStreet || null,
-      billingCity: formData.billingCity || null,
-      billingState: formData.billingState
-        ? dropdownData.billingStates.find(
+    setLoading(true);
+    try {
+      const submitData = {
+        customerId: customerId,
+        companyName: formData.companyName,
+        phone: formData.phone || null,
+        mobile: formData.mobile || null,
+        website: formData.website || null,
+        industry: formData.industry,
+        revenue: formData.revenue ? parseFloat(formData.revenue) : 0,
+        gstin: formData.gstin || null,
+        panNumber: formData.panNumber || null,
+        billingStreet: formData.billingStreet || null,
+        billingCity: formData.billingCity || null,
+        billingState: formData.billingState
+          ? dropdownData.billingStates.find(
             (s) => s.value === formData.billingState
           )?.label || formData.billingState // Fallback to stored name
-        : null,
-      billingCountry: formData.billingCountry
-        ? dropdownData.countries.find(
+          : null,
+        billingCountry: formData.billingCountry
+          ? dropdownData.countries.find(
             (c) => c.value === formData.billingCountry
           )?.label || formData.billingCountry // Fallback to stored name
-        : null,
-      billingZipCode: formData.billingZipCode || null,
-      shippingStreet: formData.shippingStreet || null,
-      shippingCity: formData.shippingCity || null,
-      shippingState: formData.shippingState
-        ? dropdownData.shippingStates.find(
+          : null,
+        billingZipCode: formData.billingZipCode || null,
+        shippingStreet: formData.shippingStreet || null,
+        shippingCity: formData.shippingCity || null,
+        shippingState: formData.shippingState
+          ? dropdownData.shippingStates.find(
             (s) => s.value === formData.shippingState
           )?.label || formData.shippingState // Fallback to stored name
-        : null,
-      shippingCountry: formData.shippingCountry
-        ? dropdownData.countries.find(
+          : null,
+        shippingCountry: formData.shippingCountry
+          ? dropdownData.countries.find(
             (c) => c.value === formData.shippingCountry
           )?.label || formData.shippingCountry // Fallback to stored name
-        : null,
-      shippingZipCode: formData.shippingZipCode || null,
-      description: formData.description || null,
-      employeeId: formData.employeeId || null,
-    };
+          : null,
+        shippingZipCode: formData.shippingZipCode || null,
+        description: formData.description || null,
+        employeeId: formData.employeeId || null,
+      };
 
-    await axiosInstance.put("updateCustomer", submitData);
-    toast.success("Customer updated successfully!");
+      await axiosInstance.put("updateCustomer", submitData);
+      toast.success("Customer updated successfully!");
 
-    if (role === "ROLE_ADMIN") {
-      navigate("/Admin/CustomerList");
-    } else if (role === "ROLE_EMPLOYEE") {
-      navigate("/Employee/CustomerList");
+      if (role === "ROLE_ADMIN") {
+        navigate("/Admin/CustomerList");
+      } else if (role === "ROLE_EMPLOYEE") {
+        navigate("/Employee/CustomerList");
+      }
+    } catch (error) {
+      console.error("Error updating customer:", error);
+      if (error.response?.data?.message) {
+        toast.error(`Failed to update customer: ${error.response.data.message}`);
+      } else {
+        toast.error("Failed to update customer. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error updating customer:", error);
-    if (error.response?.data?.message) {
-      toast.error(`Failed to update customer: ${error.response.data.message}`);
-    } else {
-      toast.error("Failed to update customer. Please try again.");
-    }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleCancel = () => {
     if (
@@ -774,579 +777,344 @@ const handleSubmit = async (e) => {
   }
 
 
+
   return (
     <LayoutComponent>
-      <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
-        <div className="">
-          <div className="flex items-center gap-2 mb-2">
-            <button
-              onClick={() => {
-                if (role === "ROLE_ADMIN") {
-                  navigate("/Admin/CustomerList");
-                } else if (role === "ROLE_EMPLOYEE") {
-                  navigate("/Employee/CustomerList");
-                }
-              }}
-              className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+      <div className=" bg-white h-[90vh] overflow-y-auto CRM-scroll-width-none">
+        {/* Compact Header */}
+        <div className="bg-white border-gray-200 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate(role === "ROLE_ADMIN" ? "/Admin/CustomerList" : "/Employee/CustomerList")}
+                className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 p-1.5 hover:bg-gray-100 rounded transition-colors"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Back to Customers
-            </button>
-          </div>
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Edit Customer</h1>
-             
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span className="hidden sm:inline">Back</span>
+              </button>
+              <div>
+                <h1 className="text-lg font-semibold text-gray-900">Edit Customer</h1>
+                <p className="text-xs text-gray-600">Update customer information</p>
+              </div>
             </div>
+
             <div className="flex items-center gap-2">
               <button
-                type="button"
                 onClick={handleCancel}
-                className="px-4 py-2 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 text-sm font-medium"
+                className="px-3 py-1.5 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 text-sm transition-colors"
               >
                 Cancel
               </button>
               <button
-                type="submit"
-                form="editCustomerForm"
+                onClick={handleSubmit}
                 disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200 text-sm font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
               >
                 {loading ? (
-                  "Updating..."
-                ) : (
                   <>
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    Update Customer
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Saving...
                   </>
+                ) : (
+                  'Update'
                 )}
               </button>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto h-[72vh] overflow-y-auto CRM-scroll-width-none">
-          <div className="p-4">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <form
-                id="editCustomerForm"
-                onSubmit={handleSubmit}
-                className="p-6"
-              >
-                <div className="space-y-6">
-                  {/* Company Information Section */}
-                  <section>
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <svg
-                          className="w-4 h-4 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-semibold text-gray-900">
-                          Company Information
-                        </h2>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="relative">
-                        <input
-                          type="text"
-                          name="companyName"
-                          value={formData.companyName}
+        {/* Ultra Compact Form */}
+        <div className="p-4">
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Company Information</h3>
+
+                {/* Left Column - Company Info */}
+                <div className="space-y-4">
+                  {/* Company Name */}
+                  <FormInput
+                    label="Company Name"
+                    name="companyName"
+                    value={formData.companyName}
+                    onChange={handleChange}
+                    required={true}
+                    error={errors.companyName}
+                    className="mb-4"
+                    background="white"
+                  />
+
+                  {/* Industry & Revenue */}
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    <FormSelect
+                      label="Industry"
+                      name="industry"
+                      background="white"
+                      className="setbg-white"
+                      value={[
+                        { value: "Software Development", label: "Software" },
+                        { value: "Manufacturing", label: "Manufacturing" },
+                        { value: "Healthcare", label: "Healthcare" },
+                        { value: "Finance", label: "Finance" }
+                      ].find(opt => opt.value === formData.industry)}
+                      onChange={(selectedOption) => handleSelectChange(selectedOption, { name: "industry" })}
+                      options={[
+                        { value: "Software Development", label: "Software" },
+                        { value: "Manufacturing", label: "Manufacturing" },
+                        { value: "Healthcare", label: "Healthcare" },
+                        { value: "Finance", label: "Finance" }
+                      ]}
+                      error={errors.industry}
+                    />
+
+                    <FormInput
+                      label="Revenue (₹)"
+                      name="revenue"
+                      value={formData.revenue}
+                      onChange={handleChange}
+                      type="number"
+                      background="white"
+                      error={errors.revenue}
+                    />
+                  </div>
+
+                  {/* Website */}
+                  <FormInput
+                    label="Website"
+                    name="website"
+                    value={formData.website}
+                    onChange={handleChange}
+                    error={errors.website}
+                    background="white"
+                    className="mb-4"
+                  />
+
+                  {/* GSTIN & PAN */}
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    <FormInput
+                      label="GSTIN"
+                      name="gstin"
+                      value={formData.gstin}
+                      onChange={handleChange}
+                      error={errors.gstin}
+                      background="white"
+                    />
+
+                    <FormInput
+                      label="PAN Number"
+                      name="panNumber"
+                      value={formData.panNumber}
+                      onChange={handleChange}
+                      error={errors.panNumber}
+                      background="white"
+                    />
+                  </div>
+
+                  {/* Phone Numbers */}
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    <FormPhoneInputFloating
+                      label="Primary Number"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={(phone) => handlePhoneChange('phone', phone)}
+                      required={true}
+                      error={errors.phone}
+                      background="white"
+                    />
+
+                    <FormPhoneInputFloating
+                      label="Secondary Number"
+                      name="mobile"
+                      value={formData.mobile}
+                      onChange={(phone) => handlePhoneChange('mobile', phone)}
+                      error={errors.mobile}
+                      background="white"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <FormTextarea
+                    label="Description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    rows={2}
+                    className="mb-4"
+                    background="white"
+                  />
+                </div>
+              </div>
+
+              {/* Right Column - Address Information */}
+              <div className="space-y-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Address Information</h3>
+
+                  <div className="space-y-4">
+                    {/* Billing Address */}
+                    {/* Billing Address */}
+                    <div className="space-y-3 mb-4">
+                      <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-3">Billing Address</h4>
+
+                      <div className="space-y-3">
+                        <FormInput
+                          label="Street Address"
+                          name="billingStreet"
+                          value={formData.billingStreet}
                           onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
-                            errors.companyName
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
-                          placeholder=" "
+                          background="white"
+                          className="mb-4"
                         />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                          Company Name *
-                        </label>
-                        {errors.companyName && (
-                          <p className="mt-1 text-xs text-red-600">
-                            {errors.companyName}
-                          </p>
-                        )}
-                      </div>
 
-                      <div className="relative">
-                        <select
-                          name="industry"
-                          value={formData.industry}
-                          onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer appearance-none bg-white ${
-                            errors.industry
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
-                        >
-                          <option value="">Select Industry</option>
-                          <option value="Software Development">
-                            Software Development
-                          </option>
-                          <option value="Manufacturing">Manufacturing</option>
-                          <option value="Healthcare">Healthcare</option>
-                          <option value="Finance">Finance</option>
-                          <option value="Education">Education</option>
-                          <option value="Retail">Retail</option>
-                          <option value="Real Estate">Real Estate</option>
-                          <option value="Other">Other</option>
-                        </select>
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600">
-                          Industry
-                        </label>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 9l-7 7-7-7"
-                            />
-                          </svg>
-                        </div>
-                        {errors.industry && (
-                          <p className="mt-1 text-xs text-red-600">
-                            {errors.industry}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="relative">
-                        <input
-                          type="number"
-                          step="0.01"
-                          name="revenue"
-                          value={formData.revenue}
-                          onChange={handleChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
-                          placeholder=" "
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                          Annual Revenue (₹)
-                        </label>
-                      </div>
-
-                      <div className="relative">
-                        <input
-                          type="text"
-                          name="website"
-                          value={formData.website}
-                          onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
-                            errors.website
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
-                          placeholder=" "
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                          Website
-                        </label>
-                        {errors.website && (
-                          <p className="mt-1 text-xs text-red-600">
-                            {errors.website}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="relative">
-                        <input
-                          type="text"
-                          name="gstin"
-                          value={formData.gstin}
-                          onChange={handleChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
-                          placeholder=" "
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                          GSTIN
-                        </label>
-                      </div>
-
-                      <div className="relative">
-                        <input
-                          type="text"
-                          name="panNumber"
-                          value={formData.panNumber}
-                          onChange={handleChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
-                          placeholder=" "
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                          PAN Number
-                        </label>
-                      </div>
-
-                      <div className="relative">
-                        <input
-                          type="text"
-                          name="phone"
-                          value={formData.phone}
-                          onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
-                            errors.phone ? "border-red-500" : "border-gray-300"
-                          }`}
-                          placeholder=" "
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                          Primary Number
-                        </label>
-                        {errors.phone && (
-                          <p className="mt-1 text-xs text-red-600">
-                            {errors.phone}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="relative">
-                        <input
-                          type="text"
-                          name="mobile"
-                          value={formData.mobile}
-                          onChange={handleChange}
-                          className={`w-full px-3 py-2 border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer ${
-                            errors.mobile ? "border-red-500" : "border-gray-300"
-                          }`}
-                          placeholder=" "
-                        />
-                        <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                          Secondary Number
-                        </label>
-                        {errors.mobile && (
-                          <p className="mt-1 text-xs text-red-600">
-                            {errors.mobile}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Address Section - Side by Side */}
-                  <section>
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                        <svg
-                          className="w-4 h-4 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-semibold text-gray-900">
-                          Address Information
-                        </h2>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* Billing Address - Left Side */}
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-                          Billing Address
-                        </h3>
-
-                        <div className="relative">
-                          <input
-                            type="text"
-                            name="billingStreet"
-                            value={formData.billingStreet}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
-                            placeholder=" "
-                          />
-                          <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                            Street Address
-                          </label>
-                        </div>
-
-                        <div className="relative">
-                          <Select
+                        <div className="grid grid-cols-2 gap-2 mb-4">
+                          <FormSelect
+                            label="Country"
                             name="billingCountry"
-                            value={dropdownData.countries.find(
-                              (option) =>
-                                option.value === formData.billingCountry
-                            )}
+                            className="setbg-white"
+                            value={dropdownData.countries.find(opt => opt.value === formData.billingCountry)}
                             onChange={handleBillingCountryChange}
                             options={dropdownData.countries}
-                            placeholder=" "
                             isSearchable
-                            styles={customStyles}
+                            error={errors.billingCountry}
+                            background="white"
                           />
-                          <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
-                            Country
-                          </label>
-                        </div>
 
-                        <div className="relative">
-                          <Select
-                            key={`billing-state-${formData.billingCountry}`}
+                          <FormSelect
+                            label="State"
                             name="billingState"
-                            value={dropdownData.billingStates.find(
-                              (option) => option.value === formData.billingState
-                            )}
+                            className="setbg-white"
+                            value={dropdownData.billingStates.find(opt => opt.value === formData.billingState)}
                             onChange={handleBillingStateChange}
                             options={dropdownData.billingStates}
-                            placeholder=" "
                             isSearchable
                             isDisabled={!formData.billingCountry}
-                            styles={customStyles}
+                            error={errors.billingState}
+                            background="white"
                           />
-                          <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
-                            State
-                          </label>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="relative">
-                            <Select
-                              key={`billing-city-${formData.billingState}`}
-                              name="billingCity"
-                              value={dropdownData.billingCities.find(
-                                (option) =>
-                                  option.value === formData.billingCity
-                              )}
-                              onChange={handleBillingCityChange}
-                              options={dropdownData.billingCities}
-                              placeholder=" "
-                              isSearchable
-                              isDisabled={!formData.billingState}
-                              styles={customStyles}
-                            />
-                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
-                              City
-                            </label>
-                          </div>
+                        <div className="grid grid-cols-2 gap-2 mb-4">
+                          <FormSelect
+                            label="City"
+                            name="billingCity"
+                            className="setbg-white"
+                            value={dropdownData.billingCities.find(opt => opt.value === formData.billingCity)}
+                            onChange={handleBillingCityChange}
+                            options={dropdownData.billingCities}
+                            isSearchable
+                            isDisabled={!formData.billingState}
+                            error={errors.billingCity}
+                            background="white"
+                          />
 
-                          <div className="relative">
-                            <input
-                              type="text"
-                              name="billingZipCode"
-                              value={formData.billingZipCode}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer"
-                              placeholder=" "
-                            />
-                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                              ZIP Code
-                            </label>
-                          </div>
+                          <FormInput
+                            label="ZIP Code"
+                            name="billingZipCode"
+                            value={formData.billingZipCode}
+                            onChange={handleChange}
+                            error={errors.billingZipCode}
+                            background="white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Shipping Address */}
+                    {/* Shipping Address */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Shipping Address</h4>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="checkbox"
+                            id="sameAsBilling"
+                            checked={sameAsBilling}
+                            onChange={(e) => setSameAsBilling(e.target.checked)}
+                            className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <label htmlFor="sameAsBilling" className="text-xs text-gray-700">
+                            Same as billing
+                          </label>
                         </div>
                       </div>
 
-                      {/* Shipping Address - Right Side */}
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-                            Shipping Address
-                          </h3>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              id="sameAsBilling"
-                              checked={sameAsBilling}
-                              onChange={(e) =>
-                                setSameAsBilling(e.target.checked)
-                              }
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            />
-                            <label
-                              htmlFor="sameAsBilling"
-                              className="text-sm text-gray-700"
-                            >
-                              Same as billing
-                            </label>
-                          </div>
-                        </div>
+                      <div className="space-y-3">
+                        {/* Street Address */}
+                        <FormInput
+                          label="Street Address"
+                          name="shippingStreet"
+                          value={formData.shippingStreet}
+                          onChange={handleChange}
+                          disabled={sameAsBilling}
+                          error={errors.shippingStreet}
+                          background="white"
+                          className="mb-4"
+                        />
 
-                        <div className="relative">
-                          <input
-                            type="text"
-                            name="shippingStreet"
-                            value={formData.shippingStreet}
-                            onChange={handleChange}
-                            disabled={sameAsBilling}
-                            className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer disabled:bg-gray-100 disabled:cursor-not-allowed"
-                            placeholder=" "
-                          />
-                          <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                            Street Address
-                          </label>
-                        </div>
-
-                        <div className="relative">
-                          <Select
+                        {/* Country & State */}
+                        <div className="grid grid-cols-2 gap-2 mb-4">
+                          <FormSelect
+                            label="Country"
                             name="shippingCountry"
-                            value={dropdownData.countries.find(
-                              (option) =>
-                                option.value === formData.shippingCountry
-                            )}
+                            className="setbg-white"
+                            value={dropdownData.countries.find(opt => opt.value === formData.shippingCountry)}
                             onChange={handleShippingCountryChange}
                             options={dropdownData.countries}
-                            placeholder=" "
                             isSearchable
                             isDisabled={sameAsBilling}
-                            styles={customStyles}
+                            error={errors.shippingCountry}
+                            background="white"
                           />
-                          <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
-                            Country
-                          </label>
-                        </div>
 
-                        <div className="relative">
-                          <Select
-                            key={`shipping-state-${formData.shippingCountry}`}
+                          <FormSelect
+                            label="State"
                             name="shippingState"
-                            value={dropdownData.shippingStates.find(
-                              (option) =>
-                                option.value === formData.shippingState
-                            )}
+                            className="setbg-white"
+                            value={dropdownData.shippingStates.find(opt => opt.value === formData.shippingState)}
                             onChange={handleShippingStateChange}
                             options={dropdownData.shippingStates}
-                            placeholder=" "
                             isSearchable
-                            isDisabled={
-                              !formData.shippingCountry || sameAsBilling
-                            }
-                            styles={customStyles}
+                            isDisabled={!formData.shippingCountry || sameAsBilling}
+                            error={errors.shippingState}
+                            background="white"
                           />
-                          <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
-                            State
-                          </label>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="relative">
-                            <Select
-                              key={`shipping-city-${formData.shippingState}`}
-                              name="shippingCity"
-                              value={dropdownData.shippingCities.find(
-                                (option) =>
-                                  option.value === formData.shippingCity
-                              )}
-                              onChange={handleShippingCityChange}
-                              options={dropdownData.shippingCities}
-                              placeholder=" "
-                              isSearchable
-                              isDisabled={
-                                !formData.shippingState || sameAsBilling
-                              }
-                              styles={customStyles}
-                            />
-                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 z-10 pointer-events-none">
-                              City
-                            </label>
-                          </div>
+                        {/* City & ZIP Code */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <FormSelect
+                            label="City"
+                            name="shippingCity"
+                            className="setbg-white"
+                            value={dropdownData.shippingCities.find(opt => opt.value === formData.shippingCity)}
+                            onChange={handleShippingCityChange}
+                            options={dropdownData.shippingCities}
+                            isSearchable
+                            isDisabled={!formData.shippingState || sameAsBilling}
+                            error={errors.shippingCity}
+                            background="white"
+                          />
 
-                          <div className="relative">
-                            <input
-                              type="text"
-                              name="shippingZipCode"
-                              value={formData.shippingZipCode}
-                              onChange={handleChange}
-                              disabled={sameAsBilling}
-                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm peer disabled:bg-gray-100 disabled:cursor-not-allowed"
-                              placeholder=" "
-                            />
-                            <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                              ZIP Code
-                            </label>
-                          </div>
+                          <FormInput
+                            label="ZIP Code"
+                            name="shippingZipCode"
+                            value={formData.shippingZipCode}
+                            onChange={handleChange}
+                            disabled={sameAsBilling}
+                            error={errors.shippingZipCode}
+                            background="white"
+                          />
                         </div>
                       </div>
                     </div>
-                  </section>
-
-                  {/* Description Section */}
-                  <section>
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center">
-                        <svg
-                          className="w-4 h-4 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-semibold text-gray-900">
-                          Description
-                        </h2>
-                      </div>
-                    </div>
-
-                    <div>
-                      <textarea
-                        name="description"
-                        value={formData.description}
-                        onChange={handleChange}
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
-                        placeholder="Enter additional notes or description about the customer"
-                      />
-                    </div>
-                  </section>
+                  </div>
                 </div>
-              </form>
+              </div>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </LayoutComponent>
