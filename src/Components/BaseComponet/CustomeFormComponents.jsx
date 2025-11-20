@@ -12,12 +12,12 @@ export const customReactSelectStyles = (hasError) => ({
     backgroundColor: state.isDisabled ? "#f3f4f6" : "transparent",
     cursor: state.isDisabled ? "not-allowed" : "default",
     borderColor: state.isDisabled
-      ? "#d1d5db"
+      ? "#9b9fa3ff"
       : hasError
       ? "#ef4444"
       : state.isFocused
       ? "#3b82f6"
-      : "#d1d5db",
+      : "#9b9fa3ff",
     borderRadius: "0.5rem",
     borderWidth: state.isFocused ? "2px" : "1px",
     boxShadow: "none",
@@ -88,7 +88,7 @@ export const FormInput = ({
       className={`block w-full px-3 py-2 bg-transparent border rounded-lg appearance-none focus:outline-none focus:ring-2 peer text-sm ${
         error
           ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-          : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+          : "border-gray-400 focus:ring-blue-500 focus:border-blue-500"
       } ${disabled ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
     />
     <label
@@ -96,7 +96,7 @@ export const FormInput = ({
       className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-1 origin-[0] bg-white px-2 left-1 
         peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
         peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none 
-        ${error ? "text-red-600" : "text-gray-500 peer-focus:text-blue-600"} 
+        ${error ? "text-red-600" : "text-gray-700 peer-focus:text-blue-600"} 
         ${disabled ? "text-gray-400" : ""}`}
     >
       {label} {required && <span className="text-red-500">*</span>}
@@ -124,14 +124,14 @@ export const FormInputWithPrefix = ({
   <div className={`relative ${className}`}>
     <div
       className={`flex rounded-lg border ${
-        error ? "border-red-500" : "border-gray-300"
+        error ? "border-red-500" : "border-gray-400"
       } focus-within:ring-2 ${
         error
           ? "focus-within:ring-red-500 focus-within:border-red-500"
           : "focus-within:ring-blue-500 focus-within:border-blue-500"
       }`}
     >
-      <span className="flex items-center px-3 text-sm text-gray-500 bg-gray-50 border-r border-gray-300 rounded-l-lg">
+      <span className="flex items-center px-3 text-sm text-gray-700 bg-gray-50 border-r border-gray-300 rounded-l-lg">
         {prefix}
       </span>
 
@@ -153,7 +153,7 @@ export const FormInputWithPrefix = ({
             peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
             peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none 
             ${
-              error ? "text-red-600" : "text-gray-500 peer-focus:text-blue-600"
+              error ? "text-red-600" : "text-gray-700 peer-focus:text-blue-600"
             }`}
         >
           {label} {required && <span className="text-red-500">*</span>}
@@ -194,16 +194,16 @@ export const FormTextarea = ({
       className={`block w-full px-3 py-2 border rounded-lg appearance-none focus:outline-none focus:ring-2 peer text-sm resize-y ${
         error
           ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-          : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+          : "border-gray-400 focus:ring-blue-500 focus:border-blue-500"
       } ${disabled ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
     />
     <label
       htmlFor={name}
       className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 
-         peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
-         peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none 
-         ${error ? "text-red-600" : "text-gray-500 peer-focus:text-blue-600"} 
-         ${disabled ? "text-gray-400" : ""}`}
+        peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
+        peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none 
+        ${error ? "text-red-600" : "text-gray-700 peer-focus:text-blue-600"} 
+        ${disabled ? "text-gray-400" : ""}`}
     >
       {label} {required && <span className="text-red-500">*</span>}
     </label>
@@ -246,7 +246,7 @@ export const FormSelect = ({
               ? "text-red-600"
               : isFocused
               ? "text-blue-600"
-              : "text-gray-500"
+              : "text-gray-700"
           }
           ${isDisabled ? "text-gray-400 bg-gray-50" : "bg-white"}`}
                 style={{
@@ -315,7 +315,7 @@ export const FormNumberInputWithPrefix = ({
     <div className={`relative ${className}`}>
       <div
         className={`flex rounded-lg border ${
-          error ? "border-red-500" : "border-gray-300"
+          error ? "border-red-500" : "border-gray-400"
         } focus-within:ring-2 ${
           error
             ? "focus-within:ring-red-500 focus-within:border-red-500"
@@ -323,7 +323,7 @@ export const FormNumberInputWithPrefix = ({
         }`}
       >
         {prefix && (
-          <span className="flex items-center px-3 text-sm text-gray-500 bg-gray-50 border-r border-gray-300 rounded-l-lg">
+          <span className="flex items-center px-3 text-sm text-gray-700 bg-gray-50 border-r border-gray-400 rounded-l-lg">
             {prefix}
           </span>
         )}
@@ -353,7 +353,7 @@ export const FormNumberInputWithPrefix = ({
               ${
                 error
                   ? "text-red-600"
-                  : "text-gray-500 peer-focus:text-blue-600"
+                  : "text-gray-700 peer-focus:text-blue-600"
               }`}
           >
             {label} {required && <span className="text-red-500">*</span>}
