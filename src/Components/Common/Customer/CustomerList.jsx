@@ -23,7 +23,7 @@ function CustomerList() {
   // Contact Modal State
   const [showContactModal, setShowContactModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
- const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
 
   // Predefined industries list
@@ -353,12 +353,14 @@ function CustomerList() {
         </div>
 
         {/* Total Customers Card - Smaller Size */}
-        {/* <div className="mb-4">
-          <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+        {/* Stats Cards Section - Improved */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-4">
+          {/* Total Customers Card */}
+          <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-gray-100">
                 <svg
-                  className="w-4 h-4 text-blue-600"
+                  className="w-3 h-3 text-gray-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -371,13 +373,13 @@ function CustomerList() {
                   />
                 </svg>
               </div>
-              <div>
-                <p className="text-gray-500 text-xs font-medium">
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-500 text-[12px] font-medium truncate">
                   Total Customers
                 </p>
-                <p className="text-xl font-bold text-gray-900">
+                <p className="text-gray-900 text-sm font-bold truncate">
                   {loading ? (
-                    <InlineSpinner label="Loading..." />
+                    <div className="h-4 bg-gray-200 rounded w-12 animate-pulse"></div>
                   ) : (
                     totalCustomers.toLocaleString()
                   )}
@@ -385,7 +387,77 @@ function CustomerList() {
               </div>
             </div>
           </div>
-        </div> */}
+
+          {/* Showing Count Card */}
+          <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-blue-100">
+                <svg
+                  className="w-3 h-3 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-500 text-[12px] font-medium truncate">
+                  Showing
+                </p>
+                <p className="text-gray-900 text-sm font-bold truncate">
+                  {loading ? (
+                    <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+                  ) : (
+                    `${customers.length} of ${totalCustomers}`
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+
+       
+
+          {/* Industry Distribution Card
+          <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-purple-100">
+                <svg
+                  className="w-3 h-3 text-purple-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                  />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-500 text-[12px] font-medium truncate">
+                  Industries
+                </p>
+                <p className="text-gray-900 text-sm font-bold truncate">
+                  {loading ? (
+                    <div className="h-4 bg-gray-200 rounded w-10 animate-pulse"></div>
+                  ) : (
+                    `${new Set(customers.map(c => c.industry)).size}`
+                  )}
+                </p>
+              </div>
+            </div>
+          </div> */}
+
+        
+        </div>
 
         {/* Table View */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
@@ -435,66 +507,66 @@ function CustomerList() {
                             </div>
 
                             <div>
-                            <div
-                              className="font-semibold truncate max-w-[120px]"
-                              title={customer.companyName}
-                            >
-                              {customer.companyName || "N/A"}
-                            </div>
-     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                            {/* Contact Button */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleContact(customer);
-                              }}
-                              className="text-green-600 hover:text-green-900 hover:bg-green-50 rounded-lg transition-all duration-200 flex items-center gap-1 text-xs bg-white"
-                              title="Manage Contacts"
-                            >
-                              <svg
-                                className="w-3 h-3"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                              <div
+                                className="font-semibold truncate max-w-[120px]"
+                                title={customer.companyName}
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                              </svg>
-                              
-                            </button>
+                                {customer.companyName || "N/A"}
+                              </div>
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                                {/* Contact Button */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleContact(customer);
+                                  }}
+                                  className="text-green-600 hover:text-green-900 hover:bg-green-50 rounded-lg transition-all duration-200 flex items-center gap-1 text-xs bg-white"
+                                  title="Manage Contacts"
+                                >
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                                    />
+                                  </svg>
 
-                            {/* Edit Button */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEdit(customer.customerId);
-                              }}
-                              className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-all duration-200 flex items-center gap-1 text-xs bg-white px-2"
-                              title="Edit Customer"
-                            >
-                              <svg
-                                className="w-3 h-3"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
-                              </svg>
-                            
-                            </button>
-                          </div>
+                                </button>
+
+                                {/* Edit Button */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEdit(customer.customerId);
+                                  }}
+                                  className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-all duration-200 flex items-center gap-1 text-xs bg-white px-2"
+                                  title="Edit Customer"
+                                >
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                    />
+                                  </svg>
+
+                                </button>
+                              </div>
                             </div>
                           </div>
-                     
+
                         </div>
                       </td>
 
@@ -624,7 +696,7 @@ function CustomerList() {
       </div>
 
 
-   {/* 🔥 CREATE CUSTOMER MODAL */}
+      {/* 🔥 CREATE CUSTOMER MODAL */}
       {showCreateModal && (
         <CreateCustomerModal
           onClose={handleCloseCreateModal}

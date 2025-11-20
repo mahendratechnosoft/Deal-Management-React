@@ -26,7 +26,7 @@ const GeneralIcon = () => (
   </svg>
 );
 
-const DepartmentIcon = () => (
+export const DepartmentIcon = () => (
   <svg
     className="w-5 h-5"
     fill="none"
@@ -34,13 +34,30 @@ const DepartmentIcon = () => (
     viewBox="0 0 24 24"
   >
     <path
+      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeWidth={2}
-      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+      d="M3 21h18M4 21V7a2 2 0 012-2h4v16M10 5h4a2 2 0 012 2v14M14 9h1M14 13h1M7 9h1M7 13h1M9 21v-3a2 2 0 012-2h2a2 2 0 012 2v3"
     />
   </svg>
 );
+
+export const DynamicFormIcon = () => (
+  <svg
+    className="w-5 h-5"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M8 6h8M8 12h4M8 18h8M4 4h16a2 2 0 012 2v3a2 2 0 01-2 2H4M4 11h16M4 11v9a2 2 0 002 2h12a2 2 0 002-2v-9"
+    />
+  </svg>
+);
+
 
 const MenuIcon = () => (
   <svg
@@ -213,7 +230,7 @@ const SettingsLayout = () => {
                           to="/Admin/Settings/Form"
                           className={getNavLinkClass}
                         >
-                          <DepartmentIcon />
+                          <DynamicFormIcon />
                           <span className="ml-3 font-medium block text-xs">
                             Dynamic Form
                           </span>

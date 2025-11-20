@@ -1,103 +1,42 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axiosInstance from "../../BaseComponet/axiosInstance";
-import TopBar from "../../Pages/Admin/TopBarAdmin";
-import Sidebar from "../../Pages/Admin/SidebarAdmin";
-import Select from "react-select"; // Import react-select
 import toast from "react-hot-toast";
 import { useLayout } from "../../Layout/useLayout";
 import { Country, State, City } from "country-state-city";
-// --- STYLES AND OPTIONS (Copied from CreateEmployee) ---
-const customReactSelectStyles = (hasError) => ({
-  control: (provided, state) => ({
-    ...provided,
-    minHeight: "42px",
-    backgroundColor: state.isDisabled ? "#f3f4f6" : "transparent",
-    cursor: state.isDisabled ? "not-allowed" : "default",
-    borderColor: state.isDisabled
-      ? "#d1d5db"
-      : hasError
-        ? "#ef4444"
-        : state.isFocused
-          ? "#3b82f6"
-          : "#d1d5db",
-    borderRadius: "0.5rem",
-    borderWidth: state.isFocused ? "2px" : "1px",
-    boxShadow: "none",
-    "&:hover": {
-      borderColor: state.isDisabled
-        ? "#d1d5db"
-        : hasError
-          ? "#ef4444"
-          : state.isFocused
-            ? "#3b82f6"
-            : "#9ca3af",
-    },
-  }),
-  valueContainer: (provided) => ({
-    ...provided,
-    padding: "6px 8px",
-  }),
-  placeholder: (provided) => ({
-    ...provided,
-    color: "transparent",
-  }),
-  menu: (provided) => ({
-    ...provided,
-    zIndex: 50,
-  }),
-  input: (provided) => ({
-    ...provided,
-    margin: 0,
-    padding: 0,
-  }),
-  singleValue: (provided, state) => ({
-    ...provided,
-    color: state.isDisabled ? "#9ca3af" : "hsl(0, 0%, 20%)",
-  }),
-  indicatorsContainer: (provided, state) => ({
-    ...provided,
-    color: state.isDisabled ? "#9ca3af" : provided.color,
-  }),
-});
+import {
+  FormInput,
+  FormSelect,
+  FormTextarea,
+  FormPhoneInputFloating
+} from "../../BaseComponet/CustomeFormComponents"; // Your existing components
 
+// Constants
 const genderOptions = [
   { value: "Male", label: "Male" },
   { value: "Female", label: "Female" },
   { value: "Other", label: "Other" },
 ];
-// --- END STYLES AND OPTIONS ---
 
 function EditEmployee() {
   const { LayoutComponent, role } = useLayout();
-
   const navigate = useNavigate();
   const { employeeId } = useParams();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
-  const [isGenderFocused, setIsGenderFocused] = useState(false);
-  const [isDeptFocused, setIsDeptFocused] = useState(false);
-  const [isRoleFocused, setIsRoleFocused] = useState(false);
-
   const [departmentOptions, setDepartmentOptions] = useState([]);
   const [roleOptions, setRoleOptions] = useState([]);
-
   const [isDeptLoading, setIsDeptLoading] = useState(false);
   const [isRoleLoading, setIsRoleLoading] = useState(false);
-
   const [moduleAccess, setModuleAccess] = useState(null);
-  // Add these to your existing focus state declarations
-  const [isCountryFocused, setIsCountryFocused] = useState(false);
-  const [isStateFocused, setIsStateFocused] = useState(false);
-  const [isCityFocused, setIsCityFocused] = useState(false);
 
   const [dropdownData, setDropdownData] = useState({
     countries: [],
     states: [],
     cities: [],
   });
+
   const [formData, setFormData] = useState({
     loginEmail: "",
     name: "",
@@ -116,79 +55,6 @@ function EditEmployee() {
   });
 
   const [errors, setErrors] = useState({});
-
-  useEffect(() => {
-    const fetchEmployeeData = async () => {
-      if (!employeeId) {
-        alert("Employee ID not found in URL.");
-        navigate("/Admin/EmployeeList");
-        return;
-      }
-      setInitialLoading(true);
-      try {
-        const response = await axiosInstance.get(
-          `/admin/getEmployeeById/${employeeId}`
-        );
-        const employeeData = response.data;
-
-        // Populate form data
-        setFormData({
-          loginEmail: employeeData.loginEmail || "",
-          name: employeeData.name || "",
-          phone: employeeData.phone || "",
-          address: employeeData.address || "",
-          country: employeeData.country || "",
-          state: employeeData.state || "",
-          city: employeeData.city || "",
-          gender: employeeData.gender || "",
-          description: employeeData.description || "",
-          profileImageBase64: employeeData.profileImage || "",
-          departmentId: employeeData.departmentId || "",
-          roleId: employeeData.roleId || "",
-          departmentName: employeeData.departmentName || "",
-          roleName: employeeData.roleName || "",
-        });
-        setModuleAccess(employeeData.moduleAccess || null);
-        // --- PRE-POPULATE DROPDOWNS ---
-        // Pre-fill department options with the current value
-        if (employeeData.departmentId && employeeData.departmentName) {
-          setDepartmentOptions([
-            {
-              value: employeeData.departmentId,
-              label: employeeData.departmentName,
-            },
-          ]);
-        }
-        // Pre-fill role options with the current value
-        if (employeeData.roleId && employeeData.roleName) {
-          setRoleOptions([
-            { value: employeeData.roleId, label: employeeData.roleName },
-          ]);
-        }
-        // --- END ---
-      } catch (error) {
-        console.error("Error fetching employee data:", error);
-        alert("Failed to fetch employee details. Please try again.");
-        navigate("/Admin/EmployeeList");
-      } finally {
-        setInitialLoading(false);
-      }
-    };
-
-    fetchEmployeeData();
-  }, [employeeId, navigate]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-  };
-
-
-  // =======================================COUNTrY STATE CITY DROPDOWN===================================
-  // Add these useEffect hooks after your existing state declarations
 
   // Load countries on component mount
   useEffect(() => {
@@ -214,7 +80,7 @@ function EditEmployee() {
       setDropdownData((prev) => ({
         ...prev,
         states,
-        cities: [], // Clear cities when country changes
+        cities: [],
       }));
     }
   }, [formData.country]);
@@ -234,47 +100,119 @@ function EditEmployee() {
     }
   }, [formData.country, formData.state]);
 
+  // Fetch employee data
+  useEffect(() => {
+    const fetchEmployeeData = async () => {
+      if (!employeeId) {
+        toast.error("Employee ID not found in URL.");
+        navigate("/Admin/EmployeeList");
+        return;
+      }
+      setInitialLoading(true);
+      try {
+        const response = await axiosInstance.get(
+          `/admin/getEmployeeById/${employeeId}`
+        );
+        const employeeData = response.data;
 
+        setFormData({
+          loginEmail: employeeData.loginEmail || "",
+          name: employeeData.name || "",
+          phone: employeeData.phone || "",
+          address: employeeData.address || "",
+          country: employeeData.country || "",
+          state: employeeData.state || "",
+          city: employeeData.city || "",
+          gender: employeeData.gender || "",
+          description: employeeData.description || "",
+          profileImageBase64: employeeData.profileImage || "",
+          departmentId: employeeData.departmentId || "",
+          roleId: employeeData.roleId || "",
+          departmentName: employeeData.departmentName || "",
+          roleName: employeeData.roleName || "",
+        });
+        
+        setModuleAccess(employeeData.moduleAccess || null);
 
-  // Add these handlers after your existing change handlers
+        // Pre-fill department and role options
+        if (employeeData.departmentId && employeeData.departmentName) {
+          setDepartmentOptions([
+            {
+              value: employeeData.departmentId,
+              label: employeeData.departmentName,
+            },
+          ]);
+        }
+        if (employeeData.roleId && employeeData.roleName) {
+          setRoleOptions([
+            { value: employeeData.roleId, label: employeeData.roleName },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error fetching employee data:", error);
+        toast.error("Failed to fetch employee details. Please try again.");
+        navigate("/Admin/EmployeeList");
+      } finally {
+        setInitialLoading(false);
+      }
+    };
 
-  // Country change handler
+    fetchEmployeeData();
+  }, [employeeId, navigate]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const handlePhoneChange = (phone) => {
+    setFormData((prev) => ({ ...prev, phone }));
+    if (errors.phone) {
+      setErrors((prev) => ({ ...prev, phone: "" }));
+    }
+  };
+
+  const handleSelectChange = (selectedOption, fieldName) => {
+    setFormData((prev) => ({
+      ...prev,
+      [fieldName]: selectedOption ? selectedOption.value : "",
+    }));
+    if (errors[fieldName]) {
+      setErrors((prev) => ({ ...prev, [fieldName]: "" }));
+    }
+  };
+
   const handleCountryChange = (selectedOption) => {
     const countryCode = selectedOption ? selectedOption.value : "";
-
     setFormData((prev) => ({
       ...prev,
       country: countryCode,
-      state: "", // Reset state when country changes
-      city: "",  // Reset city when country changes
+      state: "",
+      city: "",
     }));
   };
 
-  // State change handler
   const handleStateChange = (selectedOption) => {
     const stateCode = selectedOption ? selectedOption.value : "";
-
     setFormData((prev) => ({
       ...prev,
       state: stateCode,
-      city: "", // Reset city when state changes
+      city: "",
     }));
   };
 
-  // City change handler
   const handleCityChange = (selectedOption) => {
     const cityName = selectedOption ? selectedOption.value : "";
-
     setFormData((prev) => ({
       ...prev,
       city: cityName,
     }));
   };
-  // =======================================COUNTrY STATE CITY DROPDOWN===================================
-
 
   const handleFileChange = (e) => {
-    // ... (This function is unchanged)
     const file = e.target.files[0];
     if (file) {
       if (!["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
@@ -308,22 +246,9 @@ function EditEmployee() {
     }
   };
 
-  // --- NEW HANDLERS (Copied from CreateEmployee) ---
-  const handleGenderChange = (selectedOption) => {
-    setFormData((prev) => ({
-      ...prev,
-      gender: selectedOption ? selectedOption.value : "",
-    }));
-    if (errors.gender) {
-      setErrors((prev) => ({ ...prev, gender: "" }));
-    }
-  };
-
   const loadDepartments = async () => {
-    // Only fetch if options are not already loaded (or just has the 1 pre-filled value)
-    if (departmentOptions.length > 1) {
-      return;
-    }
+    if (departmentOptions.length > 1) return;
+    
     setIsDeptLoading(true);
     try {
       const response = await axiosInstance.get("/admin/getAllDepartment");
@@ -334,19 +259,15 @@ function EditEmployee() {
       setDepartmentOptions(options);
     } catch (error) {
       console.error("Failed to fetch departments", error);
+      toast.error("Failed to load departments");
     } finally {
       setIsDeptLoading(false);
     }
   };
 
   const loadRoles = async () => {
-    if (!formData.departmentId) {
-      return;
-    }
-    // Only fetch if options are not already loaded (or just has the 1 pre-filled value)
-    if (roleOptions.length > 1 && roleOptions[0]?.value === formData.roleId) {
-      return;
-    }
+    if (!formData.departmentId) return;
+    if (roleOptions.length > 1 && roleOptions[0]?.value === formData.roleId) return;
 
     setIsRoleLoading(true);
     try {
@@ -361,6 +282,7 @@ function EditEmployee() {
     } catch (error) {
       console.error("Failed to fetch roles", error);
       setRoleOptions([]);
+      toast.error("Failed to load roles");
     } finally {
       setIsRoleLoading(false);
     }
@@ -371,10 +293,10 @@ function EditEmployee() {
       ...prev,
       departmentId: selectedOption ? selectedOption.value : "",
       departmentName: selectedOption ? selectedOption.label : "",
-      roleId: "", // Reset role
-      roleName: "", // Reset role
+      roleId: "",
+      roleName: "",
     }));
-    setRoleOptions([]); // Clear old role options
+    setRoleOptions([]);
 
     if (errors.departmentId) {
       setErrors((prev) => ({ ...prev, departmentId: "" }));
@@ -397,7 +319,6 @@ function EditEmployee() {
 
   const handleAccessChange = (field, value) => {
     setModuleAccess((prev) => {
-      // If moduleAccess is null, initialize it
       if (!prev) {
         return {
           leadAccess: false,
@@ -406,54 +327,34 @@ function EditEmployee() {
           leadCreate: false,
           leadDelete: false,
           leadEdit: false,
-
           customerAccess: false,
           customerViewAll: false,
           customerCreate: false,
           customerDelete: false,
           customerEdit: false,
-
           proposalAccess: false,
           proposalViewAll: false,
           proposalCreate: false,
           proposalDelete: false,
           proposalEdit: false,
-
           proformaInvoiceAccess: false,
           proformaInvoiceViewAll: false,
           proformaInvoiceCreate: false,
           proformaInvoiceDelete: false,
           proformaInvoiceEdit: false,
-
           invoiceAccess: false,
           invoiceViewAll: false,
           invoiceCreate: false,
           invoiceDelete: false,
           invoiceEdit: false,
-
           paymentAccess: false,
           paymentViewAll: false,
           paymentcreate: false,
           paymentDelete: false,
           paymentEdit: false,
-          // accountViewAll: false,
-          // accountCreate: false,
-          // accountDelete: false,
-          // accountEdit: false,
-          // dealViewAll: false,
-          // dealCreate: false,
-          // dealDelete: false,
-          // dealEdit: false,
-          // contactViewAll: false,
-          // contactCreate: false,
-          // contactDelete: false,
-          // contactEdit: false,
-
-
-          [field]: value, // Set the one that was just toggled
+          [field]: value,
         };
       }
-      // Otherwise, just update the existing object
       return {
         ...prev,
         [field]: value,
@@ -466,11 +367,8 @@ function EditEmployee() {
     if (!formData.name?.trim()) newErrors.name = "Full name is required";
     if (!formData.phone?.trim()) newErrors.phone = "Phone number is required";
     if (!formData.gender) newErrors.gender = "Gender is required";
-    // --- VALIDATE NEW FIELDS ---
-    if (!formData.departmentId)
-      newErrors.departmentId = "Department is required";
+    if (!formData.departmentId) newErrors.departmentId = "Department is required";
     if (!formData.roleId) newErrors.roleId = "Role is required";
-    // --- END ---
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -489,20 +387,15 @@ function EditEmployee() {
       moduleAccess: moduleAccess,
     };
     delete payload.profileImageBase64;
+    
     try {
-      const response = await axiosInstance.put(
-        "/admin/updateEmployee",
-        payload
-      );
-
+      await axiosInstance.put("/admin/updateEmployee", payload);
       toast.success("Employee updated successfully!");
       navigate("/Admin/EmployeeList");
     } catch (error) {
       console.error("Error updating employee:", error);
       if (error.request) {
-        toast.error(
-          "Cannot connect to server. Please check if the backend is running."
-        );
+        toast.error("Cannot connect to server. Please check if the backend is running.");
       } else {
         toast.error("Failed to update employee. Please try again.");
       }
@@ -511,16 +404,97 @@ function EditEmployee() {
     }
   };
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!toggleSidebar);
+  const handleCancel = () => {
+    if (window.confirm("Are you sure you want to cancel? Any unsaved changes will be lost.")) {
+      navigate("/Admin/EmployeeList");
+    }
   };
 
+  // Loading Skeleton (similar to EditCustomer)
   if (initialLoading) {
-    // ... (Loading state is unchanged)
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p>Loading employee data...</p>
-      </div>
+      <LayoutComponent>
+        <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
+          {/* Header Skeleton */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="skeleton h-4 w-24 rounded"></div>
+            </div>
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+              <div className="space-y-2">
+                <div className="skeleton h-6 w-48 rounded"></div>
+                <div className="skeleton h-4 w-64 rounded"></div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="skeleton h-9 w-20 rounded"></div>
+                <div className="skeleton h-9 w-32 rounded"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Form Skeleton */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div className="p-6 space-y-6">
+                  {/* Profile Image Section Skeleton */}
+                  <section>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="skeleton w-8 h-8 rounded-lg"></div>
+                      <div className="skeleton h-6 w-48 rounded"></div>
+                    </div>
+                    <div className="flex justify-center mb-6">
+                      <div className="skeleton w-24 h-24 rounded-full"></div>
+                    </div>
+                  </section>
+
+                  {/* Personal Details Section Skeleton */}
+                  <section>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="skeleton w-8 h-8 rounded-lg"></div>
+                      <div className="skeleton h-6 w-40 rounded"></div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[...Array(6)].map((_, index) => (
+                        <div key={index} className="space-y-2">
+                          <div className="skeleton h-4 w-24 rounded"></div>
+                          <div className="skeleton h-10 w-full rounded"></div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  {/* Module Access Section Skeleton */}
+                  <section>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="skeleton w-8 h-8 rounded-lg"></div>
+                      <div className="skeleton h-6 w-32 rounded"></div>
+                    </div>
+                    <div className="space-y-4">
+                      {[...Array(3)].map((_, index) => (
+                        <div key={index} className="skeleton h-24 w-full rounded-lg"></div>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <style jsx>{`
+            .skeleton {
+              background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+              background-size: 200% 100%;
+              animation: loading 1.5s infinite;
+            }
+
+            @keyframes loading {
+              0% { background-position: 200% 0; }
+              100% { background-position: -200% 0; }
+            }
+          `}</style>
+        </div>
+      </LayoutComponent>
     );
   }
 
@@ -530,721 +504,306 @@ function EditEmployee() {
 
   return (
     <LayoutComponent>
-
-      <div className="p-4 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
-        <div className="p-2 bg-gray-50 border-b border-gray-200">
-          {/* Header */}
-          {/* ... (Header JSX is unchanged) ... */}
-          <div className="">
-            <div className="flex items-center gap-2 mb-2">
+      <div className="bg-white h-[90vh] overflow-y-auto CRM-scroll-width-none">
+        {/* Compact Header */}
+        <div className="bg-white border-gray-200 px-4 py-3 sticky top-0 z-50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => navigate("/Admin/EmployeeList")}
-                className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200"
+                className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 p-1.5 hover:bg-gray-100 rounded transition-colors"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                Back to Employees
+                <span className="hidden sm:inline">Back</span>
               </button>
-            </div>
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
               <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  Edit Employee {/* Changed Title */}
-                </h1>
+                <h1 className="text-lg font-semibold text-gray-900">Edit Employee</h1>
+                <p className="text-xs text-gray-600">Update employee information</p>
+              </div>
+            </div>
 
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => navigate("/Admin/EmployeeList")}
-                  className="px-4 py-2 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 text-sm font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  form="editEmployeeForm" // Changed form ID
-                  disabled={loading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200 text-sm font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    "Saving..."
-                  ) : (
-                    <>
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        {/* Save Icon or Check Icon */}
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
-                        />
-                      </svg>
-                      Save Changes {/* Changed Button Text */}
-                    </>
-                  )}
-                </button>
-              </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCancel}
+                className="px-3 py-1.5 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 text-sm transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Saving...
+                  </>
+                ) : (
+                  'Update'
+                )}
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Form Container */}
-        <div className="flex-1 overflow-y-auto h-[72vh] overflow-y-auto CRM-scroll-width-none">
-          <div className="p-4">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <form
-                id="editEmployeeForm" // Changed form ID
-                onSubmit={handleSubmit}
-                className="p-6"
-              >
-                <div className="space-y-6">
-                  {/* Profile Image Section (UNCHANGED) */}
-                  <section>
-                    {/* ... (Profile Image JSX is unchanged) ... */}
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                        <svg
-                          className="w-4 h-4 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l-1-1a2 2 0 00-2.828 0L8 14m0 0l-4 4h16l-4-4z"
-                          ></path>
-                        </svg>
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-semibold text-gray-900">
-                          Profile Image
-                        </h2>
-                        <p className="text-gray-600 text-sm">
-                          Update employee's profile picture
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <input
-                        type="file"
-                        id="profileImageInput"
-                        name="profileImageBase64"
-                        accept="image/png, image/jpeg, image/jpg"
-                        onChange={handleFileChange}
-                        className="hidden"
-                      />
-                      <label
-                        htmlFor="profileImageInput"
-                        className="cursor-pointer"
-                      >
-                        {formData.profileImageBase64 ? (
-                          <img
-                            src={`data:image/jpeg;base64,${formData.profileImageBase64}`} // Construct data URL
-                            alt="Profile Preview"
-                            className="w-32 h-32 rounded-full object-cover border-4 border-gray-200 shadow-sm"
-                          />
-                        ) : (
-                          <div className="w-32 h-32 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-200 hover:border-gray-400">
-                            <svg
-                              className="w-12 h-12"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={1}
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                              />
-                            </svg>
-                            <span className="text-xs font-medium mt-1">
-                              Upload Image
-                            </span>
-                          </div>
-                        )}
-                      </label>
-                      {errors.profileImageBase64 && (
-                        <p className="mt-2 text-xs text-red-600 text-center">
-                          {" "}
-                          {errors.profileImageBase64}{" "}
-                        </p>
-                      )}
-                    </div>
-                  </section>
-
-                  {/* --- Account Information Section (MODIFIED) --- */}
-                  <section>
-                    <div className="flex items-center gap-3 mb-6">
-                      {/* ... (Section header is unchanged) ... */}
-                      <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                        <svg
-                          className="w-4 h-4 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-semibold text-gray-900">
-                          Personal Details
-                        </h2>
-                        <p className="text-gray-600 text-sm">
-                          Address and descriptive information
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* --- Full Name --- */}
-                      <div className="relative">
-                        <input
-                          type="text"
-                          name="name"
-                          id="name"
-                          value={formData.name}
-                          onChange={handleChange}
-                          className={`block w-full px-3 py-2.5 bg-transparent border rounded-lg appearance-none focus:outline-none focus:ring-2 peer text-sm ${errors.name
-                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                            : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                            }`}
-                          placeholder=" "
-                        />
-                        <label
-                          htmlFor="name"
-                          className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2.5 peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none ${errors.name
-                            ? "text-red-600"
-                            : "text-gray-500 peer-focus:text-blue-600"
-                            }`}
-                        >
-                          Full Name *
-                        </label>
-                        {errors.name && (
-                          <p className="mt-1 text-xs text-red-600">
-                            {errors.name}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* --- Email (Disabled) --- */}
-                      <div className="relative">
-                        <input
-                          type="email"
-                          name="loginEmail"
-                          id="loginEmail"
-                          value={formData.loginEmail}
-                          onChange={handleChange}
-                          disabled // Make email non-editable
-                          className="block w-full px-3 py-2.5 bg-gray-100 border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 peer text-sm cursor-not-allowed"
-                          placeholder=" "
-                        />
-                        <label
-                          htmlFor="loginEmail"
-                          className="absolute text-sm text-gray-400 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-gray-100 px-2 left-1 pointer-events-none"
-                        >
-                          Email * (Cannot be changed)
-                        </label>
-                      </div>
-
-                      {/* --- Phone --- */}
-                      <div className="relative">
-                        <input
-                          type="tel"
-                          name="phone"
-                          id="phone"
-                          value={formData.phone}
-                          onChange={handleChange}
-                          className={`block w-full px-3 py-2.5 bg-transparent border rounded-lg appearance-none focus:outline-none focus:ring-2 peer text-sm ${errors.phone
-                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                            : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                            }`}
-                          placeholder=" "
-                        />
-                        <label
-                          htmlFor="phone"
-                          className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2.5 peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none ${errors.phone
-                            ? "text-red-600"
-                            : "text-gray-500 peer-focus:text-blue-600"
-                            }`}
-                        >
-                          Phone *
-                        </label>
-                        {errors.phone && (
-                          <p className="mt-1 text-xs text-red-600">
-                            {errors.phone}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* --- Country Dropdown --- */}
-                      <div className="relative">
-                        <label
-                          htmlFor="country"
-                          className={`absolute text-sm duration-300 transform z-10 origin-[0] bg-white px-2 left-1 pointer-events-none
-        ${isCountryFocused || formData.country
-                              ? "scale-75 -translate-y-4 top-2"
-                              : "scale-100 translate-y-0 top-2.5"
-                            }
-        text-gray-500
-    `}
-                        >
-                          Country
-                        </label>
-                        <Select
-                          id="country"
-                          name="country"
-                          options={dropdownData.countries}
-                          value={
-                            dropdownData.countries.find(
-                              (option) => option.value === formData.country
-                            ) || null
-                          }
-                          onChange={handleCountryChange}
-                          onFocus={() => setIsCountryFocused(true)}
-                          onBlur={() => setIsCountryFocused(false)}
-                          menuPlacement="auto"
-                          maxMenuHeight={150}
-                          styles={customReactSelectStyles(false)}
-                          placeholder=" "
-                          isClearable
-                          isSearchable
-                        />
-                      </div>
-
-                      {/* --- State Dropdown --- */}
-                      <div className="relative">
-                        <label
-                          htmlFor="state"
-                          className={`absolute text-sm duration-300 transform z-10 origin-[0] px-2 left-1 pointer-events-none
-        ${isStateFocused || formData.state
-                              ? "scale-75 -translate-y-4 top-2"
-                              : "scale-100 translate-y-0 top-2.5"
-                            }
-        ${!formData.country
-                              ? "text-gray-400 bg-gray-100"
-                              : "text-gray-500 bg-white"
-                            }
-    `}
-                        >
-                          State
-                        </label>
-                        <Select
-                          id="state"
-                          name="state"
-                          options={dropdownData.states}
-                          value={
-                            dropdownData.states.find(
-                              (option) => option.value === formData.state
-                            ) || null
-                          }
-                          onChange={handleStateChange}
-                          onFocus={() => setIsStateFocused(true)}
-                          onBlur={() => setIsStateFocused(false)}
-                          isDisabled={!formData.country}
-                          menuPlacement="auto"
-                          maxMenuHeight={150}
-                          styles={customReactSelectStyles(false)}
-                          placeholder=" "
-                          isClearable
-                          isSearchable
-                        />
-                      </div>
-
-                      {/* --- City Dropdown --- */}
-                      <div className="relative">
-                        <label
-                          htmlFor="city"
-                          className={`absolute text-sm duration-300 transform z-10 origin-[0] px-2 left-1 pointer-events-none
-        ${isCityFocused || formData.city
-                              ? "scale-75 -translate-y-4 top-2"
-                              : "scale-100 translate-y-0 top-2.5"
-                            }
-        ${!formData.state
-                              ? "text-gray-400 bg-gray-100"
-                              : "text-gray-500 bg-white"
-                            }
-    `}
-                        >
-                          City
-                        </label>
-                        <Select
-                          id="city"
-                          name="city"
-                          options={dropdownData.cities}
-                          value={
-                            dropdownData.cities.find(
-                              (option) => option.value === formData.city
-                            ) || null
-                          }
-                          onChange={handleCityChange}
-                          onFocus={() => setIsCityFocused(true)}
-                          onBlur={() => setIsCityFocused(false)}
-                          isDisabled={!formData.state}
-                          menuPlacement="auto"
-                          maxMenuHeight={150}
-                          styles={customReactSelectStyles(false)}
-                          placeholder=" "
-                          isClearable
-                          isSearchable
-                        />
-                      </div>
-
+        {/* Compact Form */}
+        <div className="p-4 pt-0">
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               
-
-                      {/* --- Department Dropdown --- */}
-                      <div className="relative">
-                        <label
-                          htmlFor="departmentId"
-                          className={`absolute text-sm duration-300 transform z-10 origin-[0] bg-white px-2 left-1 pointer-events-none
-                              ${isDeptFocused || formData.departmentId
-                              ? "scale-75 -translate-y-4 top-2"
-                              : "scale-100 translate-y-0 top-2.5"
-                            }
-                              ${errors.departmentId
-                              ? "text-red-600"
-                              : isDeptFocused
-                                ? "text-blue-600"
-                                : "text-gray-500"
-                            }
-                            `}
-                        >
-                          Department *
-                        </label>
-                        <Select
-                          id="departmentId"
-                          name="departmentId"
-                          options={departmentOptions}
-                          value={
-                            departmentOptions.find(
-                              (option) =>
-                                option.value === formData.departmentId
-                            ) || null
-                          }
-                          onChange={handleDepartmentChange}
-                          onMenuOpen={loadDepartments}
-                          onFocus={() => setIsDeptFocused(true)}
-                          onBlur={() => setIsDeptFocused(false)}
-                          isLoading={isDeptLoading}
-                          menuPlacement="auto"
-                          maxMenuHeight={150}
-                          styles={customReactSelectStyles(
-                            !!errors.departmentId
-                          )}
-                          placeholder=" "
-                          isClearable
+              {/* Left Column - Personal Information */}
+              <div className="space-y-4">
+                {/* Profile Image */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Profile Image</h3>
+                  
+                  <div className="flex flex-col items-center">
+                    <input
+                      type="file"
+                      id="profileImageInput"
+                      name="profileImageBase64"
+                      accept="image/png, image/jpeg, image/jpg"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <label htmlFor="profileImageInput" className="cursor-pointer">
+                      {formData.profileImageBase64 ? (
+                        <img
+                          src={`data:image/jpeg;base64,${formData.profileImageBase64}`}
+                          alt="Profile Preview"
+                          className="w-24 h-24 rounded-full object-cover border-4 border-gray-200 shadow-sm"
                         />
-                        {errors.departmentId && (
-                          <p className="mt-1 text-xs text-red-600">
-                            {errors.departmentId}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* --- Role Dropdown --- */}
-                      <div className="relative">
-                        <label
-                          htmlFor="roleId"
-                          className={`absolute text-sm duration-300 transform z-10 origin-[0] px-2 left-1 pointer-events-none
-                              ${isRoleFocused || formData.roleId
-                              ? "scale-75 -translate-y-4 top-2"
-                              : "scale-100 translate-y-0 top-2.5"
-                            }
-                              ${errors.roleId
-                              ? "text-red-600"
-                              : isRoleFocused
-                                ? "text-blue-600"
-                                : "text-gray-500"
-                            }
-                              ${!formData.departmentId
-                              ? "text-gray-400 bg-gray-100"
-                              : "bg-white"
-                            }
-                            `}
-                        >
-                          Role *
-                        </label>
-                        <Select
-                          id="roleId"
-                          name="roleId"
-                          options={roleOptions}
-                          value={
-                            roleOptions.find(
-                              (option) => option.value === formData.roleId
-                            ) || null
-                          }
-                          onChange={handleRoleChange}
-                          onMenuOpen={loadRoles}
-                          onFocus={() => setIsRoleFocused(true)}
-                          onBlur={() => setIsRoleFocused(false)}
-                          isLoading={isRoleLoading}
-                          isDisabled={!formData.departmentId}
-                          menuPlacement="auto"
-                          maxMenuHeight={150}
-                          styles={customReactSelectStyles(!!errors.roleId)}
-                          placeholder=" "
-                          isClearable
-                        />
-                        {errors.roleId && (
-                          <p className="mt-1 text-xs text-red-600">
-                            {errors.roleId}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* --- Personal Details Section (MODIFIED) --- */}
-                  <section>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* --- Gender --- */}
-                      <div className="relative">
-                        <label
-                          htmlFor="gender"
-                          className={`absolute text-sm duration-300 transform z-10 origin-[0] bg-white px-2 left-1 pointer-events-none
-                              ${isGenderFocused || formData.gender
-                              ? "scale-75 -translate-y-4 top-2"
-                              : "scale-100 translate-y-0 top-2.5"
-                            }
-                              ${errors.gender
-                              ? "text-red-600"
-                              : isGenderFocused
-                                ? "text-blue-600"
-                                : "text-gray-500"
-                            }
-                            `}
-                        >
-                          Gender *
-                        </label>
-                        <Select
-                          id="gender"
-                          name="gender"
-                          options={genderOptions}
-                          value={
-                            genderOptions.find(
-                              (option) => option.value === formData.gender
-                            ) || null
-                          }
-                          onChange={handleGenderChange}
-                          onFocus={() => setIsGenderFocused(true)}
-                          onBlur={() => setIsGenderFocused(false)}
-                          menuPlacement="auto"
-                          maxMenuHeight={150}
-                          styles={customReactSelectStyles(!!errors.gender)}
-                          placeholder=" "
-                          isClearable
-                        />
-                        {errors.gender && (
-                          <p className="mt-1 text-xs text-red-600">
-                            {errors.gender}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* --- Address --- */}
-                      <div className="relative md:col-span-2">
-                        <textarea
-                          name="address"
-                          id="address"
-                          value={formData.address}
-                          onChange={handleChange}
-                          rows={3}
-                          className="block w-full px-3 py-2.5 bg-transparent border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-500 peer text-sm resize-none"
-                          placeholder=" "
-                        />
-                        <label
-                          htmlFor="address"
-                          className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2.5 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none"
-                        >
-                          Address
-                        </label>
-                      </div>
-
-                      {/* --- Description --- */}
-                      <div className="relative md:col-span-2">
-                        <textarea
-                          name="description"
-                          id="description"
-                          value={formData.description}
-                          onChange={handleChange}
-                          rows={4}
-                          className="block w-full px-3 py-2.5 bg-transparent border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-500 peer text-sm resize-none"
-                          placeholder=" "
-                        />
-                        <label
-                          htmlFor="description"
-                          className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2.5 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none"
-                        >
-                          Description
-                        </label>
-                      </div>
-                    </div>
-                  </section>
-
-                  <section>
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-8 h-8 bg-cyan-600 rounded-lg flex items-center justify-center">
-                        <svg
-                          className="w-4 h-4 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                          ></path>
-                        </svg>
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-semibold text-gray-900">
-                          Module Access
-                        </h2>
-                        <p className="text-gray-600 text-sm">
-                          Set permissions for CRM modules
-                        </p>
-                      </div>
-                    </div>
-
-
-
-
-                    <div className="space-y-4">
-                      {/* Leads Permissions */}
-                      <ModuleAccessGroup
-                        title="Leads Permissions"
-                        permissions={[
-                          { label: "Access", field: "leadAccess" },
-                          { label: "View All", field: "leadViewAll" },
-                          { label: "Create", field: "leadCreate" },
-                          { label: "Edit", field: "leadEdit" },
-                          { label: "Delete", field: "leadDelete" },
-                        ]}
-                        getAccess={getAccess}
-                        handleAccessChange={handleAccessChange}
-                      />
-
-                      {/* Customer Permissions */}
-                      <ModuleAccessGroup
-                        title="Customer Permissions"
-                        permissions={[
-                          { label: "Access", field: "customerAccess" },
-                          { label: "View All", field: "customerViewAll" },
-                          { label: "Create", field: "customerCreate" },
-                          { label: "Edit", field: "customerEdit" },
-                          { label: "Delete", field: "customerDelete" },
-                        ]}
-                        getAccess={getAccess}
-                        handleAccessChange={handleAccessChange}
-                      />
-
-                      {/* Proposal Permissions */}
-                      <ModuleAccessGroup
-                        title="Proposal Permissions"
-                        permissions={[
-                          { label: "Access", field: "proposalAccess" },
-                          { label: "View All", field: "proposalViewAll" },
-                          { label: "Create", field: "proposalCreate" },
-                          { label: "Edit", field: "proposalEdit" },
-                          { label: "Delete", field: "proposalDelete" },
-                        ]}
-                        getAccess={getAccess}
-                        handleAccessChange={handleAccessChange}
-                      />
-
-                      {/* Proforma Invoice Permissions */}
-                      <ModuleAccessGroup
-                        title="Proforma Invoice Permissions"
-                        permissions={[
-                          { label: "Access", field: "proformaInvoiceAccess" },
-                          { label: "View All", field: "proformaInvoiceViewAll" },
-                          { label: "Create", field: "proformaInvoiceCreate" },
-                          { label: "Edit", field: "proformaInvoiceEdit" },
-                          { label: "Delete", field: "proformaInvoiceDelete" },
-                        ]}
-                        getAccess={getAccess}
-                        handleAccessChange={handleAccessChange}
-                      />
-
-                      {/* Invoice Permissions */}
-                      <ModuleAccessGroup
-                        title="Invoice Permissions"
-                        permissions={[
-                          { label: "Access", field: "invoiceAccess" },
-                          { label: "View All", field: "invoiceViewAll" },
-                          { label: "Create", field: "invoiceCreate" },
-                          { label: "Edit", field: "invoiceEdit" },
-                          { label: "Delete", field: "invoiceDelete" },
-                        ]}
-                        getAccess={getAccess}
-                        handleAccessChange={handleAccessChange}
-                      />
-
-                      {/* Payment Permissions */}
-                      <ModuleAccessGroup
-                        title="Payment Permissions"
-                        permissions={[
-                          { label: "Access", field: "paymentAccess" },
-                          { label: "View All", field: "paymentViewAll" },
-                          { label: "Create", field: "paymentcreate" },
-                          { label: "Edit", field: "paymentEdit" },
-                          { label: "Delete", field: "paymentDelete" },
-                        ]}
-                        getAccess={getAccess}
-                        handleAccessChange={handleAccessChange}
-                      />
-
-
-                    </div>
-                  </section>
+                      ) : (
+                        <div className="w-24 h-24 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-200 hover:border-gray-400">
+                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          <span className="text-xs font-medium mt-1">Upload Image</span>
+                        </div>
+                      )}
+                    </label>
+                    {errors.profileImageBase64 && (
+                      <p className="mt-2 text-xs text-red-600 text-center">{errors.profileImageBase64}</p>
+                    )}
+                  </div>
                 </div>
-              </form>
+
+                {/* Personal Details */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Personal Details</h3>
+                  
+                  <div className="space-y-3">
+                    <FormInput
+                      label="Full Name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required={true}
+                      error={errors.name}
+                      background="white"
+                    />
+
+                    <FormInput
+                      label="Email"
+                      name="loginEmail"
+                      value={formData.loginEmail}
+                      onChange={handleChange}
+                      disabled={true}
+                      background="white"
+                    />
+
+                    <FormPhoneInputFloating
+                      label="Phone Number"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handlePhoneChange}
+                      required={true}
+                      error={errors.phone}
+                      background="white"
+                    />
+
+                    <FormSelect
+                      label="Gender"
+                      name="gender"
+                      value={genderOptions.find(opt => opt.value === formData.gender)}
+                      onChange={(selectedOption) => handleSelectChange(selectedOption, "gender")}
+                      options={genderOptions}
+                      required={true}
+                      error={errors.gender}
+                      background="white"
+                    />
+                  </div>
+                </div>
+
+                {/* Department & Role */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Department & Role</h3>
+                  
+                  <div className="space-y-3">
+                    <FormSelect
+                      label="Department"
+                      name="departmentId"
+                      value={departmentOptions.find(opt => opt.value === formData.departmentId)}
+                      onChange={handleDepartmentChange}
+                      onMenuOpen={loadDepartments}
+                      options={departmentOptions}
+                      isLoading={isDeptLoading}
+                      required={true}
+                      error={errors.departmentId}
+                      background="white"
+                    />
+
+                    <FormSelect
+                      label="Role"
+                      name="roleId"
+                      value={roleOptions.find(opt => opt.value === formData.roleId)}
+                      onChange={handleRoleChange}
+                      onMenuOpen={loadRoles}
+                      options={roleOptions}
+                      isLoading={isRoleLoading}
+                      isDisabled={!formData.departmentId}
+                      required={true}
+                      error={errors.roleId}
+                      background="white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - Address & Description */}
+              <div className="space-y-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Address Information</h3>
+                  
+                  <div className="space-y-3">
+                    <FormSelect
+                      label="Country"
+                      name="country"
+                      value={dropdownData.countries.find(opt => opt.value === formData.country)}
+                      onChange={handleCountryChange}
+                      options={dropdownData.countries}
+                      isSearchable={true}
+                      background="white"
+                    />
+
+                    <FormSelect
+                      label="State"
+                      name="state"
+                      value={dropdownData.states.find(opt => opt.value === formData.state)}
+                      onChange={handleStateChange}
+                      options={dropdownData.states}
+                      isSearchable={true}
+                      isDisabled={!formData.country}
+                      background="white"
+                    />
+
+                    <FormSelect
+                      label="City"
+                      name="city"
+                      value={dropdownData.cities.find(opt => opt.value === formData.city)}
+                      onChange={handleCityChange}
+                      options={dropdownData.cities}
+                      isSearchable={true}
+                      isDisabled={!formData.state}
+                      background="white"
+                    />
+
+                    <FormTextarea
+                      label="Address"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      rows={3}
+                      background="white"
+                    />
+
+                    <FormTextarea
+                      label="Description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={3}
+                      background="white"
+                    />
+                  </div>
+                </div>
+
+                {/* Module Access */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Module Access</h3>
+                  
+                  <div className="space-y-4">
+                    <ModuleAccessGroup
+                      title="Leads Permissions"
+                      permissions={[
+                        { label: "Access", field: "leadAccess" },
+                        { label: "View All", field: "leadViewAll" },
+                        { label: "Create", field: "leadCreate" },
+                        { label: "Edit", field: "leadEdit" },
+                        { label: "Delete", field: "leadDelete" },
+                      ]}
+                      getAccess={getAccess}
+                      handleAccessChange={handleAccessChange}
+                    />
+
+                    <ModuleAccessGroup
+                      title="Customer Permissions"
+                      permissions={[
+                        { label: "Access", field: "customerAccess" },
+                        { label: "View All", field: "customerViewAll" },
+                        { label: "Create", field: "customerCreate" },
+                        { label: "Edit", field: "customerEdit" },
+                        { label: "Delete", field: "customerDelete" },
+                      ]}
+                      getAccess={getAccess}
+                      handleAccessChange={handleAccessChange}
+                    />
+
+                    <ModuleAccessGroup
+                      title="Proposal Permissions"
+                      permissions={[
+                        { label: "Access", field: "proposalAccess" },
+                        { label: "View All", field: "proposalViewAll" },
+                        { label: "Create", field: "proposalCreate" },
+                        { label: "Edit", field: "proposalEdit" },
+                        { label: "Delete", field: "proposalDelete" },
+                      ]}
+                      getAccess={getAccess}
+                      handleAccessChange={handleAccessChange}
+                    />
+
+                    <ModuleAccessGroup
+                      title="Invoice Permissions"
+                      permissions={[
+                        { label: "Access", field: "invoiceAccess" },
+                        { label: "View All", field: "invoiceViewAll" },
+                        { label: "Create", field: "invoiceCreate" },
+                        { label: "Edit", field: "invoiceEdit" },
+                        { label: "Delete", field: "invoiceDelete" },
+                      ]}
+                      getAccess={getAccess}
+                      handleAccessChange={handleAccessChange}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </LayoutComponent>
-
   );
 }
 
-
-function ModuleAccessGroup({
-  title,
-  permissions,
-  getAccess,
-  handleAccessChange,
-}) {
+// Keep the existing ModuleAccessGroup and AccessToggle components
+function ModuleAccessGroup({ title, permissions, getAccess, handleAccessChange }) {
   return (
-    <div className="p-4 border border-gray-200 rounded-lg">
-      <h3 className="text-lg font-medium text-gray-800 mb-3">{title}</h3>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="p-3 border border-gray-200 rounded-lg bg-white">
+      <h3 className="text-sm font-medium text-gray-800 mb-2">{title}</h3>
+      <div className="grid grid-cols-2 gap-2">
         {permissions.map((perm) => (
           <AccessToggle
             key={perm.field}
@@ -1265,10 +824,7 @@ function AccessToggle({ field, label, isChecked, onChange }) {
   };
 
   return (
-    <label
-      htmlFor={field}
-      className="flex items-center cursor-pointer select-none"
-    >
+    <label htmlFor={field} className="flex items-center cursor-pointer select-none">
       <div className="relative">
         <input
           type="checkbox"
@@ -1278,12 +834,14 @@ function AccessToggle({ field, label, isChecked, onChange }) {
           className="sr-only"
         />
         <div
-          className={`block w-10 h-6 rounded-full transition-colors ${isChecked ? "bg-blue-600" : "bg-gray-300"
-            }`}
+          className={`block w-10 h-6 rounded-full transition-colors ${
+            isChecked ? "bg-blue-600" : "bg-gray-300"
+          }`}
         ></div>
         <div
-          className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${isChecked ? "translate-x-4" : "translate-x-0"
-            }`}
+          className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${
+            isChecked ? "translate-x-4" : "translate-x-0"
+          }`}
         ></div>
       </div>
       <span className="ml-2 text-sm text-gray-700">{label}</span>

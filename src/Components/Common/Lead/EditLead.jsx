@@ -719,7 +719,8 @@ function EditLead() {
                           { value: "Referral", label: "Referral" },
                           { value: "Social Media", label: "Social Media" },
                           { value: "Trade Show", label: "Trade Show" },
-                          { value: "Email Campaign", label: "Email Campaign" }
+                          { value: "Email Campaign", label: "Email Campaign" },
+                          { value: "Website Form", label: "Website Form" }
                         ].find(opt => opt.value === formData.source)}
                         onChange={(selectedOption) => handleSelectChange(selectedOption, { name: "source" })}
                         options={[
@@ -728,7 +729,8 @@ function EditLead() {
                           { value: "Referral", label: "Referral" },
                           { value: "Social Media", label: "Social Media" },
                           { value: "Trade Show", label: "Trade Show" },
-                          { value: "Email Campaign", label: "Email Campaign" }
+                          { value: "Email Campaign", label: "Email Campaign" },
+                          { value: "Website Form", label: "Website Form" }
                         ]}
                         background="white"
                       />
