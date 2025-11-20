@@ -333,10 +333,17 @@ function CreateProposal() {
   const handleInfoChange = (e) => {
     const { name, value } = e.target;
     setProposalInfo((prev) => ({ ...prev, [name]: value }));
+
     if (name === "proposalNumber") {
       checkProposalNumberUniqueness(value);
-    } else if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
   };
 
@@ -583,6 +590,12 @@ function CreateProposal() {
       newErrors.currencyType = "Currency is required";
 
     const combinedErrors = { ...errors, ...newErrors };
+    Object.keys(combinedErrors).forEach((key) => {
+      if (!combinedErrors[key]) {
+        delete combinedErrors[key];
+      }
+    });
+
     setErrors(combinedErrors);
     return Object.keys(combinedErrors).length === 0;
   };
@@ -601,7 +614,7 @@ function CreateProposal() {
       proposalInfo: {
         ...proposalInfo,
         proposalNumber: parseInt(proposalInfo.proposalNumber),
-        discount: Number(proposalInfo.discount),
+        discount: Number(total),
         totalAmmount: Number(proposalInfo.totalAmmount),
       },
       proposalContent: proposalContent.map((item) => ({
