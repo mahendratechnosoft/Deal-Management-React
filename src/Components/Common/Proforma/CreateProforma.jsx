@@ -514,8 +514,6 @@ function CreateProforma() {
 
     if (name === "proformaInvoiceNumber") {
       checkProformaNumberUniqueness(value);
-    } else if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
 
     if (errors[name]) {
@@ -900,6 +898,12 @@ function CreateProforma() {
     }
 
     const combinedErrors = { ...errors, ...newErrors };
+    Object.keys(combinedErrors).forEach((key) => {
+      if (!combinedErrors[key]) {
+        delete combinedErrors[key];
+      }
+    });
+
     setErrors(combinedErrors);
     return Object.keys(combinedErrors).length === 0;
   };
@@ -923,7 +927,7 @@ function CreateProforma() {
       proformaInvoiceInfo: {
         ...proformaInfo,
         discount: Number(proformaInfo.discount),
-        totalAmount: Number(proformaInfo.totalAmount),
+        totalAmount: Number(total),
         proformaInvoiceDate: formattedInvoiceDate,
         dueDate: formattedDueDate,
       },
