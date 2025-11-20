@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Select from "react-select";
-import PhoneInput from 'react-phone-input-2'
-import 'react-phone-input-2/lib/style.css'
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 /* ---------------------------------------------
    🔹 Custom Styles for React Select
 --------------------------------------------- */
@@ -71,7 +71,7 @@ export const FormInput = ({
   error,
   disabled = false,
   className = "",
-    background = "transparent",
+  background = "transparent",
 }) => (
   <div className={`relative ${className}`}>
     <input
@@ -82,8 +82,8 @@ export const FormInput = ({
       onChange={onChange}
       placeholder=" "
       disabled={disabled}
-       style={{
-        backgroundColor: background === "white" ? "#ffffff" : "transparent"
+      style={{
+        backgroundColor: background === "white" ? "#ffffff" : "transparent",
       }}
       className={`block w-full px-3 py-2 bg-transparent border rounded-lg appearance-none focus:outline-none focus:ring-2 peer text-sm ${
         error
@@ -119,7 +119,7 @@ export const FormInputWithPrefix = ({
   error,
   className = "",
   disabled = false,
-   background = "transparent",
+  background = "transparent",
 }) => (
   <div className={`relative ${className}`}>
     <div
@@ -177,7 +177,7 @@ export const FormTextarea = ({
   disabled = false,
   className = "",
   rows = 4, // Added a default rows prop
-   background = "transparent",
+  background = "transparent",
 }) => (
   <div className={`relative ${className}`}>
     <textarea
@@ -188,8 +188,8 @@ export const FormTextarea = ({
       placeholder=" "
       disabled={disabled}
       rows={rows}
-       style={{
-        backgroundColor: background === "white" ? "#ffffff" : "transparent"
+      style={{
+        backgroundColor: background === "white" ? "#ffffff" : "transparent",
       }}
       className={`block w-full px-3 py-2 border rounded-lg appearance-none focus:outline-none focus:ring-2 peer text-sm resize-y ${
         error
@@ -224,7 +224,7 @@ export const FormSelect = ({
   error,
   isDisabled = false,
   className = "",
-   background = "transparent",
+  background = "transparent",
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -234,7 +234,6 @@ export const FormSelect = ({
     <div className={`relative ${className}`}>
       <label
         htmlFor={name}
-        
         className={`absolute text-sm duration-300 transform z-10 origin-[0] px-2 left-1 pointer-events-none
           ${
             isFocused || hasValue
@@ -249,9 +248,6 @@ export const FormSelect = ({
               : "text-gray-700"
           }
           ${isDisabled ? "text-gray-400 bg-gray-50" : "bg-white"}`}
-                style={{
-          backgroundColor: background === "white" ? "#ffffff" : "transparent"
-        }}
       >
         {label} {required && <span className="text-red-500">*</span>}
       </label>
@@ -365,9 +361,6 @@ export const FormNumberInputWithPrefix = ({
   );
 };
 
-
-
-
 /* ---------------------------------------------
    🔹 FormPhoneInputFloating — Phone Input with Floating Label
 --------------------------------------------- */
@@ -380,9 +373,9 @@ export const FormPhoneInputFloating = ({
   error,
   disabled = false,
   className = "",
-  country = 'in',
+  country = "in",
   enableSearch = true,
-    background = "transparent",
+  background = "transparent",
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const hasValue = !!value;
@@ -402,37 +395,41 @@ export const FormPhoneInputFloating = ({
           onBlur: () => setIsFocused(false),
         }}
         inputStyle={{
-          width: '100%',
-          height: '42px',
-          fontSize: '14px',
-          border: error ? '1px solid #ef4444' : '1px solid #d1d5db',
-          borderRadius: '8px',
-          paddingLeft: '48px',
-                   backgroundColor: disabled ? '#f3f4f6' : (background === "white" ? "#ffffff" : "transparent"),
+          width: "100%",
+          height: "42px",
+          fontSize: "14px",
+          border: error ? "1px solid #ef4444" : "1px solid #d1d5db",
+          borderRadius: "8px",
+          paddingLeft: "48px",
+          backgroundColor: disabled
+            ? "#f3f4f6"
+            : background === "white"
+            ? "#ffffff"
+            : "transparent",
         }}
         buttonStyle={{
-          border: error ? '1px solid #ef4444' : '1px solid #d1d5db',
-          borderRadius: '8px 0 0 8px',
-          backgroundColor: disabled ? '#f3f4f6' : '#f9fafb',
-          height: '42px',
+          border: error ? "1px solid #ef4444" : "1px solid #d1d5db",
+          borderRadius: "8px 0 0 8px",
+          backgroundColor: disabled ? "#f3f4f6" : "#f9fafb",
+          height: "42px",
         }}
         dropdownStyle={{
-          borderRadius: '8px',
-          fontSize: '14px',
+          borderRadius: "8px",
+          fontSize: "14px",
           zIndex: 50,
         }}
         searchStyle={{
-          fontSize: '14px',
-          padding: '8px',
-          margin: '4px',
-          borderRadius: '6px',
-          border: '1px solid #d1d5db',
+          fontSize: "14px",
+          padding: "8px",
+          margin: "4px",
+          borderRadius: "6px",
+          border: "1px solid #d1d5db",
         }}
         enableSearch={enableSearch}
         searchPlaceholder="Search countries..."
         isValid={(value, country) => {
           if (value.match(/12345/)) {
-            return 'Invalid value: '+value+', '+country.name;
+            return "Invalid value: " + value + ", " + country.name;
           } else if (value.match(/1234/)) {
             return false;
           } else {
@@ -441,9 +438,9 @@ export const FormPhoneInputFloating = ({
         }}
         disabled={disabled}
       />
-      
+
       {/* Properly Aligned Floating Label */}
-     {/* Fixed Floating Label - Always stay up when there's any value */}
+      {/* Fixed Floating Label - Always stay up when there's any value */}
       <label
         className={`absolute text-sm duration-300 transform z-10 origin-[0] px-2 left-1 pointer-events-none 
           scale-75 -translate-y-4 top-2
@@ -455,7 +452,9 @@ export const FormPhoneInputFloating = ({
               : "text-gray-500"
           }
           ${disabled ? "text-gray-400" : ""}`}
-        style={{ backgroundColor: background === "white" ? "#ffffff" : "transparent" }}
+        style={{
+          backgroundColor: background === "white" ? "#ffffff" : "transparent",
+        }}
       >
         {label} {required && <span className="text-red-500">*</span>}
       </label>
