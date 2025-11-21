@@ -563,6 +563,10 @@ function ProposalList() {
           isOpen={isInfoModalOpen}
           onClose={handleInfoModalClose}
           proposal={selectedProposalForInfo}
+          onOpenPdf={(proposalId) => {
+            handleInfoModalClose();
+            handleOpenPdfPreview(proposalId);
+          }}
         />
       )}
     </LayoutComponent>

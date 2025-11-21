@@ -392,6 +392,10 @@ function InvoiceList() {
           isOpen={isInfoModalOpen}
           onClose={() => setIsInfoModalOpen(false)}
           proforma={selectedInvoiceForInfo}
+          onOpenPdf={(proformaInvoiceId) => {
+            setIsInfoModalOpen(false);
+            handleOpenPdfPreview(proformaInvoiceId);
+          }}
         />
       )}
 

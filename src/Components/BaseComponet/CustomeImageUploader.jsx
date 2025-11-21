@@ -18,7 +18,7 @@ function CustomeImageUploader({
 
   useEffect(() => {
     if (initialBase64) {
-      setPreview(`data:image/jpeg;base64,${initialBase64}`);
+      setPreview(`data:;base64,${initialBase64}`);
     } else {
       setPreview(null);
     }
@@ -114,7 +114,9 @@ function CustomeImageUploader({
 
   return (
     <div className="w-full">
-      <h3 className="text-lg font-semibold text-gray-800 mb-2">{title}</h3>
+      {title && (
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">{title}</h3>
+      )}
 
       {/* Hidden File Input */}
       <input

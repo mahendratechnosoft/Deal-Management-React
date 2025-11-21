@@ -11,6 +11,7 @@ import {
   FormSelect,
   FormTextarea,
 } from "../../BaseComponet/CustomeFormComponents";
+import CustomeImageUploader from "../../BaseComponet/CustomeImageUploader";
 
 function CreateProforma() {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ function CreateProforma() {
     invoiceDate: new Date().toISOString().split("T")[0],
     totalAmount: 0,
     status: "Unpaid",
-    relatedTo: "",
+    relatedTo: "customer",
     relatedId: "",
     companyName: "",
     mobileNumber: "",
@@ -775,6 +776,24 @@ function CreateProforma() {
     setProformaContent(list);
   };
 
+  const handleImageUpload = (file, fieldName) => {
+    if (!file) {
+      setProformaInfo((prev) => ({ ...prev, [fieldName]: "" }));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result.split(",")[1];
+
+      setProformaInfo((prev) => ({
+        ...prev,
+        [fieldName]: base64String,
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   // --- Async/Submit Handlers ---
 
   const loadAssignToOptions = async () => {
@@ -1087,7 +1106,7 @@ function CreateProforma() {
                     Recipient Information
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormSelect
+                    {/* <FormSelect
                       label="Related To"
                       name="relatedTo"
                       value={relatedOptions.find(
@@ -1095,9 +1114,9 @@ function CreateProforma() {
                       )}
                       onChange={(opt) => handleSelectChange("relatedTo", opt)}
                       options={relatedOptions}
-                    />
+                    /> */}
                     <FormSelect
-                      label="Related Lead/Customer"
+                      label="Customer"
                       name="relatedId"
                       value={relatedIdOptions.find(
                         (o) => o.value === proformaInfo.relatedId
@@ -1106,14 +1125,14 @@ function CreateProforma() {
                       options={relatedIdOptions}
                       onMenuOpen={loadRelatedIdOptions}
                       isLoading={isRelatedIdLoading}
-                      isDisabled={!proformaInfo.relatedTo}
+                      // isDisabled={!proformaInfo.relatedTo}
                     />
                     <FormInput
                       label="Company Name"
                       name="companyName"
                       value={proformaInfo.companyName}
                       onChange={handleInfoChange}
-                      className="md:col-span-2"
+                      // className="md:col-span-2"
                       disabled={isRecipientLoading}
                       required
                       error={errors.companyName}
@@ -1306,96 +1325,111 @@ function CreateProforma() {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-gray-200 border border-gray-200">
+                    <thead className="bg-gray-100">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-1/4">
                           Item
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-1/4">
                           Description
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                           SAC Code
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                           Qty
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                           Rate ({currencySymbol})
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                           Total
                         </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
                           Action
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-gray-50 divide-y divide-gray-200">
                       {proformaContent.map((item, index) => (
                         <tr key={index} className="hover:bg-gray-50">
-                          <td className="px-2 py-2 align-middle">
-                            <input
+                          <td className="px-2 py-2 align-top">
+                            <textarea
                               type="text"
                               name="item"
                               value={item.item}
                               onChange={(e) => handleItemChange(index, e)}
-                              className="w-full border-gray-300 rounded-lg shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                              placeholder="e.g., Website Design"
+                              className="w-full border border-gray-300 rounded-md 
+                                         sm:text-sm px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 
+                                         focus:ring-blue-500 transition-colors min-h-[40px]"
+                              placeholder="Item Name"
                             />
                           </td>
-                          <td className="px-2 py-2 align-middle">
-                            <input
+                          <td className="px-2 py-2 align-top">
+                            <textarea
                               type="text"
                               name="description"
                               value={item.description}
                               onChange={(e) => handleItemChange(index, e)}
-                              className="w-full border-gray-300 rounded-lg shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                              placeholder="e.g., Responsive 5-page site"
+                              className="w-full border border-gray-300 rounded-md 
+                                         sm:text-sm px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 
+                                         focus:ring-blue-500 transition-colors min-h-[40px]"
+                              placeholder="Description"
                             />
                           </td>
-                          <td className="px-2 py-2 align-middle">
+                          <td className="px-2 py-2 align-top">
                             <input
                               type="text"
                               name="sacCode"
                               value={item.sacCode}
                               onChange={(e) => handleItemChange(index, e)}
-                              className="w-24 border-gray-300 rounded-lg shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                              placeholder="e.g., 998314"
+                              className="w-20 border border-gray-300 rounded-lg shadow-sm sm:text-sm 
+                                        px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 
+                                        focus:ring-blue-500 transition-colors"
+                              placeholder="SAC"
                             />
                           </td>
-                          <td className="px-2 py-2 align-middle">
+                          <td className="px-2 py-2 align-top">
                             <input
                               type="number"
                               name="quantity"
                               value={item.quantity}
                               onChange={(e) => handleItemChange(index, e)}
-                              className="w-20 border-gray-300 rounded-lg shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                              className="w-20 border border-gray-300 rounded-lg shadow-sm sm:text-sm 
+                                        px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 
+                                        focus:ring-blue-500 transition-colors"
                               min="1"
                             />
                           </td>
-                          <td className="px-2 py-2 align-middle">
+                          <td className="px-2 py-2 align-top">
                             <input
                               type="number"
                               name="rate"
                               value={item.rate}
                               onChange={(e) => handleItemChange(index, e)}
-                              className="w-32 border-gray-300 rounded-lg shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                              className="w-20 border border-gray-300 rounded-lg shadow-sm sm:text-sm 
+                                        px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 
+                                        focus:ring-blue-500 transition-colors"
                               min="0"
                               step="0.01"
                             />
                           </td>
-                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700 font-medium align-middle">
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700 font-medium align-top">
                             {currencySymbol}
                             {(item.quantity * item.rate).toFixed(2)}
                           </td>
-                          <td className="px-4 py-2 whitespace-nowrap text-center align-middle">
+                          <td className="px-4 py-2 whitespace-nowrap text-center align-top">
                             <button
-                              className="text-red-600 hover:text-red-900 font-medium transition-colors duration-200 flex items-center gap-1 text-xs"
+                              className={`text-red-600 hover:text-red-900 font-medium transition-colors 
+                                duration-200 flex items-center gap-1 text-xs ${
+                                  proformaContent.length <= 1 &&
+                                  "pointer-events-none opacity-50"
+                                }`}
                               onClick={() => handleRemoveItem(index)}
                               title="Remove Item"
                               type="button"
+                              disabled={proformaContent.length <= 1}
                             >
                               <svg
                                 className="w-4 h-4"
@@ -1484,8 +1518,15 @@ function CreateProforma() {
                         name="discount"
                         id="discount"
                         value={proformaInfo.discount}
-                        onChange={handleInfoChange}
-                        className="w-24 border-gray-300 rounded-md shadow-sm sm:text-sm text-right"
+                        onChange={(e) => {
+                          let value = parseFloat(e.target.value);
+                          if (value > 100) e.target.value = "100";
+                          if (value < 0) e.target.value = "0";
+                          handleInfoChange(e);
+                        }}
+                        className="w-20 border border-gray-300 rounded-lg shadow-sm sm:text-sm 
+                                        px-1 py-1 outline-none focus:border-blue-500 focus:ring-1 
+                                        focus:ring-blue-500 transition-colors"
                         min="0"
                         max="100"
                       />
@@ -1562,54 +1603,43 @@ function CreateProforma() {
                 <h2 className="text-lg font-semibold text-gray-800 mb-4">
                   Signature & Stamp
                 </h2>
-                <div className="flex flex-col md:flex-row w-1/2 gap-8">
-                  <div className="w-full md:w-1/2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Authorized Signature
-                    </label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg h-40 w-full flex items-center justify-center bg-gray-50 p-2">
-                      {companyMediaLoading ? (
-                        <span className="text-gray-400 text-sm">
-                          Loading Signature...
-                        </span>
-                      ) : signatureUrl ? (
-                        <img
-                          src={signatureUrl}
-                          alt="Authorized Signature"
-                          className="max-h-full max-w-full object-contain"
-                        />
-                      ) : (
-                        <span className="text-gray-400 text-sm text-center px-4">
-                          Please add signature from General Settings.
-                        </span>
-                      )}
-                    </div>
+
+                {/* Loading State Wrapper */}
+                {companyMediaLoading ? (
+                  <div className="flex items-center justify-center h-40 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                    <span className="text-gray-500">
+                      Loading Company Media...
+                    </span>
                   </div>
-                  {(companyMediaLoading || stampUrl) && (
-                    <div className="w-full md:w-1/2">
+                ) : (
+                  <div className="flex flex-col md:flex-row gap-8">
+                    {/* Signature Uploader */}
+                    <div className="w-full md:w-1/4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Authorized Signature
+                      </label>
+                      <CustomeImageUploader
+                        initialBase64={proformaInfo.companySignature}
+                        onFileChange={(file) =>
+                          handleImageUpload(file, "companySignature")
+                        }
+                      />
+                    </div>
+
+                    {/* Stamp Uploader */}
+                    <div className="w-full md:w-1/4">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Company Stamp
                       </label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg h-40 w-full flex items-center justify-center bg-gray-50 p-2">
-                        {companyMediaLoading ? (
-                          <span className="text-gray-400 text-sm">
-                            Loading Stamp...
-                          </span>
-                        ) : stampUrl ? (
-                          <img
-                            src={stampUrl}
-                            alt="Company Stamp"
-                            className="max-h-full max-w-full object-contain"
-                          />
-                        ) : (
-                          <span className="text-gray-400 text-sm">
-                            Stamp Image Not Available
-                          </span>
-                        )}
-                      </div>
+                      <CustomeImageUploader
+                        initialBase64={proformaInfo.companyStamp}
+                        onFileChange={(file) =>
+                          handleImageUpload(file, "companyStamp")
+                        }
+                      />
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="h-6" />

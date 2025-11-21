@@ -12,12 +12,12 @@ export const customReactSelectStyles = (hasError) => ({
     backgroundColor: state.isDisabled ? "#f3f4f6" : "transparent",
     cursor: state.isDisabled ? "not-allowed" : "default",
     borderColor: state.isDisabled
-      ? "#9b9fa3ff"
+      ? "#d1d5db"
       : hasError
       ? "#ef4444"
       : state.isFocused
       ? "#3b82f6"
-      : "#9b9fa3ff",
+      : "#d1d5db",
     borderRadius: "0.5rem",
     borderWidth: state.isFocused ? "2px" : "1px",
     boxShadow: "none",
@@ -28,7 +28,7 @@ export const customReactSelectStyles = (hasError) => ({
         ? "#ef4444"
         : state.isFocused
         ? "#3b82f6"
-        : "#9ca3af",
+        : "#d1d5db",
     },
   }),
   valueContainer: (provided) => ({
@@ -88,7 +88,7 @@ export const FormInput = ({
       className={`block w-full px-3 py-2 bg-transparent border rounded-lg appearance-none focus:outline-none focus:ring-2 peer text-sm ${
         error
           ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-          : "border-gray-400 focus:ring-blue-500 focus:border-blue-500"
+          : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
       } ${disabled ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
     />
     <label
@@ -124,7 +124,7 @@ export const FormInputWithPrefix = ({
   <div className={`relative ${className}`}>
     <div
       className={`flex rounded-lg border ${
-        error ? "border-red-500" : "border-gray-400"
+        error ? "border-red-500" : "border-gray-300"
       } focus-within:ring-2 ${
         error
           ? "focus-within:ring-red-500 focus-within:border-red-500"
@@ -194,7 +194,7 @@ export const FormTextarea = ({
       className={`block w-full px-3 py-2 border rounded-lg appearance-none focus:outline-none focus:ring-2 peer text-sm resize-y ${
         error
           ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-          : "border-gray-400 focus:ring-blue-500 focus:border-blue-500"
+          : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
       } ${disabled ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
     />
     <label
@@ -311,7 +311,7 @@ export const FormNumberInputWithPrefix = ({
     <div className={`relative ${className}`}>
       <div
         className={`flex rounded-lg border ${
-          error ? "border-red-500" : "border-gray-400"
+          error ? "border-red-500" : "border-gray-300"
         } focus-within:ring-2 ${
           error
             ? "focus-within:ring-red-500 focus-within:border-red-500"
@@ -319,7 +319,7 @@ export const FormNumberInputWithPrefix = ({
         }`}
       >
         {prefix && (
-          <span className="flex items-center px-3 text-sm text-gray-700 bg-gray-50 border-r border-gray-400 rounded-l-lg">
+          <span className="flex items-center px-3 text-sm text-gray-700 bg-gray-50 border-r border-gray-300 rounded-l-lg">
             {prefix}
           </span>
         )}
