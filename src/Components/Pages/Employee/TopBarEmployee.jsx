@@ -85,7 +85,6 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
             </svg>
           </button>
 
-          <img src={Mtech_logo} alt="" className="w-20" />
         </div>
 
         {/* Right Section */}

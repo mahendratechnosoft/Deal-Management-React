@@ -1,6 +1,8 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
 
+import Mtech_logoOnly from "../../../../public/Images/Mtech_OnlyLogo.jpg";
 function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -166,7 +168,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"
+            d="M9 14l-3-3m0 0l3-3m-3 3h6m3 10H5a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v1M9 18h6"
           />
         </svg>
       ),
@@ -187,7 +189,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"
+            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
           />
         </svg>
       ),
@@ -254,28 +256,15 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
             }`}
           >
             {isOpen ? (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow">
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h1 className="text-base font-bold text-white">
-                      Sales CRM
-                    </h1>
-                    <p className="text-gray-400 text-xs">Professional Suite</p>
+              <div className="flex items-center justify-center">
+                <div className="flex items-center space-x-3">
+                  {/* Logo with proper background */}
+                  <div className="flex items-center justify-center bg-white rounded-lg p-2 shadow-lg">
+                    <img
+                      src={Mtech_logo}
+                      alt="Mtech Logo"
+                      className="w-15 h-10 object-contain"
+                    />
                   </div>
                 </div>
                 <button
@@ -302,20 +291,12 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
                 onClick={toggleSidebar}
                 className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-700 transition-colors duration-300 group"
               >
-                <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <svg
-                    className="w-3 h-3 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                    />
-                  </svg>
+                <div className="flex items-center justify-center bg-white rounded-lg p-1 shadow">
+                  <img
+                    src={Mtech_logoOnly}
+                    alt="Mtech Logo"
+                    className="w-6 h-6 object-contain"
+                  />
                 </div>
               </button>
             )}

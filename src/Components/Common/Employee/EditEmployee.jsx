@@ -8,7 +8,7 @@ import {
   FormInput,
   FormSelect,
   FormTextarea,
-  FormPhoneInputFloating
+  FormPhoneInputFloating,
 } from "../../BaseComponet/CustomeFormComponents"; // Your existing components
 
 // Constants
@@ -72,10 +72,12 @@ function EditEmployee() {
   // Load states when country changes
   useEffect(() => {
     if (formData.country) {
-      const states = State.getStatesOfCountry(formData.country).map((state) => ({
-        value: state.isoCode,
-        label: state.name,
-      }));
+      const states = State.getStatesOfCountry(formData.country).map(
+        (state) => ({
+          value: state.isoCode,
+          label: state.name,
+        })
+      );
 
       setDropdownData((prev) => ({
         ...prev,
@@ -88,7 +90,10 @@ function EditEmployee() {
   // Load cities when state changes
   useEffect(() => {
     if (formData.country && formData.state) {
-      const cities = City.getCitiesOfState(formData.country, formData.state).map((city) => ({
+      const cities = City.getCitiesOfState(
+        formData.country,
+        formData.state
+      ).map((city) => ({
         value: city.name,
         label: city.name,
       }));
@@ -131,7 +136,7 @@ function EditEmployee() {
           departmentName: employeeData.departmentName || "",
           roleName: employeeData.roleName || "",
         });
-        
+
         setModuleAccess(employeeData.moduleAccess || null);
 
         // Pre-fill department and role options
@@ -248,7 +253,7 @@ function EditEmployee() {
 
   const loadDepartments = async () => {
     if (departmentOptions.length > 1) return;
-    
+
     setIsDeptLoading(true);
     try {
       const response = await axiosInstance.get("/admin/getAllDepartment");
@@ -267,7 +272,8 @@ function EditEmployee() {
 
   const loadRoles = async () => {
     if (!formData.departmentId) return;
-    if (roleOptions.length > 1 && roleOptions[0]?.value === formData.roleId) return;
+    if (roleOptions.length > 1 && roleOptions[0]?.value === formData.roleId)
+      return;
 
     setIsRoleLoading(true);
     try {
@@ -277,6 +283,7 @@ function EditEmployee() {
       const options = response.data.map((role) => ({
         value: role.roleId,
         label: role.name,
+        permissions: role, // Store the entire role object with permissions
       }));
       setRoleOptions(options);
     } catch (error) {
@@ -298,6 +305,9 @@ function EditEmployee() {
     }));
     setRoleOptions([]);
 
+    // Reset module access when department changes
+    setModuleAccess(null);
+
     if (errors.departmentId) {
       setErrors((prev) => ({ ...prev, departmentId: "" }));
     }
@@ -307,11 +317,56 @@ function EditEmployee() {
   };
 
   const handleRoleChange = (selectedOption) => {
+    const selectedRole = selectedOption ? selectedOption.permissions : null;
+
     setFormData((prev) => ({
       ...prev,
       roleId: selectedOption ? selectedOption.value : "",
       roleName: selectedOption ? selectedOption.label : "",
     }));
+
+    // Apply role permissions to module access
+    if (selectedRole) {
+      setModuleAccess({
+        moduleAccessId: moduleAccess?.moduleAccessId || null,
+        leadAccess: selectedRole.leadAccess || false,
+        leadViewAll: selectedRole.leadViewAll || false,
+        leadCreate: selectedRole.leadCreate || false,
+        leadDelete: selectedRole.leadDelete || false,
+        leadEdit: selectedRole.leadEdit || false,
+        customerAccess: selectedRole.customerAccess || false,
+        customerViewAll: selectedRole.customerViewAll || false,
+        customerCreate: selectedRole.customerCreate || false,
+        customerDelete: selectedRole.customerDelete || false,
+        customerEdit: selectedRole.customerEdit || false,
+        proposalAccess: selectedRole.proposalAccess || false,
+        proposalViewAll: selectedRole.proposalViewAll || false,
+        proposalCreate: selectedRole.proposalCreate || false,
+        proposalDelete: selectedRole.proposalDelete || false,
+        proposalEdit: selectedRole.proposalEdit || false,
+        proformaInvoiceAccess: selectedRole.proformaInvoiceAccess || false,
+        proformaInvoiceViewAll: selectedRole.proformaInvoiceViewAll || false,
+        proformaInvoiceCreate: selectedRole.proformaInvoiceCreate || false,
+        proformaInvoiceDelete: selectedRole.proformaInvoiceDelete || false,
+        proformaInvoiceEdit: selectedRole.proformaInvoiceEdit || false,
+        invoiceAccess: selectedRole.invoiceAccess || false,
+        invoiceViewAll: selectedRole.invoiceViewAll || false,
+        invoiceCreate: selectedRole.invoiceCreate || false,
+        invoiceDelete: selectedRole.invoiceDelete || false,
+        invoiceEdit: selectedRole.invoiceEdit || false,
+        paymentAccess: selectedRole.paymentAccess || false,
+        paymentViewAll: selectedRole.paymentViewAll || false,
+        paymentcreate: selectedRole.paymentcreate || false,
+        paymentDelete: selectedRole.paymentDelete || false,
+        paymentEdit: selectedRole.paymentEdit || false,
+        timeSheetAccess: selectedRole.timeSheetAccess || false,
+        timeSheetViewAll: selectedRole.timeSheetViewAll || false,
+        timeSheetCreate: selectedRole.timeSheetCreate || false,
+        timeSheetDelete: selectedRole.timeSheetDelete || false,
+        timeSheetEdit: selectedRole.timeSheetEdit || false,
+      });
+    }
+
     if (errors.roleId) {
       setErrors((prev) => ({ ...prev, roleId: "" }));
     }
@@ -321,8 +376,8 @@ function EditEmployee() {
     setModuleAccess((prev) => {
       if (!prev) {
         return {
-          leadAccess: false,
           moduleAccessId: null,
+          leadAccess: false,
           leadViewAll: false,
           leadCreate: false,
           leadDelete: false,
@@ -352,6 +407,11 @@ function EditEmployee() {
           paymentcreate: false,
           paymentDelete: false,
           paymentEdit: false,
+          timeSheetAccess: false,
+          timeSheetViewAll: false,
+          timeSheetCreate: false,
+          timeSheetDelete: false,
+          timeSheetEdit: false,
           [field]: value,
         };
       }
@@ -362,12 +422,97 @@ function EditEmployee() {
     });
   };
 
+  // Add these functions before the handleSubmit function
+  const handleClearAllAccess = () => {
+    setModuleAccess({
+      moduleAccessId: moduleAccess?.moduleAccessId || null,
+      leadAccess: false,
+      leadViewAll: false,
+      leadCreate: false,
+      leadDelete: false,
+      leadEdit: false,
+      customerAccess: false,
+      customerViewAll: false,
+      customerCreate: false,
+      customerDelete: false,
+      customerEdit: false,
+      proposalAccess: false,
+      proposalViewAll: false,
+      proposalCreate: false,
+      proposalDelete: false,
+      proposalEdit: false,
+      proformaInvoiceAccess: false,
+      proformaInvoiceViewAll: false,
+      proformaInvoiceCreate: false,
+      proformaInvoiceDelete: false,
+      proformaInvoiceEdit: false,
+      invoiceAccess: false,
+      invoiceViewAll: false,
+      invoiceCreate: false,
+      invoiceDelete: false,
+      invoiceEdit: false,
+      paymentAccess: false,
+      paymentViewAll: false,
+      paymentcreate: false,
+      paymentDelete: false,
+      paymentEdit: false,
+      timeSheetAccess: false,
+      timeSheetViewAll: false,
+      timeSheetCreate: false,
+      timeSheetDelete: false,
+      timeSheetEdit: false,
+    });
+    toast.success("All permissions cleared");
+  };
+
+  const handleSetAllAccess = () => {
+    setModuleAccess({
+      moduleAccessId: moduleAccess?.moduleAccessId || null,
+      leadAccess: true,
+      leadViewAll: true,
+      leadCreate: true,
+      leadDelete: true,
+      leadEdit: true,
+      customerAccess: true,
+      customerViewAll: true,
+      customerCreate: true,
+      customerDelete: true,
+      customerEdit: true,
+      proposalAccess: true,
+      proposalViewAll: true,
+      proposalCreate: true,
+      proposalDelete: true,
+      proposalEdit: true,
+      proformaInvoiceAccess: true,
+      proformaInvoiceViewAll: true,
+      proformaInvoiceCreate: true,
+      proformaInvoiceDelete: true,
+      proformaInvoiceEdit: true,
+      invoiceAccess: true,
+      invoiceViewAll: true,
+      invoiceCreate: true,
+      invoiceDelete: true,
+      invoiceEdit: true,
+      paymentAccess: true,
+      paymentViewAll: true,
+      paymentcreate: true,
+      paymentDelete: true,
+      paymentEdit: true,
+      timeSheetAccess: true,
+      timeSheetViewAll: true,
+      timeSheetCreate: true,
+      timeSheetDelete: true,
+      timeSheetEdit: true,
+    });
+    toast.success("All permissions granted");
+  };
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name?.trim()) newErrors.name = "Full name is required";
     if (!formData.phone?.trim()) newErrors.phone = "Phone number is required";
     if (!formData.gender) newErrors.gender = "Gender is required";
-    if (!formData.departmentId) newErrors.departmentId = "Department is required";
+    if (!formData.departmentId)
+      newErrors.departmentId = "Department is required";
     if (!formData.roleId) newErrors.roleId = "Role is required";
 
     setErrors(newErrors);
@@ -387,7 +532,7 @@ function EditEmployee() {
       moduleAccess: moduleAccess,
     };
     delete payload.profileImageBase64;
-    
+
     try {
       await axiosInstance.put("/admin/updateEmployee", payload);
       toast.success("Employee updated successfully!");
@@ -395,7 +540,9 @@ function EditEmployee() {
     } catch (error) {
       console.error("Error updating employee:", error);
       if (error.request) {
-        toast.error("Cannot connect to server. Please check if the backend is running.");
+        toast.error(
+          "Cannot connect to server. Please check if the backend is running."
+        );
       } else {
         toast.error("Failed to update employee. Please try again.");
       }
@@ -405,7 +552,11 @@ function EditEmployee() {
   };
 
   const handleCancel = () => {
-    if (window.confirm("Are you sure you want to cancel? Any unsaved changes will be lost.")) {
+    if (
+      window.confirm(
+        "Are you sure you want to cancel? Any unsaved changes will be lost."
+      )
+    ) {
       navigate("/Admin/EmployeeList");
     }
   };
@@ -472,7 +623,10 @@ function EditEmployee() {
                     </div>
                     <div className="space-y-4">
                       {[...Array(3)].map((_, index) => (
-                        <div key={index} className="skeleton h-24 w-full rounded-lg"></div>
+                        <div
+                          key={index}
+                          className="skeleton h-24 w-full rounded-lg"
+                        ></div>
                       ))}
                     </div>
                   </section>
@@ -483,14 +637,23 @@ function EditEmployee() {
 
           <style jsx>{`
             .skeleton {
-              background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+              background: linear-gradient(
+                90deg,
+                #f0f0f0 25%,
+                #e0e0e0 50%,
+                #f0f0f0 75%
+              );
               background-size: 200% 100%;
               animation: loading 1.5s infinite;
             }
 
             @keyframes loading {
-              0% { background-position: 200% 0; }
-              100% { background-position: -200% 0; }
+              0% {
+                background-position: 200% 0;
+              }
+              100% {
+                background-position: -200% 0;
+              }
             }
           `}</style>
         </div>
@@ -506,21 +669,35 @@ function EditEmployee() {
     <LayoutComponent>
       <div className="bg-white h-[90vh] overflow-y-auto CRM-scroll-width-none">
         {/* Compact Header */}
-        <div className="bg-white border-gray-200 px-4 py-3 sticky top-0 z-50">
+        <div className="bg-white border-gray-200 px-4 py-3 sticky top-0 z-20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => navigate("/Admin/EmployeeList")}
                 className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 p-1.5 hover:bg-gray-100 rounded transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
                 </svg>
                 <span className="hidden sm:inline">Back</span>
               </button>
               <div>
-                <h1 className="text-lg font-semibold text-gray-900">Edit Employee</h1>
-                <p className="text-xs text-gray-600">Update employee information</p>
+                <h1 className="text-lg font-semibold text-gray-900">
+                  Edit Employee
+                </h1>
+                <p className="text-xs text-gray-600">
+                  Update employee information
+                </p>
               </div>
             </div>
 
@@ -542,7 +719,7 @@ function EditEmployee() {
                     Saving...
                   </>
                 ) : (
-                  'Update'
+                  "Update"
                 )}
               </button>
             </div>
@@ -552,242 +729,345 @@ function EditEmployee() {
         {/* Compact Form */}
         <div className="p-4 pt-0">
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Left Column - Personal Information */}
               <div className="space-y-4">
-                {/* Profile Image */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Profile Image</h3>
-                  
-                  <div className="flex flex-col items-center">
-                    <input
-                      type="file"
-                      id="profileImageInput"
-                      name="profileImageBase64"
-                      accept="image/png, image/jpeg, image/jpg"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                    <label htmlFor="profileImageInput" className="cursor-pointer">
-                      {formData.profileImageBase64 ? (
-                        <img
-                          src={`data:image/jpeg;base64,${formData.profileImageBase64}`}
-                          alt="Profile Preview"
-                          className="w-24 h-24 rounded-full object-cover border-4 border-gray-200 shadow-sm"
-                        />
-                      ) : (
-                        <div className="w-24 h-24 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-200 hover:border-gray-400">
-                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                          <span className="text-xs font-medium mt-1">Upload Image</span>
-                        </div>
+                {/* Profile Image - More Compact */}
+             
+                {/* Personal Details - Phone & Gender in one line */}
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <h3 className="text-xs font-semibold text-gray-900 mb-3 uppercase tracking-wide">
+                    Personal Details
+                  </h3>
+
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+
+                    {" "}
+                    <div className="flex flex-col items-center">
+                      <input
+                        type="file"
+                        id="profileImageInput"
+                        name="profileImageBase64"
+                        accept="image/png, image/jpeg, image/jpg"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="profileImageInput"
+                        className="cursor-pointer"
+                      >
+                        {formData.profileImageBase64 ? (
+                          <img
+                            src={`data:image/jpeg;base64,${formData.profileImageBase64}`}
+                            alt="Profile Preview"
+                            className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 shadow-sm"
+                          />
+                        ) : (
+                          <div className="w-20 h-20 rounded-full bg-gray-100 border border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-200 hover:border-gray-400">
+                            <svg
+                              className="w-6 h-6"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={1}
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                              />
+                            </svg>
+                            <span className="text-xs font-medium mt-1">
+                              Upload
+                            </span>
+                          </div>
+                        )}
+                      </label>
+                      {errors.profileImageBase64 && (
+                        <p className="mt-1 text-xs text-red-600 text-center">
+                          {errors.profileImageBase64}
+                        </p>
                       )}
-                    </label>
-                    {errors.profileImageBase64 && (
-                      <p className="mt-2 text-xs text-red-600 text-center">{errors.profileImageBase64}</p>
-                    )}
+                    </div>
+                    <div className="grid grid-cols-1 gap-3">
+                      <FormInput
+                        label="Full Name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required={true}
+                        error={errors.name}
+                        background="white"
+                      />
+
+                      <FormInput
+                        label="Email"
+                        name="loginEmail"
+                        value={formData.loginEmail}
+                        onChange={handleChange}
+                        disabled={true}
+                        background="white"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                {/* Personal Details */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Personal Details</h3>
-                  
                   <div className="space-y-3">
-                    <FormInput
-                      label="Full Name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required={true}
-                      error={errors.name}
-                      background="white"
-                    />
+                    {/* Phone and Gender in one line */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormPhoneInputFloating
+                        label="Phone Number"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handlePhoneChange}
+                        required={true}
+                        error={errors.phone}
+                        background="white"
+                      />
 
-                    <FormInput
-                      label="Email"
-                      name="loginEmail"
-                      value={formData.loginEmail}
-                      onChange={handleChange}
-                      disabled={true}
-                      background="white"
-                    />
+                      <FormSelect
+                        label="Gender"
+                        name="gender"
+                        value={genderOptions.find(
+                          (opt) => opt.value === formData.gender
+                        )}
+                        onChange={(selectedOption) =>
+                          handleSelectChange(selectedOption, "gender")
+                        }
+                        options={genderOptions}
+                        required={true}
+                        error={errors.gender}
+                        background="white"
+                      />
+                    </div>
 
-                    <FormPhoneInputFloating
-                      label="Phone Number"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handlePhoneChange}
-                      required={true}
-                      error={errors.phone}
-                      background="white"
-                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormSelect
+                        label="Department"
+                        name="departmentId"
+                        value={departmentOptions.find(
+                          (opt) => opt.value === formData.departmentId
+                        )}
+                        onChange={handleDepartmentChange}
+                        onMenuOpen={loadDepartments}
+                        options={departmentOptions}
+                        isLoading={isDeptLoading}
+                        required={true}
+                        error={errors.departmentId}
+                        background="white"
+                      />
 
-                    <FormSelect
-                      label="Gender"
-                      name="gender"
-                      value={genderOptions.find(opt => opt.value === formData.gender)}
-                      onChange={(selectedOption) => handleSelectChange(selectedOption, "gender")}
-                      options={genderOptions}
-                      required={true}
-                      error={errors.gender}
-                      background="white"
-                    />
-                  </div>
-                </div>
-
-                {/* Department & Role */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Department & Role</h3>
-                  
-                  <div className="space-y-3">
-                    <FormSelect
-                      label="Department"
-                      name="departmentId"
-                      value={departmentOptions.find(opt => opt.value === formData.departmentId)}
-                      onChange={handleDepartmentChange}
-                      onMenuOpen={loadDepartments}
-                      options={departmentOptions}
-                      isLoading={isDeptLoading}
-                      required={true}
-                      error={errors.departmentId}
-                      background="white"
-                    />
-
-                    <FormSelect
-                      label="Role"
-                      name="roleId"
-                      value={roleOptions.find(opt => opt.value === formData.roleId)}
-                      onChange={handleRoleChange}
-                      onMenuOpen={loadRoles}
-                      options={roleOptions}
-                      isLoading={isRoleLoading}
-                      isDisabled={!formData.departmentId}
-                      required={true}
-                      error={errors.roleId}
-                      background="white"
-                    />
+                      <FormSelect
+                        label="Role"
+                        name="roleId"
+                        value={roleOptions.find(
+                          (opt) => opt.value === formData.roleId
+                        )}
+                        onChange={handleRoleChange}
+                        onMenuOpen={loadRoles}
+                        options={roleOptions}
+                        isLoading={isRoleLoading}
+                        isDisabled={!formData.departmentId}
+                        required={true}
+                        error={errors.roleId}
+                        background="white"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Right Column - Address & Description */}
               <div className="space-y-4">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Address Information</h3>
-                  
+                <div className="bg-gray-50 rounded-lg p-3 h-full">
+                  <h3 className="text-xs font-semibold text-gray-900 mb-3 uppercase tracking-wide">
+                    Address Information
+                  </h3>
+
                   <div className="space-y-3">
-                    <FormSelect
-                      label="Country"
-                      name="country"
-                      value={dropdownData.countries.find(opt => opt.value === formData.country)}
-                      onChange={handleCountryChange}
-                      options={dropdownData.countries}
-                      isSearchable={true}
-                      background="white"
-                    />
+                    {/* Country, State, City in one line */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <FormSelect
+                        label="Country"
+                        name="country"
+                        value={dropdownData.countries.find(
+                          (opt) => opt.value === formData.country
+                        )}
+                        onChange={handleCountryChange}
+                        options={dropdownData.countries}
+                        isSearchable={true}
+                        background="white"
+                      />
 
-                    <FormSelect
-                      label="State"
-                      name="state"
-                      value={dropdownData.states.find(opt => opt.value === formData.state)}
-                      onChange={handleStateChange}
-                      options={dropdownData.states}
-                      isSearchable={true}
-                      isDisabled={!formData.country}
-                      background="white"
-                    />
+                      <FormSelect
+                        label="State"
+                        name="state"
+                        value={dropdownData.states.find(
+                          (opt) => opt.value === formData.state
+                        )}
+                        onChange={handleStateChange}
+                        options={dropdownData.states}
+                        isSearchable={true}
+                        isDisabled={!formData.country}
+                        background="white"
+                      />
 
-                    <FormSelect
-                      label="City"
-                      name="city"
-                      value={dropdownData.cities.find(opt => opt.value === formData.city)}
-                      onChange={handleCityChange}
-                      options={dropdownData.cities}
-                      isSearchable={true}
-                      isDisabled={!formData.state}
-                      background="white"
-                    />
+                      <FormSelect
+                        label="City"
+                        name="city"
+                        value={dropdownData.cities.find(
+                          (opt) => opt.value === formData.city
+                        )}
+                        onChange={handleCityChange}
+                        options={dropdownData.cities}
+                        isSearchable={true}
+                        isDisabled={!formData.state}
+                        background="white"
+                      />
+                    </div>
 
-                    <FormTextarea
-                      label="Address"
-                      name="address"
-                      value={formData.address}
-                      onChange={handleChange}
-                      rows={3}
-                      background="white"
-                    />
+                    {/* Address and Description in one line with smaller height */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormTextarea
+                        label="Address"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleChange}
+                        rows={2}
+                        background="white"
+                        className="min-h-[80px]"
+                      />
 
-                    <FormTextarea
-                      label="Description"
-                      name="description"
-                      value={formData.description}
-                      onChange={handleChange}
-                      rows={3}
-                      background="white"
-                    />
+                      <FormTextarea
+                        label="Description"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                        rows={2}
+                        background="white"
+                        className="min-h-[80px]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 mt-4">
+              {/* Module Access - All modules in 6-column grid */}
+              <div className="bg-gray-50 rounded-lg p-3 h-full">
+                <div className="flex items-center justify-left mb-3">
+                  <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide mr-5">
+                    Module Access
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleClearAllAccess}
+                      className="px-3 py-1.5 text-xs border border-red-300 text-red-700 rounded bg-white hover:bg-red-50 transition-colors"
+                    >
+                      Clear All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSetAllAccess}
+                      className="px-3 py-1.5 text-xs border border-green-300 text-green-700 rounded bg-white hover:bg-green-50 transition-colors"
+                    >
+                      Set All
+                    </button>
                   </div>
                 </div>
 
-                {/* Module Access */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Module Access</h3>
-                  
-                  <div className="space-y-4">
-                    <ModuleAccessGroup
-                      title="Leads Permissions"
-                      permissions={[
-                        { label: "Access", field: "leadAccess" },
-                        { label: "View All", field: "leadViewAll" },
-                        { label: "Create", field: "leadCreate" },
-                        { label: "Edit", field: "leadEdit" },
-                        { label: "Delete", field: "leadDelete" },
-                      ]}
-                      getAccess={getAccess}
-                      handleAccessChange={handleAccessChange}
-                    />
+                <div className="grid grid-cols-4 gap-2">
+                  <ModuleAccessGroup
+                    title="Leads"
+                    permissions={[
+                      { label: "Access", field: "leadAccess" },
+                      { label: "View All", field: "leadViewAll" },
+                      { label: "Create", field: "leadCreate" },
+                      { label: "Edit", field: "leadEdit" },
+                      { label: "Delete", field: "leadDelete" },
+                    ]}
+                    getAccess={getAccess}
+                    handleAccessChange={handleAccessChange}
+                  />
 
-                    <ModuleAccessGroup
-                      title="Customer Permissions"
-                      permissions={[
-                        { label: "Access", field: "customerAccess" },
-                        { label: "View All", field: "customerViewAll" },
-                        { label: "Create", field: "customerCreate" },
-                        { label: "Edit", field: "customerEdit" },
-                        { label: "Delete", field: "customerDelete" },
-                      ]}
-                      getAccess={getAccess}
-                      handleAccessChange={handleAccessChange}
-                    />
+                  <ModuleAccessGroup
+                    title="Customer"
+                    permissions={[
+                      { label: "Access", field: "customerAccess" },
+                      { label: "View All", field: "customerViewAll" },
+                      { label: "Create", field: "customerCreate" },
+                      { label: "Edit", field: "customerEdit" },
+                      { label: "Delete", field: "customerDelete" },
+                    ]}
+                    getAccess={getAccess}
+                    handleAccessChange={handleAccessChange}
+                  />
 
-                    <ModuleAccessGroup
-                      title="Proposal Permissions"
-                      permissions={[
-                        { label: "Access", field: "proposalAccess" },
-                        { label: "View All", field: "proposalViewAll" },
-                        { label: "Create", field: "proposalCreate" },
-                        { label: "Edit", field: "proposalEdit" },
-                        { label: "Delete", field: "proposalDelete" },
-                      ]}
-                      getAccess={getAccess}
-                      handleAccessChange={handleAccessChange}
-                    />
+                  <ModuleAccessGroup
+                    title="Proposal"
+                    permissions={[
+                      { label: "Access", field: "proposalAccess" },
+                      { label: "View All", field: "proposalViewAll" },
+                      { label: "Create", field: "proposalCreate" },
+                      { label: "Edit", field: "proposalEdit" },
+                      { label: "Delete", field: "proposalDelete" },
+                    ]}
+                    getAccess={getAccess}
+                    handleAccessChange={handleAccessChange}
+                  />
 
-                    <ModuleAccessGroup
-                      title="Invoice Permissions"
-                      permissions={[
-                        { label: "Access", field: "invoiceAccess" },
-                        { label: "View All", field: "invoiceViewAll" },
-                        { label: "Create", field: "invoiceCreate" },
-                        { label: "Edit", field: "invoiceEdit" },
-                        { label: "Delete", field: "invoiceDelete" },
-                      ]}
-                      getAccess={getAccess}
-                      handleAccessChange={handleAccessChange}
-                    />
-                  </div>
+                  <ModuleAccessGroup
+                    title="Proforma Invoice"
+                    permissions={[
+                      { label: "Access", field: "proformaInvoiceAccess" },
+                      { label: "View All", field: "proformaInvoiceViewAll" },
+                      { label: "Create", field: "proformaInvoiceCreate" },
+                      { label: "Edit", field: "proformaInvoiceEdit" },
+                      { label: "Delete", field: "proformaInvoiceDelete" },
+                    ]}
+                    getAccess={getAccess}
+                    handleAccessChange={handleAccessChange}
+                  />
+
+                  <ModuleAccessGroup
+                    title="Invoice"
+                    permissions={[
+                      { label: "Access", field: "invoiceAccess" },
+                      { label: "View All", field: "invoiceViewAll" },
+                      { label: "Create", field: "invoiceCreate" },
+                      { label: "Edit", field: "invoiceEdit" },
+                      { label: "Delete", field: "invoiceDelete" },
+                    ]}
+                    getAccess={getAccess}
+                    handleAccessChange={handleAccessChange}
+                  />
+
+                  <ModuleAccessGroup
+                    title="Payment"
+                    permissions={[
+                      { label: "Access", field: "paymentAccess" },
+                      { label: "View All", field: "paymentViewAll" },
+                      { label: "Create", field: "paymentcreate" },
+                      { label: "Edit", field: "paymentEdit" },
+                      { label: "Delete", field: "paymentDelete" },
+                    ]}
+                    getAccess={getAccess}
+                    handleAccessChange={handleAccessChange}
+                  />
+
+                  <ModuleAccessGroup
+                    title="TimeSheet"
+                    permissions={[
+                      { label: "Access", field: "timeSheetAccess" },
+                      { label: "View All", field: "timeSheetViewAll" },
+                      { label: "Create", field: "timeSheetCreate" },
+                      { label: "Edit", field: "timeSheetEdit" },
+                      { label: "Delete", field: "timeSheetDelete" },
+                    ]}
+                    getAccess={getAccess}
+                    handleAccessChange={handleAccessChange}
+                  />
                 </div>
               </div>
             </div>
@@ -796,26 +1076,32 @@ function EditEmployee() {
       </div>
     </LayoutComponent>
   );
-}
 
-// Keep the existing ModuleAccessGroup and AccessToggle components
-function ModuleAccessGroup({ title, permissions, getAccess, handleAccessChange }) {
-  return (
-    <div className="p-3 border border-gray-200 rounded-lg bg-white">
-      <h3 className="text-sm font-medium text-gray-800 mb-2">{title}</h3>
-      <div className="grid grid-cols-2 gap-2">
-        {permissions.map((perm) => (
-          <AccessToggle
-            key={perm.field}
-            field={perm.field}
-            label={perm.label}
-            isChecked={getAccess(perm.field)}
-            onChange={(isChecked) => handleAccessChange(perm.field, isChecked)}
-          />
-        ))}
+  function ModuleAccessGroup({
+    title,
+    permissions,
+    getAccess,
+    handleAccessChange,
+  }) {
+    return (
+      <div className="p-2 border border-gray-200 rounded bg-white">
+        <h3 className="text font-medium text-gray-800 mb-2">{title}</h3>
+        <div className="space-y-1 grid grid-cols-2 gap-3">
+          {permissions.map((perm) => (
+            <AccessToggle
+              key={perm.field}
+              field={perm.field}
+              label={perm.label}
+              isChecked={getAccess(perm.field)}
+              onChange={(isChecked) =>
+                handleAccessChange(perm.field, isChecked)
+              }
+            />
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 }
 
 function AccessToggle({ field, label, isChecked, onChange }) {
@@ -824,7 +1110,10 @@ function AccessToggle({ field, label, isChecked, onChange }) {
   };
 
   return (
-    <label htmlFor={field} className="flex items-center cursor-pointer select-none">
+    <label
+      htmlFor={field}
+      className="flex items-center cursor-pointer select-none"
+    >
       <div className="relative">
         <input
           type="checkbox"
