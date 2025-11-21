@@ -281,21 +281,7 @@ function PaymentList() {
                                     />
                                 </div>
 
-                                {/* Status Filter */}
-                                <div className="flex-1 sm:flex-none">
-                                    <select
-                                        value={statusFilter}
-                                        onChange={(e) => setStatusFilter(e.target.value)}
-                                        className="w-full sm:w-40 px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white transition-colors duration-200"
-                                    >
-                                        <option value="all">All Status</option>
-                                        {allStatuses.map((status) => (
-                                            <option key={status} value={status}>
-                                                {status}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                        
                             </div>
 
                             {/* Create Button */}
@@ -340,14 +326,12 @@ function PaymentList() {
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         AMOUNT
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        STATUS
-                                    </th>
+                                  
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         PAYMENT DATE
                                     </th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        EMPLOYEE
+                                        CREATED BY
                                     </th>
                                 </tr>
                             </thead>
@@ -469,17 +453,7 @@ function PaymentList() {
                                                 {formatCurrency(payment.amount)}
                                             </td>
 
-                                            {/* Status */}
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm">
-                                                <span
-                                                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full truncate max-w-[100px] ${getStatusColor(
-                                                        payment.status
-                                                    )}`}
-                                                    title={payment.status}
-                                                >
-                                                    {payment.status || "N/A"}
-                                                </span>
-                                            </td>
+                                        
 
                                             {/* Payment Date */}
                                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
@@ -488,7 +462,7 @@ function PaymentList() {
 
                                             {/* Employee ID */}
                                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                {payment.employeeId || "N/A"}
+                                                {payment.createdBy || "N/A"}
                                             </td>
                                         </tr>
                                     ))}

@@ -598,7 +598,7 @@ function EditLead() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Column - Basic Information */}
               <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Basic Information</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Lead Details</h3>
 
                 <div className="space-y-4">
                   {/* Client Name & Company Name */}
@@ -696,60 +696,69 @@ function EditLead() {
                       ]}
                       background="white"
                     />
+
+                    <FormSelect
+                      label="Source"
+                      name="source"
+                      className="setbg-white"
+                      value={[
+                        { value: "Instagram", label: "Instagram" },
+                        { value: "Website", label: "Website" },
+                        { value: "Referral", label: "Referral" },
+                        { value: "Social Media", label: "Social Media" },
+                        { value: "Trade Show", label: "Trade Show" },
+                        { value: "Email Campaign", label: "Email Campaign" },
+                        { value: "Website Form", label: "Website Form" }
+                      ].find(opt => opt.value === formData.source)}
+                      onChange={(selectedOption) => handleSelectChange(selectedOption, { name: "source" })}
+                      options={[
+                        { value: "Instagram", label: "Instagram" },
+                        { value: "Website", label: "Website" },
+                        { value: "Referral", label: "Referral" },
+                        { value: "Social Media", label: "Social Media" },
+                        { value: "Trade Show", label: "Trade Show" },
+                        { value: "Email Campaign", label: "Email Campaign" },
+                        { value: "Website Form", label: "Website Form" }
+                      ]}
+                      background="white"
+                    />
                   </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+
+                    <FormInput
+                      label="Follow-Up Date & Time"
+                      name="followUp"
+                      value={formData.followUp}
+                      onChange={handleChange}
+                      type="datetime-local"
+                      background="white"
+                    />
+
+
+                  </div>
+                </div>
+
+
+
+              <div className="grid grid-cols-1 gap-2 mt-4">
+              
+                  <FormTextarea
+                    label="Description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    rows={2}
+                    background="white"
+                  />
+
                 </div>
               </div>
 
               {/* Right Column - Lead Details & Address */}
               <div className="space-y-4">
                 {/* Lead Details */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Lead Details</h3>
 
-                  <div className="space-y-4">
-                    {/* Lead Details - Fixed */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <FormSelect
-                        label="Source"
-                        name="source"
-                        className="setbg-white"
-                        value={[
-                          { value: "Instagram", label: "Instagram" },
-                          { value: "Website", label: "Website" },
-                          { value: "Referral", label: "Referral" },
-                          { value: "Social Media", label: "Social Media" },
-                          { value: "Trade Show", label: "Trade Show" },
-                          { value: "Email Campaign", label: "Email Campaign" },
-                          { value: "Website Form", label: "Website Form" }
-                        ].find(opt => opt.value === formData.source)}
-                        onChange={(selectedOption) => handleSelectChange(selectedOption, { name: "source" })}
-                        options={[
-                          { value: "Instagram", label: "Instagram" },
-                          { value: "Website", label: "Website" },
-                          { value: "Referral", label: "Referral" },
-                          { value: "Social Media", label: "Social Media" },
-                          { value: "Trade Show", label: "Trade Show" },
-                          { value: "Email Campaign", label: "Email Campaign" },
-                          { value: "Website Form", label: "Website Form" }
-                        ]}
-                        background="white"
-                      />
-                      <FormInput
-                        label="Follow-Up Date & Time"
-                        name="followUp"
-                        value={formData.followUp}
-                        onChange={handleChange}
-                        type="datetime-local"
-                        background="white"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-
-
-                    </div>
-                  </div>
-                </div>
 
                 {/* Address Information */}
                 <div className="bg-gray-50 rounded-lg p-4">
@@ -816,18 +825,7 @@ function EditLead() {
                   </div>
                 </div>
 
-                {/* Description */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Description</h3>
-                  <FormTextarea
-                    label="Description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={3}
-                    background="white"
-                  />
-                </div>
+         
               </div>
             </div>
           </form>
