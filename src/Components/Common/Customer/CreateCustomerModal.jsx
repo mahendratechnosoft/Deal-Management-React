@@ -50,7 +50,7 @@ const customReactSelectStyles = (hasError) => ({
 // GST Validation Function
 const validateGST = (gstin) => {
   if (!gstin) return ""; // Empty is valid (optional field)
-  
+
   const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
   if (!gstRegex.test(gstin)) {
     return "Invalid GSTIN format (e.g., 07AABCU9603R1ZM)";
@@ -61,7 +61,7 @@ const validateGST = (gstin) => {
 // PAN Validation Function
 const validatePAN = (pan) => {
   if (!pan) return ""; // Empty is valid (optional field)
-  
+
   const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
   if (!panRegex.test(pan)) {
     return "Invalid PAN format (e.g., ABCDE1234F)";
@@ -112,12 +112,12 @@ function CreateCustomerModal({ onClose, onSuccess }) {
   // Separate states for phone display and data
   const [phoneDisplay, setPhoneDisplay] = useState("");
   const [mobileDisplay, setMobileDisplay] = useState("");
-  
+
   const [phoneData, setPhoneData] = useState({
     country: "in",
     completeNumber: "",
   });
-  
+
   const [mobileData, setMobileData] = useState({
     country: "in",
     completeNumber: "",
@@ -127,6 +127,7 @@ function CreateCustomerModal({ onClose, onSuccess }) {
     companyName: "",
     phone: "",
     mobile: "",
+    email: "",
     website: "",
     industry: "",
     revenue: "",
@@ -511,36 +512,41 @@ function CreateCustomerModal({ onClose, onSuccess }) {
     }));
   };
 
- // Update validateForm function:
-const validateForm = () => {
-  const newErrors = {};
+  // Update validateForm function:
+  const validateForm = () => {
+    const newErrors = {};
 
-  if (!formData.companyName?.trim())
-    newErrors.companyName = "Company name is required";
+    if (!formData.companyName?.trim())
+      newErrors.companyName = "Company name is required";
 
-  if (formData.website && !/^(https?:\/\/)?.+\..+/.test(formData.website)) {
-    newErrors.website = "Please enter a valid website URL";
-  }
-
-  // Validate GST only if user has entered something
-  if (formData.gstin && formData.gstin.trim()) {
-    const gstError = validateGST(formData.gstin);
-    if (gstError) {
-      newErrors.gstin = gstError;
+    // Add email validation
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
     }
-  }
 
-  // Validate PAN only if user has entered something
-  if (formData.panNumber && formData.panNumber.trim()) {
-    const panError = validatePAN(formData.panNumber);
-    if (panError) {
-      newErrors.panNumber = panError;
+    if (formData.website && !/^(https?:\/\/)?.+\..+/.test(formData.website)) {
+      newErrors.website = "Please enter a valid website URL";
     }
-  }
 
-  setErrors(newErrors);
-  return Object.keys(newErrors).length === 0;
-};
+    // Validate GST only if user has entered something
+    if (formData.gstin && formData.gstin.trim()) {
+      const gstError = validateGST(formData.gstin);
+      if (gstError) {
+        newErrors.gstin = gstError;
+      }
+    }
+
+    // Validate PAN only if user has entered something
+    if (formData.panNumber && formData.panNumber.trim()) {
+      const panError = validatePAN(formData.panNumber);
+      if (panError) {
+        newErrors.panNumber = panError;
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -553,6 +559,7 @@ const validateForm = () => {
     try {
       const submitData = {
         companyName: formData.companyName,
+        email: formData.email || null,
         phone: formData.phone || null,
         mobile: formData.mobile || null,
         website: formData.website || null,
@@ -564,26 +571,26 @@ const validateForm = () => {
         billingCity: formData.billingCity || null,
         billingState: formData.billingState
           ? dropdownData.billingStates.find(
-              (s) => s.value === formData.billingState
-            )?.label
+            (s) => s.value === formData.billingState
+          )?.label
           : null,
         billingCountry: formData.billingCountry
           ? dropdownData.countries.find(
-              (c) => c.value === formData.billingCountry
-            )?.label
+            (c) => c.value === formData.billingCountry
+          )?.label
           : null,
         billingZipCode: formData.billingZipCode || null,
         shippingStreet: formData.shippingStreet || null,
         shippingCity: formData.shippingCity || null,
         shippingState: formData.shippingState
           ? dropdownData.shippingStates.find(
-              (s) => s.value === formData.shippingState
-            )?.label
+            (s) => s.value === formData.shippingState
+          )?.label
           : null,
         shippingCountry: formData.shippingCountry
           ? dropdownData.countries.find(
-              (c) => c.value === formData.shippingCountry
-            )?.label
+            (c) => c.value === formData.shippingCountry
+          )?.label
           : null,
         shippingZipCode: formData.shippingZipCode || null,
         description: formData.description || null,
@@ -647,11 +654,10 @@ const validateForm = () => {
         <button
           type="button"
           onClick={() => setActiveTab("basic")}
-          className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${
-            activeTab === "basic"
+          className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${activeTab === "basic"
               ? "border-blue-500 text-blue-600"
               : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-          }`}
+            }`}
         >
           <div className="flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -660,15 +666,14 @@ const validateForm = () => {
             Basic Information
           </div>
         </button>
-        
+
         <button
           type="button"
           onClick={() => setActiveTab("address")}
-          className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${
-            activeTab === "address"
+          className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${activeTab === "address"
               ? "border-blue-500 text-blue-600"
               : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-          }`}
+            }`}
         >
           <div className="flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -678,15 +683,14 @@ const validateForm = () => {
             Address Information
           </div>
         </button>
-        
+
         <button
           type="button"
           onClick={() => setActiveTab("additional")}
-          className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${
-            activeTab === "additional"
+          className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${activeTab === "additional"
               ? "border-blue-500 text-blue-600"
               : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-          }`}
+            }`}
         >
           <div className="flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -714,9 +718,8 @@ const validateForm = () => {
             name="companyName"
             value={formData.companyName}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
-              errors.companyName ? "border-red-500" : "border-gray-300"
-            }`}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.companyName ? "border-red-500" : "border-gray-300"
+              }`}
             placeholder="Enter company name"
           />
           {errors.companyName && (
@@ -739,6 +742,7 @@ const validateForm = () => {
           )}
         </div>
 
+
         {/* Industry */}
         <div className="space-y-2">
           <label className="text-sm font-semibold text-gray-700">
@@ -749,20 +753,42 @@ const validateForm = () => {
             value={industryOptions.find(
               (option) => option.value === formData.industry
             )}
-            onChange={(selectedOption) => 
+            onChange={(selectedOption) =>
               handleSelectChange(selectedOption, { name: "industry" })
             }
-             menuPosition="fixed"
-             
+            menuPosition="fixed"
+
             options={industryOptions}
-              menuPlacement="auto"
-            maxMenuHeight={150} 
+            menuPlacement="auto"
+            maxMenuHeight={150}
             placeholder="Select industry"
             isSearchable
             styles={customReactSelectStyles(!!errors.industry)}
           />
         </div>
 
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-gray-700">
+            Email Address
+          </label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.email ? "border-red-500" : "border-gray-300"
+              }`}
+            placeholder="Enter email address"
+          />
+          {errors.email && (
+            <p className="text-red-500 text-xs flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {errors.email}
+            </p>
+          )}
+        </div>
         {/* Revenue */}
         <div className="space-y-2">
           <label className="text-sm font-semibold text-gray-700">
@@ -789,9 +815,8 @@ const validateForm = () => {
             name="website"
             value={formData.website}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
-              errors.website ? "border-red-500" : "border-gray-300"
-            }`}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.website ? "border-red-500" : "border-gray-300"
+              }`}
             placeholder="Enter website URL"
           />
           {errors.website && (
@@ -817,7 +842,7 @@ const validateForm = () => {
         {/* Phone Number */}
         <div className="space-y-2">
           <label className="text-sm font-semibold text-gray-700">
-            Phone Number
+            Primary Number
           </label>
           <div className={`phone-input-wrapper ${errors.phone ? "border-red-500 rounded-lg" : ""}`}>
             <PhoneInput
@@ -866,7 +891,7 @@ const validateForm = () => {
         {/* Mobile Number */}
         <div className="space-y-2">
           <label className="text-sm font-semibold text-gray-700">
-            Mobile Number
+            Secondary Number
           </label>
           <div className={`phone-input-wrapper ${errors.mobile ? "border-red-500 rounded-lg" : ""}`}>
             <PhoneInput
@@ -922,7 +947,7 @@ const validateForm = () => {
         {/* Billing Address */}
         <div className="space-y-4">
           <h4 className="font-medium text-gray-700">Billing Address</h4>
-          
+
           <div className="space-y-2">
             <label className="text-sm font-semibold text-gray-700">Street Address</label>
             <input
@@ -1103,115 +1128,113 @@ const validateForm = () => {
   const renderAdditionalDetailsTab = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-     {/* GSTIN */}
-<div className="space-y-2">
-  <label className="text-sm font-semibold text-gray-700">
-    GSTIN
-  </label>
-  <input
-    type="text"
-    name="gstin"
-    value={formData.gstin}
-    onChange={handleChange}
-     maxLength={15}
-    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 uppercase ${
-      errors.gstin ? "border-red-500" : "border-gray-300"
-    }`}
-    placeholder="Enter GSTIN (optional)"
-    style={{ textTransform: 'uppercase' }}
-  />
-  {errors.gstin && (
-    <p className="text-red-500 text-xs flex items-center gap-1">
-      <svg
-        className="w-3 h-3"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-      {errors.gstin}
-    </p>
-  )}
-  {!errors.gstin && formData.gstin && (
-    <p className="text-green-500 text-xs flex items-center gap-1">
-      <svg
-        className="w-3 h-3"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M5 13l4 4L19 7"
-        />
-      </svg>
-      Valid GSTIN format
-    </p>
-  )}
-</div>
+        {/* GSTIN */}
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-gray-700">
+            GSTIN
+          </label>
+          <input
+            type="text"
+            name="gstin"
+            value={formData.gstin}
+            onChange={handleChange}
+            maxLength={15}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 uppercase ${errors.gstin ? "border-red-500" : "border-gray-300"
+              }`}
+            placeholder="Enter GSTIN (optional)"
+            style={{ textTransform: 'uppercase' }}
+          />
+          {errors.gstin && (
+            <p className="text-red-500 text-xs flex items-center gap-1">
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              {errors.gstin}
+            </p>
+          )}
+          {!errors.gstin && formData.gstin && (
+            <p className="text-green-500 text-xs flex items-center gap-1">
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              Valid GSTIN format
+            </p>
+          )}
+        </div>
 
-{/* PAN Number */}
-<div className="space-y-2">
-  <label className="text-sm font-semibold text-gray-700">
-    PAN Number
-  </label>
-  <input
-    type="text"
-    name="panNumber"
-    value={formData.panNumber}
-    onChange={handleChange}
-     maxLength={10}
-    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 uppercase ${
-      errors.panNumber ? "border-red-500" : "border-gray-300"
-    }`}
-    placeholder="Enter PAN number (optional)"
-    style={{ textTransform: 'uppercase' }}
-  />
-  {errors.panNumber && (
-    <p className="text-red-500 text-xs flex items-center gap-1">
-      <svg
-        className="w-3 h-3"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-      {errors.panNumber}
-    </p>
-  )}
-  {!errors.panNumber && formData.panNumber && (
-    <p className="text-green-500 text-xs flex items-center gap-1">
-      <svg
-        className="w-3 h-3"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M5 13l4 4L19 7"
-        />
-      </svg>
-      Valid PAN format
-    </p>
-  )}
-</div>
+        {/* PAN Number */}
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-gray-700">
+            PAN Number
+          </label>
+          <input
+            type="text"
+            name="panNumber"
+            value={formData.panNumber}
+            onChange={handleChange}
+            maxLength={10}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 uppercase ${errors.panNumber ? "border-red-500" : "border-gray-300"
+              }`}
+            placeholder="Enter PAN number (optional)"
+            style={{ textTransform: 'uppercase' }}
+          />
+          {errors.panNumber && (
+            <p className="text-red-500 text-xs flex items-center gap-1">
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              {errors.panNumber}
+            </p>
+          )}
+          {!errors.panNumber && formData.panNumber && (
+            <p className="text-green-500 text-xs flex items-center gap-1">
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              Valid PAN format
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Description */}
@@ -1322,7 +1345,7 @@ const validateForm = () => {
                 </svg>
                 Previous
               </button>
-              
+
               <button
                 type="button"
                 onClick={() => {
@@ -1405,10 +1428,10 @@ const validateForm = () => {
           </div>
         </div>
       </div>
-    
-    
-    
-       <style jsx>{`
+
+
+
+      <style jsx>{`
       
       .react-tel-input .country-list {
   position: fixed !important;

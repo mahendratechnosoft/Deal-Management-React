@@ -20,6 +20,7 @@ function EditCustomer() {
     companyName: "",
     phone: "",
     mobile: "",
+    email: "",
     website: "",
     industry: "",
     revenue: "",
@@ -201,6 +202,7 @@ function EditCustomer() {
         setFormData({
           companyName: customer.companyName || "",
           phone: customer.phone || "",
+          email: customer.email || "",
           mobile: customer.mobile || "",
           website: customer.website || "",
           industry: customer.industry || "",
@@ -348,7 +350,22 @@ function EditCustomer() {
       [name]: value,
     }));
 
-    if (errors[name]) {
+    // Validate email in real-time
+    if (name === "email") {
+      if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        setErrors((prev) => ({
+          ...prev,
+          email: "Please enter a valid email address",
+        }));
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          email: "",
+        }));
+      }
+    }
+
+    if (errors[name] && name !== "email") {
       setErrors((prev) => ({
         ...prev,
         [name]: "",
@@ -528,6 +545,10 @@ function EditCustomer() {
 
     if (!formData.companyName?.trim())
       newErrors.companyName = "Company name is required";
+    // Add email validation
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
 
 
 
@@ -548,6 +569,7 @@ function EditCustomer() {
         customerId: customerId,
         companyName: formData.companyName,
         phone: formData.phone || null,
+        email: formData.email || null,
         mobile: formData.mobile || null,
         website: formData.website || null,
         industry: formData.industry,
@@ -880,17 +902,28 @@ function EditCustomer() {
                       error={errors.revenue}
                     />
                   </div>
-
-                  {/* Website */}
-                  <FormInput
-                    label="Website"
-                    name="website"
-                    value={formData.website}
-                    onChange={handleChange}
-                    error={errors.website}
-                    background="white"
-                    className="mb-4"
-                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Website */}
+                    <FormInput
+                      label="Website"
+                      name="website"
+                      value={formData.website}
+                      onChange={handleChange}
+                      error={errors.website}
+                      background="white"
+                      className=""
+                    />
+                    {/* Email */}
+                    <FormInput
+                      label="Email Address"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      type="email"
+                      error={errors.email}
+                      background="white"
+                      className=""
+                    /></div>
 
                   {/* GSTIN & PAN */}
                   <div className="grid grid-cols-2 gap-2 mb-4">

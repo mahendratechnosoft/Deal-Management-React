@@ -695,7 +695,7 @@ function CreateCustomer() {
                           placeholder=" "
                         />
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                          Phone Number
+                          Primary Number
                         </label>
                         {errors.phone && (
                           <p className="mt-1 text-xs text-red-600">
@@ -716,7 +716,7 @@ function CreateCustomer() {
                           placeholder=" "
                         />
                         <label className="absolute left-3 -top-2.5 bg-white px-1 text-sm text-gray-600 transition-all duration-200 peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-blue-600 pointer-events-none">
-                          Mobile Number
+                          Secondary Number
                         </label>
                         {errors.mobile && (
                           <p className="mt-1 text-xs text-red-600">
