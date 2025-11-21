@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { toast } from "react-hot-toast";
 import Pagination from "../pagination";
 import { useLayout } from "../../Layout/useLayout";
 import CreateEmployeeModal from "./CreateEmployeeModal";
@@ -252,31 +252,28 @@ function EmployeeList() {
 
 
 
-  const handleDelete = async (employeeId, e) => {
-    e.stopPropagation(); // Prevent clicking row edit
+const handleDelete = async (e, employeeId) => {
+  e.stopPropagation();
 
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this employee?"
-    );
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this employee?"
+  );
 
-    if (!confirmDelete) return;
+  if (!confirmDelete) return;
 
-    try {
-      await axiosInstance.delete(`admin/deleteEmployee/${employeeId}`);
-      // Remove deleted employee from UI instantly
-      setEmployees((prev) =>
-        prev.filter((emp) => emp.employeeId !== employeeId)
-      );
+  try {
+    await axiosInstance.delete(`admin/deleteEmployee/${employeeId}`);
 
-      // Update total count instantly
-      setTotalEmployees((prev) => prev - 1);
+    setEmployees((prev) => prev.filter((emp) => emp.employeeId !== employeeId));
 
-      toast.success("Employee deleted successfully!");
-    } catch (error) {
-      console.error("Delete employee failed:", error);
-      toast.error("Failed to delete employee");
-    }
-  };
+    setTotalEmployees((prev) => prev - 1);
+
+    toast.success("Employee deleted successfully!");
+  } catch (error) {
+    console.error("Delete employee failed:", error);
+    toast.error("Failed to delete employee");
+  }
+};
 
 
 
@@ -289,41 +286,42 @@ function EmployeeList() {
   }
   if (error) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-screen">
-        <div className="text-center text-red-600 max-w-md">
-          <svg
-            className="w-16 h-16 mx-auto mb-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-            />
-          </svg>
-          <h3 className="text-lg font-semibold mb-2">
-            Error Loading Employees
-          </h3>
-          <p className="mb-4">{error}</p>
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={handleRefresh}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+      <LayoutComponent>
+        <div className=" flex items-center justify-center min-h-screen">
+          <div className="text-center text-red-600 max-w-md">
+            <svg
+              className="w-16 h-16 mx-auto mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              Retry
-            </button>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
+            </svg>
+            <h3 className="text-lg font-semibold mb-2">
+              Error Loading Employees
+            </h3>
+            <p className="mb-4">{error}</p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={handleRefresh}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Retry
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </LayoutComponent>
     );
   }
 
   return (
     <LayoutComponent>
-
       <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
         {/* Header Section */}
         <div className="mb-4">
@@ -332,7 +330,9 @@ function EmployeeList() {
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    Employees
+                  </h1>
                   <p className="text-gray-600 text-sm mt-1">
                     Manage and track all your employees in one place
                   </p>
@@ -487,48 +487,53 @@ function EmployeeList() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {listLoading
                     ? Array.from({ length: pageSize }).map((_, index) => (
-                      <EmployeeRowSkeleton key={index} />
-                    ))
+                        <EmployeeRowSkeleton key={index} />
+                      ))
                     : employees.map((employee, index) => (
-                      <tr
-                        key={employee.id}
-                        className="hover:bg-gray-50 transition-colors duration-150 group cursor-pointer"
-                        onClick={() => handleEdit(employee.employeeId)}
-                      >
-                        <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-500">
-                          {currentPage * pageSize + index + 1}
-                        </td>
-                        <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
-                          <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0">
-                              {employee.profileImage ? (
-                                <img
-                                  className="w-8 h-8 rounded-full object-cover"
-                                  src={`data:image/png;base64,${employee.profileImage}`}
-                                  alt={`${employee.name} profile`}
-                                />
-                              ) : (
-                                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                  {getInitials(employee.name)}
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="">
+                        <tr
+                          key={employee.id}
+                          className="hover:bg-gray-50 transition-colors duration-150 group cursor-pointer"
+                          onClick={() => handleEdit(employee.employeeId)}
+                        >
+                          <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-500">
+                            {currentPage * pageSize + index + 1}
+                          </td>
+                          <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
+                            <div className="flex items-center gap-3">
+                              {/* Avatar */}
+                              <div className="flex-shrink-0">
+                                {employee.profileImage ? (
+                                  <img
+                                    className="w-8 h-8 rounded-full object-cover"
+                                    src={`data:image/png;base64,${employee.profileImage}`}
+                                    alt={`${employee.name} profile`}
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                    {getInitials(employee.name)}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Name + Buttons */}
+                              <div className="flex-1 min-w-0">
                                 <div className="font-semibold text-gray-900">
                                   {employee.name || "N/A"}
                                 </div>
-                                <span className="flex">
+
+                                {/* ACTION BUTTONS (same style as leads table) */}
+                                <div className="action-buttons flex items-center gap-3 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                  {/* Edit Button */}
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleEdit(employee.employeeId);
                                     }}
+                                    className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs"
                                     title="Edit"
-                                    className="opacity-0 group-hover:opacity-100 text-blue-600 hover:text-blue-900 font-medium transition-all duration-200 flex items-center gap-1 text-xs  "
                                   >
                                     <svg
-                                      className="w-4 h-4"
+                                      className="w-3 h-3"
                                       fill="none"
                                       stroke="currentColor"
                                       viewBox="0 0 24 24"
@@ -537,38 +542,55 @@ function EmployeeList() {
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
                                         strokeWidth={2}
-                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 
+                 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                                       />
                                     </svg>
-
+                                    Edit
                                   </button>
+
+                                  {/* Delete Button */}
                                   <button
-                                    onClick={(e) => handleDelete(employee.employeeId, e)}
+                                    onClick={(e) =>
+                                      handleDelete(e, employee.employeeId)
+                                    }
+                                    className="text-gray-500 hover:text-red-600 transition-colors duration-200 flex items-center gap-1 text-xs"
                                     title="Delete"
-                                    className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-900 font-medium transition-all duration-200 flex items-center gap-1 mx-2 text-xs"
                                   >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 
-           01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a1 1 0 
-           011-1h4a1 1 0 011 1m-7 0h10" />
+                                    <svg
+                                      className="w-3 h-3"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 7l-.867 12.142A2 2 0 
+               0116.138 21H7.862a2 2 0 01-1.995-1.858L5 
+               7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 
+               0 00-1 1v3M4 7h16"
+                                      />
                                     </svg>
-                                  </button></span>
+                                    Delete
+                                  </button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
-                          {employee.loginEmail || "N/A"}
-                        </td>
-                        <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
-                          {employee.phone || "N/A"}
-                        </td>
-                        <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
-                          {employee.gender || "N/A"}
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+
+                          <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
+                            {employee.loginEmail || "N/A"}
+                          </td>
+                          <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
+                            {employee.phone || "N/A"}
+                          </td>
+                          <td className="px-6 py-1 whitespace-nowrap text-sm text-gray-900">
+                            {employee.gender || "N/A"}
+                          </td>
+                        </tr>
+                      ))}
                 </tbody>
               </table>
             </div>
@@ -619,8 +641,6 @@ function EmployeeList() {
           onPageSizeChange={handlePageSizeChange}
           itemsName="employees"
         />
-
-
 
         {/* Render the modal */}
         {showCreateModal && (
