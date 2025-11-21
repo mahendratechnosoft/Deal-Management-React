@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useLayout } from "../../Layout/useLayout";
-import EditFamily from "./EditFamily";
+import CreateFamily from "./CreateFamily";
 const EditIcon = () => (
   <svg
     className="w-4 h-4"
@@ -63,9 +63,9 @@ function FamilyList() {
   // In FamilyList component, update the handlePreviewMatchingDonor function:
 
 
-  const handlePreviewMatchingDonor = (familyId) => {
+  const handleEditFamily = () => {
    
-    window.location.href = `/Admin/PreviewMatchingDonors/${familyId}`;
+    window.location.href = `/Admin/EditFamily`;
     
    
 };
@@ -73,10 +73,10 @@ function FamilyList() {
 // Update the preview button in the table:
 <button
     title="Preview"
-    onClick={() => handlePreviewMatchingDonor(1)} // Pass the actual family ID
+    onClick={() => handleEditFamily()} // Pass the actual family ID
     className="text-blue-600 hover:text-blue-900"
 >
-    <PreviewIcon />
+    <PreviewIcon  wIcon />
 </button>
   const handleOpenPdfPreview = (id) => console.log("PDF", id);
   const [openModal, setOpenModal] = useState(false);
@@ -204,14 +204,14 @@ function FamilyList() {
                   <div className="flex items-center gap-3">
                     <button
                       title="Edit"
-                      onClick={() => setOpenModal(true)}
+                      onClick={() => handleEditFamily()}
                       className="text-blue-600 hover:text-blue-900"
                     >
                       <EditIcon />
                     </button>
                     <button
                       title="Preview"
-                      onClick={() => handlePreviewMatchingDonor(1)}
+                      onClick={() => setOpenModal(true)}
                       className="text-blue-600 hover:text-blue-900"
                     >
                       <PreviewIcon />
@@ -242,14 +242,14 @@ function FamilyList() {
                   <div className="flex items-center gap-3">
                     <button
                       title="Edit"
-                       onClick={() => setOpenModal(true)}
+                       onClick={() => handleEditFamily()}
                       className="text-blue-600 hover:text-blue-900"
                     >
                       <EditIcon />
                     </button>
                     <button
                       title="Preview"
-                      onClick={() => handlePreview(3)}
+                      onClick={() => setOpenModal(true)}
                       className="text-blue-600 hover:text-blue-900"
                     >
                       <PreviewIcon />
@@ -266,7 +266,7 @@ function FamilyList() {
 
 
    {/* Modal */}
-                <EditFamily
+                <CreateFamily
                     isOpen={openModal}
                     onClose={() => setOpenModal(false)}
                     onSuccess={() => console.log("Donor added!")}

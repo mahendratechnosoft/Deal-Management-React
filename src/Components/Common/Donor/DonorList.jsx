@@ -326,6 +326,141 @@ function DonorList() {
                     </div>
                 </div>
 
+        <div className="flex gap-2">
+  
+  <div className="flex-1 bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+    <div className="flex items-center gap-2">
+      <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-gray-100">
+        <svg
+          className="w-3 h-3 text-gray-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+          />
+        </svg>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-gray-500 text-[12px] font-medium truncate">
+          Total Donor
+        </p>
+        <p className="text-gray-900 text-sm font-bold truncate">1000</p>
+      </div>
+    </div>
+  </div>
+
+  <div className="flex-1 bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+    <div className="flex items-center gap-2">
+      <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-blue-100">
+        <svg
+          className="w-3 h-3 text-blue-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-gray-500 text-[12px] font-medium truncate">
+          New Donor
+        </p>
+        <p className="text-gray-900 text-sm font-bold truncate">250</p>
+      </div>
+    </div>
+  </div>
+
+    <div className="flex-1 bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+    <div className="flex items-center gap-2">
+      <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-blue-100">
+        <svg
+          className="w-3 h-3 text-blue-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-gray-500 text-[12px] font-medium truncate">
+          Qualified
+        </p>
+        <p className="text-gray-900 text-sm font-bold truncate">200</p>
+      </div>
+    </div>
+  </div>
+
+    <div className="flex-1 bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+    <div className="flex items-center gap-2">
+      <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-blue-100">
+        <svg
+          className="w-3 h-3 text-blue-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-gray-500 text-[12px] font-medium truncate">
+          Shortlisted
+        </p>
+        <p className="text-gray-900 text-sm font-bold truncate">300</p>
+      </div>
+    </div>
+  </div>
+    <div className="flex-1 bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+    <div className="flex items-center gap-2">
+      <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-blue-100">
+        <svg
+          className="w-3 h-3 text-blue-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-gray-500 text-[12px] font-medium truncate">
+          Rejected
+        </p>
+        <p className="text-gray-900 text-sm font-bold truncate">250</p>
+      </div>
+    </div>
+  </div>
+   
+
+</div>
+
+
                 {/* Table View */}
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
                     <div className="overflow-x-auto crm-Leadlist-kanbadn-col-list">
@@ -424,8 +559,11 @@ function DonorList() {
                                                     onChange={(e) => handleStatusChange(donor.donorId, e.target.value)}
                                                 >
                                                     <option value="New Donor">New Donor</option>
+                                                    <option value="Qualified">Qualified</option>
+                                                    <option value="Not Qualified">Not Qualified</option>
+                                                      <option value="Selected">Shortlisted</option>
+                                                    <option value="Not Shortlisted">Not Shortlisted</option>
                                                     <option value="Rejected">Rejected</option>
-                                                    <option value="Selected">Selected</option>
                                                     
                                                 </select>
                                             </td>
