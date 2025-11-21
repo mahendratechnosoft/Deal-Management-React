@@ -11,6 +11,7 @@ import {
   FormSelect,
   FormTextarea,
 } from "../../BaseComponet/CustomeFormComponents";
+import CustomeImageUploader from "../../BaseComponet/CustomeImageUploader";
 
 const SkeletonBlock = ({ className }) => (
   <div className={`bg-gray-200 rounded animate-pulse ${className}`}></div>
@@ -306,7 +307,9 @@ function EditProposal() {
           ? fetchedInfo.dueDate.split("T")[0]
           : "";
 
-        fetchedInfo.proposalNumber = formatProposalNumber(fetchedInfo.proposalNumber);
+        fetchedInfo.proposalNumber = formatProposalNumber(
+          fetchedInfo.proposalNumber
+        );
 
         // 7. Set main states
         setProposalInfo(fetchedInfo);
@@ -567,6 +570,24 @@ function EditProposal() {
 
     list.splice(index, 1);
     setProposalContent(list);
+  };
+
+  const handleImageUpload = (file, fieldName) => {
+    if (!file) {
+      setProposalInfo((prev) => ({ ...prev, [fieldName]: "" }));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result.split(",")[1];
+
+      setProposalInfo((prev) => ({
+        ...prev,
+        [fieldName]: base64String,
+      }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const { subtotal, taxAmount, total } = useMemo(() => {
@@ -1129,83 +1150,103 @@ function EditProposal() {
                   </div>
 
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
+                    <table className="min-w-full divide-y divide-gray-200 border border-gray-200">
+                      <thead className="bg-gray-100">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/5">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-2/5">
                             Item
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/5">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-2/5">
                             Description
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                             Qty
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                             Rate ({currencySymbol})
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                             Total
                           </th>
-                          <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
                             Action
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody className="bg-gray-50 divide-y divide-gray-200">
                         {proposalContent.map((item, index) => (
                           <tr key={index} className="hover:bg-gray-50">
-                            <td className="px-2 py-2 align-middle">
-                              <input
+                            {/* ITEM FIELD */}
+                            <td className="px-2 py-2 align-top">
+                              <textarea
                                 type="text"
                                 name="item"
                                 value={item.item}
                                 onChange={(e) => handleItemChange(index, e)}
-                                className="w-full border-gray-300 rounded-lg shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                                placeholder="e.g., Website Design"
+                                className="w-full border border-gray-300 rounded-md 
+                                         sm:text-sm px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 
+                                         focus:ring-blue-500 transition-colors min-h-[40px]"
+                                placeholder="Item Name"
                               />
                             </td>
-                            <td className="px-2 py-2 align-middle">
-                              <input
+
+                            {/* DESCRIPTION FIELD */}
+                            <td className="px-2 py-2 align-top">
+                              <textarea
                                 type="text"
                                 name="description"
                                 value={item.description}
                                 onChange={(e) => handleItemChange(index, e)}
-                                className="w-full border-gray-300 rounded-lg shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                                placeholder="e.g., Responsive 5-page site"
+                                className="w-full border border-gray-300 rounded-lg shadow-sm sm:text-sm
+                                         px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 
+                                         focus:ring-blue-500 transition-colors min-h-[40px]"
+                                placeholder="Description"
                               />
                             </td>
-                            <td className="px-2 py-2 align-middle">
+
+                            {/* QUANTITY FIELD */}
+                            <td className="px-2 py-2 align-top">
                               <input
                                 type="number"
                                 name="quantity"
                                 value={item.quantity}
                                 onChange={(e) => handleItemChange(index, e)}
-                                className="w-20 border-gray-300 rounded-lg shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                                className="w-20 border border-gray-300 rounded-lg shadow-sm sm:text-sm px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                                 min="1"
                               />
                             </td>
-                            <td className="px-2 py-2 align-middle">
+
+                            {/* RATE FIELD */}
+                            <td className="px-2 py-2 align-top">
                               <input
                                 type="number"
                                 name="rate"
                                 value={item.rate}
                                 onChange={(e) => handleItemChange(index, e)}
-                                className="w-32 border-gray-300 rounded-lg shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                                className="w-32 border border-gray-300 rounded-lg shadow-sm sm:text-sm px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                                 min="0"
                                 step="0.01"
                               />
                             </td>
-                            <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700 font-medium align-middle">
+
+                            {/* TOTAL DISPLAY */}
+                            <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700 font-medium align-top">
                               {currencySymbol}
                               {(item.quantity * item.rate).toFixed(2)}
                             </td>
-                            <td className="px-4 py-2 whitespace-nowrap text-center align-middle">
+
+                            {/* ACTION */}
+                            <td className="px-4 py-2 whitespace-nowrap text-center align-top">
                               <button
-                                className="text-red-600 hover:text-red-900 font-medium transition-colors duration-200 flex items-center gap-1 text-xs"
+                                className={`text-red-600 hover:text-red-900 font-medium transition-colors 
+                                duration-200 flex items-center gap-1 text-xs ${
+                                  proposalContent.length === 1 &&
+                                  "pointer-events-none opacity-50"
+                                }`}
                                 onClick={() => handleRemoveItem(index)}
                                 title="Remove Item"
                                 type="button"
+                                disabled={proposalContent.length === 1}
                               >
                                 <svg
                                   className="w-4 h-4"
@@ -1214,9 +1255,9 @@ function EditProposal() {
                                   viewBox="0 0 24 24"
                                 >
                                   <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
                                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                   ></path>
                                 </svg>
@@ -1269,7 +1310,7 @@ function EditProposal() {
                         rows={8}
                       />
                     </div>
-                    <div className="w-full md:w-1/2 lg:w-1/3 space-y-4 bg-gray-50 p-4 rounded-lg">
+                    <div className="w-full md:w-1/2 lg:w-1/3 space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
                       <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">
                         Summary
                       </h2>
@@ -1289,8 +1330,15 @@ function EditProposal() {
                           name="discount"
                           id="discount"
                           value={proposalInfo.discount}
-                          onChange={handleInfoChange}
-                          className="w-24 border-gray-300 rounded-md shadow-sm sm:text-sm text-right"
+                          onChange={(e) => {
+                            let value = parseFloat(e.target.value);
+                            if (value > 100) e.target.value = "100";
+                            if (value < 0) e.target.value = "0";
+                            handleInfoChange(e);
+                          }}
+                          className="w-20 border border-gray-300 rounded-lg shadow-sm sm:text-sm 
+                                        px-1 py-1 outline-none focus:border-blue-500 focus:ring-1 
+                                        focus:ring-blue-500 transition-colors"
                           min="0"
                           max="100"
                         />
@@ -1364,54 +1412,43 @@ function EditProposal() {
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">
                       Signature & Stamp
                     </h2>
-                    <div className="flex flex-col md:flex-row w-1/2 gap-8">
-                      <div className="w-full md:w-1/2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Authorized Signature
-                        </label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg h-40 w-full flex items-center justify-center bg-gray-50 p-2">
-                          {pageLoading ? (
-                            <span className="text-gray-400 text-sm">
-                              Loading Signature...
-                            </span>
-                          ) : signatureUrl ? (
-                            <img
-                              src={signatureUrl}
-                              alt="Authorized Signature"
-                              className="max-h-full max-w-full object-contain"
-                            />
-                          ) : (
-                            <span className="text-gray-400 text-sm text-center px-4">
-                              No Signature added at time of creation
-                            </span>
-                          )}
-                        </div>
+
+                    {/* Loading State Wrapper */}
+                    {pageLoading ? (
+                      <div className="flex items-center justify-center h-40 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                        <span className="text-gray-500">
+                          Loading Company Media...
+                        </span>
                       </div>
-                      {(pageLoading || stampUrl) && (
-                        <div className="w-full md:w-1/2">
+                    ) : (
+                      <div className="flex flex-col md:flex-row gap-8">
+                        {/* Signature Uploader */}
+                        <div className="w-full md:w-1/4">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Authorized Signature
+                          </label>
+                          <CustomeImageUploader
+                            initialBase64={proposalInfo.companySignature}
+                            onFileChange={(file) =>
+                              handleImageUpload(file, "companySignature")
+                            }
+                          />
+                        </div>
+
+                        {/* Stamp Uploader */}
+                        <div className="w-full md:w-1/4">
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Company Stamp
                           </label>
-                          <div className="border-2 border-dashed border-gray-300 rounded-lg h-40 w-full flex items-center justify-center bg-gray-50 p-2">
-                            {pageLoading ? (
-                              <span className="text-gray-400 text-sm">
-                                Loading Stamp...
-                              </span>
-                            ) : stampUrl ? (
-                              <img
-                                src={stampUrl}
-                                alt="Company Stamp"
-                                className="max-h-full max-w-full object-contain"
-                              />
-                            ) : (
-                              <span className="text-gray-400 text-sm">
-                                Stamp Image Not Available
-                              </span>
-                            )}
-                          </div>
+                          <CustomeImageUploader
+                            initialBase64={proposalInfo.companyStamp}
+                            onFileChange={(file) =>
+                              handleImageUpload(file, "companyStamp")
+                            }
+                          />
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

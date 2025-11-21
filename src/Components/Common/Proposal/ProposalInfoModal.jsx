@@ -38,7 +38,7 @@ const ProposalTabContent = ({ loading, proposalData, adminInformation }) => {
   );
 };
 
-const ProposalInfoModal = ({ isOpen, onClose, proposal }) => {
+const ProposalInfoModal = ({ isOpen, onClose, proposal, onOpenPdf }) => {
   const [activeTab, setActiveTab] = useState("proposal");
   const [proposalData, setProposalData] = useState(null);
   const [adminInformation, setAdminInformation] = useState(null);
@@ -206,6 +206,30 @@ const ProposalInfoModal = ({ isOpen, onClose, proposal }) => {
             </h3>
 
             <div className="info-modal-actions">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onOpenPdf && proposal?.proposalId) {
+                    onOpenPdf(proposal.proposalId);
+                  }
+                }}
+                className="flex items-center gap-2 px-2 py-2 border border-gray-300 rounded bg-white text-sm font-medium text-red-600 hover:text-red-900"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  ></path>
+                </svg>
+                PDF
+              </button>
               {/* Convert to Proforma */}
               <button
                 title="Convert to Proforma"
