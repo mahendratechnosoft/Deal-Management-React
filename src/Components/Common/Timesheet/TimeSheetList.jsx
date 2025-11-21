@@ -907,17 +907,19 @@ function TimeSheetList() {
                                                                 {dateList.map(({ key }) => {
                                                                     const records = empData[key] || [];
                                                                     const color = getDayColor(key, emp, false);
-
+                                                                    const hasRecords = records.length > 0;
                                                                     return (
                                                                         <div
                                                                             key={key}
                                                                             className="flex justify-center items-center min-w-[30px] flex-1"
                                                                         >
                                                                             <div
-                                                                                className="w-5 h-5 rounded-lg cursor-pointer border-2 border-gray-100 hover:border-gray-300 transition-all duration-200 hover:scale-110"
+                                                                                className="w-5 h-5 rounded-lg cursor-pointer border-2 border-gray-100 hover:border-gray-300 transition-all duration-200 hover:scale-110 text-[8px] flex items-center justify-center"
                                                                                 style={{ backgroundColor: color }}
                                                                                 onClick={() => onDayBoxClick(emp, key, records)}
-                                                                            />
+                                                                            >
+                                                                                {hasRecords ? "P" : ""}
+                                                                            </div>
                                                                         </div>
                                                                     );
                                                                 })}
