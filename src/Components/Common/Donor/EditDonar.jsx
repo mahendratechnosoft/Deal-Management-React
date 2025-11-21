@@ -28,6 +28,7 @@ function EditDonar() {
         weight: "",
         religion: "",
         bloodGroup: "",
+        skinColor:"",
 
         // Medical Information
         bsl: "",
@@ -101,6 +102,7 @@ function EditDonar() {
                 weight: d.weight || "",
                 region: d.religion || "",
                 bloodGroup: d.bloodGroup || "",
+                skinColor:d.skinColor || "",
 
                 // Medical
                 bsl: d.bsl || "",
@@ -191,7 +193,7 @@ function EditDonar() {
         try {
             const submitData = {
                 donorId: donorId,
-                adminId: "ac149001-9a76-1887-819a-76fc7d720001", // You might want to get this dynamically
+                adminId: formData.adminId, // You might want to get this dynamically
                 name: formData.name,
                 age: formData.age,
                 dateOfBirth: formData.dob,
@@ -203,8 +205,9 @@ function EditDonar() {
                 femaleKidsCount: formData.kidsFemale,
                 height: formData.height,
                 weight: formData.weight,
-                religion: formData.region,
+                religion: formData.religion,
                 booldGroup: formData.bloodGroup,
+                skinColor:formData.skinColor,
                 bsl: formData.bsl,
                 hiv: formData.hiv,
                 hbsag: formData.hbsag,
@@ -391,6 +394,15 @@ function EditDonar() {
                 type="number"
                 step="0.1"
                 error={errors.weight}
+            />
+
+               <FormInput
+                label="Skin Color"
+                name="skinColor"
+                value={formData.skinColor}
+                onChange={handleChange}
+                type="text"
+                error={errors.skinColor}
             />
 
             <FormInput
@@ -700,9 +712,9 @@ function EditDonar() {
                         <button
                             onClick={() => {
                                 if (role === "ROLE_ADMIN") {
-                                    navigate("/Admin/CustomerList");
+                                    navigate("/Admin/donarList");
                                 } else if (role === "ROLE_EMPLOYEE") {
-                                    navigate("/Employee/CustomerList");
+                                    navigate("/Employee/donarList");
                                 }
                             }}
                             className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200"

@@ -49,6 +49,7 @@ import InvoiceList from "./Components/Common/Invoice/InvoiceList.jsx";
 import InvoicePreview from "./Components/Common/Invoice/InvoicePreview.jsx";
 import FamilyList from "./Components/Common/Donor/FamilyList.jsx";
 import DonorMatchingFilter from "./Components/Common/Donor/DonorMatchingFilter.jsx";
+import EditFamily from "./Components/Common/Donor/EditFamily.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -261,6 +262,16 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                 <DonorMatchingFilter />
+              </RoleBasedRoute>
+            }
+          />
+
+
+               <Route
+            path="/Admin/EditFamily"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <EditFamily />
               </RoleBasedRoute>
             }
           />

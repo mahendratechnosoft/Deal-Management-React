@@ -256,7 +256,7 @@ function SelectedDonarList() {
                                 <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
                                 <div>
                                     <h1 className="text-2xl font-bold text-gray-900">
-                                        Selected  Donors List
+                                        Shortlisted  Donors List
                                     </h1>
                                 </div>
                             </div>
@@ -330,24 +330,34 @@ function SelectedDonarList() {
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         NAME
                                     </th>
+                                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Blood Group
+                                    </th>
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Height
+                                    </th>
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Weight
+                                    </th>
+                                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Skin Color
+                                    </th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         AGE
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        DOB
+                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Religon
                                     </th>
+                                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        City
+                                    </th>
+                                
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Material Status
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Mobile
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        City
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Address
-                                    </th>
+                                  
+                                  
+                                 
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Action
                                     </th>
@@ -383,32 +393,39 @@ function SelectedDonarList() {
 
                                             {/* AGE */}
                                             <td className="px-4 py-3 whitespace-nowrap text-sm">
-                                                {Donor.age || "N/A"}
+                                                {Donor.bloodGroup || "N/A"}
                                             </td>
 
                                             {/* DOB */}
                                             <td className="px-4 py-3 whitespace-nowrap text-sm">
-                                                {Donor.dateOfBirth || "N/A"}
+                                                {Donor.height || "N/A"}
                                             </td>
 
                                             {/* Material Status */}
                                             <td className="px-4 py-3 whitespace-nowrap text-sm">
-                                                {Donor.marriedStatus || "N/A"}
+                                                {Donor.weight || "N/A"}
                                             </td>
 
                                             {/* Mobile */}
                                             <td className="px-4 py-3 whitespace-nowrap text-sm">
-                                                {Donor.phoneNumber || "N/A"}
+                                                {Donor.skinColor || "N/A"}
                                             </td>
 
                                             {/* City */}
                                             <td className="px-4 py-3 whitespace-nowrap text-sm">
-                                                {Donor.city || "N/A"}
+                                                {Donor.age || "N/A"}
                                             </td>
 
                                             {/* Address */}
                                             <td className="px-4 py-3 whitespace-nowrap text-sm truncate max-w-[150px]">
-                                                {Donor.address || "N/A"}
+                                                {Donor.religion || "N/A"}
+                                            </td>
+
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm truncate max-w-[150px]">
+                                                {Donor.city || "N/A"}
+                                            </td>
+                                              <td className="px-4 py-3 whitespace-nowrap text-sm truncate max-w-[150px]">
+                                                {Donor.marriedStatus || "N/A"}
                                             </td>
                                             <button
                                                 className="text-blue-600 hover:text-blue-800 font-medium"

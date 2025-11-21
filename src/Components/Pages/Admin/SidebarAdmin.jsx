@@ -221,7 +221,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
       color: "from-rose-500 to-pink-500",
     },
     {
-      name: "Selected Donar",
+      name: "Shortlisted Donar",
       path: "/Admin/SelectedDonarList",
       icon: (
         <svg
