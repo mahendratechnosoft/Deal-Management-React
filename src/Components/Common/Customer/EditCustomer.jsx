@@ -7,7 +7,7 @@ import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
 import { FormInput, FormPhoneInputFloating, FormSelect, FormTextarea } from "../../BaseComponet/CustomeFormComponents";
 
-
+import { hasPermission } from "../../BaseComponet/permissions";
 
 function EditCustomer() {
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ function EditCustomer() {
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const { LayoutComponent, role } = useLayout();
-
+  const canEdit = hasPermission("customer", "Edit");
   const [formData, setFormData] = useState({
     companyName: "",
     phone: "",
@@ -829,6 +829,7 @@ function EditCustomer() {
               >
                 Cancel
               </button>
+              {canEdit && (
               <button
                 onClick={handleSubmit}
                 disabled={loading}
@@ -843,13 +844,15 @@ function EditCustomer() {
                   'Update'
                 )}
               </button>
+              )}
             </div>
           </div>
         </div>
 
         {/* Ultra Compact Form */}
         <div className="p-4">
-          <form onSubmit={handleSubmit}>
+          <div className={!canEdit ? "pointer-events-none opacity-60" : ""}>
+  <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
               <div className="bg-gray-50 rounded-lg p-4">
@@ -1148,6 +1151,7 @@ function EditCustomer() {
               </div>
             </div>
           </form>
+          </div>
         </div>
       </div>
     </LayoutComponent>

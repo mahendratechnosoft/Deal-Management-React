@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
+import { hasPermission } from '../../BaseComponet/permissions';
 
 function EditTimesheetModal({
     clickPopup,
@@ -204,6 +205,8 @@ function EditTimesheetModal({
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          
+                                {hasPermission("timeSheet", "Create") && (
                             <button
                                 onClick={handleCreateClick}
                                 className="bg-blue-600 text-white py-2 px-3 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
@@ -213,6 +216,7 @@ function EditTimesheetModal({
                                 </svg>
                                 Create
                             </button>
+                                )}
                             <button
                                 onClick={() => onClose(false)}
                                 disabled={loading}
@@ -239,12 +243,12 @@ function EditTimesheetModal({
                                     Edit {editingRecord?.type === 'in' ? 'Check-in' : 'Check-out'}
                                 </h3>
                             </div>
-                            
+
                             <div className="space-y-3">
                                 <div className="text-xs text-gray-600">
                                     Current: <span className="font-medium">{getEditingDisplayTime()}</span>
                                 </div>
-                                
+
                                 <div>
                                     <label className="block text-xs font-medium text-gray-700 mb-1">
                                         New Date & Time
@@ -284,7 +288,7 @@ function EditTimesheetModal({
                                 </svg>
                                 <h3 className="font-semibold text-green-900 text-sm">Create Record</h3>
                             </div>
-                            
+
                             <div className="space-y-3">
                                 <div>
                                     <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -355,6 +359,7 @@ function EditTimesheetModal({
                                             <span className="text-xs font-semibold text-gray-700 bg-white px-2 py-1 rounded">
                                                 Session {idx + 1}
                                             </span>
+                                                 {hasPermission("timeSheet", "Delete") && (
                                             <button
                                                 onClick={() => handleDeleteSession(p)}
                                                 disabled={loading}
@@ -365,56 +370,63 @@ function EditTimesheetModal({
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                 </svg>
                                             </button>
+                                                 )}
                                         </div>
 
-                                   {/* Connected Time Pair with Edit Buttons Aligned */}
-<div className="flex items-center gap-3">
-    <div className="flex flex-col items-center">
-        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-        <div className="w-0.5 h-4 bg-gray-300 my-1"></div>
-        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-    </div>
-    <div className="space-y-2 flex-1">
-        {/* Start Time with Edit In Button */}
-        <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-                <span className="font-medium">Start:</span> {formatTimeSimple(new Date(p.in.timeStamp))}
-            </div>
-            <button
-                onClick={() => handleEditClick(p.in, 'in')}
-                className="bg-blue-500 text-white py-1 px-2 rounded text-xs font-medium hover:bg-blue-600 transition-colors flex items-center gap-1 ml-2"
-                title="Edit check-in time"
-            >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                {/* <span className="hidden sm:inline">In</span> */}
-            </button>
-        </div>
-        
-        {/* End Time with Edit Out Button */}
-        <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-                <span className="font-medium">End:</span> {p.out ? formatTimeSimple(new Date(p.out.timeStamp)) : "—"}
-            </div>
-            {p.out ? (
-                <button
-                    onClick={() => handleEditClick(p.out, 'out')}
-                    className="bg-blue-500 text-white py-1 px-2 rounded text-xs font-medium hover:bg-blue-600 transition-colors flex items-center gap-1 ml-2"
-                    title="Edit check-out time"
-                >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    {/* <span className="hidden sm:inline"> Out</span> */}
-                </button>
-            ) : (
-                <>
-                <div className="w-20"></div> {/* Spacer for alignment when no check-out */}
-           </> )}
-        </div>
-    </div>
-</div>
+                                        {/* Connected Time Pair with Edit Buttons Aligned */}
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex flex-col items-center">
+                                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                <div className="w-0.5 h-4 bg-gray-300 my-1"></div>
+                                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                            </div>
+                                            <div className="space-y-2 flex-1">
+                                                {/* Start Time with Edit In Button */}
+                                                <div className="flex items-center justify-between">
+                                                    <div className="text-sm text-gray-600">
+                                                        <span className="font-medium">Start:</span> {formatTimeSimple(new Date(p.in.timeStamp))}
+                                                    </div>
+                                                    {hasPermission("timeSheet", "Edit") && (
+                                                        <button
+                                                            onClick={() => handleEditClick(p.in, 'in')}
+                                                            className="bg-blue-500 text-white py-1 px-2 rounded text-xs font-medium hover:bg-blue-600 transition-colors flex items-center gap-1 ml-2"
+                                                            title="Edit check-in time"
+                                                        >
+                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                            {/* <span className="hidden sm:inline">In</span> */}
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {/* End Time with Edit Out Button */}
+                                                <div className="flex items-center justify-between">
+                                                    <div className="text-sm text-gray-600">
+                                                        <span className="font-medium">End:</span> {p.out ? formatTimeSimple(new Date(p.out.timeStamp)) : "—"}
+                                                    </div>
+                                                    {p.out ? (
+                                                        <>
+                                                            {hasPermission("timeSheet", "Edit") && (
+                                                                <button
+                                                                    onClick={() => handleEditClick(p.out, 'out')}
+                                                                    className="bg-blue-500 text-white py-1 px-2 rounded text-xs font-medium hover:bg-blue-600 transition-colors flex items-center gap-1 ml-2"
+                                                                    title="Edit check-out time"
+                                                                >
+                                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                                    </svg>
+                                                                    {/* <span className="hidden sm:inline"> Out</span> */}
+                                                                </button>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <div className="w-20"></div> {/* Spacer for alignment when no check-out */}
+                                                        </>)}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 ))
                             ) : (

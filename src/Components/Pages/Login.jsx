@@ -110,6 +110,20 @@ function Login({ onSwitchToRegister, onLogin }) {
           localStorage.setItem("rememberMe", "true");
         }
 
+          // Fetch moduleAccess if employee
+  if (data.role === "ROLE_EMPLOYEE") {
+    try {
+      const empResponse = await axiosInstance.get("getEmployeeInfo");
+      const empInfo = empResponse.data;
+
+      if (empInfo?.moduleAccess) {
+        localStorage.setItem("moduleAccess", JSON.stringify(empInfo.moduleAccess));
+      }
+    } catch (err) {
+      console.error("Failed to fetch employee info:", err);
+    }
+  }
+
         // Call onLogin with the correct data structure
         if (onLogin) {
           onLogin({
