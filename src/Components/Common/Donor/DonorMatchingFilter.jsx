@@ -65,6 +65,7 @@ const DonorFilters = ({ onFilterChange, activeFilters }) => {
         { key: 'eyeColor', label: 'Eye Color' },
         { key: 'religion', label: 'Religion' },
         { key: 'education', label: 'Education' },
+        { key: 'profession', label: 'Profession' },
     ];
 
     // Count how many inputs have text in them
@@ -215,6 +216,7 @@ const DonorList = ({ donors }) => {
                                         </div>
                                         <div>Rel: <span className="text-gray-900">{donor.religion}</span></div>
                                         <div>Edu: <span className="text-gray-900">{donor.education}</span></div>
+                                         <div>Prof: <span className="text-gray-900">{donor.profession}</span></div>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -321,16 +323,16 @@ function DonorMatchingFilter() {
 // Mock API function (Unchanged data)
 const getDonorsList = () => {
     return [
-        { id: "D001", name: "Rajesh Kumar", bloodGroup: "B+", height: "5'10\"", weight: "74kg", skinColor: "Fair", eyeColor: "Brown", religion: "Hindu", education: "Graduate", district: "Pune" },
-        { id: "D002", name: "Amit Sharma", bloodGroup: "O+", height: "5'9\"", weight: "72kg", skinColor: "Wheatish", eyeColor: "Black", religion: "Hindu", education: "Post Graduate", district: "Mumbai" },
-        { id: "D003", name: "Suresh Patel", bloodGroup: "B+", height: "5'11\"", weight: "76kg", skinColor: "Fair", eyeColor: "Brown", religion: "Hindu", education: "Graduate", district: "Pune" },
-        { id: "D004", name: "Priya Singh", bloodGroup: "A+", height: "5'4\"", weight: "58kg", skinColor: "Fair", eyeColor: "Brown", religion: "Hindu", education: "Graduate", district: "Delhi" },
-        { id: "D005", name: "Neha Gupta", bloodGroup: "O+", height: "5'5\"", weight: "60kg", skinColor: "Wheatish", eyeColor: "Black", religion: "Hindu", education: "Post Graduate", district: "Bangalore" },
-        { id: "D006", name: "Rahul Verma", bloodGroup: "AB+", height: "5'8\"", weight: "70kg", skinColor: "Fair", eyeColor: "Blue", religion: "Hindu", education: "Graduate", district: "Hyderabad" },
-        { id: "D007", name: "Sanjay Joshi", bloodGroup: "O+", height: "5'7\"", weight: "68kg", skinColor: "Wheatish", eyeColor: "Brown", religion: "Hindu", education: "Diploma", district: "Pune" },
-        { id: "D008", name: "Anita Desai", bloodGroup: "A+", height: "5'3\"", weight: "55kg", skinColor: "Fair", eyeColor: "Black", religion: "Hindu", education: "Post Graduate", district: "Mumbai" },
-        { id: "D009", name: "Vikram Malhotra", bloodGroup: "B+", height: "5'10\"", weight: "75kg", skinColor: "Wheatish", eyeColor: "Brown", religion: "Hindu", education: "Graduate", district: "Delhi" },
-        { id: "D010", name: "Sunita Reddy", bloodGroup: "O+", height: "5'2\"", weight: "52kg", skinColor: "Fair", eyeColor: "Brown", religion: "Hindu", education: "Graduate", district: "Hyderabad" }
+        { id: "D001", name: "Rajesh Kumar", bloodGroup: "B+", height: "5'10\"", weight: "74kg", skinColor: "Fair", eyeColor: "Brown", religion: "Hindu", education: "Graduate",profession: "CA", district: "Pune" },
+        { id: "D002", name: "Amit Sharma", bloodGroup: "O+", height: "5'9\"", weight: "72kg", skinColor: "Wheatish", eyeColor: "Black", religion: "Hindu", education: "Post Graduate",profession: "CA", district: "Mumbai" },
+        { id: "D003", name: "Suresh Patel", bloodGroup: "B+", height: "5'11\"", weight: "76kg", skinColor: "Fair", eyeColor: "Brown", religion: "Hindu", education: "Graduate",profession: "CA", district: "Pune" },
+        { id: "D004", name: "Priya Singh", bloodGroup: "A+", height: "5'4\"", weight: "58kg", skinColor: "Fair", eyeColor: "Brown", religion: "Hindu", education: "Graduate",profession: "CA", district: "Delhi" },
+        { id: "D005", name: "Neha Gupta", bloodGroup: "O+", height: "5'5\"", weight: "60kg", skinColor: "Wheatish", eyeColor: "Black", religion: "Hindu", education: "Post Graduate",profession: "CA", district: "Bangalore" },
+        { id: "D006", name: "Rahul Verma", bloodGroup: "AB+", height: "5'8\"", weight: "70kg", skinColor: "Fair", eyeColor: "Blue", religion: "Hindu", education: "Graduate",profession: "CA", district: "Hyderabad" },
+        { id: "D007", name: "Sanjay Joshi", bloodGroup: "O+", height: "5'7\"", weight: "68kg", skinColor: "Wheatish", eyeColor: "Brown", religion: "Hindu", education: "Diploma",profession: "CA", district: "Pune" },
+        { id: "D008", name: "Anita Desai", bloodGroup: "A+", height: "5'3\"", weight: "55kg", skinColor: "Fair", eyeColor: "Black", religion: "Hindu", education: "Post Graduate",profession: "CA", district: "Mumbai" },
+        { id: "D009", name: "Vikram Malhotra", bloodGroup: "B+", height: "5'10\"", weight: "75kg", skinColor: "Wheatish", eyeColor: "Brown", religion: "Hindu", education: "Graduate",profession: "CA", district: "Delhi" },
+        { id: "D010", name: "Sunita Reddy", bloodGroup: "O+", height: "5'2\"", weight: "52kg", skinColor: "Fair", eyeColor: "Brown", religion: "Hindu", education: "Graduate",profession: "CA", district: "Hyderabad" }
     ];
 };
 
