@@ -29,6 +29,8 @@ function EditDonar() {
         religion: "",
         bloodGroup: "",
         skinColor:"",
+        education:"",
+        profession:"",
 
         // Medical Information
         bsl: "",
@@ -103,6 +105,8 @@ function EditDonar() {
                 region: d.religion || "",
                 bloodGroup: d.bloodGroup || "",
                 skinColor:d.skinColor || "",
+                education:d.education||"",
+                profession:d.profession||"",
 
                 // Medical
                 bsl: d.bsl || "",
@@ -208,6 +212,8 @@ function EditDonar() {
                 religion: formData.religion,
                 booldGroup: formData.bloodGroup,
                 skinColor:formData.skinColor,
+                education:formData.education,
+                profession:formData.profession,
                 bsl: formData.bsl,
                 hiv: formData.hiv,
                 hbsag: formData.hbsag,
@@ -404,6 +410,23 @@ function EditDonar() {
                 type="text"
                 error={errors.skinColor}
             />
+              <FormInput
+                label="Education"
+                name="education"
+                value={formData.education}
+                onChange={handleChange}
+                type="text"
+                error={errors.education}
+            />
+              <FormInput
+                label="Profession"
+                name="profession"
+                value={formData.profession}
+                onChange={handleChange}
+                type="text"
+                error={errors.profession}
+            />
+
 
             <FormInput
                 label="Religion"
