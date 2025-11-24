@@ -4,7 +4,7 @@ import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
 import toast from "react-hot-toast";
 import html2pdf from "html2pdf.js";
-
+import { hasPermission } from "../../BaseComponet/permissions";
 
 /**
  * EditPayment
@@ -29,7 +29,7 @@ function EditPayment() {
     const [paymentData, setPaymentData] = useState(null); // from getPaymentById
     const [proforma, setProforma] = useState(null); // from getProformaInvoiceById
     const [errors, setErrors] = useState({});
-
+    const canEdit = hasPermission("payment", "Edit");
     const [form, setForm] = useState({
         paymentId: "",
         adminId: "",
@@ -258,37 +258,37 @@ function EditPayment() {
     };
 
 
-  const handlePrintReceipt = () => {
-    const element = document.getElementById("receiptPreview");
+    const handlePrintReceipt = () => {
+        const element = document.getElementById("receiptPreview");
 
-    if (!element) {
-        toast.error("Receipt section not found!");
-        return;
-    }
-
-    const opt = {
-        margin: 5,
-        filename: `Payment_Receipt_${form.transactionId || "receipt"}.pdf`,
-        image: {
-            type: "jpeg",
-            quality: 1,
-        },
-        html2canvas: {
-            scale: 4,
-            useCORS: true,
-            letterRendering: true,
-            dpi: 300,
-        },
-        jsPDF: {
-            unit: "mm",
-            format: "a4",
-            orientation: "portrait",
-            precision: 16,
+        if (!element) {
+            toast.error("Receipt section not found!");
+            return;
         }
-    };
 
-    html2pdf().set(opt).from(element).save();
-};
+        const opt = {
+            margin: 5,
+            filename: `Payment_Receipt_${form.transactionId || "receipt"}.pdf`,
+            image: {
+                type: "jpeg",
+                quality: 1,
+            },
+            html2canvas: {
+                scale: 4,
+                useCORS: true,
+                letterRendering: true,
+                dpi: 300,
+            },
+            jsPDF: {
+                unit: "mm",
+                format: "a4",
+                orientation: "portrait",
+                precision: 16,
+            }
+        };
+
+        html2pdf().set(opt).from(element).save();
+    };
 
 
     const handleCancel = () => {
@@ -341,13 +341,16 @@ function EditPayment() {
                             >
                                 Print Receipt
                             </button>
-                            <button
-                                onClick={handleSubmit}
-                                disabled={loading}
-                                className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-60"
-                            >
-                                {loading ? "Updating..." : "Update Payment"}
-                            </button>
+                            {hasPermission("payment", "Edit") && (
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={loading}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-60"
+                                >
+                                    {loading ? "Updating..." : "Update Payment"}
+                                </button>
+
+                            )}
                         </div>
                     </div>
 
@@ -356,88 +359,89 @@ function EditPayment() {
                         {/* LEFT: form (col-span 5) */}
                         <div className="lg:col-span-5">
                             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 h-full">
-                                <form id="editPaymentForm" onSubmit={handleSubmit} className="space-y-6">
-                                    {/* Amount Received */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">* Amount Received</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            name="amount"
-                                            value={form.amount}
-                                            onChange={handleChange}
-                                            className={`mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${errors.amount ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-200"
-                                                }`}
-                                            placeholder="0.00"
-                                        />
-                                        {errors.amount && <p className="text-xs text-red-600 mt-1">{errors.amount}</p>}
+                                <div className={!canEdit ? "pointer-events-none opacity-60" : ""}>
+                                    <form id="editPaymentForm" onSubmit={handleSubmit} className="space-y-6">
+                                        {/* Amount Received */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">* Amount Received</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                name="amount"
+                                                value={form.amount}
+                                                onChange={handleChange}
+                                                className={`mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${errors.amount ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-200"
+                                                    }`}
+                                                placeholder="0.00"
+                                            />
+                                            {errors.amount && <p className="text-xs text-red-600 mt-1">{errors.amount}</p>}
 
-                                        {/* show available & original/proforma numbers */}
-                                        <div className="mt-2 text-xs text-gray-600">
-                                            <div>Invoice Total: <strong>₹{formatCurrency(derived.totalAmount)}</strong></div>
+                                            {/* show available & original/proforma numbers */}
+                                            <div className="mt-2 text-xs text-gray-600">
+                                                <div>Invoice Total: <strong>₹{formatCurrency(derived.totalAmount)}</strong></div>
 
-                                            <div>Original Payment Amount: <strong>₹{formatCurrency(derived.origPayment)}</strong></div>
-                                            <div>Available to set: <strong>₹{formatCurrency(derived.allowedMax)}</strong></div>
+                                                <div>Original Payment Amount: <strong>₹{formatCurrency(derived.origPayment)}</strong></div>
+                                                <div>Available to set: <strong>₹{formatCurrency(derived.allowedMax)}</strong></div>
 
 
+                                            </div>
                                         </div>
-                                    </div>
 
 
 
 
-                                    {/* Payment Date */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">* Payment Date</label>
-                                        <input
-                                            type="date"
-                                            name="paymentDate"
-                                            value={form.paymentDate}
-                                            onChange={handleChange}
-                                            className={`mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${errors.paymentDate ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-200"
-                                                }`}
-                                        />
-                                        {errors.paymentDate && <p className="text-xs text-red-600 mt-1">{errors.paymentDate}</p>}
-                                    </div>
+                                        {/* Payment Date */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">* Payment Date</label>
+                                            <input
+                                                type="date"
+                                                name="paymentDate"
+                                                value={form.paymentDate}
+                                                onChange={handleChange}
+                                                className={`mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${errors.paymentDate ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-200"
+                                                    }`}
+                                            />
+                                            {errors.paymentDate && <p className="text-xs text-red-600 mt-1">{errors.paymentDate}</p>}
+                                        </div>
 
-                                    {/* Payment Mode */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">* Payment Mode</label>
-                                        <select
-                                            name="paymentMode"
-                                            value={form.paymentMode || ""}
-                                            onChange={handleChange}
-                                            className={`mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${errors.paymentMode ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-200"
-                                                }`}
-                                        >
-                                            <option value="">Select Mode</option>
-                                            <option value="Cash">Cash</option>
-                                            <option value="Bank">Bank Details</option>
-                                            <option value="UPI">UPI</option>
-                                            <option value="Cheque">Cheque</option>
-                                        </select>
-                                        {errors.paymentMode && <p className="text-xs text-red-600 mt-1">{errors.paymentMode}</p>}
-                                    </div>
-
-
-                                    {/* Transaction ID */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">Transaction ID</label>
-                                        <input
-                                            type="text"
-                                            name="transactionId"
-                                            value={form.transactionId}
-                                            onChange={handleChange}
-                                            className={`mt-1 block w-full px-3 py-2 border rounded-md ${errors.transactionId ? "border-red-500" : "border-gray-300"
-                                                }`}
-                                            placeholder="Enter transaction id"
-                                        />
-                                        {errors.transactionId && <p className="text-xs text-red-600 mt-1">{errors.transactionId}</p>}
-                                    </div>
+                                        {/* Payment Mode */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">* Payment Mode</label>
+                                            <select
+                                                name="paymentMode"
+                                                value={form.paymentMode || ""}
+                                                onChange={handleChange}
+                                                className={`mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${errors.paymentMode ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-200"
+                                                    }`}
+                                            >
+                                                <option value="">Select Mode</option>
+                                                <option value="Cash">Cash</option>
+                                                <option value="Bank">Bank Details</option>
+                                                <option value="UPI">UPI</option>
+                                                <option value="Cheque">Cheque</option>
+                                            </select>
+                                            {errors.paymentMode && <p className="text-xs text-red-600 mt-1">{errors.paymentMode}</p>}
+                                        </div>
 
 
-                                    {/* Buttons */}
-                                    {/* <div className="flex justify-end gap-2">
+                                        {/* Transaction ID */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Transaction ID</label>
+                                            <input
+                                                type="text"
+                                                name="transactionId"
+                                                value={form.transactionId}
+                                                onChange={handleChange}
+                                                className={`mt-1 block w-full px-3 py-2 border rounded-md ${errors.transactionId ? "border-red-500" : "border-gray-300"
+                                                    }`}
+                                                placeholder="Enter transaction id"
+                                            />
+                                            {errors.transactionId && <p className="text-xs text-red-600 mt-1">{errors.transactionId}</p>}
+                                        </div>
+
+
+                                        {/* Buttons */}
+                                        {/* <div className="flex justify-end gap-2">
                                   
                                         <button
                                             type="submit"
@@ -447,7 +451,8 @@ function EditPayment() {
                                             {loading ? "Updating..." : "Update Payment"}
                                         </button>
                                     </div> */}
-                                </form>
+                                    </form>
+                                </div>
                             </div>
                         </div>
 

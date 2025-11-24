@@ -95,6 +95,8 @@ function Login({ onSwitchToRegister, onLogin }) {
             role: data.role,
             expiryDate: data.expiryDate,
             loginUserName: data.loginUserName,
+            employeeId: data.employeeId,
+            adminId: data.adminId,
           })
         );
 
@@ -110,19 +112,19 @@ function Login({ onSwitchToRegister, onLogin }) {
           localStorage.setItem("rememberMe", "true");
         }
 
-          // Fetch moduleAccess if employee
-  if (data.role === "ROLE_EMPLOYEE") {
-    try {
-      const empResponse = await axiosInstance.get("getEmployeeInfo");
-      const empInfo = empResponse.data;
+        // Fetch moduleAccess if employee
+        if (data.role === "ROLE_EMPLOYEE") {
+          try {
+            const empResponse = await axiosInstance.get("getEmployeeInfo");
+            const empInfo = empResponse.data;
 
-      if (empInfo?.moduleAccess) {
-        localStorage.setItem("moduleAccess", JSON.stringify(empInfo.moduleAccess));
-      }
-    } catch (err) {
-      console.error("Failed to fetch employee info:", err);
-    }
-  }
+            if (empInfo?.moduleAccess) {
+              localStorage.setItem("moduleAccess", JSON.stringify(empInfo.moduleAccess));
+            }
+          } catch (err) {
+            console.error("Failed to fetch employee info:", err);
+          }
+        }
 
         // Call onLogin with the correct data structure
         if (onLogin) {
@@ -343,11 +345,10 @@ function Login({ onSwitchToRegister, onLogin }) {
                     type="email"
                     value={formData.username}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 ${
-                      errors.username
-                        ? "border-red-300 bg-red-50"
-                        : "border-gray-300 hover:border-blue-300"
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 ${errors.username
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-300 hover:border-blue-300"
+                      }`}
                     placeholder="Enter your email"
                   />
                   {errors.username && (
@@ -382,11 +383,10 @@ function Login({ onSwitchToRegister, onLogin }) {
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 pr-10 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 ${
-                        errors.password
-                          ? "border-red-300 bg-red-50"
-                          : "border-gray-300 hover:border-blue-300"
-                      }`}
+                      className={`w-full px-4 py-3 pr-10 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 ${errors.password
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300 hover:border-blue-300"
+                        }`}
                       placeholder="Enter your password"
                     />
                     <button

@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import ProposalPDF from "./ProposalPDF";
 import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
 import "./ProposalList.css";
-
+import { hasPermission } from "../../BaseComponet/permissions";
 import ProposalInfoModal from "./ProposalInfoModal";
 import {
   formatCurrency,
@@ -205,25 +205,27 @@ function ProposalList() {
               </div>
 
               {/* Create Button */}
-              <button
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
-                onClick={handleCreateProposal}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              {hasPermission("proposal", "Create") && (
+                <button
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
+                  onClick={handleCreateProposal}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Create Proposal
-              </button>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Create Proposal
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -259,164 +261,163 @@ function ProposalList() {
             <tbody className="bg-white divide-y divide-gray-200">
               {listLoading
                 ? [...Array(pageSize)].map((_, index) => (
-                    <SkeletonRow key={index} />
-                  ))
+                  <SkeletonRow key={index} />
+                ))
                 : proposals.map((proposal) => (
-                    <tr
-                      key={proposal.id}
-                      className="hover:bg-gray-50 transition-colors duration-150 group cursor-pointer"
-                      onClick={() => handleOpenInfoModal(proposal)}
+                  <tr
+                    key={proposal.id}
+                    className="hover:bg-gray-50 transition-colors duration-150 group cursor-pointer"
+                    onClick={() => handleOpenInfoModal(proposal)}
+                  >
+                    <td
+                      className="px-4 py-1 truncate text-sm text-gray-900 font-bold relative"
+                      title={formatProposalNumber(proposal.proposalNumber)}
                     >
-                      <td
-                        className="px-4 py-1 truncate text-sm text-gray-900 font-bold relative"
-                        title={formatProposalNumber(proposal.proposalNumber)}
-                      >
-                        {formatProposalNumber(proposal.proposalNumber)}
+                      {formatProposalNumber(proposal.proposalNumber)}
 
-                        <div className="flex items-center gap-3 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          {/* Edit Button */}
-                          <button
-                            title="Edit"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEdit(proposal.proposalId);
-                            }}
-                            className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
+                      <div className="flex items-center gap-3 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        {/* Edit Button */}
+                        <button
+                          title="Edit"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(proposal.proposalId);
+                          }}
+                          className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
+                        >
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                           >
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                            Edit
-                          </button>
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                          Edit
+                        </button>
 
-                          {/* Preview Button */}
-                          <button
-                            title="Preview"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenInfoModal(proposal);
-                            }}
-                            className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
+                        {/* Preview Button */}
+                        <button
+                          title="Preview"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenInfoModal(proposal);
+                          }}
+                          className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
+                        >
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                           >
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                              />
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                              />
-                            </svg>
-                            Preview
-                          </button>
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                          </svg>
+                          Preview
+                        </button>
 
-                          {/* PDF Button */}
-                          <button
-                            title="View PDF"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenPdfPreview(proposal.proposalId);
-                            }}
-                            className="text-gray-500 hover:text-red-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
+                        {/* PDF Button */}
+                        <button
+                          title="View PDF"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenPdfPreview(proposal.proposalId);
+                          }}
+                          className="text-gray-500 hover:text-red-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
+                        >
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
                           >
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                              ></path>
-                            </svg>
-                            PDF
-                          </button>
-                        </div>
-                      </td>
-                      <td
-                        className="px-4 py-4 truncate text-sm text-gray-900"
-                        title={proposal.subject}
-                      >
-                        {proposal.subject}
-                      </td>
-                      <td
-                        className="px-4 py-4 truncate text-sm text-gray-900"
-                        title={proposal.companyName}
-                      >
-                        {proposal.companyName}
-                      </td>
-                      <td
-                        className="px-4 py-4 truncate text-sm text-gray-900 "
-                        title={formatCurrency(
-                          proposal.totalAmmount,
-                          proposal.currencyType
-                        )}
-                      >
-                        {formatCurrency(
-                          proposal.totalAmmount,
-                          proposal.currencyType
-                        )}
-                      </td>
-                      <td
-                        className="px-4 py-4 truncate text-sm text-gray-900 "
-                        title={proposal.proposalDate}
-                      >
-                        {proposal.proposalDate}
-                      </td>
-                      <td
-                        className="px-4 py-4 truncate text-sm text-gray-900 "
-                        title={proposal.dueDate}
-                      >
-                        {proposal.dueDate}
-                      </td>
-                      <td
-                        className="px-4 py-4 text-sm text-gray-900"
-                        title={proposal.status}
-                      >
-                        <span
-                          className={`inline-block w-24 truncate px-3 py-1 rounded text-xs text-center font-semibold uppercase tracking-wide ${
-                            proposal.status === "Accepted"
-                              ? "bg-green-100 text-green-600"
-                              : proposal.status === "Declined"
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            ></path>
+                          </svg>
+                          PDF
+                        </button>
+                      </div>
+                    </td>
+                    <td
+                      className="px-4 py-4 truncate text-sm text-gray-900"
+                      title={proposal.subject}
+                    >
+                      {proposal.subject}
+                    </td>
+                    <td
+                      className="px-4 py-4 truncate text-sm text-gray-900"
+                      title={proposal.companyName}
+                    >
+                      {proposal.companyName}
+                    </td>
+                    <td
+                      className="px-4 py-4 truncate text-sm text-gray-900 "
+                      title={formatCurrency(
+                        proposal.totalAmmount,
+                        proposal.currencyType
+                      )}
+                    >
+                      {formatCurrency(
+                        proposal.totalAmmount,
+                        proposal.currencyType
+                      )}
+                    </td>
+                    <td
+                      className="px-4 py-4 truncate text-sm text-gray-900 "
+                      title={proposal.proposalDate}
+                    >
+                      {proposal.proposalDate}
+                    </td>
+                    <td
+                      className="px-4 py-4 truncate text-sm text-gray-900 "
+                      title={proposal.dueDate}
+                    >
+                      {proposal.dueDate}
+                    </td>
+                    <td
+                      className="px-4 py-4 text-sm text-gray-900"
+                      title={proposal.status}
+                    >
+                      <span
+                        className={`inline-block w-24 truncate px-3 py-1 rounded text-xs text-center font-semibold uppercase tracking-wide ${proposal.status === "Accepted"
+                            ? "bg-green-100 text-green-600"
+                            : proposal.status === "Declined"
                               ? "bg-red-100 text-red-600"
                               : proposal.status === "Sent" ||
                                 proposal.status === "Open"
-                              ? "bg-blue-100 text-blue-600"
-                              : proposal.status === "Revised"
-                              ? "bg-yellow-100 text-yellow-600"
-                              : "bg-gray-100 text-gray-600"
+                                ? "bg-blue-100 text-blue-600"
+                                : proposal.status === "Revised"
+                                  ? "bg-yellow-100 text-yellow-600"
+                                  : "bg-gray-100 text-gray-600"
                           }`}
-                          title={proposal.status?.toUpperCase()}
-                        >
-                          {proposal.status?.toUpperCase()}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                        title={proposal.status?.toUpperCase()}
+                      >
+                        {proposal.status?.toUpperCase()}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
 
@@ -473,8 +474,8 @@ function ProposalList() {
               <h3>
                 {selectedProposalData
                   ? formatProposalNumber(
-                      selectedProposalData.proposalInfo.proposalNumber
-                    )
+                    selectedProposalData.proposalInfo.proposalNumber
+                  )
                   : "Loading..."}
               </h3>
               <div style={{ display: "flex", gap: "10px" }}>
