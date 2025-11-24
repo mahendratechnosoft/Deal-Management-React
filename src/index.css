@@ -40,3 +40,26 @@
 .setbg-white{
   background: white !important;
 }
+
+
+/* Disable normal inputs */
+.disabled-form input,
+.disabled-form textarea,
+.disabled-form select,
+.disabled-form button {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Disable React Select completely */
+.disabled-form .css-b62m3t-container,
+.disabled-form .css-b62m3t-container * {
+  pointer-events: none !important;
+  opacity: 0.9 !important;
+}
+
+/* Keep allow-click elements usable */
+.disabled-form .allow-click {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+}
