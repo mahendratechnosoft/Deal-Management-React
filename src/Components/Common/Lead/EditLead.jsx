@@ -4,6 +4,8 @@ import { Country, State, City } from "country-state-city";
 import { useLayout } from "../../Layout/useLayout";
 import { toast } from "react-hot-toast";
 import axiosInstance from "../../BaseComponet/axiosInstance";
+
+import { hasPermission } from "../../BaseComponet/permissions";
 import {
   FormInput,
   FormPhoneInputFloating,
@@ -18,7 +20,7 @@ function EditLead() {
   const [isLoading, setIsLoading] = useState(true);
   const { LayoutComponent, role } = useLayout();
   const [employeeId, setEmployeeId] = useState("");
-
+  const canEdit = hasPermission("lead", "Edit");
   const [formData, setFormData] = useState({
     companyName: "",
     assignTo: "",
@@ -574,6 +576,7 @@ function EditLead() {
               >
                 Cancel
               </button>
+                {hasPermission("lead", "Edit") && (
               <button
                 onClick={handleSubmit}
                 disabled={loading}
@@ -588,247 +591,251 @@ function EditLead() {
                   'Update Lead'
                 )}
               </button>
+                )}
             </div>
           </div>
         </div>
 
         {/* Ultra Compact Form */}
         <div className="p-4">
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left Column - Basic Information */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Lead Details</h3>
-
-                <div className="space-y-4">
-                  {/* Client Name & Company Name */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <FormInput
-                      label="Client Name"
-                      name="clientName"
-                      value={formData.clientName}
-                      onChange={handleChange}
-                      required={true}
-                      error={errors.clientName}
-                      background="white"
-                    />
-
-                    <FormInput
-                      label="Company Name"
-                      name="companyName"
-                      value={formData.companyName}
-                      onChange={handleChange}
-                      required={true}
-                      error={errors.companyName}
-                      background="white"
-                    />
-                  </div>
-
-                  {/* Phone Numbers */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <FormPhoneInputFloating
-                      label="Primary Number"
-                      name="mobileNumber"
-                      value={formData.mobileNumber}
-                      onChange={(phone) => handlePhoneChange('mobileNumber', phone)}
-                      required={true}
-                      error={errors.mobileNumber}
-                      background="white"
-                    />
-
-                    <FormPhoneInputFloating
-                      label="Secondary Number"
-                      name="phoneNumber"
-                      value={formData.phoneNumber}
-                      onChange={(phone) => handlePhoneChange('phoneNumber', phone)}
-                      error={errors.phoneNumber}
-                      background="white"
-                    />
-                  </div>
-
-                  {/* Email & Website */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <FormInput
-                      label="Email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      type="email"
-                      error={errors.email}
-                      background="white"
-                    />
-
-                    <FormInput
-                      label="Website"
-                      name="website"
-                      value={formData.website}
-                      onChange={handleChange}
-                      background="white"
-                    />
-                  </div>
-
-                  {/* Revenue & Industry */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <FormSelect
-                      label="Industry"
-                      name="industry"
-                      className="setbg-white"
-                      value={[
-                        { value: "Technology", label: "Technology" },
-                        { value: "Healthcare", label: "Healthcare" },
-                        { value: "Finance", label: "Finance" },
-                        { value: "Education", label: "Education" },
-                        { value: "Manufacturing", label: "Manufacturing" },
-                        { value: "Retail", label: "Retail" },
-                        { value: "Real Estate", label: "Real Estate" },
-                        { value: "Other", label: "Other" }
-                      ].find(opt => opt.value === formData.industry)}
-                      onChange={(selectedOption) => handleSelectChange(selectedOption, { name: "industry" })}
-                      options={[
-                        { value: "Technology", label: "Technology" },
-                        { value: "Healthcare", label: "Healthcare" },
-                        { value: "Finance", label: "Finance" },
-                        { value: "Education", label: "Education" },
-                        { value: "Manufacturing", label: "Manufacturing" },
-                        { value: "Retail", label: "Retail" },
-                        { value: "Real Estate", label: "Real Estate" },
-                        { value: "Other", label: "Other" }
-                      ]}
-                      background="white"
-                    />
-
-                    <FormSelect
-                      label="Source"
-                      name="source"
-                      className="setbg-white"
-                      value={[
-                        { value: "Instagram", label: "Instagram" },
-                        { value: "Website", label: "Website" },
-                        { value: "Referral", label: "Referral" },
-                        { value: "Social Media", label: "Social Media" },
-                        { value: "Trade Show", label: "Trade Show" },
-                        { value: "Email Campaign", label: "Email Campaign" },
-                        { value: "Website Form", label: "Website Form" }
-                      ].find(opt => opt.value === formData.source)}
-                      onChange={(selectedOption) => handleSelectChange(selectedOption, { name: "source" })}
-                      options={[
-                        { value: "Instagram", label: "Instagram" },
-                        { value: "Website", label: "Website" },
-                        { value: "Referral", label: "Referral" },
-                        { value: "Social Media", label: "Social Media" },
-                        { value: "Trade Show", label: "Trade Show" },
-                        { value: "Email Campaign", label: "Email Campaign" },
-                        { value: "Website Form", label: "Website Form" }
-                      ]}
-                      background="white"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-
-                    <FormInput
-                      label="Follow-Up Date & Time"
-                      name="followUp"
-                      value={formData.followUp}
-                      onChange={handleChange}
-                      type="datetime-local"
-                      background="white"
-                    />
-
-
-                  </div>
-                </div>
-
-
-
-              <div className="grid grid-cols-1 gap-2 mt-4">
-              
-                  <FormTextarea
-                    label="Description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={2}
-                    background="white"
-                  />
-
-                </div>
-              </div>
-
-              {/* Right Column - Lead Details & Address */}
-              <div className="space-y-4">
-                {/* Lead Details */}
-
-
-                {/* Address Information */}
+          <div className={!canEdit ? "pointer-events-none opacity-60" : ""}>
+            <form onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left Column - Basic Information */}
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Address Information</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Lead Details</h3>
 
                   <div className="space-y-4">
-                    <FormInput
-                      label="Street Address"
-                      name="street"
-                      value={formData.street}
-                      onChange={handleChange}
-                      background="white"
-                    />
-
+                    {/* Client Name & Company Name */}
                     <div className="grid grid-cols-2 gap-2">
-                      <FormSelect
-                        label="Country"
-                        name="country"
-                        className="setbg-white"
-                        value={dropdownData.countries.find(opt => opt.value === formData.country)}
-                        onChange={handleCountryChange}
-                        options={dropdownData.countries}
-                        isSearchable
-                        error={errors.country}
-                        background="white"
-                      />
-
-                      <FormSelect
-                        label="State"
-                        name="state"
-                        className="setbg-white"
-                        value={dropdownData.states.find(opt => opt.value === formData.state)}
-                        onChange={handleStateChange}
-                        options={dropdownData.states}
-                        isSearchable
-                        isDisabled={!formData.country}
-                        error={errors.state}
-                        background="white"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <FormSelect
-                        label="City"
-                        name="city"
-                        className="setbg-white"
-                        value={dropdownData.cities.find(opt => opt.value === formData.city)}
-                        onChange={handleCityChange}
-                        options={dropdownData.cities}
-                        isSearchable
-                        isDisabled={!formData.state}
-                        error={errors.city}
+                      <FormInput
+                        label="Client Name"
+                        name="clientName"
+                        value={formData.clientName}
+                        onChange={handleChange}
+                        required={true}
+                        error={errors.clientName}
                         background="white"
                       />
 
                       <FormInput
-                        label="ZIP Code"
-                        name="zipCode"
-                        value={formData.zipCode}
+                        label="Company Name"
+                        name="companyName"
+                        value={formData.companyName}
+                        onChange={handleChange}
+                        required={true}
+                        error={errors.companyName}
+                        background="white"
+                      />
+                    </div>
+
+                    {/* Phone Numbers */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <FormPhoneInputFloating
+                        label="Primary Number"
+                        name="mobileNumber"
+                        value={formData.mobileNumber}
+                        onChange={(phone) => handlePhoneChange('mobileNumber', phone)}
+                        required={true}
+                        error={errors.mobileNumber}
+                        background="white"
+                      />
+
+                      <FormPhoneInputFloating
+                        label="Secondary Number"
+                        name="phoneNumber"
+                        value={formData.phoneNumber}
+                        onChange={(phone) => handlePhoneChange('phoneNumber', phone)}
+                        error={errors.phoneNumber}
+                        background="white"
+                      />
+                    </div>
+
+                    {/* Email & Website */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <FormInput
+                        label="Email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        type="email"
+                        error={errors.email}
+                        background="white"
+                      />
+
+                      <FormInput
+                        label="Website"
+                        name="website"
+                        value={formData.website}
                         onChange={handleChange}
                         background="white"
                       />
                     </div>
+
+                    {/* Revenue & Industry */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <FormSelect
+                        label="Industry"
+                        name="industry"
+                        className="setbg-white"
+                        value={[
+                          { value: "Technology", label: "Technology" },
+                          { value: "Healthcare", label: "Healthcare" },
+                          { value: "Finance", label: "Finance" },
+                          { value: "Education", label: "Education" },
+                          { value: "Manufacturing", label: "Manufacturing" },
+                          { value: "Retail", label: "Retail" },
+                          { value: "Real Estate", label: "Real Estate" },
+                          { value: "Other", label: "Other" }
+                        ].find(opt => opt.value === formData.industry)}
+                        onChange={(selectedOption) => handleSelectChange(selectedOption, { name: "industry" })}
+                        options={[
+                          { value: "Technology", label: "Technology" },
+                          { value: "Healthcare", label: "Healthcare" },
+                          { value: "Finance", label: "Finance" },
+                          { value: "Education", label: "Education" },
+                          { value: "Manufacturing", label: "Manufacturing" },
+                          { value: "Retail", label: "Retail" },
+                          { value: "Real Estate", label: "Real Estate" },
+                          { value: "Other", label: "Other" }
+                        ]}
+                        background="white"
+                      />
+
+                      <FormSelect
+                        label="Source"
+                        name="source"
+                        className="setbg-white"
+                        value={[
+                          { value: "Instagram", label: "Instagram" },
+                          { value: "Website", label: "Website" },
+                          { value: "Referral", label: "Referral" },
+                          { value: "Social Media", label: "Social Media" },
+                          { value: "Trade Show", label: "Trade Show" },
+                          { value: "Email Campaign", label: "Email Campaign" },
+                          { value: "Website Form", label: "Website Form" }
+                        ].find(opt => opt.value === formData.source)}
+                        onChange={(selectedOption) => handleSelectChange(selectedOption, { name: "source" })}
+                        options={[
+                          { value: "Instagram", label: "Instagram" },
+                          { value: "Website", label: "Website" },
+                          { value: "Referral", label: "Referral" },
+                          { value: "Social Media", label: "Social Media" },
+                          { value: "Trade Show", label: "Trade Show" },
+                          { value: "Email Campaign", label: "Email Campaign" },
+                          { value: "Website Form", label: "Website Form" }
+                        ]}
+                        background="white"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+
+                      <FormInput
+                        label="Follow-Up Date & Time"
+                        name="followUp"
+                        value={formData.followUp}
+                        onChange={handleChange}
+                        type="datetime-local"
+                        background="white"
+                      />
+
+
+                    </div>
+                  </div>
+
+
+
+                  <div className="grid grid-cols-1 gap-2 mt-4">
+
+                    <FormTextarea
+                      label="Description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={2}
+                      background="white"
+                    />
+
                   </div>
                 </div>
 
-         
+                {/* Right Column - Lead Details & Address */}
+                <div className="space-y-4">
+                  {/* Lead Details */}
+
+
+                  {/* Address Information */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Address Information</h3>
+
+                    <div className="space-y-4">
+                      <FormInput
+                        label="Street Address"
+                        name="street"
+                        value={formData.street}
+                        onChange={handleChange}
+                        background="white"
+                      />
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <FormSelect
+                          label="Country"
+                          name="country"
+                          className="setbg-white"
+                          value={dropdownData.countries.find(opt => opt.value === formData.country)}
+                          onChange={handleCountryChange}
+                          options={dropdownData.countries}
+                          isSearchable
+                          error={errors.country}
+                          background="white"
+                        />
+
+                        <FormSelect
+                          label="State"
+                          name="state"
+                          className="setbg-white"
+                          value={dropdownData.states.find(opt => opt.value === formData.state)}
+                          onChange={handleStateChange}
+                          options={dropdownData.states}
+                          isSearchable
+                          isDisabled={!formData.country}
+                          error={errors.state}
+                          background="white"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <FormSelect
+                          label="City"
+                          name="city"
+                          className="setbg-white"
+                          value={dropdownData.cities.find(opt => opt.value === formData.city)}
+                          onChange={handleCityChange}
+                          options={dropdownData.cities}
+                          isSearchable
+                          isDisabled={!formData.state}
+                          error={errors.city}
+                          background="white"
+                        />
+
+                        <FormInput
+                          label="ZIP Code"
+                          name="zipCode"
+                          value={formData.zipCode}
+                          onChange={handleChange}
+                          background="white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+
+                </div>
               </div>
-            </div>
-          </form>
+            </form>
+
+          </div>
         </div>
       </div>
     </LayoutComponent>

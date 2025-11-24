@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import ContactByCustomer from "./ContactByCustomer";
 import Pagination from "../pagination";
 import CreateCustomerModal from "./CreateCustomerModal";
-
+import { hasPermission } from "../../BaseComponet/permissions";
 function CustomerList() {
   const navigate = useNavigate();
   const { LayoutComponent, role } = useLayout();
@@ -327,27 +327,28 @@ function CustomerList() {
                   </select>
                 </div> */}
               </div>
+              {hasPermission("customer", "Create") && (
 
-              {/* Create Button */}
-              <button
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
-                onClick={handleCreateCustomer}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <button
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
+                  onClick={handleCreateCustomer}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Create Customer
-              </button>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Create Customer
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -633,7 +634,7 @@ function CustomerList() {
                           <a
                             href={
                               customer.website.startsWith("http://") ||
-                              customer.website.startsWith("https://")
+                                customer.website.startsWith("https://")
                                 ? customer.website
                                 : `https://${customer.website}`
                             }
