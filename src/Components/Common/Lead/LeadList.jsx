@@ -5,7 +5,7 @@ import { useLayout } from "../../Layout/useLayout";
 import toast from "react-hot-toast";
 import PreviewLead from "./PreviewLead";
 import Select from "react-select";
-import { components } from "react-select";
+
 import CreateLeadModal from "./CreateLeadModal";
 import ImportLeadModal from "./ImportLeadModal";
 import { components } from "react-select";
