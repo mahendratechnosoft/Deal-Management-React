@@ -623,7 +623,7 @@ function CreateProposal() {
       proposalInfo: {
         ...proposalInfo,
         proposalNumber: parseInt(proposalInfo.proposalNumber),
-        discount: Number(total),
+        discount: Number(proposalInfo.discount),
         totalAmmount: Number(proposalInfo.totalAmmount),
       },
       proposalContent: proposalContent.map((item) => ({
