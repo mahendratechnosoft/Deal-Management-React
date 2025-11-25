@@ -9,7 +9,7 @@ import CreateSample from "./CreateSample";
 
 function SampleList() {
     const navigate = useNavigate();
-    const { donorId } = useParams();
+    const { sampleReportId } = useParams();
     const { uin } = useParams();
     const { LayoutComponent, role } = useLayout();
     const [searchTerm, setSearchTerm] = useState("");
@@ -50,8 +50,8 @@ function SampleList() {
     // Fetch samples from API
     const fetchSamples = useCallback(
         async (page = 0, search = "") => {
-            if (!donorId) {
-                setError("Donor ID is required");
+            if (!sampleReportId) {
+                setError(" Report ID is required");
                 setLoading(false);
                 return;
             }
@@ -61,7 +61,7 @@ function SampleList() {
 
             try {
                 const response = await axiosInstance.get(
-                    `getAllDonarSampleList/${page}/${pageSize}/${donorId}?search=${search}`
+                    `getAllDonarSampleList/${page}/${pageSize}/${sampleReportId}?search=${search}`
                 );
 
                 if (response.data && response.data.donarSampleList) {
@@ -82,7 +82,7 @@ function SampleList() {
                 setLoading(false);
             }
         },
-        [donorId, pageSize]
+        [sampleReportId, pageSize]
     );
 
     // Single useEffect for data fetching
@@ -303,7 +303,7 @@ function SampleList() {
                                         <tr
                                             key={sample.donorSampleId}
                                             className="hover:bg-gray-50 transition-colors duration-150 group cursor-pointer"
-                                            onClick={() => handleEdit(sample.donorSampleId)}
+                                          //  onClick={() => handleEdit(sample.donorSampleId)}
                                         >
                                             <td className="px-4 py-3 whitespace-nowrap text-sm">
                                                 {sample.tankNo || "N/A"}
@@ -329,7 +329,7 @@ function SampleList() {
 
                                             <td className="px-4 py-3 whitespace-nowrap text-sm">
                                                 <div className="flex gap-2">
-                                                    <button 
+                                                    {/* <button 
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             handleEdit(sample.donorSampleId);
@@ -337,7 +337,7 @@ function SampleList() {
                                                         className="text-blue-600 hover:text-blue-800 font-medium"
                                                     >
                                                         Open Report
-                                                    </button>
+                                                    </button> */}
                                                     <button 
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -424,7 +424,7 @@ function SampleList() {
                     isOpen={openModal}
                     onClose={() => setOpenModal(false)}
                     onSuccess={handleCreateSuccess}
-                    donorId={donorId}
+                    sampleReportId={sampleReportId}
                 />
             </div>
         </LayoutComponent>
