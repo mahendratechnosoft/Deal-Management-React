@@ -780,7 +780,7 @@ function EditProposal() {
       console.error("Failed to update proposal:", error);
       toast.error(
         error.response?.data?.message ||
-        "Failed to update proposal. Please check the form."
+          "Failed to update proposal. Please check the form."
       );
       setLoading(false);
     }
@@ -867,602 +867,605 @@ function EditProposal() {
         {pageLoading ? (
           <FormSkeleton />
         ) : (
-          <div className="h-[72vh] overflow-hidden ">
-            <div className={!canEdit ? "disabled-form" : ""}>
-
-              <form
-                onSubmit={handleSubmit}
-                id="editProposalForm"
-                className="mt-4 h-full overflow-y-auto no-scrollbar"
-              >
-                <div className="bg-white p-6 rounded-lg space-y-8 shadow-sm border border-gray-200">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8">
-                    <div className="space-y-6">
-                      <h2 className="text-lg font-semibold text-gray-800">
-                        Proposal Information
-                      </h2>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormInputWithPrefix
-                          label="Proposal Number"
-                          name="proposalNumber"
-                          prefix="PROP-"
-                          value={proposalInfo.proposalNumber}
-                          onChange={handleInfoChange}
-                          required
-                          error={errors.proposalNumber}
-                          disabled={true}
-                          className="md:col-span-1"
-                        />
-                        <FormInput
-                          label="Subject"
-                          name="subject"
-                          value={proposalInfo.subject}
-                          onChange={handleInfoChange}
-                          required
-                          error={errors.subject}
-                          className="md:col-span-1"
-                        />
-                        <FormSelect
-                          label="Related To"
-                          name="relatedTo"
-                          value={relatedOptions.find(
-                            (o) => o.value === proposalInfo.relatedTo
-                          )}
-                          onChange={(opt) => handleSelectChange("relatedTo", opt)}
-                          options={relatedOptions}
-                          error={errors.relatedTo}
-                        />
-                        <FormSelect
-                          label="Related Lead/Customer"
-                          name="relatedId"
-                          value={relatedIdOptions.find(
-                            (o) => o.value === proposalInfo.relatedId
-                          )}
-                          onChange={(opt) => handleSelectChange("relatedId", opt)}
-                          options={relatedIdOptions}
-                          error={errors.relatedId}
-                          onMenuOpen={loadRelatedIdOptions}
-                          isLoading={isRelatedIdLoading || isRecipientLoading} // <-- MODIFIED
-                          isDisabled={!proposalInfo.relatedTo}
-                        />
-                        <FormSelect
-                          label="Assign To"
-                          name="assignTo"
-                          value={assignToOptions.find(
-                            (o) => o.value === proposalInfo.employeeId
-                          )}
-                          onChange={(opt) => handleSelectChange("assignTo", opt)}
-                          options={assignToOptions}
-                          error={errors.assignTo}
-                          onMenuOpen={loadAssignToOptions}
-                          isLoading={isAssignToLoading}
-                        />
-                        <FormInput
-                          label="Proposal Date"
-                          name="proposalDate"
-                          value={proposalInfo.proposalDate}
-                          onChange={handleInfoChange}
-                          type="date"
-                          required
-                          error={errors.proposalDate}
-                        />
-                        <FormInput
-                          label="Due Date"
-                          name="dueDate"
-                          value={proposalInfo.dueDate}
-                          onChange={handleInfoChange}
-                          type="date"
-                          error={errors.dueDate}
-                        />
-                        <FormSelect
-                          label="Status"
-                          name="status"
-                          value={statusOptions.find(
-                            (o) => o.value === proposalInfo.status
-                          )}
-                          onChange={(opt) => handleSelectChange("status", opt)}
-                          options={statusOptions}
-                          required
-                          error={errors.status}
-                        />
-                      </div>
-                    </div>
-
-                    {/* --- Column 2: Recipient Info --- */}
-                    <div className="space-y-6 mt-8 lg:mt-0 lg:border-l lg:border-gray-200 lg:pl-8">
-                      <h2 className="text-lg font-semibold text-gray-800">
-                        Recipient Information
-                      </h2>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormInput
-                          label="Company Name"
-                          name="companyName"
-                          value={proposalInfo.companyName}
-                          onChange={handleInfoChange}
-                          required
-                          error={errors.companyName}
-                          disabled={isRecipientLoading} // <-- MODIFIED
-                        />
-                        <FormInput
-                          label="Email"
-                          name="email"
-                          value={proposalInfo.email}
-                          onChange={handleInfoChange}
-                          type="email"
-                          required
-                          error={errors.email}
-                          disabled={isRecipientLoading} // <-- MODIFIED
-                        />
-                        <FormInput
-                          label="Mobile Number"
-                          name="mobileNumber"
-                          value={proposalInfo.mobileNumber}
-                          onChange={handleInfoChange}
-                          error={errors.mobileNumber}
-                          disabled={isRecipientLoading} // <-- MODIFIED
-                        />
-                        <FormInput
-                          label="Street Address"
-                          name="street"
-                          value={proposalInfo.street}
-                          onChange={handleInfoChange}
-                          required
-                          error={errors.street}
-                          disabled={isRecipientLoading} // <-- MODIFIED
-                        />
-
-                        {/* --- 7. MODIFIED ONCHANGE --- */}
-                        <FormSelect
-                          label="Country"
-                          name="country"
-                          value={selectedCountry}
-                          onChange={(opt) => {
-                            setSelectedCountry(opt);
-                            if (opt) {
-                              const newStates = State.getStatesOfCountry(
-                                opt.value
-                              ).map((s) => ({
-                                value: s.isoCode,
-                                label: s.name,
-                                ...s,
-                              }));
-                              setStates(newStates);
-                              setProposalInfo((prev) => ({
-                                ...prev,
-                                country: opt.label,
-                                state: "",
-                                city: "",
-                              }));
-                            } else {
-                              setStates([]);
-                              setProposalInfo((prev) => ({
-                                ...prev,
-                                country: "",
-                                state: "",
-                                city: "",
-                              }));
-                            }
-                            setSelectedState(null);
-                            setCities([]);
-                            setSelectedCity(null);
-                            if (errors.country)
-                              setErrors((prev) => ({
-                                ...prev,
-                                country: "",
-                                state: "",
-                                city: "",
-                              }));
-                          }}
-                          options={countries}
-                          required
-                          error={errors.country}
-                          disabled={isRecipientLoading} // <-- MODIFIED
-                        />
-
-                        {/* --- 8. MODIFIED ONCHANGE --- */}
-                        <FormSelect
-                          label="State"
-                          name="state"
-                          value={selectedState}
-                          onChange={(opt) => {
-                            setSelectedState(opt);
-                            if (opt) {
-                              const newCities = City.getCitiesOfState(
-                                selectedCountry.value,
-                                opt.value
-                              ).map((c) => ({
-                                value: c.name,
-                                label: c.name,
-                                ...c,
-                              }));
-                              setCities(newCities);
-                              setProposalInfo((prev) => ({
-                                ...prev,
-                                state: opt.label,
-                                city: "",
-                              }));
-                            } else {
-                              setCities([]);
-                              setProposalInfo((prev) => ({
-                                ...prev,
-                                state: "",
-                                city: "",
-                              }));
-                            }
-                            setSelectedCity(null);
-                            if (errors.state)
-                              setErrors((prev) => ({
-                                ...prev,
-                                state: "",
-                                city: "",
-                              }));
-                          }}
-                          options={states}
-                          required
-                          isDisabled={!selectedCountry || isRecipientLoading} // <-- MODIFIED
-                          error={errors.state}
-                        />
-                        <FormSelect
-                          label="City"
-                          name="city"
-                          value={selectedCity}
-                          onChange={(opt) => {
-                            setSelectedCity(opt);
-                            setProposalInfo((prev) => ({
-                              ...prev,
-                              city: opt ? opt.value : "",
-                            }));
-                            if (errors.city)
-                              setErrors((prev) => ({ ...prev, city: "" }));
-                          }}
-                          options={cities}
-                          required
-                          isDisabled={!selectedState || isRecipientLoading} // <-- MODIFIED
-                          error={errors.city}
-                        />
-                        <FormInput
-                          label="Zip Code"
-                          name="zipCode"
-                          value={proposalInfo.zipCode}
-                          onChange={handleInfoChange}
-                          required
-                          error={errors.zipCode}
-                          disabled={isRecipientLoading} // <-- MODIFIED
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* --- Section 2: Proposal Items --- */}
-                  <div className="pt-8 border-t border-gray-200">
-                    <div className="mb-4 flex items-start justify-between gap-4">
-                      <h2 className="text-lg font-semibold text-gray-800">
-                        Proposal Items
-                      </h2>
-                      <FormSelect
-                        label="Currency"
-                        name="currencyType"
-                        value={currencyOptions.find(
-                          (o) => o.value === proposalInfo.currencyType
-                        )}
-                        onChange={(opt) =>
-                          handleSelectChange("currencyType", opt)
-                        }
-                        options={currencyOptions}
+          <div
+            className={`h-[72vh] overflow-hidden ${
+              !canEdit ? "disabled-form" : ""
+            }`}
+          >
+            <form
+              onSubmit={handleSubmit}
+              id="editProposalForm"
+              className="mt-4 h-full overflow-y-auto no-scrollbar"
+            >
+              <div className="bg-white p-6 rounded-lg space-y-8 shadow-sm border border-gray-200">
+                <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8">
+                  <div className="space-y-6">
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Proposal Information
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormInputWithPrefix
+                        label="Proposal Number"
+                        name="proposalNumber"
+                        prefix="PROP-"
+                        value={proposalInfo.proposalNumber}
+                        onChange={handleInfoChange}
                         required
-                        error={errors.currencyType}
-                        className="w-48"
+                        error={errors.proposalNumber}
+                        disabled={true}
+                        className="md:col-span-1"
+                      />
+                      <FormInput
+                        label="Subject"
+                        name="subject"
+                        value={proposalInfo.subject}
+                        onChange={handleInfoChange}
+                        required
+                        error={errors.subject}
+                        className="md:col-span-1"
+                      />
+                      <FormSelect
+                        label="Related To"
+                        name="relatedTo"
+                        value={relatedOptions.find(
+                          (o) => o.value === proposalInfo.relatedTo
+                        )}
+                        onChange={(opt) => handleSelectChange("relatedTo", opt)}
+                        options={relatedOptions}
+                        error={errors.relatedTo}
+                      />
+                      <FormSelect
+                        label="Related Lead/Customer"
+                        name="relatedId"
+                        value={relatedIdOptions.find(
+                          (o) => o.value === proposalInfo.relatedId
+                        )}
+                        onChange={(opt) => handleSelectChange("relatedId", opt)}
+                        options={relatedIdOptions}
+                        error={errors.relatedId}
+                        onMenuOpen={loadRelatedIdOptions}
+                        isLoading={isRelatedIdLoading || isRecipientLoading} // <-- MODIFIED
+                        isDisabled={!proposalInfo.relatedTo}
+                      />
+                      <FormSelect
+                        label="Assign To"
+                        name="assignTo"
+                        value={assignToOptions.find(
+                          (o) => o.value === proposalInfo.employeeId
+                        )}
+                        onChange={(opt) => handleSelectChange("assignTo", opt)}
+                        options={assignToOptions}
+                        error={errors.assignTo}
+                        onMenuOpen={loadAssignToOptions}
+                        isLoading={isAssignToLoading}
+                      />
+                      <FormInput
+                        label="Proposal Date"
+                        name="proposalDate"
+                        value={proposalInfo.proposalDate}
+                        onChange={handleInfoChange}
+                        type="date"
+                        required
+                        error={errors.proposalDate}
+                      />
+                      <FormInput
+                        label="Due Date"
+                        name="dueDate"
+                        value={proposalInfo.dueDate}
+                        onChange={handleInfoChange}
+                        type="date"
+                        error={errors.dueDate}
+                      />
+                      <FormSelect
+                        label="Status"
+                        name="status"
+                        value={statusOptions.find(
+                          (o) => o.value === proposalInfo.status
+                        )}
+                        onChange={(opt) => handleSelectChange("status", opt)}
+                        options={statusOptions}
+                        required
+                        error={errors.status}
                       />
                     </div>
-
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200 border border-gray-200">
-                        <thead className="bg-gray-100">
-                          <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-2/5">
-                              Item
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-2/5">
-                              Description
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                              Qty
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                              Rate ({currencySymbol})
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                              Total
-                            </th>
-                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
-                              Action
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-gray-50 divide-y divide-gray-200">
-                          {proposalContent.map((item, index) => (
-                            <tr key={index} className="hover:bg-gray-50">
-                              {/* ITEM FIELD */}
-                              <td className="px-2 py-2 align-top">
-                                <textarea
-                                  type="text"
-                                  name="item"
-                                  value={item.item}
-                                  onChange={(e) => handleItemChange(index, e)}
-                                  className="w-full border border-gray-300 rounded-md 
-                                         sm:text-sm px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 
-                                         focus:ring-blue-500 transition-colors min-h-[40px]"
-                                  placeholder="Item Name"
-                                />
-                              </td>
-
-                              {/* DESCRIPTION FIELD */}
-                              <td className="px-2 py-2 align-top">
-                                <textarea
-                                  type="text"
-                                  name="description"
-                                  value={item.description}
-                                  onChange={(e) => handleItemChange(index, e)}
-                                  className="w-full border border-gray-300 rounded-lg shadow-sm sm:text-sm
-                                         px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 
-                                         focus:ring-blue-500 transition-colors min-h-[40px]"
-                                  placeholder="Description"
-                                />
-                              </td>
-
-                              {/* QUANTITY FIELD */}
-                              <td className="px-2 py-2 align-top">
-                                <input
-                                  type="number"
-                                  name="quantity"
-                                  value={item.quantity}
-                                  onChange={(e) => handleItemChange(index, e)}
-                                  className="w-20 border border-gray-300 rounded-lg shadow-sm sm:text-sm px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-                                  min="1"
-                                />
-                              </td>
-
-                              {/* RATE FIELD */}
-                              <td className="px-2 py-2 align-top">
-                                <input
-                                  type="number"
-                                  name="rate"
-                                  value={item.rate}
-                                  onChange={(e) => handleItemChange(index, e)}
-                                  className="w-32 border border-gray-300 rounded-lg shadow-sm sm:text-sm px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-                                  min="0"
-                                  step="0.01"
-                                />
-                              </td>
-
-                              {/* TOTAL DISPLAY */}
-                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700 font-medium align-top">
-                                {currencySymbol}
-                                {(item.quantity * item.rate).toFixed(2)}
-                              </td>
-
-                              {/* ACTION */}
-                              <td
-                                className="px-4 py-2 whitespace-nowrap text-center align-top"
-                              >
-                                <button
-                                  className={`${canDelete ? "allow-click" : ""
-                                    } text-red-600 hover:text-red-900 font-medium transition-colors 
-      duration-200 flex items-center gap-1 text-xs
-      ${proposalContent.length === 1 || !canDelete ? "pointer-events-none opacity-50" : ""}`
-                                  }
-                                  onClick={() => handleRemoveItem(index)}
-                                  title="Remove Item"
-                                  type="button"
-                                  disabled={proposalContent.length === 1}
-                                >
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth="2"
-                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                    ></path>
-                                  </svg>
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleAddItem}
-                      className="mt-4 inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                    >
-                      <svg
-                        className="w-5 h-5 text-gray-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                        />
-                      </svg>
-                      Add New Item
-                    </button>
                   </div>
 
-                  {/* --- Section 3: Summary --- */}
-                  <div className="pt-8 border-t border-gray-200">
-                    <div className="flex flex-col md:flex-row justify-between gap-8">
-                      <div className="w-full md:w-1/2 lg:flex-1 space-y-4">
-                        <FormTextarea
-                          label="Notes"
-                          name="notes"
-                          value={proposalInfo.notes}
-                          onChange={handleInfoChange}
-                          rows={5}
-                        />
-                        <FormTextarea
-                          label="Terms & Conditions"
-                          name="termsAndConditions"
-                          value={proposalInfo.termsAndConditions}
-                          onChange={handleInfoChange}
-                          rows={8}
-                        />
-                      </div>
-                      <div className="w-full md:w-1/2 lg:w-1/3 space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">
-                          Summary
-                        </h2>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Subtotal:</span>
-                          <span className="font-medium text-gray-800">
-                            {currencySymbol}
-                            {subtotal.toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <label htmlFor="discount" className="text-gray-600">
-                            Discount (%):
-                          </label>
-                          <input
-                            type="number"
-                            name="discount"
-                            id="discount"
-                            value={proposalInfo.discount}
-                            onChange={(e) => {
-                              let value = parseFloat(e.target.value);
-                              if (value > 100) e.target.value = "100";
-                              if (value < 0) e.target.value = "0";
-                              handleInfoChange(e);
-                            }}
-                            className="w-20 border border-gray-300 rounded-lg shadow-sm sm:text-sm 
-                                        px-1 py-1 outline-none focus:border-blue-500 focus:ring-1 
-                                        focus:ring-blue-500 transition-colors"
-                            min="0"
-                            max="100"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 items-center">
-                          <Select
-                            id="taxType"
-                            name="taxType"
-                            value={taxOptions.find(
-                              (o) => o.value === proposalInfo.taxType
-                            )}
-                            onChange={(opt) => {
-                              if (opt) {
-                                handleSelectChange("taxType", opt);
-                                setTaxRateInput(opt.defaultRate);
-                                setProposalInfo((prev) => ({
-                                  ...prev,
-                                  taxPercentage: Number(opt.defaultRate) || 0,
-                                }));
-                              } else {
-                                handleSelectChange("taxType", null);
-                                setTaxRateInput("");
-                                setProposalInfo((prev) => ({
-                                  ...prev,
-                                  taxPercentage: 0,
-                                }));
-                              }
-                            }}
-                            options={taxOptions}
-                            className="w-full"
-                            classNamePrefix="select"
-                            menuPlacement="auto"
-                          />
-                          <FormInput
-                            label="Tax %"
-                            name="taxRateInput"
-                            type="number"
-                            value={taxRateInput}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setTaxRateInput(value);
-                              setProposalInfo((prev) => ({
-                                ...prev,
-                                taxPercentage: Number(value) || 0,
-                              }));
-                            }}
-                            disabled={proposalInfo.taxType === "No Tax"}
-                            className="w-full"
-                          />
-                        </div>
-                        <div className="flex justify-between text-gray-600">
-                          <span>Tax Amount:</span>
-                          <span className="font-medium text-gray-800">
-                            {currencySymbol}
-                            {taxAmount.toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="border-t pt-4 mt-4">
-                          <div className="flex justify-between text-xl font-bold">
-                            <span>Grand Total:</span>
-                            <span>
-                              {currencySymbol}
-                              {total.toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  {/* --- Column 2: Recipient Info --- */}
+                  <div className="space-y-6 mt-8 lg:mt-0 lg:border-l lg:border-gray-200 lg:pl-8">
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Recipient Information
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormInput
+                        label="Company Name"
+                        name="companyName"
+                        value={proposalInfo.companyName}
+                        onChange={handleInfoChange}
+                        required
+                        error={errors.companyName}
+                        disabled={isRecipientLoading} // <-- MODIFIED
+                      />
+                      <FormInput
+                        label="Email"
+                        name="email"
+                        value={proposalInfo.email}
+                        onChange={handleInfoChange}
+                        type="email"
+                        required
+                        error={errors.email}
+                        disabled={isRecipientLoading} // <-- MODIFIED
+                      />
+                      <FormInput
+                        label="Mobile Number"
+                        name="mobileNumber"
+                        value={proposalInfo.mobileNumber}
+                        onChange={handleInfoChange}
+                        error={errors.mobileNumber}
+                        disabled={isRecipientLoading} // <-- MODIFIED
+                      />
+                      <FormInput
+                        label="Street Address"
+                        name="street"
+                        value={proposalInfo.street}
+                        onChange={handleInfoChange}
+                        required
+                        error={errors.street}
+                        disabled={isRecipientLoading} // <-- MODIFIED
+                      />
 
-                    <div className="pt-8 border-t border-gray-200">
-                      <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                        Signature & Stamp
-                      </h2>
+                      {/* --- 7. MODIFIED ONCHANGE --- */}
+                      <FormSelect
+                        label="Country"
+                        name="country"
+                        value={selectedCountry}
+                        onChange={(opt) => {
+                          setSelectedCountry(opt);
+                          if (opt) {
+                            const newStates = State.getStatesOfCountry(
+                              opt.value
+                            ).map((s) => ({
+                              value: s.isoCode,
+                              label: s.name,
+                              ...s,
+                            }));
+                            setStates(newStates);
+                            setProposalInfo((prev) => ({
+                              ...prev,
+                              country: opt.label,
+                              state: "",
+                              city: "",
+                            }));
+                          } else {
+                            setStates([]);
+                            setProposalInfo((prev) => ({
+                              ...prev,
+                              country: "",
+                              state: "",
+                              city: "",
+                            }));
+                          }
+                          setSelectedState(null);
+                          setCities([]);
+                          setSelectedCity(null);
+                          if (errors.country)
+                            setErrors((prev) => ({
+                              ...prev,
+                              country: "",
+                              state: "",
+                              city: "",
+                            }));
+                        }}
+                        options={countries}
+                        required
+                        error={errors.country}
+                        disabled={isRecipientLoading} // <-- MODIFIED
+                      />
 
-                      {/* Loading State Wrapper */}
-                      {pageLoading ? (
-                        <div className="flex items-center justify-center h-40 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                          <span className="text-gray-500">
-                            Loading Company Media...
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col md:flex-row gap-8">
-                          {/* Signature Uploader */}
-                          <div className="w-full md:w-1/4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Authorized Signature
-                            </label>
-                            <CustomeImageUploader
-                              initialBase64={proposalInfo.companySignature}
-                              onFileChange={(file) =>
-                                handleImageUpload(file, "companySignature")
-                              }
-                            />
-                          </div>
-
-                          {/* Stamp Uploader */}
-                          <div className="w-full md:w-1/4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Company Stamp
-                            </label>
-                            <CustomeImageUploader
-                              initialBase64={proposalInfo.companyStamp}
-                              onFileChange={(file) =>
-                                handleImageUpload(file, "companyStamp")
-                              }
-                            />
-                          </div>
-                        </div>
-                      )}
+                      {/* --- 8. MODIFIED ONCHANGE --- */}
+                      <FormSelect
+                        label="State"
+                        name="state"
+                        value={selectedState}
+                        onChange={(opt) => {
+                          setSelectedState(opt);
+                          if (opt) {
+                            const newCities = City.getCitiesOfState(
+                              selectedCountry.value,
+                              opt.value
+                            ).map((c) => ({
+                              value: c.name,
+                              label: c.name,
+                              ...c,
+                            }));
+                            setCities(newCities);
+                            setProposalInfo((prev) => ({
+                              ...prev,
+                              state: opt.label,
+                              city: "",
+                            }));
+                          } else {
+                            setCities([]);
+                            setProposalInfo((prev) => ({
+                              ...prev,
+                              state: "",
+                              city: "",
+                            }));
+                          }
+                          setSelectedCity(null);
+                          if (errors.state)
+                            setErrors((prev) => ({
+                              ...prev,
+                              state: "",
+                              city: "",
+                            }));
+                        }}
+                        options={states}
+                        required
+                        isDisabled={!selectedCountry || isRecipientLoading} // <-- MODIFIED
+                        error={errors.state}
+                      />
+                      <FormSelect
+                        label="City"
+                        name="city"
+                        value={selectedCity}
+                        onChange={(opt) => {
+                          setSelectedCity(opt);
+                          setProposalInfo((prev) => ({
+                            ...prev,
+                            city: opt ? opt.value : "",
+                          }));
+                          if (errors.city)
+                            setErrors((prev) => ({ ...prev, city: "" }));
+                        }}
+                        options={cities}
+                        required
+                        isDisabled={!selectedState || isRecipientLoading} // <-- MODIFIED
+                        error={errors.city}
+                      />
+                      <FormInput
+                        label="Zip Code"
+                        name="zipCode"
+                        value={proposalInfo.zipCode}
+                        onChange={handleInfoChange}
+                        required
+                        error={errors.zipCode}
+                        disabled={isRecipientLoading} // <-- MODIFIED
+                      />
                     </div>
                   </div>
                 </div>
-                <div className="h-6" />
-              </form>
-            </div>
+
+                {/* --- Section 2: Proposal Items --- */}
+                <div className="pt-8 border-t border-gray-200">
+                  <div className="mb-4 flex items-start justify-between gap-4">
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Proposal Items
+                    </h2>
+                    <FormSelect
+                      label="Currency"
+                      name="currencyType"
+                      value={currencyOptions.find(
+                        (o) => o.value === proposalInfo.currencyType
+                      )}
+                      onChange={(opt) =>
+                        handleSelectChange("currencyType", opt)
+                      }
+                      options={currencyOptions}
+                      required
+                      error={errors.currencyType}
+                      className="w-48"
+                    />
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 border border-gray-200">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-2/5">
+                            Item
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-2/5">
+                            Description
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                            Qty
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                            Rate ({currencySymbol})
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                            Total
+                          </th>
+                          <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
+                            Action
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-gray-50 divide-y divide-gray-200">
+                        {proposalContent.map((item, index) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            {/* ITEM FIELD */}
+                            <td className="px-2 py-2 align-top">
+                              <textarea
+                                type="text"
+                                name="item"
+                                value={item.item}
+                                onChange={(e) => handleItemChange(index, e)}
+                                className="w-full border border-gray-300 rounded-md 
+                                         sm:text-sm px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 
+                                         focus:ring-blue-500 transition-colors min-h-[40px]"
+                                placeholder="Item Name"
+                              />
+                            </td>
+
+                            {/* DESCRIPTION FIELD */}
+                            <td className="px-2 py-2 align-top">
+                              <textarea
+                                type="text"
+                                name="description"
+                                value={item.description}
+                                onChange={(e) => handleItemChange(index, e)}
+                                className="w-full border border-gray-300 rounded-lg shadow-sm sm:text-sm
+                                         px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 
+                                         focus:ring-blue-500 transition-colors min-h-[40px]"
+                                placeholder="Description"
+                              />
+                            </td>
+
+                            {/* QUANTITY FIELD */}
+                            <td className="px-2 py-2 align-top">
+                              <input
+                                type="number"
+                                name="quantity"
+                                value={item.quantity}
+                                onChange={(e) => handleItemChange(index, e)}
+                                className="w-20 border border-gray-300 rounded-lg shadow-sm sm:text-sm px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                                min="1"
+                              />
+                            </td>
+
+                            {/* RATE FIELD */}
+                            <td className="px-2 py-2 align-top">
+                              <input
+                                type="number"
+                                name="rate"
+                                value={item.rate}
+                                onChange={(e) => handleItemChange(index, e)}
+                                className="w-32 border border-gray-300 rounded-lg shadow-sm sm:text-sm px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                                min="0"
+                                step="0.01"
+                              />
+                            </td>
+
+                            {/* TOTAL DISPLAY */}
+                            <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700 font-medium align-top">
+                              {currencySymbol}
+                              {(item.quantity * item.rate).toFixed(2)}
+                            </td>
+
+                            {/* ACTION */}
+                            <td className="px-4 py-2 whitespace-nowrap text-center align-top">
+                              <button
+                                className={`${
+                                  canDelete ? "allow-click" : ""
+                                } text-red-600 hover:text-red-900 font-medium transition-colors 
+      duration-200 flex items-center gap-1 text-xs
+      ${
+        proposalContent.length === 1 || !canDelete
+          ? "pointer-events-none opacity-50"
+          : ""
+      }`}
+                                onClick={() => handleRemoveItem(index)}
+                                title="Remove Item"
+                                type="button"
+                                disabled={proposalContent.length === 1}
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  ></path>
+                                </svg>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddItem}
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                  >
+                    <svg
+                      className="w-5 h-5 text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                    Add New Item
+                  </button>
+                </div>
+
+                {/* --- Section 3: Summary --- */}
+                <div className="pt-8 border-t border-gray-200">
+                  <div className="flex flex-col md:flex-row justify-between gap-8">
+                    <div className="w-full md:w-1/2 lg:flex-1 space-y-4">
+                      <FormTextarea
+                        label="Notes"
+                        name="notes"
+                        value={proposalInfo.notes}
+                        onChange={handleInfoChange}
+                        rows={5}
+                      />
+                      <FormTextarea
+                        label="Terms & Conditions"
+                        name="termsAndConditions"
+                        value={proposalInfo.termsAndConditions}
+                        onChange={handleInfoChange}
+                        rows={8}
+                      />
+                    </div>
+                    <div className="w-full md:w-1/2 lg:w-1/3 space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">
+                        Summary
+                      </h2>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Subtotal:</span>
+                        <span className="font-medium text-gray-800">
+                          {currencySymbol}
+                          {subtotal.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <label htmlFor="discount" className="text-gray-600">
+                          Discount (%):
+                        </label>
+                        <input
+                          type="number"
+                          name="discount"
+                          id="discount"
+                          value={proposalInfo.discount}
+                          onChange={(e) => {
+                            let value = parseFloat(e.target.value);
+                            if (value > 100) e.target.value = "100";
+                            if (value < 0) e.target.value = "0";
+                            handleInfoChange(e);
+                          }}
+                          className="w-20 border border-gray-300 rounded-lg shadow-sm sm:text-sm 
+                                        px-1 py-1 outline-none focus:border-blue-500 focus:ring-1 
+                                        focus:ring-blue-500 transition-colors"
+                          min="0"
+                          max="100"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 items-center">
+                        <Select
+                          id="taxType"
+                          name="taxType"
+                          value={taxOptions.find(
+                            (o) => o.value === proposalInfo.taxType
+                          )}
+                          onChange={(opt) => {
+                            if (opt) {
+                              handleSelectChange("taxType", opt);
+                              setTaxRateInput(opt.defaultRate);
+                              setProposalInfo((prev) => ({
+                                ...prev,
+                                taxPercentage: Number(opt.defaultRate) || 0,
+                              }));
+                            } else {
+                              handleSelectChange("taxType", null);
+                              setTaxRateInput("");
+                              setProposalInfo((prev) => ({
+                                ...prev,
+                                taxPercentage: 0,
+                              }));
+                            }
+                          }}
+                          options={taxOptions}
+                          className="w-full"
+                          classNamePrefix="select"
+                          menuPlacement="auto"
+                        />
+                        <FormInput
+                          label="Tax %"
+                          name="taxRateInput"
+                          type="number"
+                          value={taxRateInput}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setTaxRateInput(value);
+                            setProposalInfo((prev) => ({
+                              ...prev,
+                              taxPercentage: Number(value) || 0,
+                            }));
+                          }}
+                          disabled={proposalInfo.taxType === "No Tax"}
+                          className="w-full"
+                        />
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Tax Amount:</span>
+                        <span className="font-medium text-gray-800">
+                          {currencySymbol}
+                          {taxAmount.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="border-t pt-4 mt-4">
+                        <div className="flex justify-between text-xl font-bold">
+                          <span>Grand Total:</span>
+                          <span>
+                            {currencySymbol}
+                            {total.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-8 border-t border-gray-200">
+                    <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                      Signature & Stamp
+                    </h2>
+
+                    {/* Loading State Wrapper */}
+                    {pageLoading ? (
+                      <div className="flex items-center justify-center h-40 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                        <span className="text-gray-500">
+                          Loading Company Media...
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col md:flex-row gap-8">
+                        {/* Signature Uploader */}
+                        <div className="w-full md:w-1/4">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Authorized Signature
+                          </label>
+                          <CustomeImageUploader
+                            initialBase64={proposalInfo.companySignature}
+                            onFileChange={(file) =>
+                              handleImageUpload(file, "companySignature")
+                            }
+                          />
+                        </div>
+
+                        {/* Stamp Uploader */}
+                        <div className="w-full md:w-1/4">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Company Stamp
+                          </label>
+                          <CustomeImageUploader
+                            initialBase64={proposalInfo.companyStamp}
+                            onFileChange={(file) =>
+                              handleImageUpload(file, "companyStamp")
+                            }
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="h-6" />
+            </form>
           </div>
         )}
       </div>
