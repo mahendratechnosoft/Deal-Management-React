@@ -63,3 +63,18 @@
   pointer-events: auto !important;
   opacity: 1 !important;
 }
+
+
+.disabled-form textarea {
+  pointer-events: auto !important; /* Enable pointer events for scrolling */
+  opacity: 0.7 !important;
+  cursor: not-allowed !important; /* Show not-allowed cursor */
+  user-select: none !important; /* Prevent text selection */
+user-select: none !important; /* Prevent text selection */
+  background-color: #f9fafb !important; /* gray-50 */
+}
+.disabled-form textarea:focus {
+  outline: none !important;
+  border-color: #d1d5db !important; /* gray-300 */
+  box-shadow: none !important;
+}
