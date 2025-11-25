@@ -121,9 +121,9 @@ function SelectedDonarList() {
 
     const handleEdit = (DonorId, uin) => {
         if (role === "ROLE_ADMIN") {
-            navigate(`/Admin/SampleList/${DonorId}/${uin}`);
+            navigate(`/Admin/SampleReport/${DonorId}/${uin}`);
         } else if (role === "ROLE_EMPLOYEE") {
-            navigate(`/Employee/SampleList/${DonorId}/${uin}`);
+            navigate(`/Employee/SampleReport/${DonorId}/${uin}`);
         }
     };
 
@@ -434,7 +434,7 @@ function SelectedDonarList() {
                                                     handleEdit(Donor.donorId, Donor.uin);
                                                 }}
                                             >
-                                                Open Sample
+                                               Collect Sample
                                             </button>
 
                                         </tr>
