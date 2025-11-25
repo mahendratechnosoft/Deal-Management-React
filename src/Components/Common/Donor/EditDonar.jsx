@@ -12,6 +12,23 @@ function EditDonar() {
     const [loading, setLoading] = useState(false);
     const { LayoutComponent, role } = useLayout();
     const [activeTab, setActiveTab] = useState("personal");
+      const [brothers, setBrothers] = useState([
+    { age: "", profession: "", kids: "", illness: "" },
+  ]);
+
+  const [sisters, setSisters] = useState([
+    { age: "", profession: "", kids: "", illness: "" },
+  ]);
+
+  // Add new row for brothers
+  const addBrother = () => {
+    setBrothers([...brothers, { age: "", profession: "", kids: "", illness: "" }]);
+  };
+
+  // Add new row for sisters
+  const addSister = () => {
+    setSisters([...sisters, { age: "", profession: "", kids: "", illness: "" }]);
+  };
 
     const [formData, setFormData] = useState({
         // Personal Information
@@ -70,7 +87,7 @@ function EditDonar() {
     const tabs = [
         { id: "personal", label: "Personal Information" },
         { id: "family", label: "Family Information" },
-        { id: "history", label: "Medical History" },
+        { id: "history", label: "Previous Medical History" },
     ];
 
     const statusOptions = [
@@ -149,6 +166,20 @@ function EditDonar() {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+
+        if (name === "phone") {
+        if (!/^[0-9]{10}$/.test(value)) {
+            setErrors((prev) => ({
+                ...prev,
+                phone: "Phone must be 10 digits",
+            }));
+        } else {
+            setErrors((prev) => ({
+                ...prev,
+                phone: "",
+            }));
+        }
+    }
         
         setFormData((prev) => ({
             ...prev,
@@ -183,7 +214,10 @@ function EditDonar() {
         if (!formData.name?.trim())
             newErrors.name = "Name is required";
 
-       
+          // Phone validation (10 digit only)
+   if (!/^[0-9]{10}$/.test(formData.phone)) {
+        newErrors.phone = "Phone must be a 10-digit number";
+    }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -277,8 +311,29 @@ function EditDonar() {
         }
     };
 
+    const addBrotherRow = () => {
+    setFormData((prev) => ({
+        ...prev,
+        brothers: [
+            ...prev.brothers,
+            { age: "", profession: "", kids: "", illness: "" }
+        ]
+    }));
+};
+
+const addSisterRow = () => {
+    setFormData((prev) => ({
+        ...prev,
+        sisters: [
+            ...prev.sisters,
+            { age: "", profession: "", kids: "", illness: "" }
+        ]
+    }));
+};
+
+
     const renderPersonalInformation = () => (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <FormInput
                 label="Name"
                 name="name"
@@ -338,12 +393,13 @@ function EditDonar() {
             />
 
             <FormInput
-                label="Phone"
+                label="Mobile Number"
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
                 type="text"
                 error={errors.phone}
+                
             />
 
             <FormInput
@@ -447,7 +503,7 @@ function EditDonar() {
             />
 
             <FormInput
-                label="BSL"
+                label="BSL ®"
                 name="bsl"
                 value={formData.bsl}
                 onChange={handleChange}
@@ -521,79 +577,136 @@ function EditDonar() {
     );
 
     const renderFamilyInformation = () => (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <h3 className="text-lg font-semibold text-gray-900 md:col-span-4">Brother Information</h3>
-                <FormInput
-                    label="Age"
-                    name="brotherAge"
-                    value={formData.brotherAge}
-                    onChange={handleChange}
-                    type="number"
-                    error={errors.brotherAge}
-                />
-                <FormInput
-                    label="Profession"
-                    name="brotherProfession"
-                    value={formData.brotherProfession}
-                    onChange={handleChange}
-                    type="text"
-                    error={errors.brotherProfession}
-                />
-                <FormInput
-                    label="Kids"
-                    name="brotherKids"
-                    value={formData.brotherKids}
-                    onChange={handleChange}
-                    type="number"
-                    error={errors.brotherKids}
-                />
-                <FormInput
-                    label="Any Illness DM/HTN/Any Other"
-                    name="brotherIllness"
-                    value={formData.brotherIllness}
-                    onChange={handleChange}
-                    type="text"
-                    error={errors.brotherIllness}
-                />
-            </div>
+        <div className="space-y-8">
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <h3 className="text-lg font-semibold text-gray-900 md:col-span-4">Sister Information</h3>
-                <FormInput
-                    label="Age"
-                    name="sisterAge"
-                    value={formData.sisterAge}
-                    onChange={handleChange}
-                    type="number"
-                    error={errors.sisterAge}
-                />
-                <FormInput
-                    label="Profession"
-                    name="sisterProfession"
-                    value={formData.sisterProfession}
-                    onChange={handleChange}
-                    type="text"
-                    error={errors.sisterProfession}
-                />
-                <FormInput
-                    label="Kids"
-                    name="sisterKids"
-                    value={formData.sisterKids}
-                    onChange={handleChange}
-                    type="number"
-                    error={errors.sisterKids}
-                />
-                <FormInput
-                    label="Any Illness DM/HTN/Any Other"
-                    name="sisterIllness"
-                    value={formData.sisterIllness}
-                    onChange={handleChange}
-                    type="text"
-                    error={errors.sisterIllness}
-                />
-            </div>
+      {/* BROTHER SECTION */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold">Brother Information</h3>
+          <li
+            className="px-3 py-1 bg-blue-600 text-white rounded"
+            onClick={addBrother}
+          >
+            + Add Brother
+          </li>
         </div>
+
+        {brothers.map((item, index) => (
+          <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+
+            <input type="number" placeholder="Age" className="border p-2 rounded w-full" />
+
+            <input type="text" placeholder="Profession" className="border p-2 rounded w-full" />
+
+            <input type="number" placeholder="Kids" className="border p-2 rounded w-full" />
+
+            <input type="text" placeholder="Illness" className="border p-2 rounded w-full" />
+
+          </div>
+        ))}
+      </div>
+
+      {/* SISTER SECTION */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold">Sister Information</h3>
+          <li
+            className="px-3 py-1 bg-blue-600 text-white rounded"
+            onClick={addSister}
+          >
+            + Add Sister
+          </li>
+        </div>
+
+        {sisters.map((item, index) => (
+          <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+
+            <input type="number" placeholder="Age" className="border p-2 rounded w-full" />
+
+            <input type="text" placeholder="Profession" className="border p-2 rounded w-full" />
+
+            <input type="number" placeholder="Kids" className="border p-2 rounded w-full" />
+
+            <input type="text" placeholder="Illness" className="border p-2 rounded w-full" />
+
+          </div>
+        ))}
+      </div>
+
+    </div>
+        // <div className="space-y-6">
+        //     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        //         <h3 className="text-lg font-semibold text-gray-900 md:col-span-4">Brother Information</h3>
+        //         <FormInput
+        //             label="Age"
+        //             name="brotherAge"
+        //             value={formData.brotherAge}
+        //             onChange={handleChange}
+        //             type="number"
+        //             error={errors.brotherAge}
+        //         />
+        //         <FormInput
+        //             label="Profession"
+        //             name="brotherProfession"
+        //             value={formData.brotherProfession}
+        //             onChange={handleChange}
+        //             type="text"
+        //             error={errors.brotherProfession}
+        //         />
+        //         <FormInput
+        //             label="Kids"
+        //             name="brotherKids"
+        //             value={formData.brotherKids}
+        //             onChange={handleChange}
+        //             type="number"
+        //             error={errors.brotherKids}
+        //         />
+        //         <FormInput
+        //             label="Any Illness DM/HTN/Any Other"
+        //             name="brotherIllness"
+        //             value={formData.brotherIllness}
+        //             onChange={handleChange}
+        //             type="text"
+        //             error={errors.brotherIllness}
+        //         />
+        //     </div>
+
+        //     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        //         <h3 className="text-lg font-semibold text-gray-900 md:col-span-4">Sister Information</h3>
+        //         <FormInput
+        //             label="Age"
+        //             name="sisterAge"
+        //             value={formData.sisterAge}
+        //             onChange={handleChange}
+        //             type="number"
+        //             error={errors.sisterAge}
+        //         />
+        //         <FormInput
+        //             label="Profession"
+        //             name="sisterProfession"
+        //             value={formData.sisterProfession}
+        //             onChange={handleChange}
+        //             type="text"
+        //             error={errors.sisterProfession}
+        //         />
+        //         <FormInput
+        //             label="Kids"
+        //             name="sisterKids"
+        //             value={formData.sisterKids}
+        //             onChange={handleChange}
+        //             type="number"
+        //             error={errors.sisterKids}
+        //         />
+        //         <FormInput
+        //             label="Any Illness DM/HTN/Any Other"
+        //             name="sisterIllness"
+        //             value={formData.sisterIllness}
+        //             onChange={handleChange}
+        //             type="text"
+        //             error={errors.sisterIllness}
+        //         />
+        //     </div>
+        // </div>
     );
 
     const renderMedicalHistory = () => (
@@ -614,7 +727,7 @@ function EditDonar() {
                 options={statusOptions}
             />
 
-            <div className="md:col-span-2">
+         {formData.hospitalAdmissionStatus === true &&  ( <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     Reason
                 </label>
@@ -627,6 +740,7 @@ function EditDonar() {
                     placeholder="Enter hospital admission reason"
                 />
             </div>
+         )}
 
             <h3 className="text-lg font-semibold text-gray-900 md:col-span-2">
                 Surgery
@@ -642,6 +756,8 @@ function EditDonar() {
                 }
             />
 
+        {formData.surgeryStatus === true &&  (
+
             <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     Reason
@@ -655,6 +771,7 @@ function EditDonar() {
                     placeholder="Enter surgery reason"
                 />
             </div>
+             )}
 
             <h3 className="text-lg font-semibold text-gray-900 md:col-span-2">
                 H/O Blood Donation/Transfusion
@@ -670,6 +787,7 @@ function EditDonar() {
                 }
             />
 
+        {formData.bloodDonationStatus === true &&  (
             <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     Reason
@@ -683,6 +801,7 @@ function EditDonar() {
                     placeholder="Enter blood donation reason"
                 />
             </div>
+        )}
 
             <h3 className="text-lg font-semibold text-gray-900 md:col-span-2">
                 H/O Prolonged Illness
@@ -697,10 +816,10 @@ function EditDonar() {
                     handleSelectChange(option, { name: "prolongedIllnessStatus" })
                 }
             />
-
+        {formData.prolongedIllnessStatus === true &&  (
             <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Reason
+                    Diagnosis
                 </label>
                 <textarea
                     name="prolongedIllnessReason"
@@ -711,7 +830,9 @@ function EditDonar() {
                     placeholder="Enter prolonged illness reason"
                 />
             </div>
+         )}
         </div>
+        
     );
 
     const renderTabContent = () => {

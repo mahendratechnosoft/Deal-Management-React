@@ -8,7 +8,7 @@ import CreateSampleReport from "./CreateSampleReport";
 
 function SampleReport() {
     const navigate = useNavigate();
-    const { sampleId } = useParams();
+    const { donorId } = useParams();
     const { LayoutComponent, role } = useLayout();
     const [searchTerm, setSearchTerm] = useState("");
     const [sampleReports, setSampleReports] = useState([]);
@@ -48,7 +48,7 @@ function SampleReport() {
     // Fetch sample reports from API
     const fetchSampleReports = useCallback(
         async (page = 0, search = "") => {
-            if (!sampleId) {
+            if (!donorId) {
                 setError("Sample ID is required");
                 setLoading(false);
                 return;
@@ -59,7 +59,7 @@ function SampleReport() {
 
             try {
                 const response = await axiosInstance.get(
-                    `getAllSampleReportList/${page}/${pageSize}/${sampleId}?search=${search}`
+                    `getAllSampleReportList/${page}/${pageSize}/${donorId}?search=${search}`
                 );
 
                 if (response.data && response.data.SampleReportList) {
@@ -80,7 +80,7 @@ function SampleReport() {
                 setLoading(false);
             }
         },
-        [sampleId, pageSize]
+        [donorId, pageSize]
     );
 
     // Single useEffect for data fetching
@@ -101,9 +101,17 @@ function SampleReport() {
 
     const handleEdit = (sampleReportId) => {
         if (role === "ROLE_ADMIN") {
-            navigate(`/Admin/SampleReportEdit/${sampleReportId}`);
+         //   navigate(`/Admin/SampleReportEdit/${sampleReportId}`);
         } else if (role === "ROLE_EMPLOYEE") {
-            navigate(`/Employee/SampleReportEdit/${sampleReportId}`);
+         //   navigate(`/Employee/SampleReportEdit/${sampleReportId}`);
+        }
+    };
+
+     const handleOpenSample = (sampleReportId) => {
+        if (role === "ROLE_ADMIN") {
+            navigate(`/Admin/SampleList/${sampleReportId}`);
+        } else if (role === "ROLE_EMPLOYEE") {
+            navigate(`/Employee/SampleList/${sampleReportId}`);
         }
     };
 
@@ -197,9 +205,9 @@ function SampleReport() {
                                     <h1 className="text-2xl font-bold text-gray-900">
                                         Sample Report List
                                     </h1>
-                                    {sampleId && (
+                                    {donorId && (
                                         <p className="text-sm text-gray-600 mt-1">
-                                            Sample ID: {sampleId}
+                                            DonorId ID: {donorId}
                                         </p>
                                     )}
                                     {!loading && (
@@ -380,6 +388,12 @@ function SampleReport() {
                                                     >
                                                         Delete
                                                     </button>
+                                                      <button 
+                                                        onClick={() => handleOpenSample(report.sampleReportId)}
+                                                        className="text-blue-600 hover:text-red-800 font-medium ml-4"
+                                                    >
+                                                        Open samples
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -447,7 +461,7 @@ function SampleReport() {
                     isOpen={openModal}
                     onClose={() => setOpenModal(false)}
                     onSuccess={handleCreateSuccess}
-                    sampleId={sampleId}
+                    donorId={donorId}
                 />
             </div>
         </LayoutComponent>

@@ -228,7 +228,7 @@ function App() {
 
 
             <Route
-            path="/Admin/SampleList/:donorId/:uin"
+            path="/Admin/SampleList/:sampleReportId"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                 <SampleList />
@@ -237,7 +237,7 @@ function App() {
           />
 
                 <Route
-            path="/Admin/SampleReport/:sampleId"
+            path="/Admin/SampleReport/:donorId/:uin"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                 <SampleReport />

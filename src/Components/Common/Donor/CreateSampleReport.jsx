@@ -3,7 +3,7 @@ import { FormInput, FormSelect, FormTextarea } from "../../BaseComponet/CustomeF
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 
-const CreateSampleReport = ({ isOpen, onClose, onSuccess, sampleId }) => {
+const CreateSampleReport = ({ isOpen, onClose, onSuccess, donorId }) => {
     const [formData, setFormData] = useState({
         dateAndTime: "",
         media: "",
@@ -46,7 +46,7 @@ const CreateSampleReport = ({ isOpen, onClose, onSuccess, sampleId }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (!sampleId) {
+        if (!donorId) {
             toast.error("Sample ID is required");
             return;
         }
@@ -62,7 +62,7 @@ const CreateSampleReport = ({ isOpen, onClose, onSuccess, sampleId }) => {
             }
 
             const apiData = {
-                sampleId: sampleId,
+                donorId: donorId,
                 dateAndTime: formattedDateTime,
                 media: formData.media,
                 volumne: parseFloat(formData.volumne) || 0,
@@ -147,9 +147,9 @@ const CreateSampleReport = ({ isOpen, onClose, onSuccess, sampleId }) => {
                     <h2 className="text-2xl font-semibold text-gray-800">
                         Create Sample Report
                     </h2>
-                    {sampleId && (
+                    {donorId && (
                         <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                            Sample ID: {sampleId}
+                            Donor ID: {donorId}
                         </span>
                     )}
                 </div>
