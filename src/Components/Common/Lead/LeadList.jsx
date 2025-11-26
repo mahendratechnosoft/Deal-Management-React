@@ -1298,7 +1298,7 @@ function LeadList() {
                   Create Lead
                 </button>
               )}
-              
+
               <button
                 className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
                 onClick={() => setIsImportOpen(true)}
@@ -1628,20 +1628,20 @@ function LeadList() {
                                           </button>
 
                                           {/* Delete Button */}
-                                            {hasPermission("lead", "Delete") && (
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              deleteLead(lead.id, lead.clientName || "this lead");
-                                            }}
-                                            className="text-gray-500 hover:text-red-600 transition-colors duration-200 flex items-center gap-1 text-xs"
-                                            title="Delete Lead"
-                                          >
-                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                            Delete
-                                          </button>
+                                          {hasPermission("lead", "Delete") && (
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                deleteLead(lead.id, lead.clientName || "this lead");
+                                              }}
+                                              className="text-gray-500 hover:text-red-600 transition-colors duration-200 flex items-center gap-1 text-xs"
+                                              title="Delete Lead"
+                                            >
+                                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                              </svg>
+                                              Delete
+                                            </button>
 
                                           )}
                                         </div>
@@ -1660,14 +1660,22 @@ function LeadList() {
                                         lead.status
                                       )} px-2 py-0.5`}
                                     >
-                                      <StatusSelect
-                                        value={getCurrentStatus(lead.status)}
-                                        options={statusOptions}
-                                        onChange={(newValue) =>
-                                          updateLeadStatus(lead.id, newValue)
-                                        }
-                                        styles={customStyles}
-                                      />
+                                      {lead.status?.toLowerCase() === "converted" ? (
+                                        // Display static text for converted leads
+                                        <span className="text-xs font-semibold px-2 py-1">
+                                          Converted
+                                        </span>
+                                      ) : (
+                                        // Show dropdown for non-converted leads
+                                        <StatusSelect
+                                          value={getCurrentStatus(lead.status)}
+                                          options={statusOptions}
+                                          onChange={(newValue) =>
+                                            updateLeadStatus(lead.id, newValue)
+                                          }
+                                          styles={customStyles}
+                                        />
+                                      )}
                                     </div>
                                   </div>
                                 ) : column.id === "source" ? (

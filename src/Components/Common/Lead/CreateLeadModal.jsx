@@ -1008,6 +1008,7 @@ if (formData.followUp) {
                       placeholder="Select country"
                       isSearchable
                       styles={customStyles}
+                       menuPlacement="top"
                     />
                     {errors.country && (
                       <p className="text-red-500 text-xs flex items-center gap-1">
@@ -1046,6 +1047,7 @@ if (formData.followUp) {
                       isSearchable
                       isDisabled={!formData.country}
                       styles={customStyles}
+                       menuPlacement="top"
                     />
                     {errors.state && (
                       <p className="text-red-500 text-xs flex items-center gap-1">
@@ -1084,6 +1086,7 @@ if (formData.followUp) {
                       isSearchable
                       isDisabled={!formData.state}
                       styles={customStyles}
+                       menuPlacement="top"
                     />
                     {errors.city && (
                       <p className="text-red-500 text-xs flex items-center gap-1">
