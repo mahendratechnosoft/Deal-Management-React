@@ -42,6 +42,7 @@ function EditPayment() {
         amount: "",
         paymentDate: "",
         paymentMode: "",
+        createdBy: "",
 
     });
 
@@ -95,6 +96,7 @@ function EditPayment() {
                             : "",
                     paymentDate: pay.paymentDate || "",
                     paymentMode: pay.paymentMode || "",
+                    createdBy: pay.createdBy || "",
 
                 };
 
@@ -241,6 +243,7 @@ function EditPayment() {
                 amount: newPaymentAmount, // current payment record amount
                 paymentDate: form.paymentDate,
                 paymentMode: form.paymentMode,
+                createdBy: form.createdBy,
 
                 // SEND total paid on invoice after update (NOT just current payment)
                 totalProformaInvoicePaidAmount: Number(totalPaidAfter.toFixed(2)),

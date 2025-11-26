@@ -31,6 +31,11 @@ const customReactSelectStyles = (hasError) => ({
     borderRadius: "6px",
     boxShadow: "0 10px 25px rgba(0, 0, 0, 0.15)",
   }),
+  menuList: (base) => ({
+    ...base,
+    maxHeight: "150px",
+    padding: "4px 0",
+  }),
   option: (base, state) => ({
     ...base,
     backgroundColor: state.isSelected
@@ -655,8 +660,8 @@ function CreateCustomerModal({ onClose, onSuccess }) {
           type="button"
           onClick={() => setActiveTab("basic")}
           className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${activeTab === "basic"
-              ? "border-blue-500 text-blue-600"
-              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            ? "border-blue-500 text-blue-600"
+            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
         >
           <div className="flex items-center gap-2">
@@ -671,8 +676,8 @@ function CreateCustomerModal({ onClose, onSuccess }) {
           type="button"
           onClick={() => setActiveTab("address")}
           className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${activeTab === "address"
-              ? "border-blue-500 text-blue-600"
-              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            ? "border-blue-500 text-blue-600"
+            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
         >
           <div className="flex items-center gap-2">
@@ -688,8 +693,8 @@ function CreateCustomerModal({ onClose, onSuccess }) {
           type="button"
           onClick={() => setActiveTab("additional")}
           className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${activeTab === "additional"
-              ? "border-blue-500 text-blue-600"
-              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            ? "border-blue-500 text-blue-600"
+            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
         >
           <div className="flex items-center gap-2">
@@ -972,6 +977,7 @@ function CreateCustomerModal({ onClose, onSuccess }) {
               placeholder="Select country"
               isSearchable
               styles={customReactSelectStyles(false)}
+              menuPlacement="top"
             />
           </div>
 
@@ -990,6 +996,7 @@ function CreateCustomerModal({ onClose, onSuccess }) {
                 isSearchable
                 isDisabled={!formData.billingCountry}
                 styles={customReactSelectStyles(false)}
+                menuPlacement="top"
               />
             </div>
 
@@ -1007,6 +1014,7 @@ function CreateCustomerModal({ onClose, onSuccess }) {
                 isSearchable
                 isDisabled={!formData.billingState}
                 styles={customReactSelectStyles(false)}
+                menuPlacement="top"
               />
             </div>
           </div>
@@ -1068,6 +1076,7 @@ function CreateCustomerModal({ onClose, onSuccess }) {
               isSearchable
               isDisabled={sameAsBilling}
               styles={customReactSelectStyles(false)}
+              menuPlacement="top"
             />
           </div>
 
@@ -1086,6 +1095,7 @@ function CreateCustomerModal({ onClose, onSuccess }) {
                 isSearchable
                 isDisabled={!formData.shippingCountry || sameAsBilling}
                 styles={customReactSelectStyles(false)}
+                menuPlacement="top"
               />
             </div>
 
@@ -1103,6 +1113,7 @@ function CreateCustomerModal({ onClose, onSuccess }) {
                 isSearchable
                 isDisabled={!formData.shippingState || sameAsBilling}
                 styles={customReactSelectStyles(false)}
+                menuPlacement="top"
               />
             </div>
           </div>
