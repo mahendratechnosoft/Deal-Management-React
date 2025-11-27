@@ -385,9 +385,11 @@ function CreatePaymentModal({ onClose, onSuccess, proformaId }) {
                         : "Select proforma invoice"
                     }
                     isSearchable
-                    isDisabled={fetchLoading}
+                    isDisabled={fetchLoading || !!proformaId}
                     styles={customReactSelectStyles(!!errors.proformaInvoiceId)}
                     inputRef={invoiceRef}
+                    menuPlacement="auto"
+                    menuPosition="fixed"
                   />
                   {errors.proformaInvoiceId && (
                     <p className="text-red-500 text-xs flex items-center gap-1">

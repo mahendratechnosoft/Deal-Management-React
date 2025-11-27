@@ -14,6 +14,7 @@ import {
 } from "../../BaseComponet/CustomeFormComponents";
 import CustomeImageUploader from "../../BaseComponet/CustomeImageUploader";
 import { hasPermission } from "../../BaseComponet/permissions";
+import { showConfirmDialog } from "../../BaseComponet/alertUtils";
 
 function EditProforma() {
   const { proformaInvoiceId } = useParams();
@@ -394,10 +395,15 @@ function EditProforma() {
 
   // --- Handlers (Synced with CreateProforma) ---
 
-  const handleCancel = () => {
-    if (role === "ROLE_ADMIN") navigate("/Proforma");
-    else if (role === "ROLE_EMPLOYEE") navigate("/Employee/Proforma");
-    else navigate("/login");
+  const handleCancel = async () => {
+    const result = await showConfirmDialog(
+      "Are you sure you want to cancel? Any unsaved changes will be lost."
+    );
+    if (result.isConfirmed) {
+      if (role === "ROLE_ADMIN") navigate("/Proforma");
+      else if (role === "ROLE_EMPLOYEE") navigate("/Employee/Proforma");
+      else navigate("/login");
+    }
   };
 
   const handleInfoChange = (e) => {
