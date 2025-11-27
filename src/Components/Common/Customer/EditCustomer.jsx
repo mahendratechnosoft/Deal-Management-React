@@ -8,6 +8,7 @@ import { useLayout } from "../../Layout/useLayout";
 import { FormInput, FormPhoneInputFloating, FormSelect, FormTextarea } from "../../BaseComponet/CustomeFormComponents";
 
 import { hasPermission } from "../../BaseComponet/permissions";
+import { showConfirmDialog } from "../../BaseComponet/alertUtils";
 
 function EditCustomer() {
   const navigate = useNavigate();
@@ -626,20 +627,19 @@ function EditCustomer() {
     }
   };
 
-  const handleCancel = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to cancel? Any unsaved changes will be lost."
-      )
-    ) {
-      // Navigate based on user role
-      if (role === "ROLE_ADMIN") {
-        navigate("/Admin/CustomerList");
-      } else if (role === "ROLE_EMPLOYEE") {
-        navigate("/Employee/CustomerList");
-      }
+const handleCancel = async () => {
+  const result = await showConfirmDialog(
+    "Are you sure you want to cancel? Any unsaved changes will be lost."
+  );
+  
+  if (result.isConfirmed) {
+    if (role === "ROLE_ADMIN") {
+      navigate("/Admin/CustomerList");
+    } else if (role === "ROLE_EMPLOYEE") {
+      navigate("/Employee/CustomerList");
     }
-  };
+  }
+}
 
   const customStyles = {
     control: (base) => ({
@@ -830,20 +830,20 @@ function EditCustomer() {
                 Cancel
               </button>
               {canEdit && (
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Saving...
-                  </>
-                ) : (
-                  'Update'
-                )}
-              </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    'Update'
+                  )}
+                </button>
               )}
             </div>
           </div>
@@ -852,305 +852,306 @@ function EditCustomer() {
         {/* Ultra Compact Form */}
         <div className="p-4">
           <div className={!canEdit ? "pointer-events-none opacity-60" : ""}>
-  <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Company Information</h3>
-
-                {/* Left Column - Company Info */}
-                <div className="space-y-4">
-                  {/* Company Name */}
-                  <FormInput
-                    label="Company Name"
-                    name="companyName"
-                    value={formData.companyName}
-                    onChange={handleChange}
-                    required={true}
-                    error={errors.companyName}
-                    className="mb-4"
-                    background="white"
-                  />
-
-                  {/* Industry & Revenue */}
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <FormSelect
-                      label="Industry"
-                      name="industry"
-                      background="white"
-                      className="setbg-white"
-                      value={[
-                        { value: "Software Development", label: "Software" },
-                        { value: "Manufacturing", label: "Manufacturing" },
-                        { value: "Healthcare", label: "Healthcare" },
-                        { value: "Finance", label: "Finance" }
-                      ].find(opt => opt.value === formData.industry)}
-                      onChange={(selectedOption) => handleSelectChange(selectedOption, { name: "industry" })}
-                      options={[
-                        { value: "Software Development", label: "Software" },
-                        { value: "Manufacturing", label: "Manufacturing" },
-                        { value: "Healthcare", label: "Healthcare" },
-                        { value: "Finance", label: "Finance" }
-                      ]}
-                      error={errors.industry}
-                    />
-
-                    <FormInput
-                      label="Revenue (₹)"
-                      name="revenue"
-                      value={formData.revenue}
-                      onChange={handleChange}
-                      type="number"
-                      background="white"
-                      error={errors.revenue}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {/* Website */}
-                    <FormInput
-                      label="Website"
-                      name="website"
-                      value={formData.website}
-                      onChange={handleChange}
-                      error={errors.website}
-                      background="white"
-                      className=""
-                    />
-                    {/* Email */}
-                    <FormInput
-                      label="Email Address"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      type="email"
-                      error={errors.email}
-                      background="white"
-                      className=""
-                    /></div>
-
-                  {/* GSTIN & PAN */}
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <FormInput
-                      label="GSTIN"
-                      name="gstin"
-                      value={formData.gstin}
-                      onChange={handleChange}
-                      error={errors.gstin}
-                      background="white"
-                    />
-
-                    <FormInput
-                      label="PAN Number"
-                      name="panNumber"
-                      value={formData.panNumber}
-                      onChange={handleChange}
-                      error={errors.panNumber}
-                      background="white"
-                    />
-                  </div>
-
-                  {/* Phone Numbers */}
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <FormPhoneInputFloating
-                      label="Primary Number"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={(phone) => handlePhoneChange('phone', phone)}
-                      required={true}
-                      error={errors.phone}
-                      background="white"
-                    />
-
-                    <FormPhoneInputFloating
-                      label="Secondary Number"
-                      name="mobile"
-                      value={formData.mobile}
-                      onChange={(phone) => handlePhoneChange('mobile', phone)}
-                      error={errors.mobile}
-                      background="white"
-                    />
-                  </div>
-
-                  {/* Description */}
-                  <FormTextarea
-                    label="Description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={2}
-                    className="mb-4"
-                    background="white"
-                  />
-                </div>
-              </div>
-
-              {/* Right Column - Address Information */}
-              <div className="space-y-4">
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Address Information</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Company Information</h3>
 
+                  {/* Left Column - Company Info */}
                   <div className="space-y-4">
-                    {/* Billing Address */}
-                    {/* Billing Address */}
-                    <div className="space-y-3 mb-4">
-                      <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-3">Billing Address</h4>
+                    {/* Company Name */}
+                    <FormInput
+                      label="Company Name"
+                      name="companyName"
+                      value={formData.companyName}
+                      onChange={handleChange}
+                      required={true}
+                      error={errors.companyName}
+                      className="mb-4"
+                      background="white"
+                    />
 
-                      <div className="space-y-3">
-                        <FormInput
-                          label="Street Address"
-                          name="billingStreet"
-                          value={formData.billingStreet}
-                          onChange={handleChange}
-                          background="white"
-                          className="mb-4"
-                        />
+                    {/* Industry & Revenue */}
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      <FormSelect
+                        label="Industry"
+                        name="industry"
+                        background="white"
+                        className="setbg-white"
+                        value={[
+                          { value: "Software Development", label: "Software" },
+                          { value: "Manufacturing", label: "Manufacturing" },
+                          { value: "Healthcare", label: "Healthcare" },
+                          { value: "Finance", label: "Finance" }
+                        ].find(opt => opt.value === formData.industry)}
+                        onChange={(selectedOption) => handleSelectChange(selectedOption, { name: "industry" })}
+                        options={[
+                          { value: "Software Development", label: "Software" },
+                          { value: "Manufacturing", label: "Manufacturing" },
+                          { value: "Healthcare", label: "Healthcare" },
+                          { value: "Finance", label: "Finance" }
+                        ]}
+                        error={errors.industry}
+                      />
 
-                        <div className="grid grid-cols-2 gap-2 mb-4">
-                          <FormSelect
-                            label="Country"
-                            name="billingCountry"
-                            className="setbg-white"
-                            value={dropdownData.countries.find(opt => opt.value === formData.billingCountry)}
-                            onChange={handleBillingCountryChange}
-                            options={dropdownData.countries}
-                            isSearchable
-                            error={errors.billingCountry}
-                            background="white"
-                          />
+                      <FormInput
+                        label="Revenue"
+                        name="revenue"
+                        value={formData.revenue}
+                        onChange={handleChange}
+                        type="number"
+                        background="white"
+                        error={errors.revenue}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {/* Website */}
+                      <FormInput
+                        label="Website"
+                        name="website"
+                        value={formData.website}
+                        onChange={handleChange}
+                        error={errors.website}
+                        background="white"
+                        className=""
+                      />
+                      {/* Email */}
+                      <FormInput
+                        label="Email Address"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        type="email"
+                        error={errors.email}
+                        background="white"
+                        className=""
+                      /></div>
 
-                          <FormSelect
-                            label="State"
-                            name="billingState"
-                            className="setbg-white"
-                            value={dropdownData.billingStates.find(opt => opt.value === formData.billingState)}
-                            onChange={handleBillingStateChange}
-                            options={dropdownData.billingStates}
-                            isSearchable
-                            isDisabled={!formData.billingCountry}
-                            error={errors.billingState}
-                            background="white"
-                          />
-                        </div>
+                    {/* GSTIN & PAN */}
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      <FormInput
+                        label="GSTIN"
+                        name="gstin"
+                        value={formData.gstin}
+                        onChange={handleChange}
+                        error={errors.gstin}
+                        background="white"
+                      />
 
-                        <div className="grid grid-cols-2 gap-2 mb-4">
-                          <FormSelect
-                            label="City"
-                            name="billingCity"
-                            className="setbg-white"
-                            value={dropdownData.billingCities.find(opt => opt.value === formData.billingCity)}
-                            onChange={handleBillingCityChange}
-                            options={dropdownData.billingCities}
-                            isSearchable
-                            isDisabled={!formData.billingState}
-                            error={errors.billingCity}
-                            background="white"
-                          />
-
-                          <FormInput
-                            label="ZIP Code"
-                            name="billingZipCode"
-                            value={formData.billingZipCode}
-                            onChange={handleChange}
-                            error={errors.billingZipCode}
-                            background="white"
-                          />
-                        </div>
-                      </div>
+                      <FormInput
+                        label="PAN Number"
+                        name="panNumber"
+                        value={formData.panNumber}
+                        onChange={handleChange}
+                        error={errors.panNumber}
+                        background="white"
+                      />
                     </div>
 
-                    {/* Shipping Address */}
-                    {/* Shipping Address */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Shipping Address</h4>
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="checkbox"
-                            id="sameAsBilling"
-                            checked={sameAsBilling}
-                            onChange={(e) => setSameAsBilling(e.target.checked)}
-                            className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    {/* Phone Numbers */}
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      <FormPhoneInputFloating
+                        label="Primary Number"
+                        name="phone"
+                        value={formData.mobile}
+                        onChange={(phone) => handlePhoneChange('phone', phone)}
+                        required={true}
+                        error={errors.phone}
+                        background="white"
+                      />
+
+                      <FormPhoneInputFloating
+                        label="Secondary Number"
+                        name="mobile"
+
+                        value={formData.phone}
+                        onChange={(phone) => handlePhoneChange('mobile', phone)}
+                        error={errors.mobile}
+                        background="white"
+                      />
+                    </div>
+
+                    {/* Description */}
+                    <FormTextarea
+                      label="Description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={2}
+                      className="mb-4"
+                      background="white"
+                    />
+                  </div>
+                </div>
+
+                {/* Right Column - Address Information */}
+                <div className="space-y-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Address Information</h3>
+
+                    <div className="space-y-4">
+                      {/* Billing Address */}
+                      {/* Billing Address */}
+                      <div className="space-y-3 mb-4">
+                        <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-3">Billing Address</h4>
+
+                        <div className="space-y-3">
+                          <FormInput
+                            label="Street Address"
+                            name="billingStreet"
+                            value={formData.billingStreet}
+                            onChange={handleChange}
+                            background="white"
+                            className="mb-4"
                           />
-                          <label htmlFor="sameAsBilling" className="text-xs text-gray-700">
-                            Same as billing
-                          </label>
+
+                          <div className="grid grid-cols-2 gap-2 mb-4">
+                            <FormSelect
+                              label="Country"
+                              name="billingCountry"
+                              className="setbg-white"
+                              value={dropdownData.countries.find(opt => opt.value === formData.billingCountry)}
+                              onChange={handleBillingCountryChange}
+                              options={dropdownData.countries}
+                              isSearchable
+                              error={errors.billingCountry}
+                              background="white"
+                            />
+
+                            <FormSelect
+                              label="State"
+                              name="billingState"
+                              className="setbg-white"
+                              value={dropdownData.billingStates.find(opt => opt.value === formData.billingState)}
+                              onChange={handleBillingStateChange}
+                              options={dropdownData.billingStates}
+                              isSearchable
+                              isDisabled={!formData.billingCountry}
+                              error={errors.billingState}
+                              background="white"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 mb-4">
+                            <FormSelect
+                              label="City"
+                              name="billingCity"
+                              className="setbg-white"
+                              value={dropdownData.billingCities.find(opt => opt.value === formData.billingCity)}
+                              onChange={handleBillingCityChange}
+                              options={dropdownData.billingCities}
+                              isSearchable
+                              isDisabled={!formData.billingState}
+                              error={errors.billingCity}
+                              background="white"
+                            />
+
+                            <FormInput
+                              label="ZIP Code"
+                              name="billingZipCode"
+                              value={formData.billingZipCode}
+                              onChange={handleChange}
+                              error={errors.billingZipCode}
+                              background="white"
+                            />
+                          </div>
                         </div>
                       </div>
 
+                      {/* Shipping Address */}
+                      {/* Shipping Address */}
                       <div className="space-y-3">
-                        {/* Street Address */}
-                        <FormInput
-                          label="Street Address"
-                          name="shippingStreet"
-                          value={formData.shippingStreet}
-                          onChange={handleChange}
-                          disabled={sameAsBilling}
-                          error={errors.shippingStreet}
-                          background="white"
-                          className="mb-4"
-                        />
-
-                        {/* Country & State */}
-                        <div className="grid grid-cols-2 gap-2 mb-4">
-                          <FormSelect
-                            label="Country"
-                            name="shippingCountry"
-                            className="setbg-white"
-                            value={dropdownData.countries.find(opt => opt.value === formData.shippingCountry)}
-                            onChange={handleShippingCountryChange}
-                            options={dropdownData.countries}
-                            isSearchable
-                            isDisabled={sameAsBilling}
-                            error={errors.shippingCountry}
-                            background="white"
-                          />
-
-                          <FormSelect
-                            label="State"
-                            name="shippingState"
-                            className="setbg-white"
-                            value={dropdownData.shippingStates.find(opt => opt.value === formData.shippingState)}
-                            onChange={handleShippingStateChange}
-                            options={dropdownData.shippingStates}
-                            isSearchable
-                            isDisabled={!formData.shippingCountry || sameAsBilling}
-                            error={errors.shippingState}
-                            background="white"
-                          />
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Shipping Address</h4>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="checkbox"
+                              id="sameAsBilling"
+                              checked={sameAsBilling}
+                              onChange={(e) => setSameAsBilling(e.target.checked)}
+                              className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <label htmlFor="sameAsBilling" className="text-xs text-gray-700">
+                              Same as billing
+                            </label>
+                          </div>
                         </div>
 
-                        {/* City & ZIP Code */}
-                        <div className="grid grid-cols-2 gap-2">
-                          <FormSelect
-                            label="City"
-                            name="shippingCity"
-                            className="setbg-white"
-                            value={dropdownData.shippingCities.find(opt => opt.value === formData.shippingCity)}
-                            onChange={handleShippingCityChange}
-                            options={dropdownData.shippingCities}
-                            isSearchable
-                            isDisabled={!formData.shippingState || sameAsBilling}
-                            error={errors.shippingCity}
-                            background="white"
-                          />
-
+                        <div className="space-y-3">
+                          {/* Street Address */}
                           <FormInput
-                            label="ZIP Code"
-                            name="shippingZipCode"
-                            value={formData.shippingZipCode}
+                            label="Street Address"
+                            name="shippingStreet"
+                            value={formData.shippingStreet}
                             onChange={handleChange}
                             disabled={sameAsBilling}
-                            error={errors.shippingZipCode}
+                            error={errors.shippingStreet}
                             background="white"
+                            className="mb-4"
                           />
+
+                          {/* Country & State */}
+                          <div className="grid grid-cols-2 gap-2 mb-4">
+                            <FormSelect
+                              label="Country"
+                              name="shippingCountry"
+                              className="setbg-white"
+                              value={dropdownData.countries.find(opt => opt.value === formData.shippingCountry)}
+                              onChange={handleShippingCountryChange}
+                              options={dropdownData.countries}
+                              isSearchable
+                              isDisabled={sameAsBilling}
+                              error={errors.shippingCountry}
+                              background="white"
+                            />
+
+                            <FormSelect
+                              label="State"
+                              name="shippingState"
+                              className="setbg-white"
+                              value={dropdownData.shippingStates.find(opt => opt.value === formData.shippingState)}
+                              onChange={handleShippingStateChange}
+                              options={dropdownData.shippingStates}
+                              isSearchable
+                              isDisabled={!formData.shippingCountry || sameAsBilling}
+                              error={errors.shippingState}
+                              background="white"
+                            />
+                          </div>
+
+                          {/* City & ZIP Code */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <FormSelect
+                              label="City"
+                              name="shippingCity"
+                              className="setbg-white"
+                              value={dropdownData.shippingCities.find(opt => opt.value === formData.shippingCity)}
+                              onChange={handleShippingCityChange}
+                              options={dropdownData.shippingCities}
+                              isSearchable
+                              isDisabled={!formData.shippingState || sameAsBilling}
+                              error={errors.shippingCity}
+                              background="white"
+                            />
+
+                            <FormInput
+                              label="ZIP Code"
+                              name="shippingZipCode"
+                              value={formData.shippingZipCode}
+                              onChange={handleChange}
+                              disabled={sameAsBilling}
+                              error={errors.shippingZipCode}
+                              background="white"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </form>
+            </form>
           </div>
         </div>
       </div>

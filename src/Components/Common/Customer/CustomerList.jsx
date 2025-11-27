@@ -469,10 +469,10 @@ function CustomerList() {
                     INDUSTRY
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    PHONE
+                    PRIMARY NO
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    MOBILE
+                    SECONDARY NO
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     WEBSITE
@@ -615,9 +615,10 @@ function CustomerList() {
                       {/* Phone */}
                       <td
                         className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 truncate max-w-[100px]"
-                        title={customer.phone}
+                        title={customer.phone}  
                       >
-                        {customer.phone || "N/A"}
+
+                        {customer.mobile || "N/A"}
                       </td>
 
                       {/* Mobile */}
@@ -625,7 +626,7 @@ function CustomerList() {
                         className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 truncate max-w-[100px]"
                         title={customer.mobile}
                       >
-                        {customer.mobile || "N/A"}
+                        {customer.phone || "N/A"}
                       </td>
 
                       {/* Website */}

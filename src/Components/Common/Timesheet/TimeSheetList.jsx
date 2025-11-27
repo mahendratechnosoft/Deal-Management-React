@@ -566,7 +566,7 @@ function TimeSheetList() {
                             </div>
 
                             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                {role !== "ROLE_EMPLOYEE" && (
+                                {/* {role !== "ROLE_EMPLOYEE" && ( */}
                                     <div className="w-64">
                                         <Select
                                             className="basic-single"
@@ -577,7 +577,7 @@ function TimeSheetList() {
                                             placeholder="Select Employee"
                                         />
                                     </div>
-                                )}
+                                {/* )} */}
                             </div>
                         </div>
                     </div>

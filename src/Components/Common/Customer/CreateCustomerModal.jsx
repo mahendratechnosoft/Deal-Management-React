@@ -797,7 +797,7 @@ function CreateCustomerModal({ onClose, onSuccess }) {
         {/* Revenue */}
         <div className="space-y-2">
           <label className="text-sm font-semibold text-gray-700">
-            Annual Revenue (₹)
+            Annual Revenue
           </label>
           <input
             type="number"
@@ -852,7 +852,7 @@ function CreateCustomerModal({ onClose, onSuccess }) {
           <div className={`phone-input-wrapper ${errors.phone ? "border-red-500 rounded-lg" : ""}`}>
             <PhoneInput
               country={"in"}
-              value={phoneDisplay}
+              value={mobileDisplay}
               onChange={handlePhoneChange}
               enableSearch={true}
               placeholder="Enter phone number"
@@ -901,7 +901,7 @@ function CreateCustomerModal({ onClose, onSuccess }) {
           <div className={`phone-input-wrapper ${errors.mobile ? "border-red-500 rounded-lg" : ""}`}>
             <PhoneInput
               country={"in"}
-              value={mobileDisplay}
+              value={phoneDisplay}
               onChange={handleMobileChange}
               enableSearch={true}
               placeholder="Enter mobile number"

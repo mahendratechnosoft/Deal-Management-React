@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import { hasPermission } from '../../BaseComponet/permissions';
+import { showDeleteConfirmation } from '../../BaseComponet/alertUtils';
 
 function EditTimesheetModal({
     clickPopup,
@@ -19,6 +20,15 @@ function EditTimesheetModal({
     const [newRecordTime, setNewRecordTime] = useState('');
     const [newRecordStatus, setNewRecordStatus] = useState(true);
     const [deletingRecord, setDeletingRecord] = useState(null);
+    const [validationErrors, setValidationErrors] = useState({});
+    const [allRecords, setAllRecords] = useState([]);
+
+    // Initialize records when clickPopup changes
+    useEffect(() => {
+        if (clickPopup?.records) {
+            setAllRecords([...clickPopup.records].sort((a, b) => a.timeStamp - b.timeStamp));
+        }
+    }, [clickPopup]);
 
     if (!clickPopup) return null;
 
@@ -36,6 +46,230 @@ function EditTimesheetModal({
         return total;
     }
 
+    // ==================== ENHANCED VALIDATION FUNCTIONS ====================
+
+    const getCurrentTime = () => {
+        return new Date();
+    };
+
+    const isFutureTime = (timestamp) => {
+        return new Date(timestamp) > getCurrentTime();
+    };
+
+    const validateRecordTime = (timestamp, recordType, currentRecord = null) => {
+        const errors = [];
+        const newTime = new Date(timestamp);
+        const currentTime = getCurrentTime();
+        const dateKey = clickPopup.dateKey;
+
+        // Get all records for the day (sorted by time)
+        const dayRecords = allRecords.filter(record => {
+            const recordDate = new Date(record.timeStamp).toISOString().split('T')[0];
+            return recordDate === dateKey;
+        });
+
+        // Validation 1: Cannot set future time
+        if (isFutureTime(timestamp)) {
+            errors.push('Cannot set time in the future');
+        }
+
+        // Validation 2: Time must be within the selected date
+        const recordDate = newTime.toISOString().split('T')[0];
+        if (recordDate !== dateKey) {
+            errors.push(`Time must be within ${dateKey}`);
+        }
+
+        // Validation 3: No duplicate timestamps (excluding current record being edited)
+        const duplicate = dayRecords.find(record =>
+            record.timeStamp === timestamp &&
+            (!currentRecord || record.attendanceId !== currentRecord.attendanceId)
+        );
+        if (duplicate) {
+            errors.push('Duplicate timestamp found');
+        }
+
+        if (recordType === 'in') {
+            // Validation 4: Check-in must be before its corresponding check-out
+            const correspondingOut = currentRecord ?
+                dayRecords.find(record =>
+                    record.attendanceId !== currentRecord.attendanceId &&
+                    record.timeStamp > currentRecord.timeStamp &&
+                    !record.status
+                ) : null;
+
+            if (correspondingOut && newTime >= new Date(correspondingOut.timeStamp)) {
+                errors.push('Check-in time must be before check-out time');
+            }
+
+            // Validation 5: Check-in cannot be after next check-in if exists
+            const currentIndex = dayRecords.findIndex(record =>
+                currentRecord && record.attendanceId === currentRecord.attendanceId
+            );
+            if (currentIndex > -1 && currentIndex + 1 < dayRecords.length) {
+                const nextRecord = dayRecords[currentIndex + 1];
+                if (newTime >= new Date(nextRecord.timeStamp)) {
+                    errors.push('Check-in cannot be after next record');
+                }
+            }
+
+            // Validation 6: Check-in cannot be after previous check-out if exists
+            if (currentIndex > 0) {
+                const prevRecord = dayRecords[currentIndex - 1];
+                if (newTime <= new Date(prevRecord.timeStamp)) {
+                    errors.push('Check-in must be after previous record');
+                }
+            }
+
+        } else if (recordType === 'out') {
+            // Validation 7: Check-out must be after its corresponding check-in
+            const correspondingIn = currentRecord ?
+                dayRecords.find(record => record.attendanceId === currentRecord.attendanceId) : null;
+
+            if (correspondingIn && newTime <= new Date(correspondingIn.timeStamp)) {
+                errors.push('Check-out time must be after check-in time');
+            }
+
+            // Validation 8: Check-out cannot be before next check-in if exists
+            const currentIndex = dayRecords.findIndex(record =>
+                currentRecord && record.attendanceId === currentRecord.attendanceId
+            );
+            if (currentIndex > -1 && currentIndex + 1 < dayRecords.length) {
+                const nextRecord = dayRecords[currentIndex + 1];
+                if (nextRecord.status === true && newTime >= new Date(nextRecord.timeStamp)) {
+                    errors.push('Check-out cannot be after next check-in time');
+                }
+            }
+
+            // Validation 9: Check-out cannot be before previous check-out if exists
+            if (currentIndex > 0) {
+                const prevRecord = dayRecords[currentIndex - 1];
+                if (!prevRecord.status && newTime <= new Date(prevRecord.timeStamp)) {
+                    errors.push('Check-out must be after previous check-out');
+                }
+            }
+        }
+
+        // Validation 10: Business rules - reasonable time ranges (24 hours allowed)
+        const startOfDay = new Date(dateKey + 'T00:00:00');
+        const endOfDay = new Date(dateKey + 'T23:59:59');
+        if (newTime < startOfDay || newTime > endOfDay) {
+            errors.push(`Time must be between 00:00 and 23:59 on ${dateKey}`);
+        }
+
+        // Validation 11: Minimum session duration (1 minute)
+        if (recordType === 'out' && currentRecord) {
+            const inTime = new Date(currentRecord.timeStamp);
+            const duration = newTime - inTime;
+            if (duration < 1 * 60 * 1000) { // 1 minute
+                errors.push('Minimum session duration is 1 minute');
+            }
+        }
+
+        // Validation 12: Maximum session duration (24 hours)
+        if (recordType === 'out' && currentRecord) {
+            const inTime = new Date(currentRecord.timeStamp);
+            const duration = newTime - inTime;
+            if (duration > 24 * 60 * 60 * 1000) { // 24 hours
+                errors.push('Maximum session duration is 24 hours');
+            }
+        }
+
+        return errors;
+    };
+
+    const validateNewRecord = (timestamp, status) => {
+        const errors = [];
+        const newTime = new Date(timestamp);
+        const currentTime = getCurrentTime();
+        const dateKey = clickPopup.dateKey;
+
+        const dayRecords = allRecords.filter(record => {
+            const recordDate = new Date(record.timeStamp).toISOString().split('T')[0];
+            return recordDate === dateKey;
+        });
+
+        // Validation 1: Cannot create future records
+        if (isFutureTime(timestamp)) {
+            errors.push('Cannot create records with future time');
+        }
+
+        // Validation 2: Date must match selected date
+        const recordDate = newTime.toISOString().split('T')[0];
+        if (recordDate !== dateKey) {
+            errors.push(`Time must be within ${dateKey}`);
+        }
+
+        // Validation 3: No duplicates
+        const duplicate = dayRecords.find(record => record.timeStamp === timestamp);
+        if (duplicate) {
+            errors.push('Duplicate timestamp found');
+        }
+
+        // Validation 4: Time must be within day boundaries
+        const startOfDay = new Date(dateKey + 'T00:00:00');
+        const endOfDay = new Date(dateKey + 'T23:59:59');
+        if (newTime < startOfDay || newTime > endOfDay) {
+            errors.push(`Time must be between 00:00 and 23:59 on ${dateKey}`);
+        }
+
+        if (status === true) { // Check-in
+            // Validation 5: Check-in must be first record or after last check-out
+            const lastRecord = dayRecords[dayRecords.length - 1];
+            if (lastRecord && lastRecord.status === true) {
+                errors.push('Cannot create check-in when last record is also check-in');
+            }
+            if (lastRecord && newTime <= new Date(lastRecord.timeStamp)) {
+                errors.push('New check-in must be after last record');
+            }
+        } else { // Check-out
+            // Validation 6: Check-out requires an open check-in
+            const lastRecord = dayRecords[dayRecords.length - 1];
+            if (!lastRecord || lastRecord.status === false) {
+                errors.push('Cannot create check-out without an open check-in');
+            } else {
+                // Validation 7: Check-out must be after last check-in
+                if (newTime <= new Date(lastRecord.timeStamp)) {
+                    errors.push('Check-out must be after the last check-in');
+                }
+
+                // Validation 8: Minimum duration (1 minute)
+                const duration = newTime - new Date(lastRecord.timeStamp);
+                if (duration < 1 * 60 * 1000) {
+                    errors.push('Minimum session duration is 1 minute');
+                }
+
+                // Validation 9: Maximum duration (24 hours)
+                if (duration > 24 * 60 * 60 * 1000) {
+                    errors.push('Maximum session duration is 24 hours');
+                }
+            }
+        }
+
+        return errors;
+    };
+
+    const canCreateCheckout = () => {
+        const dayRecords = allRecords.filter(record => {
+            const recordDate = new Date(record.timeStamp).toISOString().split('T')[0];
+            return recordDate === clickPopup.dateKey;
+        });
+
+        const lastRecord = dayRecords[dayRecords.length - 1];
+        return lastRecord && lastRecord.status === true; // Last record is check-in
+    };
+
+    const canCreateCheckin = () => {
+        const dayRecords = allRecords.filter(record => {
+            const recordDate = new Date(record.timeStamp).toISOString().split('T')[0];
+            return recordDate === clickPopup.dateKey;
+        });
+
+        const lastRecord = dayRecords[dayRecords.length - 1];
+        return !lastRecord || lastRecord.status === false; // No records or last is check-out
+    };
+
+    // ==================== UTILITY FUNCTIONS ====================
+
     const convertToDateTimeLocal = (timestamp) => {
         const date = new Date(timestamp);
         const year = date.getFullYear();
@@ -47,9 +281,40 @@ function EditTimesheetModal({
     };
 
     const getCurrentDateTimeLocal = () => {
-        const now = new Date();
-        return convertToDateTimeLocal(now);
+        const now = getCurrentTime();
+        // Set to current time but ensure it's not in future for the selected date
+        const selectedDate = clickPopup.dateKey;
+        const currentDate = now.toISOString().split('T')[0];
+
+        if (selectedDate > currentDate) {
+            // If selected date is in future, set to end of selected date
+            return `${selectedDate}T23:59`;
+        } else if (selectedDate < currentDate) {
+            // If selected date is in past, set to end of selected date
+            return `${selectedDate}T23:59`;
+        } else {
+            // Current date, use current time
+            return convertToDateTimeLocal(now);
+        }
     };
+
+    const getMaxDateTimeLocal = () => {
+        const selectedDate = clickPopup.dateKey;
+        const currentDate = getCurrentTime().toISOString().split('T')[0];
+
+        if (selectedDate > currentDate) {
+            // Future date - allow full day
+            return `${selectedDate}T23:59`;
+        } else if (selectedDate < currentDate) {
+            // Past date - allow full day
+            return `${selectedDate}T23:59`;
+        } else {
+            // Current date - only allow up to current time
+            return convertToDateTimeLocal(getCurrentTime());
+        }
+    };
+
+    // ==================== EVENT HANDLERS ====================
 
     const handleEditClick = (record, type) => {
         setIsEditing(true);
@@ -57,6 +322,7 @@ function EditTimesheetModal({
         setEditingRecord({ ...record, type });
         const formattedDate = convertToDateTimeLocal(record.timeStamp);
         setEditedTime(formattedDate);
+        setValidationErrors({});
     };
 
     const handleCreateClick = () => {
@@ -64,6 +330,7 @@ function EditTimesheetModal({
         setIsEditing(false);
         setNewRecordTime(getCurrentDateTimeLocal());
         setNewRecordStatus(true);
+        setValidationErrors({});
     };
 
     const handleCancel = () => {
@@ -72,10 +339,24 @@ function EditTimesheetModal({
         setEditingRecord(null);
         setEditedTime('');
         setNewRecordTime('');
+        setValidationErrors({});
     };
 
     const handleSaveEdit = async () => {
         if (!editedTime || !editingRecord) return;
+
+        // Run validation
+        const errors = validateRecordTime(
+            new Date(editedTime).getTime(),
+            editingRecord.type,
+            editingRecord
+        );
+
+        if (errors.length > 0) {
+            setValidationErrors({ edit: errors });
+            toast.error('Validation failed: ' + errors.join(', '));
+            return;
+        }
 
         setLoading(true);
         try {
@@ -105,6 +386,18 @@ function EditTimesheetModal({
     const handleCreateRecord = async () => {
         if (!newRecordTime) {
             toast.error('Please select a date and time');
+            return;
+        }
+
+        // Run validation
+        const errors = validateNewRecord(
+            new Date(newRecordTime).getTime(),
+            newRecordStatus
+        );
+
+        if (errors.length > 0) {
+            setValidationErrors({ create: errors });
+            toast.error('Validation failed: ' + errors.join(', '));
             return;
         }
 
@@ -154,7 +447,8 @@ function EditTimesheetModal({
             ? `Are you sure you want to delete this entire session?`
             : `Are you sure you want to delete this check-in record?`;
 
-        if (!window.confirm(confirmMessage)) {
+        const result = await showDeleteConfirmation(confirmMessage);
+        if (!result.isConfirmed) {
             return;
         }
 
@@ -181,6 +475,8 @@ function EditTimesheetModal({
         return formatTimeSimple(new Date(editingRecord.timeStamp));
     };
 
+    // ==================== RENDER ====================
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-auto overflow-hidden">
@@ -205,18 +501,18 @@ function EditTimesheetModal({
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          
-                                {hasPermission("timeSheet", "Create") && (
-                            <button
-                                onClick={handleCreateClick}
-                                className="bg-blue-600 text-white py-2 px-3 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                                Create
-                            </button>
-                                )}
+                            {/* Hide Create button when editing */}
+                            {!isEditing && hasPermission("timeSheet", "Create") && (
+                                <button
+                                    onClick={handleCreateClick}
+                                    className="bg-blue-600 text-white py-2 px-3 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Create
+                                </button>
+                            )}
                             <button
                                 onClick={() => onClose(false)}
                                 disabled={loading}
@@ -230,7 +526,7 @@ function EditTimesheetModal({
                     </div>
                 </div>
 
-                {/* Content - Compact Design */}
+                {/* Content */}
                 <div className="p-4 max-h-80 overflow-y-auto">
                     {isEditing ? (
                         // Edit Mode
@@ -256,10 +552,29 @@ function EditTimesheetModal({
                                     <input
                                         type="datetime-local"
                                         value={editedTime}
-                                        onChange={(e) => setEditedTime(e.target.value)}
+                                        max={getMaxDateTimeLocal()}
+                                        onChange={(e) => {
+                                            setEditedTime(e.target.value);
+                                            setValidationErrors({});
+                                        }}
                                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        Maximum allowed: {getMaxDateTimeLocal().replace('T', ' ')}
+                                    </div>
                                 </div>
+
+                                {/* Validation Errors for Edit */}
+                                {validationErrors.edit && validationErrors.edit.length > 0 && (
+                                    <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                                        <div className="text-red-800 text-xs font-medium mb-1">Validation Errors:</div>
+                                        <ul className="text-red-700 text-xs list-disc list-inside space-y-1">
+                                            {validationErrors.edit.map((error, index) => (
+                                                <li key={index}>{error}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
 
                                 <div className="flex gap-2">
                                     <button
@@ -297,9 +612,16 @@ function EditTimesheetModal({
                                     <input
                                         type="datetime-local"
                                         value={newRecordTime}
-                                        onChange={(e) => setNewRecordTime(e.target.value)}
+                                        max={getMaxDateTimeLocal()}
+                                        onChange={(e) => {
+                                            setNewRecordTime(e.target.value);
+                                            setValidationErrors({});
+                                        }}
                                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        Maximum allowed: {getMaxDateTimeLocal().replace('T', ' ')}
+                                    </div>
                                 </div>
 
                                 <div>
@@ -312,28 +634,54 @@ function EditTimesheetModal({
                                                 type="radio"
                                                 value="true"
                                                 checked={newRecordStatus === true}
-                                                onChange={() => setNewRecordStatus(true)}
+                                                onChange={() => {
+                                                    setNewRecordStatus(true);
+                                                    setValidationErrors({});
+                                                }}
                                                 className="w-3 h-3"
+                                                disabled={!canCreateCheckin()}
                                             />
-                                            <span className="text-green-600 font-medium">Check-in</span>
+                                            <span className={`font-medium ${!canCreateCheckin() ? 'text-gray-400' : 'text-green-600'}`}>
+                                                Check-in {!canCreateCheckin() && '(Not allowed)'}
+                                            </span>
                                         </label>
                                         <label className="flex items-center gap-1 text-sm">
                                             <input
                                                 type="radio"
                                                 value="false"
                                                 checked={newRecordStatus === false}
-                                                onChange={() => setNewRecordStatus(false)}
+                                                onChange={() => {
+                                                    setNewRecordStatus(false);
+                                                    setValidationErrors({});
+                                                }}
                                                 className="w-3 h-3"
+                                                disabled={!canCreateCheckout()}
                                             />
-                                            <span className="text-red-600 font-medium">Check-out</span>
+                                            <span className={`font-medium ${!canCreateCheckout() ? 'text-gray-400' : 'text-red-600'}`}>
+                                                Check-out {!canCreateCheckout() && '(Not allowed)'}
+                                            </span>
                                         </label>
                                     </div>
                                 </div>
 
+                                {/* Validation Errors for Create */}
+                                {validationErrors.create && validationErrors.create.length > 0 && (
+                                    <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                                        <div className="text-red-800 text-xs font-medium mb-1">Validation Errors:</div>
+                                        <ul className="text-red-700 text-xs list-disc list-inside space-y-1">
+                                            {validationErrors.create.map((error, index) => (
+                                                <li key={index}>{error}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
                                 <div className="flex gap-2">
                                     <button
                                         onClick={handleCreateRecord}
-                                        disabled={loading || !newRecordTime}
+                                        disabled={loading || !newRecordTime ||
+                                            (newRecordStatus && !canCreateCheckin()) ||
+                                            (!newRecordStatus && !canCreateCheckout())}
                                         className="flex-1 bg-green-600 text-white py-2 px-3 rounded text-sm font-medium hover:bg-green-700 disabled:opacity-50"
                                     >
                                         {loading ? 'Creating...' : 'Create'}
@@ -349,31 +697,29 @@ function EditTimesheetModal({
                             </div>
                         </div>
                     ) : (
-                        // View Mode - Compact Session List
+                        // View Mode
                         <div className="space-y-3">
                             {pairs.length > 0 ? (
                                 pairs.map((p, idx) => (
                                     <div key={idx} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                                        {/* Session Header */}
                                         <div className="flex justify-between items-center mb-3">
                                             <span className="text-xs font-semibold text-gray-700 bg-white px-2 py-1 rounded">
                                                 Session {idx + 1}
                                             </span>
-                                                 {hasPermission("timeSheet", "Delete") && (
-                                            <button
-                                                onClick={() => handleDeleteSession(p)}
-                                                disabled={loading}
-                                                className="text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
-                                                title="Delete session"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                                 )}
+                                            {hasPermission("timeSheet", "Delete") && (
+                                                <button
+                                                    onClick={() => handleDeleteSession(p)}
+                                                    disabled={loading}
+                                                    className="text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                                                    title="Delete session"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            )}
                                         </div>
 
-                                        {/* Connected Time Pair with Edit Buttons Aligned */}
                                         <div className="flex items-center gap-3">
                                             <div className="flex flex-col items-center">
                                                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -381,7 +727,6 @@ function EditTimesheetModal({
                                                 <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                                             </div>
                                             <div className="space-y-2 flex-1">
-                                                {/* Start Time with Edit In Button */}
                                                 <div className="flex items-center justify-between">
                                                     <div className="text-sm text-gray-600">
                                                         <span className="font-medium">Start:</span> {formatTimeSimple(new Date(p.in.timeStamp))}
@@ -395,12 +740,10 @@ function EditTimesheetModal({
                                                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                             </svg>
-                                                            {/* <span className="hidden sm:inline">In</span> */}
                                                         </button>
                                                     )}
                                                 </div>
 
-                                                {/* End Time with Edit Out Button */}
                                                 <div className="flex items-center justify-between">
                                                     <div className="text-sm text-gray-600">
                                                         <span className="font-medium">End:</span> {p.out ? formatTimeSimple(new Date(p.out.timeStamp)) : "—"}
@@ -416,14 +759,12 @@ function EditTimesheetModal({
                                                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                                     </svg>
-                                                                    {/* <span className="hidden sm:inline"> Out</span> */}
                                                                 </button>
                                                             )}
                                                         </>
                                                     ) : (
-                                                        <>
-                                                            <div className="w-20"></div> {/* Spacer for alignment when no check-out */}
-                                                        </>)}
+                                                        <div className="w-20"></div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
