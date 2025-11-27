@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../../BaseComponet/axiosInstance";
 import MtechLOGO from "../../../../../public/Images/Mtech_Logo.jpg";
+import { showAutoCloseSuccess, showSuccessAlert } from "../../../BaseComponet/alertUtils";
 const DynamicFormBase = () => {
   const [adminInfo, setAdminInfo] = useState(null);
   const [generatedLink, setGeneratedLink] = useState("");
@@ -33,10 +34,20 @@ const DynamicFormBase = () => {
   };
 
   // Copy to clipboard
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedLink);
-    alert("Link copied to clipboard!");
-  };
+const copyToClipboard = async () => {
+  if (!generatedLink) {
+    showErrorAlert("Nothing to copy.");
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(generatedLink);
+    showAutoCloseSuccess("Link copied to clipboard!");
+  } catch (err) {
+    console.error("Clipboard write failed:", err);
+    showErrorAlert("Failed to copy link. Please try again.");
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
@@ -44,7 +55,7 @@ const DynamicFormBase = () => {
         {/* Header Section */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-          
+
             <h1 className="text-3xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Lead Capture Form Builder
             </h1>
@@ -64,7 +75,7 @@ const DynamicFormBase = () => {
                   Create a professional form and share it with potential clients
                 </p>
               </div>
-              
+
               <div className="flex flex-col sm:flex-row gap-4">
                 {/* Preview Button */}
                 <button
@@ -130,16 +141,16 @@ const DynamicFormBase = () => {
                   Live Preview
                 </span>
               </div>
-              
+
               <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 bg-gray-50">
                 <div className="max-w-2xl mx-auto">
                   {/* Preview Header with Company Logo */}
                   <div className="text-center mb-8">
                     <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
                       <div className="flex items-center justify-center mb-4">
-                        <img 
+                        <img
                           src={MtechLOGO}
-                          alt="Mahendra Technosoft Pvt. Ltd." 
+                          alt="Mahendra Technosoft Pvt. Ltd."
                           className="h-16 w-auto"
                         />
                       </div>
@@ -149,9 +160,9 @@ const DynamicFormBase = () => {
                       <p className="text-gray-600 mb-3">
                         Get In Touch With Us
                       </p>
-                      <a 
-                        href="https://www.mahendratechnosoft.com/" 
-                        target="_blank" 
+                      <a
+                        href="https://www.mahendratechnosoft.com/"
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
@@ -167,7 +178,7 @@ const DynamicFormBase = () => {
                         Business Enquiry Form
                       </h2>
                     </div>
-                    
+
                     <div className="p-6 space-y-4">
                       {/* Sample form fields for preview */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -205,7 +216,7 @@ const DynamicFormBase = () => {
                           <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 opacity-50">
                             example.com
                           </div>
-                        
+
                         </div>
                       </div>
 
@@ -262,7 +273,7 @@ const DynamicFormBase = () => {
                   Click the "Generate Form Link" button to create your unique form URL
                 </p>
               </div>
-              
+
               <div className="text-center p-6 bg-green-50 rounded-xl border border-green-100">
                 <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white font-bold text-lg mx-auto mb-4">
                   2
@@ -272,7 +283,7 @@ const DynamicFormBase = () => {
                   Copy the generated link and share it via email, social media, or your website
                 </p>
               </div>
-              
+
               <div className="text-center p-6 bg-purple-50 rounded-xl border border-purple-100">
                 <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg mx-auto mb-4">
                   3

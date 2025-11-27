@@ -380,76 +380,89 @@ export const FormPhoneInputFloating = ({
   const [isFocused, setIsFocused] = useState(false);
   const hasValue = !!value;
 
+  const handleFocus = () => {
+    setIsFocused(true);
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+  };
+
   return (
     <div className={`relative ${className}`}>
-      <PhoneInput
-        country={country}
-        value={value}
-        onChange={(phone) => onChange(phone)}
-        inputProps={{
-          name,
-          required,
-          autoFocus: false,
-          disabled,
-          onFocus: () => setIsFocused(true),
-          onBlur: () => setIsFocused(false),
-        }}
-        inputStyle={{
-          width: "100%",
-          height: "42px",
-          fontSize: "14px",
-          border: error ? "1px solid #ef4444" : "1px solid #d1d5db",
-          borderRadius: "8px",
-          paddingLeft: "48px",
-          backgroundColor: disabled
-            ? "#f3f4f6"
-            : background === "white"
-            ? "#ffffff"
-            : "transparent",
-        }}
-        buttonStyle={{
-          border: error ? "1px solid #ef4444" : "1px solid #d1d5db",
-          borderRadius: "8px 0 0 8px",
-          backgroundColor: disabled ? "#f3f4f6" : "#f9fafb",
-          height: "42px",
-        }}
-        dropdownStyle={{
-          borderRadius: "8px",
-          fontSize: "14px",
-          zIndex: 50,
-        }}
-        searchStyle={{
-          fontSize: "14px",
-          padding: "8px",
-          margin: "4px",
-          borderRadius: "6px",
-          border: "1px solid #d1d5db",
-        }}
-        enableSearch={enableSearch}
-        searchPlaceholder="Search countries..."
-        isValid={(value, country) => {
-          // if (value.match(/12345/)) {
-          //   return "Invalid value: " + value + ", " + country.name;
-          // } else if (value.match(/1234/)) {
-          //   return false;
-          // } else {
-          //   return true;
-          // }
-        }}
-        disabled={disabled}
-      />
+      <div className={`relative border rounded-lg transition-all duration-200 ${
+        error 
+          ? 'border-red-500 ring-2 ring-red-500 ring-opacity-20' 
+          : isFocused 
+            ? 'border-blue-500 ring-2 ring-blue-500 ring-opacity-80' 
+            : 'border-gray-300'
+      } ${disabled ? 'bg-gray-100' : ''}`}>
+        <PhoneInput
+          country={country}
+          value={value}
+          onChange={(phone) => onChange(phone)}
+          inputProps={{
+            name,
+            required,
+            autoFocus: false,
+            disabled,
+            onFocus: handleFocus,
+            onBlur: handleBlur,
+          }}
+          inputStyle={{
+            width: "100%",
+            height: "42px",
+            fontSize: "14px",
+            border: "none",
+            borderRadius: "8px",
+            paddingLeft: "48px",
+            backgroundColor: "transparent",
+            boxShadow: "none",
+            outline: "none",
+            color: "#111827", // Dark gray text color to match other inputs
+            fontWeight: "400",
+          }}
+          buttonStyle={{
+            border: "none",
+            backgroundColor: "transparent",
+            height: "42px",
+            marginRight: "4px",
+          }}
+          containerStyle={{
+            border: "none",
+            backgroundColor: "transparent",
+          }}
+          dropdownStyle={{
+            borderRadius: "8px",
+            fontSize: "14px",
+            zIndex: 50,
+            border: "1px solid #e5e7eb",
+            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+          }}
+          searchStyle={{
+            fontSize: "14px",
+            padding: "8px",
+            margin: "4px",
+            borderRadius: "6px",
+            border: "1px solid #d1d5db",
+            color: "#111827", // Dark text in search
+          }}
+          enableSearch={enableSearch}
+          searchPlaceholder="Search countries..."
+          disabled={disabled}
+        />
+      </div>
 
-      {/* Properly Aligned Floating Label */}
-      {/* Fixed Floating Label - Always stay up when there's any value */}
+      {/* Floating Label - Made darker to match other labels */}
       <label
-        className={`absolute text-sm duration-300 transform z-10 origin-[0] px-2  left-11 pointer-events-none 
-          scale-75 -translate-y-4 top-2
+        className={`absolute text-sm duration-300 transform z-10 origin-[0] px-2 left-11 pointer-events-none 
+          scale-75 -translate-y-4 top-2 font-medium
           ${
             error
               ? "text-red-600"
               : isFocused
               ? "text-blue-600"
-              : "text-gray-500"
+              : "text-gray-700" // Changed from text-gray-500 to text-gray-700 for darker label
           }
           ${disabled ? "text-gray-400" : ""}`}
         style={{

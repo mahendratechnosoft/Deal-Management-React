@@ -82,6 +82,7 @@ function EditPayment() {
                 }
 
                 // initialize form using payment + proforma
+                // In your useEffect where you set initial form:
                 const initialFormData = {
                     paymentId: pay.paymentId || "",
                     adminId: pay.adminId || "",
@@ -96,7 +97,7 @@ function EditPayment() {
                     customerId: pay.customerId || "",
                     amount:
                         pay.amount !== undefined && pay.amount !== null
-                            ? Number(pay.amount).toFixed(2)
+                            ? Number(pay.amount).toFixed(2) // Ensure 2 decimal places
                             : "",
                     paymentDate: pay.paymentDate || "",
                     paymentMode: pay.paymentMode || "",
@@ -154,7 +155,7 @@ function EditPayment() {
     useEffect(() => {
         if (!initialForm) return;
 
-        const hasChanged = 
+        const hasChanged =
             form.amount !== initialForm.amount ||
             form.paymentDate !== initialForm.paymentDate ||
             form.paymentMode !== initialForm.paymentMode ||
@@ -183,18 +184,33 @@ function EditPayment() {
 
         // If amount, allow numeric and keep two decimals - but keep raw string until submit/validation
         if (name === "amount") {
+            // Allow only numbers and one decimal point
+            const cleaned = value.replace(/[^0-9.]/g, '');
+
+            // Check if it's a valid number
+            const numericValue = parseFloat(cleaned);
+
             // Validate amount doesn't exceed allowed maximum in real-time
-            const numericValue = parseFloat(value);
             if (!isNaN(numericValue) && numericValue > derived.allowedMax) {
-                // Set to maximum allowed value
+                // Set to maximum allowed value with exactly 2 decimal places
                 setForm((p) => ({ ...p, [name]: derived.allowedMax.toFixed(2) }));
                 setErrors((p) => ({ ...p, amount: `Amount cannot exceed ₹${formatCurrency(derived.allowedMax)}` }));
                 return;
             }
-            
-            // replace multiple decimals or non-numeric except dot
-            const cleaned = value;
-            setForm((p) => ({ ...p, [name]: cleaned }));
+
+            // If it's a valid number, format to 2 decimal places
+            if (!isNaN(numericValue) && cleaned.includes('.')) {
+                const parts = cleaned.split('.');
+                if (parts[1].length > 2) {
+                    // If more than 2 decimal places, truncate to 2
+                    setForm((p) => ({ ...p, [name]: numericValue.toFixed(2) }));
+                } else {
+                    setForm((p) => ({ ...p, [name]: cleaned }));
+                }
+            } else {
+                setForm((p) => ({ ...p, [name]: cleaned }));
+            }
+
             if (errors.amount) setErrors((p) => ({ ...p, amount: "" }));
             return;
         }
@@ -246,6 +262,7 @@ function EditPayment() {
 
             const previousPaid = paidAmountFromProforma - origPayment;
 
+            // Ensure amount has exactly 2 decimal places
             const newPaymentAmount = Number(parseFloat(form.amount || 0).toFixed(2));
 
             const totalPaidAfter = previousPaid + newPaymentAmount;
@@ -259,7 +276,7 @@ function EditPayment() {
                 transactionId: form.transactionId,
                 companyName: form.companyName,
                 customerId: form.customerId,
-                amount: newPaymentAmount, // current payment record amount
+                amount: newPaymentAmount, // This now has exactly 2 decimal places
                 paymentDate: form.paymentDate,
                 paymentMode: form.paymentMode,
                 createdBy: form.createdBy,
@@ -270,11 +287,11 @@ function EditPayment() {
 
             await axiosInstance.put("updatePayment", payload);
             toast.success("Payment updated successfully");
-            
+
             // Update initial form after successful save
-            setInitialForm(form);
+            setInitialForm({ ...form, amount: newPaymentAmount.toFixed(2) });
             setIsFormModified(false);
-            
+
             navigate(-1);
         } catch (err) {
             console.error("Update failed:", err);
@@ -322,16 +339,16 @@ function EditPayment() {
         html2pdf().set(opt).from(element).save();
     };
 
-  const handleCancel = async () => {
-    if (isFormModified) {
-        const result = await showConfirmDialog("You have unsaved changes. Discard changes and go back?");
-        if (result.isConfirmed) {
+    const handleCancel = async () => {
+        if (isFormModified) {
+            const result = await showConfirmDialog("You have unsaved changes. Discard changes and go back?");
+            if (result.isConfirmed) {
+                navigate(-1);
+            }
+        } else {
             navigate(-1);
         }
-    } else {
-        navigate(-1);
-    }
-};
+    };
 
     if (fetchLoading) {
         return (
@@ -360,11 +377,11 @@ function EditPayment() {
                                 Back
                             </button>
                             <h1 className="text-2xl font-bold text-gray-900 mt-2">Edit Payment</h1>
-                           
+
                         </div>
 
                         <div className="flex items-center gap-2">
-                             {isFormModified && (
+                            {isFormModified && (
                                 <p className="text-xs text-orange-600 mt-1">You have unsaved changes</p>
                             )}
                             <button
