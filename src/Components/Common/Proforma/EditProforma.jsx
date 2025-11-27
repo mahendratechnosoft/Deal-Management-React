@@ -14,6 +14,7 @@ import {
 } from "../../BaseComponet/CustomeFormComponents";
 import CustomeImageUploader from "../../BaseComponet/CustomeImageUploader";
 import { hasPermission } from "../../BaseComponet/permissions";
+import { showConfirmDialog } from "../../BaseComponet/alertUtils";
 
 function EditProforma() {
   const { proformaInvoiceId } = useParams();
@@ -34,6 +35,7 @@ function EditProforma() {
 
   const canEdit = hasPermission("proformaInvoice", "Edit");
   const canDelete = hasPermission("proformaInvoice", "Delete");
+
   // Main Form State
   const [proformaInfo, setProformaInfo] = useState({
     proformaInvoiceId: "",
@@ -47,6 +49,7 @@ function EditProforma() {
     dueDate: "",
     invoiceDate: "",
     totalAmount: 0,
+    paidAmount: 0,
     status: "Unpaid",
     relatedTo: "",
     relatedId: "",
@@ -70,6 +73,11 @@ function EditProforma() {
     companySignature: "",
     companyStamp: "",
   });
+
+  const hasPayments = (Number(proformaInfo.paidAmount) || 0) > 0;
+  const isFormEditable = canEdit && !hasPayments;
+
+  console.log("isFormEditable", isFormEditable);
 
   const [isSameAsBilling, setIsSameAsBilling] = useState(false);
   const [proformaContent, setProformaContent] = useState([]);
@@ -387,10 +395,15 @@ function EditProforma() {
 
   // --- Handlers (Synced with CreateProforma) ---
 
-  const handleCancel = () => {
-    if (role === "ROLE_ADMIN") navigate("/Proforma");
-    else if (role === "ROLE_EMPLOYEE") navigate("/Employee/Proforma");
-    else navigate("/login");
+  const handleCancel = async () => {
+    const result = await showConfirmDialog(
+      "Are you sure you want to cancel? Any unsaved changes will be lost."
+    );
+    if (result.isConfirmed) {
+      if (role === "ROLE_ADMIN") navigate("/Proforma");
+      else if (role === "ROLE_EMPLOYEE") navigate("/Employee/Proforma");
+      else navigate("/login");
+    }
   };
 
   const handleInfoChange = (e) => {
@@ -1067,7 +1080,7 @@ function EditProforma() {
               >
                 Cancel
               </button>
-              {hasPermission("proformaInvoice", "Edit") && (
+              {isFormEditable && (
                 <button
                   type="submit"
                   form="editProformaForm"
@@ -1081,10 +1094,44 @@ function EditProforma() {
           </div>
         </div>
 
+        {hasPayments && !isFetching && (
+          <div className="mt-4 mx-2 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded shadow-sm">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-yellow-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-yellow-700">
+                  <strong>Editing Disabled:</strong> This Proforma Invoice
+                  cannot be modified because a payment of{" "}
+                  <span className="font-bold">
+                    {currencySymbol}
+                    {proformaInfo.paidAmount}
+                  </span>{" "}
+                  has already been recorded.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* --- Form --- */}
         <div
           className={`h-[72vh] overflow-hidden ${
-            !canEdit ? "disabled-form" : ""
+            !isFormEditable
+              ? "disabled-form pointer-events-none opacity-60"
+              : ""
           }`}
         >
           {isFetching ? (
