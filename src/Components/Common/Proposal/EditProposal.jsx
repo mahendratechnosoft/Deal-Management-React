@@ -8,6 +8,7 @@ import { City, Country, State } from "country-state-city";
 import {
   FormInput,
   FormInputWithPrefix,
+  FormPhoneInputFloating,
   FormSelect,
   FormTextarea,
 } from "../../BaseComponet/CustomeFormComponents";
@@ -475,6 +476,20 @@ function EditProposal() {
     }
   };
 
+  const handlePhoneChange = (fieldName, phone) => {
+    setProposalInfo((prev) => ({
+      ...prev,
+      [fieldName]: phone,
+    }));
+
+    if (errors[fieldName]) {
+      setErrors((prev) => ({
+        ...prev,
+        [fieldName]: "",
+      }));
+    }
+  };
+
   const handleSelectChange = (name, selectedOption) => {
     if (name === "assignTo") {
       setProposalInfo((prev) => ({
@@ -721,6 +736,13 @@ function EditProposal() {
 
     if (!proposalInfo.currencyType)
       newErrors.currencyType = "Currency is required";
+
+    if (
+      !proposalInfo.mobileNumber ||
+      proposalInfo.mobileNumber.toString().length < 5
+    ) {
+      newErrors.mobileNumber = "Mobile Number is required";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -995,13 +1017,15 @@ function EditProposal() {
                         error={errors.email}
                         disabled={isRecipientLoading} // <-- MODIFIED
                       />
-                      <FormInput
+                      <FormPhoneInputFloating
                         label="Mobile Number"
                         name="mobileNumber"
                         value={proposalInfo.mobileNumber}
-                        onChange={handleInfoChange}
+                        onChange={(phone) =>
+                          handlePhoneChange("mobileNumber", phone)
+                        }
                         error={errors.mobileNumber}
-                        disabled={isRecipientLoading} // <-- MODIFIED
+                        background="white"
                       />
                       <FormInput
                         label="Street Address"

@@ -10,6 +10,8 @@ function CustomeImageUploader({
   onFileChange,
   className = "",
   initialBase64 = null,
+  maxSize = 5 * 1024 * 1024,
+  acceptedFileTypes = ["image/jpeg", "image/png", "image/jpg"],
 }) {
   const [preview, setPreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -28,6 +30,21 @@ function CustomeImageUploader({
   const processFile = (file) => {
     if (!isImageFile(file)) {
       toast.error("Invalid file type. Please upload an image.");
+      return;
+    }
+
+    if (!acceptedFileTypes.includes(file.type)) {
+      const allowedExtensions = acceptedFileTypes
+        .map((type) => type.split("/")[1].toUpperCase())
+        .join(", ");
+
+      toast.error(`Invalid file type. Only ${allowedExtensions} are allowed.`);
+      return;
+    }
+
+    if (maxSize && file.size > maxSize) {
+      const sizeInMb = Math.floor(maxSize / (1024 * 1024));
+      toast.error(`File is too large. Maximum size is ${sizeInMb}MB.`);
       return;
     }
 

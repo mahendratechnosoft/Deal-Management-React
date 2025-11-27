@@ -64,12 +64,14 @@ const AccessToggle = ({ field, label, isChecked, onChange }) => {
           className="sr-only"
         />
         <div
-          className={`block w-10 h-6 rounded-full transition-colors ${isChecked ? "bg-blue-600" : "bg-gray-300"
-            }`}
+          className={`block w-10 h-6 rounded-full transition-colors ${
+            isChecked ? "bg-blue-600" : "bg-gray-300"
+          }`}
         ></div>
         <div
-          className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${isChecked ? "translate-x-4" : "translate-x-0"
-            }`}
+          className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${
+            isChecked ? "translate-x-4" : "translate-x-0"
+          }`}
         ></div>
       </div>
       <span className="ml-2 text-sm text-gray-700">{label}</span>
@@ -102,11 +104,10 @@ const ModuleAccessGroup = ({
   );
 };
 
-
 // Select All Access Button Component
 const SelectAllAccessButton = ({ onSelectAll, onClearAll, getAccess }) => {
-  const hasSomeAccess = Object.keys(getAccess).some(key =>
-    key.includes('Access') && getAccess(key)
+  const hasSomeAccess = Object.keys(getAccess).some(
+    (key) => key.includes("Access") && getAccess(key)
   );
 
   return (
@@ -195,7 +196,7 @@ function RoleListCompo() {
     timeSheetViewAll: false,
     timeSheetCreate: false,
     timeSheetDelete: false,
-    timeSheetEdit: false
+    timeSheetEdit: false,
   });
 
   // Module Access State for Update Modal
@@ -240,7 +241,7 @@ function RoleListCompo() {
     timeSheetViewAll: false,
     timeSheetCreate: false,
     timeSheetDelete: false,
-    timeSheetEdit: false
+    timeSheetEdit: false,
   });
 
   useEffect(() => {
@@ -328,7 +329,7 @@ function RoleListCompo() {
       timeSheetViewAll: false,
       timeSheetCreate: false,
       timeSheetDelete: false,
-      timeSheetEdit: false
+      timeSheetEdit: false,
     });
   };
 
@@ -345,7 +346,7 @@ function RoleListCompo() {
       await axiosInstance.post("/admin/createRole", {
         name: newRoleName,
         departmentId: departmentId,
-        ...moduleAccess
+        ...moduleAccess,
       });
       handleCloseCreateModal();
       fetchRoles();
@@ -415,7 +416,7 @@ function RoleListCompo() {
         timeSheetViewAll: role.timeSheetViewAll || false,
         timeSheetCreate: role.timeSheetCreate || false,
         timeSheetDelete: role.timeSheetDelete || false,
-        timeSheetEdit: role.timeSheetEdit || false
+        timeSheetEdit: role.timeSheetEdit || false,
       });
     }
 
@@ -444,7 +445,7 @@ function RoleListCompo() {
         name: editingRole.name,
         roleId: editingRole.roleId,
         departmentId: editingRole.departmentId,
-        ...updateModuleAccess
+        ...updateModuleAccess,
       });
       handleCloseUpdateModal();
       fetchRoles();
@@ -496,8 +497,6 @@ function RoleListCompo() {
     });
   };
 
-
-
   // Select All Access for Create Modal
   const handleSelectAllAccess = () => {
     const allAccessTrue = Object.keys(moduleAccess).reduce((acc, key) => {
@@ -527,15 +526,15 @@ function RoleListCompo() {
 
   // Clear All Access for Update Modal
   const handleUpdateClearAllAccess = () => {
-    const allAccessFalse = Object.keys(updateModuleAccess).reduce((acc, key) => {
-      acc[key] = false;
-      return acc;
-    }, {});
+    const allAccessFalse = Object.keys(updateModuleAccess).reduce(
+      (acc, key) => {
+        acc[key] = false;
+        return acc;
+      },
+      {}
+    );
     setUpdateModuleAccess(allAccessFalse);
   };
-
-
-
 
   const renderTableBody = () => {
     if (isLoading) {
@@ -649,7 +648,7 @@ function RoleListCompo() {
   };
 
   return (
-    <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
+    <>
       {/* Header Section */}
       <div className="mb-4">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -741,8 +740,8 @@ function RoleListCompo() {
       </div>
 
       {/* Table Section */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 h-[60vh] overflow-y-auto">
+        <div className="min-w-full">
           <table className="min-w-full divide-y divide-gray-200">
             <colgroup>
               <col style={{ width: "5%" }} />
@@ -843,7 +842,7 @@ function RoleListCompo() {
 
                   <div className="space-y-4">
                     {/* Rest of the ModuleAccessGroup components remain the same */}
-             
+
                     {/* Leads Permissions */}
                     <ModuleAccessGroup
                       title="Leads Permissions"
@@ -1081,7 +1080,7 @@ function RoleListCompo() {
 
                   <div className="space-y-4">
                     {/* Rest of the ModuleAccessGroup components remain the same */}
-                 
+
                     {/* Leads Permissions */}
                     <ModuleAccessGroup
                       title="Leads Permissions"
@@ -1240,7 +1239,7 @@ function RoleListCompo() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
