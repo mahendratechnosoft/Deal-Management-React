@@ -12,48 +12,7 @@ import Select from "react-select";
 
 import { toast } from "react-hot-toast";
 
-const customReactSelectStyles = (hasError) => ({
-  control: (provided, state) => ({
-    ...provided,
-    minHeight: "40px",
-    borderColor: state.isFocused
-      ? "#3b82f6"
-      : hasError
-        ? "#ef4444"
-        : "#e5e7eb",
-    borderWidth: "1px",
-    borderRadius: "6px",
-    boxShadow: state.isFocused ? "0 0 0 3px rgba(59, 130, 246, 0.1)" : "none",
-    "&:hover": {
-      borderColor: state.isFocused ? "#3b82f6" : "#9ca3af",
-    },
-    backgroundColor: "white",
-  }),
-  menu: (base) => ({
-    ...base,
-    zIndex: 50,
-    borderRadius: "6px",
-    boxShadow: "0 10px 25px rgba(0, 0, 0, 0.15)",
-  }),
-  menuList: (base) => ({
-    ...base,
-    maxHeight: "150px",
-    padding: "4px 0",
-  }),
-  option: (base, state) => ({
-    ...base,
-    backgroundColor: state.isSelected
-      ? "#3b82f6"
-      : state.isFocused
-        ? "#f3f4f6"
-        : "white",
-    color: state.isSelected ? "white" : "#1f2937",
-    "&:active": {
-      backgroundColor: "#3b82f6",
-      color: "white",
-    },
-  }),
-});
+
 
 const customStyles = {
   control: (base, state) => ({
@@ -220,20 +179,28 @@ const PublicForm = () => {
   };
 
   // Special handler for phone input (since it doesn't use regular event)
-  const handlePhoneChange = (phone, fieldName) => {
-    setFormData((prev) => ({
-      ...prev,
-      [fieldName]: phone,
-    }));
+const handlePhoneChange = (phone, fieldName) => {
+  setFormData((prev) => ({
+    ...prev,
+    [fieldName]: phone,
+  }));
 
-    // Clear error when user starts typing
-    if (errors[fieldName]) {
-      setErrors((prev) => ({
-        ...prev,
-        [fieldName]: "",
-      }));
-    }
-  };
+  // Clear error when user starts typing
+  if (errors[fieldName]) {
+    setErrors((prev) => ({
+      ...prev,
+      [fieldName]: "",
+    }));
+  }
+
+  // Additional real-time validation for primary number
+  if (fieldName === "mobileNumber" && phone && phone.length < 5) {
+    setErrors((prev) => ({
+      ...prev,
+      mobileNumber: "Please enter a valid mobile number",
+    }));
+  }
+};
 
   const formatWebsiteUrl = (url) => {
     if (!url) return "";
@@ -243,42 +210,45 @@ const PublicForm = () => {
     return `https://${url}`;
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+const validateForm = () => {
+  const newErrors = {};
 
-    // Required fields validation
-    if (!formData.clientName.trim()) {
-      newErrors.clientName = "Client name is required";
+  // Required fields validation
+  if (!formData.clientName.trim()) {
+    newErrors.clientName = "Client name is required";
+  }
+  if (!formData.companyName.trim()) {
+    newErrors.companyName = "Company name is required";
+  }
+  if (!formData.email.trim()) {
+    newErrors.email = "Email is required";
+  } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    newErrors.email = "Email is invalid";
+  }
+  
+  // FIX: Better mobile number validation
+  if (!formData.mobileNumber || formData.mobileNumber.trim().length < 5) {
+    newErrors.mobileNumber = "Valid mobile number is required";
+  } else {
+    // Additional validation for phone number format
+    const phoneRegex = /^[0-9+\-\s()]+$/;
+    if (!phoneRegex.test(formData.mobileNumber.replace(/\s/g, ''))) {
+      newErrors.mobileNumber = "Please enter a valid mobile number";
     }
-    if (!formData.companyName.trim()) {
-      newErrors.companyName = "Company name is required";
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid";
-    }
-    if (!formData.mobileNumber.trim()) {
-      newErrors.mobileNumber = "Mobile number is required";
-    }
-    if (!formData.country.trim()) {
-      newErrors.country = "Country is required";
-    }
-    // if (!formData.state.trim()) {
-    //   newErrors.state = "State is required";
-    // }
-    // if (!formData.city.trim()) {
-    //   newErrors.city = "City is required";
-    // }
+  }
+  
+  if (!formData.country.trim()) {
+    newErrors.country = "Country is required";
+  }
 
-    // Website validation
-    if (formData.website && !validateWebsite(formData.website)) {
-      newErrors.website = "Please enter a valid website URL (e.g., example.com or https://example.com)";
-    }
+  // Website validation
+  if (formData.website && !validateWebsite(formData.website)) {
+    newErrors.website = "Please enter a valid website URL (e.g., example.com or https://example.com)";
+  }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -411,48 +381,6 @@ const PublicForm = () => {
 
 
 
-const customReactSelectStyles = (hasError) => ({
-  control: (provided, state) => ({
-    ...provided,
-    minHeight: "40px",
-    borderColor: state.isFocused
-      ? "#3b82f6"
-      : hasError
-        ? "#ef4444"
-        : "#e5e7eb",
-    borderWidth: "1px",
-    borderRadius: "6px",
-    boxShadow: state.isFocused ? "0 0 0 3px rgba(59, 130, 246, 0.1)" : "none",
-    "&:hover": {
-      borderColor: state.isFocused ? "#3b82f6" : "#9ca3af",
-    },
-    backgroundColor: "white",
-  }),
-  menu: (base) => ({
-    ...base,
-    zIndex: 50,
-    borderRadius: "6px",
-    boxShadow: "0 10px 25px rgba(0, 0, 0, 0.15)",
-  }),
-  menuList: (base) => ({
-    ...base,
-    maxHeight: "150px",
-    padding: "4px 0",
-  }),
-  option: (base, state) => ({
-    ...base,
-    backgroundColor: state.isSelected
-      ? "#3b82f6"
-      : state.isFocused
-        ? "#f3f4f6"
-        : "white",
-    color: state.isSelected ? "white" : "#1f2937",
-    "&:active": {
-      backgroundColor: "#3b82f6",
-      color: "white",
-    },
-  }),
-});
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 relative overflow-hidden">
@@ -569,9 +497,7 @@ const customReactSelectStyles = (hasError) => ({
                     enableSearch={true}
                     background="white"
                   />
-                  {errors.mobileNumber && (
-                    <p className="text-red-500 text-xs mt-1">{errors.mobileNumber}</p>
-                  )}
+                
                 </div>
                           {/* Phone Number - OPTIONAL */}
                 <div>

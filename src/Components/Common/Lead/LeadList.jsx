@@ -526,67 +526,71 @@ function LeadList() {
   };
 
   // Update lead status function
-  const updateLeadStatus = async (leadId, newStatus) => {
-    // Prevent updating converted leads to any other status
-    const currentLead = leads.find((lead) => lead.id === leadId);
-    if (currentLead?.status?.toLowerCase() === "converted" && newStatus.value.toLowerCase() !== "converted") {
-      toast.error("Cannot change status of converted lead");
-      return;
+// Update lead status function
+const updateLeadStatus = async (leadId, newStatus) => {
+  // Prevent updating converted leads to any other status
+  const currentLead = leads.find((lead) => lead.id === leadId);
+  if (currentLead?.status?.toLowerCase() === "converted" && newStatus.value.toLowerCase() !== "converted") {
+    toast.error("Cannot change status of converted lead");
+    return;
+  }
+
+  try {
+    // Remove the lead from the current view immediately (for table view with filters)
+    if (viewMode === "table" && (searchTerm || statusFilter !== "all")) {
+      setLeads(prevLeads => prevLeads.filter(lead => lead.id !== leadId));
     }
 
-    try {
-      const response = await axiosInstance.put("updateLeadStatus", {
-        leadId: leadId,
-        status: newStatus.value,
-      });
+    const response = await axiosInstance.put("updateLeadStatus", {
+      leadId: leadId,
+      status: newStatus.value,
+    });
 
-      toast.success("Status updated successfully!");
+    toast.success("Status updated successfully!");
 
-      if (response.data) {
-        // Find the lead to get old status BEFORE updating state
-        const oldLead = leads.find((lead) => lead.id === leadId);
+    if (response.data) {
+      // Refresh status counts from API to ensure accuracy
+      await fetchStatusCounts();
 
-        // Update table view leads - IMMEDIATELY remove from current list
-        setLeads((prevLeads) =>
-          prevLeads.filter((lead) => lead.id !== leadId)
+      // Only handle kanban view updates
+      if (viewMode === "kanban") {
+        const sourceColumn = kanbanColumns.find(
+          (col) => col.apiStatus === currentLead?.status
+        );
+        const targetColumn = kanbanColumns.find(
+          (col) => col.apiStatus === newStatus.value
         );
 
-        // Refresh status counts from API to ensure accuracy
-        await fetchStatusCounts();
-
-        // Refresh the current view data based on current filters
-        if (viewMode === "table") {
-          // Re-fetch leads with current filters to get updated data
-          fetchLeads(currentPage, searchTerm, statusFilter, true);
-        } else if (viewMode === "kanban") {
-          // Refresh both source and target columns in kanban view
-          const sourceColumn = kanbanColumns.find(
-            (col) => col.apiStatus === oldLead?.status
-          );
-          const targetColumn = kanbanColumns.find(
-            (col) => col.apiStatus === newStatus.value
-          );
-
-          if (sourceColumn) {
-            fetchKanbanLeads(sourceColumn.apiStatus, 0, false);
-          }
-          if (targetColumn) {
-            fetchKanbanLeads(targetColumn.apiStatus, 0, false);
-          }
+        if (sourceColumn) {
+          fetchKanbanLeads(sourceColumn.apiStatus, 0, false);
+        }
+        if (targetColumn) {
+          fetchKanbanLeads(targetColumn.apiStatus, 0, false);
         }
       }
-    } catch (error) {
-      console.error("Error updating lead status:", error);
-      toast.error("Failed to update status. Please try again.");
-
-      // If update fails, refresh the data to ensure consistency
-      if (viewMode === "table") {
-        fetchLeads(currentPage, searchTerm, statusFilter, true);
-      } else if (viewMode === "kanban") {
-        fetchAllKanbanColumns();
+      
+      // For table view with NO filters, just update the status locally
+      if (viewMode === "table" && !searchTerm && statusFilter === "all") {
+        setLeads(prevLeads => 
+          prevLeads.map(lead => 
+            lead.id === leadId 
+              ? { ...lead, status: newStatus.value }
+              : lead
+          )
+        );
       }
     }
-  };
+  } catch (error) {
+    console.error("Error updating lead status:", error);
+    toast.error("Failed to update status. Please try again.");
+
+    // If update fails and we removed the lead, put it back
+    if (viewMode === "table" && (searchTerm || statusFilter !== "all")) {
+      // Re-fetch to ensure consistency
+      fetchLeads(currentPage, searchTerm, statusFilter, true);
+    }
+  }
+};
 
   // Get current status value for React Select
   // Get current status value for React Select

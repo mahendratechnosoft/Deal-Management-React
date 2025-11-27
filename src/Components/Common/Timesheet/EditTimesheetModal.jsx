@@ -56,40 +56,49 @@ function EditTimesheetModal({
         return new Date(timestamp) > getCurrentTime();
     };
 
-    const validateRecordTime = (timestamp, recordType, currentRecord = null) => {
+    // ==================== ENHANCED VALIDATION FUNCTIONS ====================
+
+    const validateRecordTime = (dateTimeString, recordType, currentRecord = null) => {
         const errors = [];
-        const newTime = new Date(timestamp);
-        const currentTime = getCurrentTime();
+        const newTime = parseDateTimeLocal(dateTimeString);
+        const currentTime = new Date();
         const dateKey = clickPopup.dateKey;
 
-        // Get all records for the day (sorted by time)
+        // Get all records for the day (using local date comparison)
         const dayRecords = allRecords.filter(record => {
-            const recordDate = new Date(record.timeStamp).toISOString().split('T')[0];
+            const recordDate = formatYMD(new Date(record.timeStamp));
             return recordDate === dateKey;
         });
 
         // Validation 1: Cannot set future time
-        if (isFutureTime(timestamp)) {
+        if (newTime > currentTime) {
             errors.push('Cannot set time in the future');
         }
 
-        // Validation 2: Time must be within the selected date
-        const recordDate = newTime.toISOString().split('T')[0];
+        // Validation 2: Time must be within the selected date (using local date)
+        const recordDate = formatYMD(newTime);
         if (recordDate !== dateKey) {
             errors.push(`Time must be within ${dateKey}`);
         }
 
-        // Validation 3: No duplicate timestamps (excluding current record being edited)
+        // Validation 3: No duplicate timestamps
+        const newTimestamp = newTime.getTime();
         const duplicate = dayRecords.find(record =>
-            record.timeStamp === timestamp &&
+            record.timeStamp === newTimestamp &&
             (!currentRecord || record.attendanceId !== currentRecord.attendanceId)
         );
         if (duplicate) {
             errors.push('Duplicate timestamp found');
         }
 
+        // NEW VALIDATION: Check-in time must be from day start (midnight)
         if (recordType === 'in') {
-            // Validation 4: Check-in must be before its corresponding check-out
+            const startOfDay = parseDateTimeLocal(`${dateKey}T00:00`);
+            if (newTime < startOfDay) {
+                errors.push('Check-in time must be from day start (00:00)');
+            }
+
+            // ... rest of your existing validations for 'in' records
             const correspondingOut = currentRecord ?
                 dayRecords.find(record =>
                     record.attendanceId !== currentRecord.attendanceId &&
@@ -101,7 +110,6 @@ function EditTimesheetModal({
                 errors.push('Check-in time must be before check-out time');
             }
 
-            // Validation 5: Check-in cannot be after next check-in if exists
             const currentIndex = dayRecords.findIndex(record =>
                 currentRecord && record.attendanceId === currentRecord.attendanceId
             );
@@ -112,7 +120,6 @@ function EditTimesheetModal({
                 }
             }
 
-            // Validation 6: Check-in cannot be after previous check-out if exists
             if (currentIndex > 0) {
                 const prevRecord = dayRecords[currentIndex - 1];
                 if (newTime <= new Date(prevRecord.timeStamp)) {
@@ -121,7 +128,7 @@ function EditTimesheetModal({
             }
 
         } else if (recordType === 'out') {
-            // Validation 7: Check-out must be after its corresponding check-in
+            // ... rest of your existing validations for 'out' records
             const correspondingIn = currentRecord ?
                 dayRecords.find(record => record.attendanceId === currentRecord.attendanceId) : null;
 
@@ -129,7 +136,6 @@ function EditTimesheetModal({
                 errors.push('Check-out time must be after check-in time');
             }
 
-            // Validation 8: Check-out cannot be before next check-in if exists
             const currentIndex = dayRecords.findIndex(record =>
                 currentRecord && record.attendanceId === currentRecord.attendanceId
             );
@@ -140,7 +146,6 @@ function EditTimesheetModal({
                 }
             }
 
-            // Validation 9: Check-out cannot be before previous check-out if exists
             if (currentIndex > 0) {
                 const prevRecord = dayRecords[currentIndex - 1];
                 if (!prevRecord.status && newTime <= new Date(prevRecord.timeStamp)) {
@@ -149,27 +154,27 @@ function EditTimesheetModal({
             }
         }
 
-        // Validation 10: Business rules - reasonable time ranges (24 hours allowed)
-        const startOfDay = new Date(dateKey + 'T00:00:00');
-        const endOfDay = new Date(dateKey + 'T23:59:59');
+        // Validation: Time must be within day boundaries
+        const startOfDay = parseDateTimeLocal(`${dateKey}T00:00`);
+        const endOfDay = parseDateTimeLocal(`${dateKey}T23:59`);
         if (newTime < startOfDay || newTime > endOfDay) {
             errors.push(`Time must be between 00:00 and 23:59 on ${dateKey}`);
         }
 
-        // Validation 11: Minimum session duration (1 minute)
+        // Validation: Minimum session duration (1 minute)
         if (recordType === 'out' && currentRecord) {
             const inTime = new Date(currentRecord.timeStamp);
             const duration = newTime - inTime;
-            if (duration < 1 * 60 * 1000) { // 1 minute
+            if (duration < 1 * 60 * 1000) {
                 errors.push('Minimum session duration is 1 minute');
             }
         }
 
-        // Validation 12: Maximum session duration (24 hours)
+        // Validation: Maximum session duration (24 hours)
         if (recordType === 'out' && currentRecord) {
             const inTime = new Date(currentRecord.timeStamp);
             const duration = newTime - inTime;
-            if (duration > 24 * 60 * 60 * 1000) { // 24 hours
+            if (duration > 24 * 60 * 60 * 1000) {
                 errors.push('Maximum session duration is 24 hours');
             }
         }
@@ -177,42 +182,51 @@ function EditTimesheetModal({
         return errors;
     };
 
-    const validateNewRecord = (timestamp, status) => {
+
+    const validateNewRecord = (dateTimeString, status) => {
         const errors = [];
-        const newTime = new Date(timestamp);
-        const currentTime = getCurrentTime();
+        const newTime = parseDateTimeLocal(dateTimeString);
+        const currentTime = new Date();
         const dateKey = clickPopup.dateKey;
 
         const dayRecords = allRecords.filter(record => {
-            const recordDate = new Date(record.timeStamp).toISOString().split('T')[0];
+            const recordDate = formatYMD(new Date(record.timeStamp));
             return recordDate === dateKey;
         });
 
         // Validation 1: Cannot create future records
-        if (isFutureTime(timestamp)) {
+        if (newTime > currentTime) {
             errors.push('Cannot create records with future time');
         }
 
-        // Validation 2: Date must match selected date
-        const recordDate = newTime.toISOString().split('T')[0];
+        // Validation 2: Date must match selected date (using local date)
+        const recordDate = formatYMD(newTime);
         if (recordDate !== dateKey) {
             errors.push(`Time must be within ${dateKey}`);
         }
 
         // Validation 3: No duplicates
-        const duplicate = dayRecords.find(record => record.timeStamp === timestamp);
+        const newTimestamp = newTime.getTime();
+        const duplicate = dayRecords.find(record => {
+            return record.timeStamp === newTimestamp;
+        });
         if (duplicate) {
             errors.push('Duplicate timestamp found');
         }
 
         // Validation 4: Time must be within day boundaries
-        const startOfDay = new Date(dateKey + 'T00:00:00');
-        const endOfDay = new Date(dateKey + 'T23:59:59');
+        const startOfDay = parseDateTimeLocal(`${dateKey}T00:00`);
+        const endOfDay = parseDateTimeLocal(`${dateKey}T23:59`);
         if (newTime < startOfDay || newTime > endOfDay) {
             errors.push(`Time must be between 00:00 and 23:59 on ${dateKey}`);
         }
 
         if (status === true) { // Check-in
+            // Check-in time must be from day start (midnight)
+            if (newTime < startOfDay) {
+                errors.push('Check-in time must be from day start (00:00)');
+            }
+
             // Validation 5: Check-in must be first record or after last check-out
             const lastRecord = dayRecords[dayRecords.length - 1];
             if (lastRecord && lastRecord.status === true) {
@@ -248,27 +262,61 @@ function EditTimesheetModal({
         return errors;
     };
 
-    const canCreateCheckout = () => {
-        const dayRecords = allRecords.filter(record => {
-            const recordDate = new Date(record.timeStamp).toISOString().split('T')[0];
-            return recordDate === clickPopup.dateKey;
-        });
-
-        const lastRecord = dayRecords[dayRecords.length - 1];
-        return lastRecord && lastRecord.status === true; // Last record is check-in
-    };
-
-    const canCreateCheckin = () => {
-        const dayRecords = allRecords.filter(record => {
-            const recordDate = new Date(record.timeStamp).toISOString().split('T')[0];
-            return recordDate === clickPopup.dateKey;
-        });
-
-        const lastRecord = dayRecords[dayRecords.length - 1];
-        return !lastRecord || lastRecord.status === false; // No records or last is check-out
-    };
 
     // ==================== UTILITY FUNCTIONS ====================
+
+    const getCurrentDateTimeLocal = () => {
+        const now = new Date();
+        const selectedDate = clickPopup.dateKey;
+        const currentDate = formatYMD(now);
+
+        if (selectedDate > currentDate) {
+            return `${selectedDate}T00:00`;
+        } else if (selectedDate < currentDate) {
+            return `${selectedDate}T00:00`;
+        } else {
+            const startOfDay = parseDateTimeLocal(`${selectedDate}T00:00`);
+            return now < startOfDay ? `${selectedDate}T00:00` : convertToDateTimeLocal(now);
+        }
+    };
+
+    const getMinDateTimeLocal = () => {
+        const selectedDate = clickPopup.dateKey;
+        return `${selectedDate}T00:00`;
+    };
+
+    const getMaxDateTimeLocal = () => {
+        const selectedDate = clickPopup.dateKey;
+        const currentDate = formatYMD(new Date());
+
+        if (selectedDate > currentDate) {
+            return `${selectedDate}T23:59`;
+        } else if (selectedDate < currentDate) {
+            return `${selectedDate}T23:59`;
+        } else {
+            return convertToDateTimeLocal(new Date());
+        }
+    };
+
+    const parseDateTimeLocal = (dateTimeString) => {
+        if (!dateTimeString) return null;
+
+        // Split the datetime string into date and time parts
+        const [datePart, timePart] = dateTimeString.split('T');
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hours, minutes] = (timePart || '00:00').split(':').map(Number);
+
+        // Create date in local timezone (this preserves the exact local time)
+        return new Date(year, month - 1, day, hours, minutes, 0, 0);
+    };
+
+    // Helper function to format date as YYYY-MM-DD (local time)
+    const formatYMD = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
 
     const convertToDateTimeLocal = (timestamp) => {
         const date = new Date(timestamp);
@@ -280,39 +328,29 @@ function EditTimesheetModal({
         return `${year}-${month}-${day}T${hours}:${minutes}`;
     };
 
-    const getCurrentDateTimeLocal = () => {
-        const now = getCurrentTime();
-        // Set to current time but ensure it's not in future for the selected date
-        const selectedDate = clickPopup.dateKey;
-        const currentDate = now.toISOString().split('T')[0];
 
-        if (selectedDate > currentDate) {
-            // If selected date is in future, set to end of selected date
-            return `${selectedDate}T23:59`;
-        } else if (selectedDate < currentDate) {
-            // If selected date is in past, set to end of selected date
-            return `${selectedDate}T23:59`;
-        } else {
-            // Current date, use current time
-            return convertToDateTimeLocal(now);
-        }
+
+    const canCreateCheckout = () => {
+        const dayRecords = allRecords.filter(record => {
+            const recordDate = formatYMD(new Date(record.timeStamp));
+            return recordDate === clickPopup.dateKey;
+        });
+
+        const lastRecord = dayRecords[dayRecords.length - 1];
+        return lastRecord && lastRecord.status === true;
     };
 
-    const getMaxDateTimeLocal = () => {
-        const selectedDate = clickPopup.dateKey;
-        const currentDate = getCurrentTime().toISOString().split('T')[0];
+    const canCreateCheckin = () => {
+        const dayRecords = allRecords.filter(record => {
+            const recordDate = formatYMD(new Date(record.timeStamp));
+            return recordDate === clickPopup.dateKey;
+        });
 
-        if (selectedDate > currentDate) {
-            // Future date - allow full day
-            return `${selectedDate}T23:59`;
-        } else if (selectedDate < currentDate) {
-            // Past date - allow full day
-            return `${selectedDate}T23:59`;
-        } else {
-            // Current date - only allow up to current time
-            return convertToDateTimeLocal(getCurrentTime());
-        }
+        const lastRecord = dayRecords[dayRecords.length - 1];
+        return !lastRecord || lastRecord.status === false;
     };
+
+
 
     // ==================== EVENT HANDLERS ====================
 
@@ -345,9 +383,9 @@ function EditTimesheetModal({
     const handleSaveEdit = async () => {
         if (!editedTime || !editingRecord) return;
 
-        // Run validation
+        // Run validation with the datetime string directly
         const errors = validateRecordTime(
-            new Date(editedTime).getTime(),
+            editedTime, // Pass the string directly, not the timestamp
             editingRecord.type,
             editingRecord
         );
@@ -360,8 +398,7 @@ function EditTimesheetModal({
 
         setLoading(true);
         try {
-            const localDate = new Date(editedTime);
-            const newTimestamp = localDate.getTime();
+            const newTimestamp = parseDateTimeLocal(editedTime).getTime();
 
             const updateData = {
                 attendanceId: editingRecord.attendanceId,
@@ -383,17 +420,15 @@ function EditTimesheetModal({
         }
     };
 
+
     const handleCreateRecord = async () => {
         if (!newRecordTime) {
             toast.error('Please select a date and time');
             return;
         }
 
-        // Run validation
-        const errors = validateNewRecord(
-            new Date(newRecordTime).getTime(),
-            newRecordStatus
-        );
+        // Run validation with the datetime string directly
+        const errors = validateNewRecord(newRecordTime, newRecordStatus);
 
         if (errors.length > 0) {
             setValidationErrors({ create: errors });
@@ -411,8 +446,7 @@ function EditTimesheetModal({
 
         setLoading(true);
         try {
-            const localDate = new Date(newRecordTime);
-            const newTimestamp = localDate.getTime();
+            const newTimestamp = parseDateTimeLocal(newRecordTime).getTime();
 
             const createData = {
                 employeeId: targetEmployeeId,
@@ -552,6 +586,7 @@ function EditTimesheetModal({
                                     <input
                                         type="datetime-local"
                                         value={editedTime}
+                                        min={getMinDateTimeLocal()} // ADD THIS LINE
                                         max={getMaxDateTimeLocal()}
                                         onChange={(e) => {
                                             setEditedTime(e.target.value);
@@ -560,7 +595,7 @@ function EditTimesheetModal({
                                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
                                     <div className="text-xs text-gray-500 mt-1">
-                                        Maximum allowed: {getMaxDateTimeLocal().replace('T', ' ')}
+                                        Allowed range: {getMinDateTimeLocal().replace('T', ' ')} to {getMaxDateTimeLocal().replace('T', ' ')}
                                     </div>
                                 </div>
 
@@ -612,16 +647,22 @@ function EditTimesheetModal({
                                     <input
                                         type="datetime-local"
                                         value={newRecordTime}
+                                        min={getMinDateTimeLocal()}
                                         max={getMaxDateTimeLocal()}
                                         onChange={(e) => {
+                                            console.log('Selected time:', e.target.value); // Debug
                                             setNewRecordTime(e.target.value);
                                             setValidationErrors({});
                                         }}
                                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        step="60" // Allow only minute steps
                                     />
                                     <div className="text-xs text-gray-500 mt-1">
-                                        Maximum allowed: {getMaxDateTimeLocal().replace('T', ' ')}
+                                        Allowed range: {getMinDateTimeLocal().replace('T', ' ')} to {getMaxDateTimeLocal().replace('T', ' ')}
                                     </div>
+                                    {/* <div className="text-xs text-blue-500 mt-1">
+        Selected: {newRecordTime ? newRecordTime.replace('T', ' ') : 'None'}
+    </div> */}
                                 </div>
 
                                 <div>
