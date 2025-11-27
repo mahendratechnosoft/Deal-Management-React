@@ -71,3 +71,19 @@ export const numberToWords = (num, currency = "INR") => {
     return num;
   }
 };
+
+export const breakLongText = (text, limit = 10) => {
+  if (!text) return "";
+
+  const lines = String(text).split("\n");
+
+  const processedLines = lines.map((line) => {
+    if (!line) return "";
+
+    const regex = new RegExp(`.{1,${limit}}`, "g");
+    const chunks = line.match(regex) || [];
+    return chunks.join(" ");
+  });
+
+  return processedLines.join("\n");
+};

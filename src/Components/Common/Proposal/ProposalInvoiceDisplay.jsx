@@ -229,66 +229,70 @@ const ProposalInvoiceDisplay = ({
         {/* Main Content (Left) */}
         <div className="lg:col-span-2 p-6 md:p-8">
           {/* Items Table */}
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-1/12">
-                    #
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-5/12">
-                    Particular
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-2/12">
-                    Qty
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-2/12">
-                    Rate
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-2/12">
-                    Amount
-                  </th>
+
+          <table className="w-full table-fixed divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                {/* Widths must sum up to 12/12 (approx 100%) for table-fixed to work well */}
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-1/12">
+                  #
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-5/12">
+                  Particular
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-2/12">
+                  Qty
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-2/12">
+                  Rate
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-2/12">
+                  Amount
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {proposalContent.map((item, index) => (
+                <tr key={item.proposalContentId || index}>
+                  <td className="px-4 py-4 text-sm text-gray-500 align-top">
+                    {index + 1}
+                  </td>
+
+                  <td className="px-4 py-4 break-words whitespace-normal align-top">
+                    <div className="text-sm font-medium text-gray-900">
+                      {item.item}
+                    </div>
+                    <div className="text-sm text-gray-500 mt-1">
+                      {item.description}
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-4 text-sm break-words text-gray-700 align-top">
+                    {item.quantity}
+                  </td>
+                  <td className="px-4 py-4 text-sm break-words text-gray-700 align-top">
+                    {formatCurrency(item.rate, currencyType)}
+                  </td>
+                  <td className="px-4 py-4 text-sm break-words text-gray-900 font-medium align-top">
+                    {formatCurrency(item.quantity * item.rate, currencyType)}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {proposalContent.map((item, index) => (
-                  <tr key={item.proposalContentId || index}>
-                    <td className="px-4 py-4 text-sm text-gray-500">
-                      {index + 1}
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {item.item}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {item.description}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-gray-700">
-                      {item.quantity}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-gray-700">
-                      {formatCurrency(item.rate, currencyType)}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-gray-900 font-medium">
-                      {formatCurrency(item.quantity * item.rate, currencyType)}
-                    </td>
-                  </tr>
-                ))}
-                {Array.from({
-                  length: Math.max(0, 6 - proposalContent.length),
-                }).map((_, i) => (
-                  <tr key={`empty-${i}`}>
-                    <td className="px-4 py-4 h-14" colSpan={5}></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+
+              {/* Empty rows filler */}
+              {Array.from({
+                length: Math.max(0, 6 - proposalContent.length),
+              }).map((_, i) => (
+                <tr key={`empty-${i}`}>
+                  <td className="px-4 py-4 h-14" colSpan={5}></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
           {/* Totals Section */}
           <div className="flex justify-end mt-6">
-            <div className="w-full md:w-1/2 lg:w-2/5 space-y-2">
+            <div className="w-full md:w-auto lg:min-w-[35%] space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Sub Total</span>
                 <span className="font-medium text-gray-800">
@@ -347,13 +351,15 @@ const ProposalInvoiceDisplay = ({
 
           {/* Company Info */}
           <div className="mt-6">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3">
+            <h3 className="text-sm font-semibold break-words text-gray-800 mb-3">
               {adminInformation.companyName}
             </h3>
             <div className="space-y-2 text-sm text-gray-600">
-              <p className="flex items-start gap-2">
-                <IconMapPin className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>{adminInformation.address}</span>
+              <p className="flex items-start gap-2 ">
+                <IconMapPin className="w-4 h-4 mt-0.5  shrink-0" />
+                <span className="break-words min-w-0">
+                  {adminInformation.address}
+                </span>
               </p>
               <p className="flex items-center gap-2">
                 <IconFileText className="w-4 h-4 shrink-0" />
@@ -365,7 +371,9 @@ const ProposalInvoiceDisplay = ({
               </p>
               <p className="flex items-center gap-2">
                 <IconMail className="w-4 h-4 shrink-0" />
-                <span>Email: {adminInformation.companyEmail}</span>
+                <span className="break-words min-w-0">
+                  Email: {adminInformation.companyEmail}
+                </span>
               </p>
             </div>
           </div>
@@ -376,10 +384,12 @@ const ProposalInvoiceDisplay = ({
               Proposal Information
             </h3>
             <div className="mb-4">
-              <p className="font-semibold text-gray-800">
+              <p className="font-semibold text-gray-800 break-words">
                 {proposalInfo.companyName}
               </p>
-              <p className="text-sm text-gray-600">{proposalInfo.street}</p>
+              <p className="text-sm text-gray-600 break-words">
+                {proposalInfo.street}
+              </p>
               <p className="text-sm text-gray-600">
                 {proposalInfo.city}, {proposalInfo.state} -{" "}
                 {proposalInfo.zipCode}

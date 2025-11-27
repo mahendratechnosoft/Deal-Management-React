@@ -14,7 +14,10 @@ import RobotoRegular from "../../../../public/fonts/Roboto-Regular.ttf";
 import RobotoBold from "../../../../public/fonts/Roboto-Bold.ttf";
 import RobotoItalic from "../../../../public/fonts/Roboto-Italic.ttf";
 import RobotoBoldItalic from "../../../../public/fonts/Roboto-BoldItalic.ttf";
-import { formatInvoiceNumber } from "../../BaseComponet/UtilFunctions";
+import {
+  breakLongText,
+  formatInvoiceNumber,
+} from "../../BaseComponet/UtilFunctions";
 Font.register({
   family: "Roboto",
   fonts: [
@@ -346,7 +349,7 @@ const formatProformaNumber = (number) => {
 const getSafeImageSrc = (base64String) => {
   if (!base64String) return null;
   if (base64String.startsWith("data:image")) return base64String;
-  return `data:image/png;base64,${base64String}`;
+  return `data:;base64,${base64String}`;
 };
 
 const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
@@ -467,10 +470,10 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
         <View style={styles.addressSection}>
           <View style={styles.addressBlock}>
             <Text style={styles.companyName}>
-              {adminInformation?.companyName}
+              {breakLongText(adminInformation?.companyName, 50)}
             </Text>
             <Text style={styles.addressText}>
-              {adminInformation?.address}
+              {breakLongText(adminInformation?.address, 50)}
               {adminInformation?.gstNumber &&
                 `\nGST Number: ${adminInformation.gstNumber}`}
               {adminInformation?.panNumber &&
@@ -478,14 +481,16 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
               {adminInformation?.phone &&
                 `\nMobile No: ${adminInformation.phone}`}
               {adminInformation?.companyEmail &&
-                `\nEmail: ${adminInformation.companyEmail}`}
+                `\nEmail: ${breakLongText(adminInformation.companyEmail, 30)}`}
             </Text>
           </View>
           <View style={styles.addressBlockRight}>
             <Text style={styles.addressHeader}>Bill To</Text>
-            <Text style={styles.companyName}>{info.companyName}</Text>
+            <Text style={styles.companyName}>
+              {breakLongText(info.companyName, 47)}
+            </Text>
             <Text style={styles.addressText}>
-              {info.billingStreet}
+              {breakLongText(info.billingStreet, 50)}
               {"\n"}
               {info.billingCity}, {info.billingState} {info.billingZipCode}
               {"\n"}
@@ -496,7 +501,7 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
               <View style={{ marginTop: 8 }}>
                 <Text style={styles.addressHeader}>Ship To</Text>
                 <Text style={styles.addressText}>
-                  {info.shippingStreet}
+                  {breakLongText(info.shippingStreet, 50)}
                   {"\n"}
                   {info.shippingCity}, {info.shippingState}{" "}
                   {info.shippingZipCode}
@@ -510,7 +515,7 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
               {info?.gstin && `GST Number: ${info.gstin}`}
               {info?.panNumber && `\nPAN: ${info.panNumber}`}
               {info?.mobileNumber && `\nMobile No: ${info.mobileNumber}`}
-              {info?.email && `\nEmail: ${info.email}`}
+              {info?.email && `\nEmail: ${breakLongText(info.email, 30)}`}
             </Text>
 
             <View style={styles.dateBox}>
@@ -552,16 +557,25 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
             >
               <Text style={[styles.td, styles.colSno]}>{index + 1}</Text>
               <View style={[styles.td, styles.colItem]}>
-                <Text style={{ fontWeight: "bold" }}>{item.item}</Text>
-                <Text style={styles.itemDescription}>{item.description}</Text>
+                <Text style={{ fontWeight: "bold" }}>
+                  {breakLongText(item.item, 40)}
+                </Text>
+                <Text style={styles.itemDescription}>
+                  {breakLongText(item.description, 45)}
+                </Text>
               </View>
-              <Text style={[styles.td, styles.colSac]}>{item.sacCode}</Text>
+              <Text style={[styles.td, styles.colSac]}>
+                {breakLongText(item.sacCode, 20)}
+              </Text>
               <Text style={[styles.td, styles.colQty]}>{item.quantity}</Text>
               <Text style={[styles.td, styles.colRate]}>
-                {formatCurrency(item.rate, currency)}
+                {breakLongText(formatCurrency(item.rate, currency), 10)}
               </Text>
               <Text style={[styles.td, styles.colAmount]}>
-                {formatCurrency(item.quantity * item.rate, currency)}
+                {breakLongText(
+                  formatCurrency(item.quantity * item.rate, currency),
+                  10
+                )}
               </Text>
             </View>
           ))}
@@ -632,7 +646,9 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
               <Text style={[styles.sectionTitle, { color: "#111827" }]}>
                 Terms & Conditions
               </Text>
-              <Text style={styles.termsText}>{info.termsAndConditions}</Text>
+              <Text style={styles.termsText}>
+                {breakLongText(info.termsAndConditions, 128)}
+              </Text>
             </View>
           )}
           {info.notes && (
@@ -640,7 +656,9 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
               <Text style={[styles.sectionTitle, { color: "#111827" }]}>
                 Notes
               </Text>
-              <Text style={styles.notesText}>{info.notes}</Text>
+              <Text style={styles.notesText}>
+                {breakLongText(info.notes, 128)}
+              </Text>
             </View>
           )}
           <View wrap={false}>
@@ -678,7 +696,7 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
         <View style={styles.pageFooter} fixed>
           <Text>Thank you for your business!</Text>
           <Text style={{ fontWeight: "bold" }}>
-            {adminInformation?.companyName}
+            {breakLongText(adminInformation?.companyName, 90)}
           </Text>
         </View>
       </Page>

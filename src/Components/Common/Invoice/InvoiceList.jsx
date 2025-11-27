@@ -82,7 +82,7 @@ function InvoiceList() {
       setInvoices(data.invoiceList || []);
       setTotalPages(data.totalPages || 1);
       setCurrentPage(data.currentPage || page);
-      setTotalItems(data.totalItems || 100);
+      setTotalItems(data.totalElements);
     } catch (err) {
       console.error("Error fetching invoices:", err);
       toast.error("Failed to fetch invoices. Please try again.");
