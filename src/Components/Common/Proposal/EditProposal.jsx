@@ -14,6 +14,7 @@ import {
 } from "../../BaseComponet/CustomeFormComponents";
 import CustomeImageUploader from "../../BaseComponet/CustomeImageUploader";
 import { hasPermission } from "../../BaseComponet/permissions";
+import { showConfirmDialog } from "../../BaseComponet/alertUtils";
 const SkeletonBlock = ({ className }) => (
   <div className={`bg-gray-200 rounded animate-pulse ${className}`}></div>
 );
@@ -458,13 +459,18 @@ function EditProposal() {
     }
   };
 
-  const handleCancel = () => {
-    if (role === "ROLE_ADMIN") {
-      navigate("/Proposal");
-    } else if (role === "ROLE_EMPLOYEE") {
-      navigate("/Employee/Proposal");
-    } else {
-      navigate("/login");
+  const handleCancel = async () => {
+    const result = await showConfirmDialog(
+      "Are you sure you want to cancel? Any unsaved changes will be lost."
+    );
+    if (result.isConfirmed) {
+      if (role === "ROLE_ADMIN") {
+        navigate("/Proposal");
+      } else if (role === "ROLE_EMPLOYEE") {
+        navigate("/Employee/Proposal");
+      } else {
+        navigate("/login");
+      }
     }
   };
 
