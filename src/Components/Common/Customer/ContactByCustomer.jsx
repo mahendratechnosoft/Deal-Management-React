@@ -40,8 +40,9 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
       required: true,
       minLength: 2,
       maxLength: 50,
-      pattern: /^[a-zA-Z\s.'-]+$/,
-      message: "Name should contain only letters, spaces, and basic punctuation (2-50 characters)"
+      pattern: /^[a-zA-Z0-9\s.'-]+$/,
+      message: "Name should contain letters, numbers, spaces, and basic punctuation (2-50 characters)"
+
     },
     email: {
       required: true,
@@ -402,8 +403,8 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
                   onBlur={handleBlur}
                   required
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${formErrors.name && touched.name
-                      ? "border-red-300 bg-red-50"
-                      : "border-gray-300"
+                    ? "border-red-300 bg-red-50"
+                    : "border-gray-300"
                     }`}
                   placeholder="Enter contact name"
                   minLength="2"
@@ -432,8 +433,8 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
                   onBlur={handleBlur}
                   required
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${formErrors.email && touched.email
-                      ? "border-red-300 bg-red-50"
-                      : "border-gray-300"
+                    ? "border-red-300 bg-red-50"
+                    : "border-gray-300"
                     }`}
                   placeholder="Enter email address"
                 />
@@ -645,8 +646,8 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${contact.status === false
-                            ? "bg-red-100 text-red-800"
-                            : "bg-green-100 text-green-800"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-green-100 text-green-800"
                           }`}
                       >
                         {contact.status === false ? "Inactive" : "Active"}
