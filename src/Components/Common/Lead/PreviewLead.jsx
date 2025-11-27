@@ -387,14 +387,14 @@ function PreviewLead({ leadId, onClose, onEdit, onConvert }) {
                             {leadData.source || "N/A"}
                           </p>
                         </div>
-                        <div>
+                        {/* <div>
                           <label className="text-sm font-medium text-gray-500">
                             Priority
                           </label>
                           <p className="text-gray-900">
                             {leadData.priority || "N/A"}
                           </p>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
 
