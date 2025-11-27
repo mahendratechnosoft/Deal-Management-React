@@ -10,6 +10,7 @@ import {
   FormTextarea,
   FormPhoneInputFloating,
 } from "../../BaseComponet/CustomeFormComponents"; // Your existing components
+import { showConfirmDialog } from "../../BaseComponet/alertUtils";
 
 // Constants
 const genderOptions = [
@@ -551,91 +552,91 @@ function EditEmployee() {
     }
   };
 
-  const handleCancel = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to cancel? Any unsaved changes will be lost."
-      )
-    ) {
-      navigate("/Admin/EmployeeList");
-    }
-  };
+const handleCancel = async () => {
+  const result = await showConfirmDialog(
+    "Are you sure you want to cancel? Any unsaved changes will be lost."
+  );
+  
+  if (result.isConfirmed) {
+    navigate("/Admin/EmployeeList");
+  }
+};
 
-  // Loading Skeleton (similar to EditCustomer)
-  if (initialLoading) {
-    return (
-      <LayoutComponent>
-        <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
-          {/* Header Skeleton */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="skeleton h-4 w-24 rounded"></div>
+// Loading Skeleton (similar to EditCustomer)
+if (initialLoading) {
+  return (
+    <LayoutComponent>
+      <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
+        {/* Header Skeleton */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="skeleton h-4 w-24 rounded"></div>
+          </div>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div className="space-y-2">
+              <div className="skeleton h-6 w-48 rounded"></div>
+              <div className="skeleton h-4 w-64 rounded"></div>
             </div>
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-              <div className="space-y-2">
-                <div className="skeleton h-6 w-48 rounded"></div>
-                <div className="skeleton h-4 w-64 rounded"></div>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="skeleton h-9 w-20 rounded"></div>
-                <div className="skeleton h-9 w-32 rounded"></div>
+            <div className="flex items-center gap-2">
+              <div className="skeleton h-9 w-20 rounded"></div>
+              <div className="skeleton h-9 w-32 rounded"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Form Skeleton */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="p-6 space-y-6">
+                {/* Profile Image Section Skeleton */}
+                <section>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="skeleton w-8 h-8 rounded-lg"></div>
+                    <div className="skeleton h-6 w-48 rounded"></div>
+                  </div>
+                  <div className="flex justify-center mb-6">
+                    <div className="skeleton w-24 h-24 rounded-full"></div>
+                  </div>
+                </section>
+
+                {/* Personal Details Section Skeleton */}
+                <section>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="skeleton w-8 h-8 rounded-lg"></div>
+                    <div className="skeleton h-6 w-40 rounded"></div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[...Array(6)].map((_, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="skeleton h-4 w-24 rounded"></div>
+                        <div className="skeleton h-10 w-full rounded"></div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Module Access Section Skeleton */}
+                <section>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="skeleton w-8 h-8 rounded-lg"></div>
+                    <div className="skeleton h-6 w-32 rounded"></div>
+                  </div>
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, index) => (
+                      <div
+                        key={index}
+                        className="skeleton h-24 w-full rounded-lg"
+                      ></div>
+                    ))}
+                  </div>
+                </section>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Form Skeleton */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-4">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="p-6 space-y-6">
-                  {/* Profile Image Section Skeleton */}
-                  <section>
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="skeleton w-8 h-8 rounded-lg"></div>
-                      <div className="skeleton h-6 w-48 rounded"></div>
-                    </div>
-                    <div className="flex justify-center mb-6">
-                      <div className="skeleton w-24 h-24 rounded-full"></div>
-                    </div>
-                  </section>
-
-                  {/* Personal Details Section Skeleton */}
-                  <section>
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="skeleton w-8 h-8 rounded-lg"></div>
-                      <div className="skeleton h-6 w-40 rounded"></div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {[...Array(6)].map((_, index) => (
-                        <div key={index} className="space-y-2">
-                          <div className="skeleton h-4 w-24 rounded"></div>
-                          <div className="skeleton h-10 w-full rounded"></div>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-
-                  {/* Module Access Section Skeleton */}
-                  <section>
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="skeleton w-8 h-8 rounded-lg"></div>
-                      <div className="skeleton h-6 w-32 rounded"></div>
-                    </div>
-                    <div className="space-y-4">
-                      {[...Array(3)].map((_, index) => (
-                        <div
-                          key={index}
-                          className="skeleton h-24 w-full rounded-lg"
-                        ></div>
-                      ))}
-                    </div>
-                  </section>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <style jsx>{`
+        <style jsx>{`
             .skeleton {
               background: linear-gradient(
                 90deg,
@@ -656,452 +657,452 @@ function EditEmployee() {
               }
             }
           `}</style>
-        </div>
-      </LayoutComponent>
-    );
-  }
-
-  const getAccess = (field) => {
-    return moduleAccess ? moduleAccess[field] : false;
-  };
-
-  return (
-    <LayoutComponent>
-      <div className="bg-white h-[90vh] overflow-y-auto CRM-scroll-width-none">
-        {/* Compact Header */}
-        <div className="bg-white border-gray-200 px-4 py-3 sticky top-0 z-20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate("/Admin/EmployeeList")}
-                className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 p-1.5 hover:bg-gray-100 rounded transition-colors"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                  />
-                </svg>
-                <span className="hidden sm:inline">Back</span>
-              </button>
-              <div>
-                <h1 className="text-lg font-semibold text-gray-900">
-                  Edit Employee
-                </h1>
-                <p className="text-xs text-gray-600">
-                  Update employee information
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleCancel}
-                className="px-3 py-1.5 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 text-sm transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Saving...
-                  </>
-                ) : (
-                  "Update"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Compact Form */}
-        <div className="p-4 pt-0">
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Left Column - Personal Information */}
-              <div className="space-y-4">
-                {/* Profile Image - More Compact */}
-             
-                {/* Personal Details - Phone & Gender in one line */}
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <h3 className="text-xs font-semibold text-gray-900 mb-3 uppercase tracking-wide">
-                    Personal Details
-                  </h3>
-
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-
-                    {" "}
-                    <div className="flex flex-col items-center">
-                      <input
-                        type="file"
-                        id="profileImageInput"
-                        name="profileImageBase64"
-                        accept="image/png, image/jpeg, image/jpg"
-                        onChange={handleFileChange}
-                        className="hidden"
-                      />
-                      <label
-                        htmlFor="profileImageInput"
-                        className="cursor-pointer"
-                      >
-                        {formData.profileImageBase64 ? (
-                          <img
-                            src={`data:image/jpeg;base64,${formData.profileImageBase64}`}
-                            alt="Profile Preview"
-                            className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 shadow-sm"
-                          />
-                        ) : (
-                          <div className="w-20 h-20 rounded-full bg-gray-100 border border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-200 hover:border-gray-400">
-                            <svg
-                              className="w-6 h-6"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={1}
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                              />
-                            </svg>
-                            <span className="text-xs font-medium mt-1">
-                              Upload
-                            </span>
-                          </div>
-                        )}
-                      </label>
-                      {errors.profileImageBase64 && (
-                        <p className="mt-1 text-xs text-red-600 text-center">
-                          {errors.profileImageBase64}
-                        </p>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 gap-3">
-                      <FormInput
-                        label="Full Name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required={true}
-                        error={errors.name}
-                        background="white"
-                      />
-
-                      <FormInput
-                        label="Email"
-                        name="loginEmail"
-                        value={formData.loginEmail}
-                        onChange={handleChange}
-                        disabled={true}
-                        background="white"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {/* Phone and Gender in one line */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <FormPhoneInputFloating
-                        label="Phone Number"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handlePhoneChange}
-                        required={true}
-                        error={errors.phone}
-                        background="white"
-                      />
-
-                      <FormSelect
-                        label="Gender"
-                        name="gender"
-                        value={genderOptions.find(
-                          (opt) => opt.value === formData.gender
-                        )}
-                        onChange={(selectedOption) =>
-                          handleSelectChange(selectedOption, "gender")
-                        }
-                        options={genderOptions}
-                        required={true}
-                        error={errors.gender}
-                        background="white"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <FormSelect
-                        label="Department"
-                        name="departmentId"
-                        value={departmentOptions.find(
-                          (opt) => opt.value === formData.departmentId
-                        )}
-                        onChange={handleDepartmentChange}
-                        onMenuOpen={loadDepartments}
-                        options={departmentOptions}
-                        isLoading={isDeptLoading}
-                        required={true}
-                        error={errors.departmentId}
-                        background="white"
-                      />
-
-                      <FormSelect
-                        label="Role"
-                        name="roleId"
-                        value={roleOptions.find(
-                          (opt) => opt.value === formData.roleId
-                        )}
-                        onChange={handleRoleChange}
-                        onMenuOpen={loadRoles}
-                        options={roleOptions}
-                        isLoading={isRoleLoading}
-                        isDisabled={!formData.departmentId}
-                        required={true}
-                        error={errors.roleId}
-                        background="white"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column - Address & Description */}
-              <div className="space-y-4">
-                <div className="bg-gray-50 rounded-lg p-3 h-full">
-                  <h3 className="text-xs font-semibold text-gray-900 mb-3 uppercase tracking-wide">
-                    Address Information
-                  </h3>
-
-                  <div className="space-y-3">
-                    {/* Country, State, City in one line */}
-                    <div className="grid grid-cols-3 gap-2">
-                      <FormSelect
-                        label="Country"
-                        name="country"
-                        value={dropdownData.countries.find(
-                          (opt) => opt.value === formData.country
-                        )}
-                        onChange={handleCountryChange}
-                        options={dropdownData.countries}
-                        isSearchable={true}
-                        background="white"
-                      />
-
-                      <FormSelect
-                        label="State"
-                        name="state"
-                        value={dropdownData.states.find(
-                          (opt) => opt.value === formData.state
-                        )}
-                        onChange={handleStateChange}
-                        options={dropdownData.states}
-                        isSearchable={true}
-                        isDisabled={!formData.country}
-                        background="white"
-                      />
-
-                      <FormSelect
-                        label="City"
-                        name="city"
-                        value={dropdownData.cities.find(
-                          (opt) => opt.value === formData.city
-                        )}
-                        onChange={handleCityChange}
-                        options={dropdownData.cities}
-                        isSearchable={true}
-                        isDisabled={!formData.state}
-                        background="white"
-                      />
-                    </div>
-
-                    {/* Address and Description in one line with smaller height */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <FormTextarea
-                        label="Address"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleChange}
-                        rows={2}
-                        background="white"
-                        className="min-h-[80px]"
-                      />
-
-                      <FormTextarea
-                        label="Description"
-                        name="description"
-                        value={formData.description}
-                        onChange={handleChange}
-                        rows={2}
-                        background="white"
-                        className="min-h-[80px]"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4 mt-4">
-              {/* Module Access - All modules in 6-column grid */}
-              <div className="bg-gray-50 rounded-lg p-3 h-full">
-                <div className="flex items-center justify-left mb-3">
-                  <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide mr-5">
-                    Module Access
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={handleClearAllAccess}
-                      className="px-3 py-1.5 text-xs border border-red-300 text-red-700 rounded bg-white hover:bg-red-50 transition-colors"
-                    >
-                      Clear All
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSetAllAccess}
-                      className="px-3 py-1.5 text-xs border border-green-300 text-green-700 rounded bg-white hover:bg-green-50 transition-colors"
-                    >
-                      Set All
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-4 gap-2">
-                  <ModuleAccessGroup
-                    title="Leads"
-                    permissions={[
-                      { label: "Access", field: "leadAccess" },
-                      { label: "View All", field: "leadViewAll" },
-                      { label: "Create", field: "leadCreate" },
-                      { label: "Edit", field: "leadEdit" },
-                      { label: "Delete", field: "leadDelete" },
-                    ]}
-                    getAccess={getAccess}
-                    handleAccessChange={handleAccessChange}
-                  />
-
-                  <ModuleAccessGroup
-                    title="Customer"
-                    permissions={[
-                      { label: "Access", field: "customerAccess" },
-                      { label: "View All", field: "customerViewAll" },
-                      { label: "Create", field: "customerCreate" },
-                      { label: "Edit", field: "customerEdit" },
-                      { label: "Delete", field: "customerDelete" },
-                    ]}
-                    getAccess={getAccess}
-                    handleAccessChange={handleAccessChange}
-                  />
-
-                  <ModuleAccessGroup
-                    title="Proposal"
-                    permissions={[
-                      { label: "Access", field: "proposalAccess" },
-                      { label: "View All", field: "proposalViewAll" },
-                      { label: "Create", field: "proposalCreate" },
-                      { label: "Edit", field: "proposalEdit" },
-                      { label: "Delete", field: "proposalDelete" },
-                    ]}
-                    getAccess={getAccess}
-                    handleAccessChange={handleAccessChange}
-                  />
-
-                  <ModuleAccessGroup
-                    title="Proforma Invoice"
-                    permissions={[
-                      { label: "Access", field: "proformaInvoiceAccess" },
-                      { label: "View All", field: "proformaInvoiceViewAll" },
-                      { label: "Create", field: "proformaInvoiceCreate" },
-                      { label: "Edit", field: "proformaInvoiceEdit" },
-                      { label: "Delete", field: "proformaInvoiceDelete" },
-                    ]}
-                    getAccess={getAccess}
-                    handleAccessChange={handleAccessChange}
-                  />
-
-                  <ModuleAccessGroup
-                    title="Invoice"
-                    permissions={[
-                      { label: "Access", field: "invoiceAccess" },
-                      { label: "View All", field: "invoiceViewAll" },
-                      { label: "Create", field: "invoiceCreate" },
-                      { label: "Edit", field: "invoiceEdit" },
-                      { label: "Delete", field: "invoiceDelete" },
-                    ]}
-                    getAccess={getAccess}
-                    handleAccessChange={handleAccessChange}
-                  />
-
-                  <ModuleAccessGroup
-                    title="Payment"
-                    permissions={[
-                      { label: "Access", field: "paymentAccess" },
-                      { label: "View All", field: "paymentViewAll" },
-                      { label: "Create", field: "paymentcreate" },
-                      { label: "Edit", field: "paymentEdit" },
-                      { label: "Delete", field: "paymentDelete" },
-                    ]}
-                    getAccess={getAccess}
-                    handleAccessChange={handleAccessChange}
-                  />
-
-                  <ModuleAccessGroup
-                    title="TimeSheet"
-                    permissions={[
-                      { label: "Access", field: "timeSheetAccess" },
-                      { label: "View All", field: "timeSheetViewAll" },
-                      { label: "Create", field: "timeSheetCreate" },
-                      { label: "Edit", field: "timeSheetEdit" },
-                      { label: "Delete", field: "timeSheetDelete" },
-                    ]}
-                    getAccess={getAccess}
-                    handleAccessChange={handleAccessChange}
-                  />
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
       </div>
     </LayoutComponent>
   );
+}
 
-  function ModuleAccessGroup({
-    title,
-    permissions,
-    getAccess,
-    handleAccessChange,
-  }) {
-    return (
-      <div className="p-2 border border-gray-200 rounded bg-white">
-        <h3 className="text font-medium text-gray-800 mb-2">{title}</h3>
-        <div className="space-y-1 grid grid-cols-2 gap-3">
-          {permissions.map((perm) => (
-            <AccessToggle
-              key={perm.field}
-              field={perm.field}
-              label={perm.label}
-              isChecked={getAccess(perm.field)}
-              onChange={(isChecked) =>
-                handleAccessChange(perm.field, isChecked)
-              }
-            />
-          ))}
+const getAccess = (field) => {
+  return moduleAccess ? moduleAccess[field] : false;
+};
+
+return (
+  <LayoutComponent>
+    <div className="bg-white h-[90vh] overflow-y-auto CRM-scroll-width-none">
+      {/* Compact Header */}
+      <div className="bg-white border-gray-200 px-4 py-3 sticky top-0 z-20">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/Admin/EmployeeList")}
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 p-1.5 hover:bg-gray-100 rounded transition-colors"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+              <span className="hidden sm:inline">Back</span>
+            </button>
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900">
+                Edit Employee
+              </h1>
+              <p className="text-xs text-gray-600">
+                Update employee information
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCancel}
+              className="px-3 py-1.5 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 text-sm transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
+            >
+              {loading ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Saving...
+                </>
+              ) : (
+                "Update"
+              )}
+            </button>
+          </div>
         </div>
       </div>
-    );
-  }
+
+      {/* Compact Form */}
+      <div className="p-4 pt-0">
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Left Column - Personal Information */}
+            <div className="space-y-4">
+              {/* Profile Image - More Compact */}
+
+              {/* Personal Details - Phone & Gender in one line */}
+              <div className="bg-gray-50 rounded-lg p-3">
+                <h3 className="text-xs font-semibold text-gray-900 mb-3 uppercase tracking-wide">
+                  Personal Details
+                </h3>
+
+                <div className="grid grid-cols-2 gap-3 mb-4">
+
+                  {" "}
+                  <div className="flex flex-col items-center">
+                    <input
+                      type="file"
+                      id="profileImageInput"
+                      name="profileImageBase64"
+                      accept="image/png, image/jpeg, image/jpg"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="profileImageInput"
+                      className="cursor-pointer"
+                    >
+                      {formData.profileImageBase64 ? (
+                        <img
+                          src={`data:image/jpeg;base64,${formData.profileImageBase64}`}
+                          alt="Profile Preview"
+                          className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 shadow-sm"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 rounded-full bg-gray-100 border border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-200 hover:border-gray-400">
+                          <svg
+                            className="w-6 h-6"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1}
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            />
+                          </svg>
+                          <span className="text-xs font-medium mt-1">
+                            Upload
+                          </span>
+                        </div>
+                      )}
+                    </label>
+                    {errors.profileImageBase64 && (
+                      <p className="mt-1 text-xs text-red-600 text-center">
+                        {errors.profileImageBase64}
+                      </p>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 gap-3">
+                    <FormInput
+                      label="Full Name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required={true}
+                      error={errors.name}
+                      background="white"
+                    />
+
+                    <FormInput
+                      label="Email"
+                      name="loginEmail"
+                      value={formData.loginEmail}
+                      onChange={handleChange}
+                      disabled={true}
+                      background="white"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {/* Phone and Gender in one line */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormPhoneInputFloating
+                      label="Phone Number"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handlePhoneChange}
+                      required={true}
+                      error={errors.phone}
+                      background="white"
+                    />
+
+                    <FormSelect
+                      label="Gender"
+                      name="gender"
+                      value={genderOptions.find(
+                        (opt) => opt.value === formData.gender
+                      )}
+                      onChange={(selectedOption) =>
+                        handleSelectChange(selectedOption, "gender")
+                      }
+                      options={genderOptions}
+                      required={true}
+                      error={errors.gender}
+                      background="white"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormSelect
+                      label="Department"
+                      name="departmentId"
+                      value={departmentOptions.find(
+                        (opt) => opt.value === formData.departmentId
+                      )}
+                      onChange={handleDepartmentChange}
+                      onMenuOpen={loadDepartments}
+                      options={departmentOptions}
+                      isLoading={isDeptLoading}
+                      required={true}
+                      error={errors.departmentId}
+                      background="white"
+                    />
+
+                    <FormSelect
+                      label="Role"
+                      name="roleId"
+                      value={roleOptions.find(
+                        (opt) => opt.value === formData.roleId
+                      )}
+                      onChange={handleRoleChange}
+                      onMenuOpen={loadRoles}
+                      options={roleOptions}
+                      isLoading={isRoleLoading}
+                      isDisabled={!formData.departmentId}
+                      required={true}
+                      error={errors.roleId}
+                      background="white"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Address & Description */}
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-lg p-3 h-full">
+                <h3 className="text-xs font-semibold text-gray-900 mb-3 uppercase tracking-wide">
+                  Address Information
+                </h3>
+
+                <div className="space-y-3">
+                  {/* Country, State, City in one line */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <FormSelect
+                      label="Country"
+                      name="country"
+                      value={dropdownData.countries.find(
+                        (opt) => opt.value === formData.country
+                      )}
+                      onChange={handleCountryChange}
+                      options={dropdownData.countries}
+                      isSearchable={true}
+                      background="white"
+                    />
+
+                    <FormSelect
+                      label="State"
+                      name="state"
+                      value={dropdownData.states.find(
+                        (opt) => opt.value === formData.state
+                      )}
+                      onChange={handleStateChange}
+                      options={dropdownData.states}
+                      isSearchable={true}
+                      isDisabled={!formData.country}
+                      background="white"
+                    />
+
+                    <FormSelect
+                      label="City"
+                      name="city"
+                      value={dropdownData.cities.find(
+                        (opt) => opt.value === formData.city
+                      )}
+                      onChange={handleCityChange}
+                      options={dropdownData.cities}
+                      isSearchable={true}
+                      isDisabled={!formData.state}
+                      background="white"
+                    />
+                  </div>
+
+                  {/* Address and Description in one line with smaller height */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormTextarea
+                      label="Address"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      rows={2}
+                      background="white"
+                      className="min-h-[80px]"
+                    />
+
+                    <FormTextarea
+                      label="Description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={2}
+                      background="white"
+                      className="min-h-[80px]"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4 mt-4">
+            {/* Module Access - All modules in 6-column grid */}
+            <div className="bg-gray-50 rounded-lg p-3 h-full">
+              <div className="flex items-center justify-left mb-3">
+                <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide mr-5">
+                  Module Access
+                </h3>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleClearAllAccess}
+                    className="px-3 py-1.5 text-xs border border-red-300 text-red-700 rounded bg-white hover:bg-red-50 transition-colors"
+                  >
+                    Clear All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSetAllAccess}
+                    className="px-3 py-1.5 text-xs border border-green-300 text-green-700 rounded bg-white hover:bg-green-50 transition-colors"
+                  >
+                    Set All
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-2">
+                <ModuleAccessGroup
+                  title="Leads"
+                  permissions={[
+                    { label: "Access", field: "leadAccess" },
+                    { label: "View All", field: "leadViewAll" },
+                    { label: "Create", field: "leadCreate" },
+                    { label: "Edit", field: "leadEdit" },
+                    { label: "Delete", field: "leadDelete" },
+                  ]}
+                  getAccess={getAccess}
+                  handleAccessChange={handleAccessChange}
+                />
+
+                <ModuleAccessGroup
+                  title="Customer"
+                  permissions={[
+                    { label: "Access", field: "customerAccess" },
+                    { label: "View All", field: "customerViewAll" },
+                    { label: "Create", field: "customerCreate" },
+                    { label: "Edit", field: "customerEdit" },
+                    { label: "Delete", field: "customerDelete" },
+                  ]}
+                  getAccess={getAccess}
+                  handleAccessChange={handleAccessChange}
+                />
+
+                <ModuleAccessGroup
+                  title="Proposal"
+                  permissions={[
+                    { label: "Access", field: "proposalAccess" },
+                    { label: "View All", field: "proposalViewAll" },
+                    { label: "Create", field: "proposalCreate" },
+                    { label: "Edit", field: "proposalEdit" },
+                    { label: "Delete", field: "proposalDelete" },
+                  ]}
+                  getAccess={getAccess}
+                  handleAccessChange={handleAccessChange}
+                />
+
+                <ModuleAccessGroup
+                  title="Proforma Invoice"
+                  permissions={[
+                    { label: "Access", field: "proformaInvoiceAccess" },
+                    { label: "View All", field: "proformaInvoiceViewAll" },
+                    { label: "Create", field: "proformaInvoiceCreate" },
+                    { label: "Edit", field: "proformaInvoiceEdit" },
+                    { label: "Delete", field: "proformaInvoiceDelete" },
+                  ]}
+                  getAccess={getAccess}
+                  handleAccessChange={handleAccessChange}
+                />
+
+                <ModuleAccessGroup
+                  title="Invoice"
+                  permissions={[
+                    { label: "Access", field: "invoiceAccess" },
+                    { label: "View All", field: "invoiceViewAll" },
+                    { label: "Create", field: "invoiceCreate" },
+                    { label: "Edit", field: "invoiceEdit" },
+                    { label: "Delete", field: "invoiceDelete" },
+                  ]}
+                  getAccess={getAccess}
+                  handleAccessChange={handleAccessChange}
+                />
+
+                <ModuleAccessGroup
+                  title="Payment"
+                  permissions={[
+                    { label: "Access", field: "paymentAccess" },
+                    { label: "View All", field: "paymentViewAll" },
+                    { label: "Create", field: "paymentcreate" },
+                    { label: "Edit", field: "paymentEdit" },
+                    { label: "Delete", field: "paymentDelete" },
+                  ]}
+                  getAccess={getAccess}
+                  handleAccessChange={handleAccessChange}
+                />
+
+                <ModuleAccessGroup
+                  title="TimeSheet"
+                  permissions={[
+                    { label: "Access", field: "timeSheetAccess" },
+                    { label: "View All", field: "timeSheetViewAll" },
+                    { label: "Create", field: "timeSheetCreate" },
+                    { label: "Edit", field: "timeSheetEdit" },
+                    { label: "Delete", field: "timeSheetDelete" },
+                  ]}
+                  getAccess={getAccess}
+                  handleAccessChange={handleAccessChange}
+                />
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </LayoutComponent>
+);
+
+function ModuleAccessGroup({
+  title,
+  permissions,
+  getAccess,
+  handleAccessChange,
+}) {
+  return (
+    <div className="p-2 border border-gray-200 rounded bg-white">
+      <h3 className="text font-medium text-gray-800 mb-2">{title}</h3>
+      <div className="space-y-1 grid grid-cols-2 gap-3">
+        {permissions.map((perm) => (
+          <AccessToggle
+            key={perm.field}
+            field={perm.field}
+            label={perm.label}
+            isChecked={getAccess(perm.field)}
+            onChange={(isChecked) =>
+              handleAccessChange(perm.field, isChecked)
+            }
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 }
 
 function AccessToggle({ field, label, isChecked, onChange }) {
@@ -1123,14 +1124,12 @@ function AccessToggle({ field, label, isChecked, onChange }) {
           className="sr-only"
         />
         <div
-          className={`block w-10 h-6 rounded-full transition-colors ${
-            isChecked ? "bg-blue-600" : "bg-gray-300"
-          }`}
+          className={`block w-10 h-6 rounded-full transition-colors ${isChecked ? "bg-blue-600" : "bg-gray-300"
+            }`}
         ></div>
         <div
-          className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${
-            isChecked ? "translate-x-4" : "translate-x-0"
-          }`}
+          className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${isChecked ? "translate-x-4" : "translate-x-0"
+            }`}
         ></div>
       </div>
       <span className="ml-2 text-sm text-gray-700">{label}</span>

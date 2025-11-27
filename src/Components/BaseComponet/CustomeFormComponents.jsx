@@ -428,13 +428,13 @@ export const FormPhoneInputFloating = ({
         enableSearch={enableSearch}
         searchPlaceholder="Search countries..."
         isValid={(value, country) => {
-          if (value.match(/12345/)) {
-            return "Invalid value: " + value + ", " + country.name;
-          } else if (value.match(/1234/)) {
-            return false;
-          } else {
-            return true;
-          }
+          // if (value.match(/12345/)) {
+          //   return "Invalid value: " + value + ", " + country.name;
+          // } else if (value.match(/1234/)) {
+          //   return false;
+          // } else {
+          //   return true;
+          // }
         }}
         disabled={disabled}
       />
@@ -442,7 +442,7 @@ export const FormPhoneInputFloating = ({
       {/* Properly Aligned Floating Label */}
       {/* Fixed Floating Label - Always stay up when there's any value */}
       <label
-        className={`absolute text-sm duration-300 transform z-10 origin-[0] px-2 left-1 pointer-events-none 
+        className={`absolute text-sm duration-300 transform z-10 origin-[0] px-2  left-11 pointer-events-none 
           scale-75 -translate-y-4 top-2
           ${
             error

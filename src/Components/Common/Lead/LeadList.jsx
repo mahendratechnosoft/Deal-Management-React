@@ -10,6 +10,7 @@ import CreateLeadModal from "./CreateLeadModal";
 import ImportLeadModal from "./ImportLeadModal";
 import { components } from "react-select";
 import { hasPermission } from "../../BaseComponet/permissions";
+import { showDeleteConfirmation } from "../../BaseComponet/alertUtils";
 
 // Table Body Skeleton Component (for search operations)
 const TableBodySkeleton = ({ rows = 5, columns = 7 }) => {
@@ -183,9 +184,17 @@ function LeadList() {
     { value: "Negotiation", label: "Negotiation", color: "#f97316" },
     { value: "Won", label: "Won", color: "#059669" },
     { value: "Lost", label: "Lost", color: "#ef4444" },
-    { value: "Converted", label: "Converted", color: "#6366f1" },
+    // { value: "Converted", label: "Converted", color: "#6366f1" },
   ];
 
+  const getFilteredStatusOptions = (currentStatus) => {
+    if (currentStatus?.toLowerCase() === "converted") {
+      // For converted leads, only show "Converted" option
+      return [{ value: "Converted", label: "Converted", color: "#6366f1" }];
+    }
+    // For non-converted leads, show all options except "Converted"
+    return statusOptions;
+  };
   // Updated custom styles for React Select v5
   const customStyles = {
     control: (base, state) => ({
@@ -283,6 +292,7 @@ function LeadList() {
       page: 0,
       hasMore: true,
       loading: false,
+      allowDragDrop: true,
     },
     {
       id: "contacted",
@@ -292,6 +302,7 @@ function LeadList() {
       page: 0,
       hasMore: true,
       loading: false,
+      allowDragDrop: true,
     },
     {
       id: "qualified",
@@ -301,6 +312,7 @@ function LeadList() {
       page: 0,
       hasMore: true,
       loading: false,
+      allowDragDrop: true,
     },
     {
       id: "proposal",
@@ -310,6 +322,7 @@ function LeadList() {
       page: 0,
       hasMore: true,
       loading: false,
+      allowDragDrop: true,
     },
     {
       id: "negotiation",
@@ -319,6 +332,7 @@ function LeadList() {
       page: 0,
       hasMore: true,
       loading: false,
+      allowDragDrop: true,
     },
     {
       id: "won",
@@ -328,6 +342,7 @@ function LeadList() {
       page: 0,
       hasMore: true,
       loading: false,
+      allowDragDrop: true,
     },
     {
       id: "lost",
@@ -337,6 +352,7 @@ function LeadList() {
       page: 0,
       hasMore: true,
       loading: false,
+      allowDragDrop: true,
     },
     {
       id: "converted",
@@ -346,6 +362,7 @@ function LeadList() {
       page: 0,
       hasMore: true,
       loading: false,
+      allowDragDrop: false,
     },
   ];
 
@@ -510,10 +527,17 @@ function LeadList() {
 
   // Update lead status function
   const updateLeadStatus = async (leadId, newStatus) => {
+    // Prevent updating converted leads to any other status
+    const currentLead = leads.find((lead) => lead.id === leadId);
+    if (currentLead?.status?.toLowerCase() === "converted" && newStatus.value.toLowerCase() !== "converted") {
+      toast.error("Cannot change status of converted lead");
+      return;
+    }
+
     try {
       const response = await axiosInstance.put("updateLeadStatus", {
         leadId: leadId,
-        status: newStatus.value, // React Select uses object with value property
+        status: newStatus.value,
       });
 
       toast.success("Status updated successfully!");
@@ -522,18 +546,20 @@ function LeadList() {
         // Find the lead to get old status BEFORE updating state
         const oldLead = leads.find((lead) => lead.id === leadId);
 
-        // Update table view leads
+        // Update table view leads - IMMEDIATELY remove from current list
         setLeads((prevLeads) =>
-          prevLeads.map((lead) =>
-            lead.id === leadId ? { ...lead, status: newStatus.value } : lead
-          )
+          prevLeads.filter((lead) => lead.id !== leadId)
         );
 
         // Refresh status counts from API to ensure accuracy
         await fetchStatusCounts();
 
-        // If in kanban view, refresh kanban data to ensure consistency
-        if (viewMode === "kanban") {
+        // Refresh the current view data based on current filters
+        if (viewMode === "table") {
+          // Re-fetch leads with current filters to get updated data
+          fetchLeads(currentPage, searchTerm, statusFilter, true);
+        } else if (viewMode === "kanban") {
+          // Refresh both source and target columns in kanban view
           const sourceColumn = kanbanColumns.find(
             (col) => col.apiStatus === oldLead?.status
           );
@@ -552,11 +578,22 @@ function LeadList() {
     } catch (error) {
       console.error("Error updating lead status:", error);
       toast.error("Failed to update status. Please try again.");
+
+      // If update fails, refresh the data to ensure consistency
+      if (viewMode === "table") {
+        fetchLeads(currentPage, searchTerm, statusFilter, true);
+      } else if (viewMode === "kanban") {
+        fetchAllKanbanColumns();
+      }
     }
   };
 
   // Get current status value for React Select
+  // Get current status value for React Select
   const getCurrentStatus = (leadStatus) => {
+    if (leadStatus?.toLowerCase() === "converted") {
+      return { value: "Converted", label: "Converted", color: "#6366f1" };
+    }
     return (
       statusOptions.find((option) => option.value === leadStatus) ||
       statusOptions.find((option) => option.value === "New Lead")
@@ -868,6 +905,14 @@ function LeadList() {
   };
 
   const handleKanbanDragOver = (e, columnId) => {
+    const column = kanbanColumns.find(col => col.id === columnId);
+
+    // Don't allow drag over if column doesn't allow drag drop
+    if (!column?.allowDragDrop) {
+      e.preventDefault();
+      return;
+    }
+
     e.preventDefault();
     setDragOverColumn(columnId);
 
@@ -887,10 +932,15 @@ function LeadList() {
   const handleKanbanDrop = async (e, targetColumnId) => {
     e.preventDefault();
 
+    const targetColumn = kanbanColumns.find(col => col.id === targetColumnId);
+
+    // Don't allow drop if target column doesn't allow drag drop
+    if (!targetColumn?.allowDragDrop) {
+      toast.error("Cannot move leads to Converted column");
+      return;
+    }
+
     if (draggedLead && draggedLead.fromColumn !== targetColumnId) {
-      const targetColumn = kanbanColumns.find(
-        (col) => col.id === targetColumnId
-      );
       const sourceColumn = kanbanColumns.find(
         (col) => col.id === draggedLead.fromColumn
       );
@@ -941,6 +991,7 @@ function LeadList() {
     e.currentTarget.style.backgroundColor = "";
     e.currentTarget.style.borderColor = "";
   };
+
   // Helper functions
   const visibleColumns = columns
     .filter((col) => col.visible)
@@ -1066,9 +1117,13 @@ function LeadList() {
 
 
   // Delete lead function
-  const deleteLead = async (leadId, leadName) => {
-    if (!window.confirm(`Are you sure you want to delete lead "${leadName}"? This action cannot be undone.`)) {
-      return;
+ const deleteLead = async (leadId, leadName) => {
+    const result = await showDeleteConfirmation(
+        `Are you sure you want to delete lead "${leadName}"? This action cannot be undone.`
+    );
+    
+    if (!result.isConfirmed) {
+        return;
     }
 
     try {
@@ -1661,7 +1716,7 @@ function LeadList() {
                                       )} px-2 py-0.5`}
                                     >
                                       {lead.status?.toLowerCase() === "converted" ? (
-                                        // Display static text for converted leads
+                                        // Display static text for converted leads - NO DROPDOWN
                                         <span className="text-xs font-semibold px-2 py-1">
                                           Converted
                                         </span>
@@ -1670,9 +1725,7 @@ function LeadList() {
                                         <StatusSelect
                                           value={getCurrentStatus(lead.status)}
                                           options={statusOptions}
-                                          onChange={(newValue) =>
-                                            updateLeadStatus(lead.id, newValue)
-                                          }
+                                          onChange={(newValue) => updateLeadStatus(lead.id, newValue)}
                                           styles={customStyles}
                                         />
                                       )}
@@ -1871,29 +1924,29 @@ function LeadList() {
                   return (
                     <div key={column.id} className="w-80 flex-shrink-0">
                       <div
-                        className={`bg-white rounded-xl shadow-sm border border-gray-200 h-full transition-all duration-200 ${dragOverColumn === column.id
+                        className={`bg-white rounded-xl shadow-sm border border-gray-200 h-full transition-all duration-200 ${dragOverColumn === column.id && column.allowDragDrop
                           ? "ring-2 ring-blue-400 bg-blue-50"
                           : ""
-                          }`}
-                        onDragOver={(e) => handleKanbanDragOver(e, column.id)}
-                        onDragLeave={handleKanbanDragLeave}
-                        onDrop={(e) => handleKanbanDrop(e, column.id)}
+                          } ${!column.allowDragDrop ? "opacity-90" : ""}`}
+                        onDragOver={(e) => column.allowDragDrop && handleKanbanDragOver(e, column.id)}
+                        onDragLeave={column.allowDragDrop ? handleKanbanDragLeave : undefined}
+                        onDrop={(e) => column.allowDragDrop && handleKanbanDrop(e, column.id)}
                       >
                         {/* Column Header */}
 
                         <div className="p-4 border-b border-gray-200">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <div
-                                className={`w-3 h-3 rounded-full ${column.color}`}
-                              ></div>
+                              <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
                               <h3 className="font-semibold text-gray-900">
                                 {column.title}
                               </h3>
                               <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
-                                {columnTotal}{" "}
-                                {/* Use the real count from API */}
+                                {columnTotal}
                               </span>
+                              {!column.allowDragDrop && (
+                                <span className="text-xs text-gray-500 italic">(Read-only)</span>
+                              )}
                             </div>
                             {isLoading && (
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
@@ -1904,18 +1957,19 @@ function LeadList() {
                         {/* Column Content with Infinite Scroll */}
                         <div
                           className="p-4 space-y-3 min-h-[200px] h-[60vh] overflow-y-auto crm-Leadlist-kanbadn-col-list"
-                          onScroll={(e) =>
-                            handleColumnScroll(e, column.apiStatus)
-                          }
+                          onScroll={(e) => handleColumnScroll(e, column.apiStatus)}
                         >
                           {/* Leads List */}
                           {columnLeads.map((lead) => (
                             <div
                               key={lead.id}
-                              className="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-colors duration-200 cursor-grab"
-                              draggable
+                              className={`bg-gray-50 rounded-lg p-3 border border-gray-200 transition-colors duration-200 ${column.allowDragDrop
+                                ? "hover:border-blue-300 cursor-grab"
+                                : "cursor-not-allowed opacity-75"
+                                }`}
+                              draggable={column.allowDragDrop}
                               onDragStart={(e) =>
-                                handleKanbanDragStart(e, lead, column.id)
+                                column.allowDragDrop && handleKanbanDragStart(e, lead, column.id)
                               }
                               onDragEnd={() => {
                                 setDraggedLead(null);

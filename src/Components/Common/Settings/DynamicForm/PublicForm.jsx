@@ -4,6 +4,104 @@ import { useParams } from "react-router-dom";
 import axiosInstance from "../../../BaseComponet/axiosInstance";
 import Swal from 'sweetalert2';
 import MtechLOGO from "../../../../../public/Images/Mtech_Logo.jpg";
+import { FormPhoneInputFloating } from "../../../BaseComponet/CustomeFormComponents";
+import { Country, State, City } from "country-state-city";
+
+
+import Select from "react-select";
+
+import { toast } from "react-hot-toast";
+
+const customReactSelectStyles = (hasError) => ({
+  control: (provided, state) => ({
+    ...provided,
+    minHeight: "40px",
+    borderColor: state.isFocused
+      ? "#3b82f6"
+      : hasError
+        ? "#ef4444"
+        : "#e5e7eb",
+    borderWidth: "1px",
+    borderRadius: "6px",
+    boxShadow: state.isFocused ? "0 0 0 3px rgba(59, 130, 246, 0.1)" : "none",
+    "&:hover": {
+      borderColor: state.isFocused ? "#3b82f6" : "#9ca3af",
+    },
+    backgroundColor: "white",
+  }),
+  menu: (base) => ({
+    ...base,
+    zIndex: 50,
+    borderRadius: "6px",
+    boxShadow: "0 10px 25px rgba(0, 0, 0, 0.15)",
+  }),
+  menuList: (base) => ({
+    ...base,
+    maxHeight: "150px",
+    padding: "4px 0",
+  }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isSelected
+      ? "#3b82f6"
+      : state.isFocused
+        ? "#f3f4f6"
+        : "white",
+    color: state.isSelected ? "white" : "#1f2937",
+    "&:active": {
+      backgroundColor: "#3b82f6",
+      color: "white",
+    },
+  }),
+});
+
+const customStyles = {
+  control: (base, state) => ({
+    ...base,
+    minHeight: "40px",
+    maxHeight: "100px",
+    borderColor: state.isFocused
+      ? "#3b82f6"
+      : errors.country || errors.state || errors.city
+        ? "#ef4444"
+        : "#e5e7eb",
+    borderWidth: "1px",
+    borderRadius: "6px",
+    boxShadow: state.isFocused ? "0 0 0 3px rgba(59, 130, 246, 0.1)" : "none",
+    "&:hover": {
+      borderColor: state.isFocused ? "#3b82f6" : "#9ca3af",
+    },
+    backgroundColor: "white",
+  }),
+
+  menu: (base) => ({
+    ...base,
+    zIndex: 50,
+    borderRadius: "6px",
+    boxShadow: "0 10px 25px rgba(0, 0, 0, 0.15)",
+  }),
+  menuList: (base) => ({
+    ...base,
+    maxHeight: "150px",
+    padding: "4px 0",
+  }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isSelected
+      ? "#3b82f6"
+      : state.isFocused
+        ? "#f3f4f6"
+        : "white",
+    color: state.isSelected ? "white" : "#1f2937",
+    "&:active": {
+      backgroundColor: "#3b82f6",
+      color: "white",
+    },
+  }),
+};
+
+
+
 const PublicForm = () => {
   const { adminId, formId } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,39 +128,27 @@ const PublicForm = () => {
 
   const [errors, setErrors] = useState({});
 
-  // Load countries on component mount
+  // Load countries on component mount - USING COUNTRY-STATE-CITY LIBRARY
   useEffect(() => {
     loadCountries();
   }, []);
 
   const loadCountries = async () => {
     try {
-      const response = await fetch('https://countriesnow.space/api/v0.1/countries');
-      const data = await response.json();
-      if (data.data) {
-        setCountries(data.data.sort((a, b) => a.country.localeCompare(b.country)));
-      }
+      // Use country-state-city library instead of API call
+      const allCountries = Country.getAllCountries();
+      setCountries(allCountries.sort((a, b) => a.name.localeCompare(b.name)));
     } catch (error) {
       console.error('Error loading countries:', error);
     }
   };
 
-  const loadStates = async (country) => {
+  const loadStates = async (countryCode) => {
     try {
-      const response = await fetch('https://countriesnow.space/api/v0.1/countries/states', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ country })
-      });
-      const data = await response.json();
-      if (data.data && data.data.states) {
-        setStates(data.data.states.sort((a, b) => a.name.localeCompare(b.name)));
-      } else {
-        setStates([]);
-      }
-      setCities([]);
+      // Use country-state-city library
+      const countryStates = State.getStatesOfCountry(countryCode);
+      setStates(countryStates.sort((a, b) => a.name.localeCompare(b.name)));
+      setCities([]); // Reset cities when states change
     } catch (error) {
       console.error('Error loading states:', error);
       setStates([]);
@@ -70,21 +156,11 @@ const PublicForm = () => {
     }
   };
 
-  const loadCities = async (country, state) => {
+  const loadCities = async (countryCode, stateCode) => {
     try {
-      const response = await fetch('https://countriesnow.space/api/v0.1/countries/state/cities', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ country, state })
-      });
-      const data = await response.json();
-      if (data.data) {
-        setCities(data.data.sort((a, b) => a.localeCompare(b)));
-      } else {
-        setCities([]);
-      }
+      // Use country-state-city library
+      const stateCities = City.getCitiesOfState(countryCode, stateCode);
+      setCities(stateCities.sort((a, b) => a.name.localeCompare(b.name)));
     } catch (error) {
       console.error('Error loading cities:', error);
       setCities([]);
@@ -97,6 +173,7 @@ const PublicForm = () => {
     return pattern.test(url);
   };
 
+  // Updated handleChange function with country-state-city logic
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -112,24 +189,48 @@ const PublicForm = () => {
       }));
     }
 
-    // Handle country change
+    // Handle country change - USING COUNTRY-STATE-CITY
     if (name === "country" && value) {
-      loadStates(value);
+      // Find the country code from the selected country name
+      const selectedCountry = countries.find(country => country.name === value);
+      if (selectedCountry) {
+        loadStates(selectedCountry.isoCode);
+      }
       setFormData(prev => ({
         ...prev,
         state: "",
         city: ""
       }));
-      setStates([]);
-      setCities([]);
     }
 
-    // Handle state change
+    // Handle state change - USING COUNTRY-STATE-CITY
     if (name === "state" && value && formData.country) {
-      loadCities(formData.country, value);
+      // Find the country code and state code
+      const selectedCountry = countries.find(country => country.name === formData.country);
+      const selectedState = states.find(state => state.name === value);
+
+      if (selectedCountry && selectedState) {
+        loadCities(selectedCountry.isoCode, selectedState.isoCode);
+      }
       setFormData(prev => ({
         ...prev,
         city: ""
+      }));
+    }
+  };
+
+  // Special handler for phone input (since it doesn't use regular event)
+  const handlePhoneChange = (phone, fieldName) => {
+    setFormData((prev) => ({
+      ...prev,
+      [fieldName]: phone,
+    }));
+
+    // Clear error when user starts typing
+    if (errors[fieldName]) {
+      setErrors((prev) => ({
+        ...prev,
+        [fieldName]: "",
       }));
     }
   };
@@ -163,12 +264,12 @@ const PublicForm = () => {
     if (!formData.country.trim()) {
       newErrors.country = "Country is required";
     }
-    if (!formData.state.trim()) {
-      newErrors.state = "State is required";
-    }
-    if (!formData.city.trim()) {
-      newErrors.city = "City is required";
-    }
+    // if (!formData.state.trim()) {
+    //   newErrors.state = "State is required";
+    // }
+    // if (!formData.city.trim()) {
+    //   newErrors.city = "City is required";
+    // }
 
     // Website validation
     if (formData.website && !validateWebsite(formData.website)) {
@@ -308,6 +409,51 @@ const PublicForm = () => {
     }
   };
 
+
+
+const customReactSelectStyles = (hasError) => ({
+  control: (provided, state) => ({
+    ...provided,
+    minHeight: "40px",
+    borderColor: state.isFocused
+      ? "#3b82f6"
+      : hasError
+        ? "#ef4444"
+        : "#e5e7eb",
+    borderWidth: "1px",
+    borderRadius: "6px",
+    boxShadow: state.isFocused ? "0 0 0 3px rgba(59, 130, 246, 0.1)" : "none",
+    "&:hover": {
+      borderColor: state.isFocused ? "#3b82f6" : "#9ca3af",
+    },
+    backgroundColor: "white",
+  }),
+  menu: (base) => ({
+    ...base,
+    zIndex: 50,
+    borderRadius: "6px",
+    boxShadow: "0 10px 25px rgba(0, 0, 0, 0.15)",
+  }),
+  menuList: (base) => ({
+    ...base,
+    maxHeight: "150px",
+    padding: "4px 0",
+  }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isSelected
+      ? "#3b82f6"
+      : state.isFocused
+        ? "#f3f4f6"
+        : "white",
+    color: state.isSelected ? "white" : "#1f2937",
+    "&:active": {
+      backgroundColor: "#3b82f6",
+      color: "white",
+    },
+  }),
+});
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 relative overflow-hidden">
       {/* Moving Dots Background Animation */}
@@ -353,9 +499,6 @@ const PublicForm = () => {
             <h2 className="text-2xl font-bold text-white text-center">
               Business Enquiry Form
             </h2>
-            {/* <p className="text-blue-100 text-center mt-2">
-              All fields marked with * are required
-            </p> */}
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -369,7 +512,7 @@ const PublicForm = () => {
                 {/* Client Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    Client Name 
+                    Client Name
                     <span className="text-red-500 ml-1">*</span>
                   </label>
                   <input
@@ -390,7 +533,7 @@ const PublicForm = () => {
                 {/* Company Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    Company Name 
+                    Company Name
                     <span className="text-red-500 ml-1">*</span>
                   </label>
                   <input
@@ -411,10 +554,47 @@ const PublicForm = () => {
 
               {/* Contact Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Email */}
+           
+
+                {/* Mobile Number - REPLACED WITH GLOBAL INPUT */}
+                <div>
+                  <FormPhoneInputFloating
+                    label="Primary Number"
+                    name="mobileNumber"
+                    value={formData.mobileNumber}
+                    onChange={(phone) => handlePhoneChange(phone, "mobileNumber")}
+                    required={true}
+                    error={errors.mobileNumber}
+                    country="in" // Default to India
+                    enableSearch={true}
+                    background="white"
+                  />
+                  {errors.mobileNumber && (
+                    <p className="text-red-500 text-xs mt-1">{errors.mobileNumber}</p>
+                  )}
+                </div>
+                          {/* Phone Number - OPTIONAL */}
+                <div>
+                  <FormPhoneInputFloating
+                    label="Secondary Number"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={(phone) => handlePhoneChange(phone, "phoneNumber")}
+                    required={false}
+                    error={errors.phoneNumber}
+                    country="in"
+                    enableSearch={true}
+                    background="white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      
+                     {/* Email */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    Email Address 
+                    Email Address
                     <span className="text-red-500 ml-1">*</span>
                   </label>
                   <input
@@ -430,44 +610,6 @@ const PublicForm = () => {
                   {errors.email && (
                     <p className="text-red-500 text-xs mt-1">{errors.email}</p>
                   )}
-                </div>
-
-                {/* Mobile Number */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    Mobile Number 
-                    <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    name="mobileNumber"
-                    value={formData.mobileNumber}
-                    onChange={handleChange}
-                    required
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${errors.mobileNumber ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    placeholder="+1 (555) 123-4567"
-                  />
-                  {errors.mobileNumber && (
-                    <p className="text-red-500 text-xs mt-1">{errors.mobileNumber}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Phone Number */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder="Optional phone number"
-                  />
                 </div>
 
                 {/* Website */}
@@ -487,7 +629,6 @@ const PublicForm = () => {
                   {errors.website && (
                     <p className="text-red-500 text-xs mt-1">{errors.website}</p>
                   )}
-
                 </div>
               </div>
             </div>
@@ -508,6 +649,7 @@ const PublicForm = () => {
                     name="industry"
                     value={formData.industry}
                     onChange={handleChange}
+                    style={customStyles}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                   >
                     <option value="">Select your industry</option>
@@ -524,7 +666,7 @@ const PublicForm = () => {
                 {/* Revenue */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Annual Revenue ($)
+                    Annual Revenue
                   </label>
                   <input
                     type="number"
@@ -538,7 +680,7 @@ const PublicForm = () => {
               </div>
             </div>
 
-            {/* Address Section */}
+            {/* Address Section - USING COUNTRY-STATE-CITY LIBRARY */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
                 Address Information
@@ -560,24 +702,25 @@ const PublicForm = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Country */}
+                {/* Country - USING COUNTRY-STATE-CITY */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    Country 
+                    Country
                     <span className="text-red-500 ml-1">*</span>
                   </label>
                   <select
                     name="country"
                     value={formData.country}
                     onChange={handleChange}
+                    style={customStyles}
                     required
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${errors.country ? 'border-red-500' : 'border-gray-300'
                       }`}
                   >
-                    <option value="">Select Country</option>
-                    {countries.map((countryData) => (
-                      <option key={countryData.country} value={countryData.country}>
-                        {countryData.country}
+                    <option value="" className="h-10">Select Country</option>
+                    {countries.map((country) => (
+                      <option key={country.isoCode} value={country.name} className="h-10">
+                        {country.name}
                       </option>
                     ))}
                   </select>
@@ -586,25 +729,26 @@ const PublicForm = () => {
                   )}
                 </div>
 
-                {/* State */}
+                {/* State - USING COUNTRY-STATE-CITY */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    State/Province 
-                    <span className="text-red-500 ml-1">*</span>
+                    State/Province
+      
                   </label>
                   <select
                     name="state"
                     value={formData.state}
                     onChange={handleChange}
-                    required
+                    style={customStyles}
+                  
                     disabled={!formData.country}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${errors.state ? 'border-red-500' : 'border-gray-300'
                       } ${!formData.country ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   >
                     <option value="">Select State</option>
-                    {states.map((stateData) => (
-                      <option key={stateData.name} value={stateData.name}>
-                        {stateData.name}
+                    {states.map((state) => (
+                      <option key={state.isoCode} value={state.name}>
+                        {state.name}
                       </option>
                     ))}
                   </select>
@@ -613,25 +757,26 @@ const PublicForm = () => {
                   )}
                 </div>
 
-                {/* City */}
+                {/* City - USING COUNTRY-STATE-CITY */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    City 
-                    <span className="text-red-500 ml-1">*</span>
+                    City
+                   
                   </label>
                   <select
                     name="city"
                     value={formData.city}
                     onChange={handleChange}
-                    required
+                    style={customStyles}
+                 
                     disabled={!formData.state}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${errors.city ? 'border-red-500' : 'border-gray-300'
                       } ${!formData.state ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   >
                     <option value="">Select City</option>
-                    {cities.map((cityName) => (
-                      <option key={cityName} value={cityName}>
-                        {cityName}
+                    {cities.map((city) => (
+                      <option key={city.name} value={city.name}>
+                        {city.name}
                       </option>
                     ))}
                   </select>

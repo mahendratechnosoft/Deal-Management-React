@@ -12,6 +12,7 @@ import {
   FormSelect,
   FormTextarea
 } from "../../BaseComponet/CustomeFormComponents";
+import { showConfirmDialog } from "../../BaseComponet/alertUtils";
 
 function EditLead() {
   const { id } = useParams();
@@ -21,6 +22,12 @@ function EditLead() {
   const { LayoutComponent, role } = useLayout();
   const [employeeId, setEmployeeId] = useState("");
   const canEdit = hasPermission("lead", "Edit");
+
+  const [timestamps, setTimestamps] = useState({
+    createdDate: "",
+    updatedDate: ""
+  });
+
   const [formData, setFormData] = useState({
     companyName: "",
     assignTo: "",
@@ -98,6 +105,12 @@ function EditLead() {
           navigateBasedOnRole();
           return;
         }
+
+        // Store timestamps
+        setTimestamps({
+          createdDate: leadData.createdDate,
+          updatedDate: leadData.updatedDate
+        });
 
         if (leadData.employeeId) {
           setEmployeeId(leadData.employeeId);
@@ -412,6 +425,8 @@ function EditLead() {
         followUp: formData.followUp
           ? formData.followUp + ":00.000000000"
           : null,
+        createdDate: timestamps.createdDate,
+        updatedDate: timestamps.updatedDate
       };
 
       if (role === "ROLE_EMPLOYEE" && employeeId) {
@@ -438,12 +453,12 @@ function EditLead() {
     }
   };
 
-  const handleCancel = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to cancel? Any unsaved changes will be lost."
-      )
-    ) {
+ const handleCancel = async () => {
+  const result = await showConfirmDialog(
+    "Are you sure you want to cancel? Any unsaved changes will be lost."
+  );
+  
+  if (result.isConfirmed) {
       if (role === "ROLE_ADMIN") {
         navigate("/Admin/LeadList");
       } else if (role === "ROLE_EMPLOYEE") {
@@ -576,22 +591,22 @@ function EditLead() {
               >
                 Cancel
               </button>
-                {hasPermission("lead", "Edit") && (
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Updating...
-                  </>
-                ) : (
-                  'Update Lead'
-                )}
-              </button>
-                )}
+              {hasPermission("lead", "Edit") && (
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Updating...
+                    </>
+                  ) : (
+                    'Update Lead'
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>

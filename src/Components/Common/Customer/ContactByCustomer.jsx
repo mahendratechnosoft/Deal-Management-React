@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
+import { FormPhoneInputFloating } from "../../BaseComponet/CustomeFormComponents";
 
 function ContactByCustomer({ customerId, customerName, onClose }) {
   const [contacts, setContacts] = useState([]);
@@ -18,9 +19,94 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
     email: "",
     phone: "",
     position: "",
+    status: true,
   });
 
-  // Fetch contacts - Match the same pattern as CustomerList
+  const [formErrors, setFormErrors] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
+
+  const [touched, setTouched] = useState({
+    name: false,
+    email: false,
+    phone: false,
+  });
+
+  // Validation rules
+  const validationRules = {
+    name: {
+      required: true,
+      minLength: 2,
+      maxLength: 50,
+      pattern: /^[a-zA-Z\s.'-]+$/,
+      message: "Name should contain only letters, spaces, and basic punctuation (2-50 characters)"
+    },
+    email: {
+      required: true,
+      pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      message: "Please enter a valid email address"
+    },
+    phone: {
+      required: true,
+      minLength: 10,
+      pattern: /^\+?[\d\s-()]+$/,
+      message: "Please enter a valid phone number (at least 10 digits)"
+    }
+  };
+
+  // Validate individual field
+  const validateField = (name, value) => {
+    const rules = validationRules[name];
+    if (!rules) return "";
+
+    if (rules.required && !value.trim()) {
+      return "This field is required";
+    }
+
+    if (rules.minLength && value.length < rules.minLength) {
+      return `Minimum ${rules.minLength} characters required`;
+    }
+
+    if (rules.maxLength && value.length > rules.maxLength) {
+      return `Maximum ${rules.maxLength} characters allowed`;
+    }
+
+    if (rules.pattern && !rules.pattern.test(value)) {
+      return rules.message;
+    }
+
+    return "";
+  };
+
+  // Validate all fields
+  const validateForm = () => {
+    const errors = {};
+    Object.keys(validationRules).forEach(field => {
+      errors[field] = validateField(field, formData[field]);
+    });
+    setFormErrors(errors);
+    return !Object.values(errors).some(error => error !== "");
+  };
+
+  // Handle field blur
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+
+    const error = validateField(name, formData[name]);
+    setFormErrors(prev => ({ ...prev, [name]: error }));
+  };
+
+  // Handle phone blur separately
+  const handlePhoneBlur = () => {
+    setTouched(prev => ({ ...prev, phone: true }));
+    const error = validateField("phone", formData.phone);
+    setFormErrors(prev => ({ ...prev, phone: error }));
+  };
+
+  // Fetch contacts
   const fetchContacts = async () => {
     try {
       setLoading(true);
@@ -48,6 +134,34 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
       ...prev,
       [name]: value,
     }));
+
+    // Validate field in real-time if it's been touched
+    if (touched[name]) {
+      const error = validateField(name, value);
+      setFormErrors(prev => ({ ...prev, [name]: error }));
+    }
+  };
+
+  // Handle phone input change for the global component
+  const handlePhoneChange = (phone) => {
+    setFormData((prev) => ({
+      ...prev,
+      phone: phone,
+    }));
+
+    // Validate phone in real-time if it's been touched
+    if (touched.phone) {
+      const error = validateField("phone", phone);
+      setFormErrors(prev => ({ ...prev, phone: error }));
+    }
+  };
+
+  // Toggle status handler
+  const handleStatusToggle = () => {
+    setFormData((prev) => ({
+      ...prev,
+      status: !prev.status,
+    }));
   };
 
   const resetForm = () => {
@@ -56,21 +170,47 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
       email: "",
       phone: "",
       position: "",
+      status: true,
+    });
+    setFormErrors({
+      name: "",
+      email: "",
+      phone: "",
+    });
+    setTouched({
+      name: false,
+      email: false,
+      phone: false,
     });
     setEditingContact(null);
     setShowCreateForm(false);
   };
 
-  // Create contact - Match the same pattern
+  // Create contact
   const handleCreateContact = async (e) => {
     e.preventDefault();
+
+    // Mark all fields as touched
+    setTouched({
+      name: true,
+      email: true,
+      phone: true,
+    });
+
+    // Validate form
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors before submitting");
+      return;
+    }
+
     try {
       const contactData = {
         customerId: customerId,
-        name: formData.name,
-        email: formData.email,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
         phone: formData.phone,
-        position: formData.position,
+        position: formData.position.trim(),
+        status: formData.status,
       };
 
       await axiosInstance.post("createContact", contactData);
@@ -83,18 +223,32 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
     }
   };
 
-  // Update contact - Match the same pattern
+  // Update contact
   const handleUpdateContact = async (e) => {
     e.preventDefault();
+
+    // Mark all fields as touched
+    setTouched({
+      name: true,
+      email: true,
+      phone: true,
+    });
+
+    // Validate form
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors before submitting");
+      return;
+    }
+
     try {
       const updateData = {
         id: editingContact.id,
         customerId: customerId,
-        name: formData.name,
-        email: formData.email,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
         phone: formData.phone,
-        position: formData.position,
-        status: editingContact.status || true,
+        position: formData.position.trim(),
+        status: formData.status,
       };
 
       await axiosInstance.put("updateContact", updateData);
@@ -107,7 +261,6 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
     }
   };
 
-  // Delete contact - Match the same pattern
   // Delete contact with modern popup
   const handleDeleteContact = async (contactId) => {
     try {
@@ -138,6 +291,18 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
       email: contact.email,
       phone: contact.phone,
       position: contact.position,
+      status: contact.status !== false,
+    });
+    // Reset touched state when editing
+    setTouched({
+      name: false,
+      email: false,
+      phone: false,
+    });
+    setFormErrors({
+      name: "",
+      email: "",
+      phone: "",
     });
     setShowCreateForm(true);
   };
@@ -163,8 +328,6 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
     );
   }
 
-
-
   return (
     <div className="space-y-6">
       {/* Header Section with Title, Stats and Add Button */}
@@ -176,21 +339,6 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
           </div>
           <div className="bg-blue-50 rounded-lg p-3">
             <div className="flex items-center gap-2">
-              {/* <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-4 h-4 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              </div> */}
               <div>
                 <p className="text-blue-600 text-xs font-medium">
                   Total Contacts
@@ -203,28 +351,30 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
           </div>
         </div>
 
-        <button
-          onClick={() => setShowCreateForm(true)}
-          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        {/* Hide Add Contact button when editing */}
+        {!editingContact && (
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          Add Contact
-        </button>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            Add Contact
+          </button>
+        )}
       </div>
 
-      {/* Rest of the component remains the same */}
       {/* Create/Edit Form */}
       {(showCreateForm || editingContact) && (
         <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
@@ -236,8 +386,10 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
               editingContact ? handleUpdateContact : handleCreateContact
             }
             className="space-y-4"
+            noValidate
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Name Field */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Name *
@@ -247,11 +399,27 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${formErrors.name && touched.name
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-300"
+                    }`}
                   placeholder="Enter contact name"
+                  minLength="2"
+                  maxLength="50"
                 />
+                {formErrors.name && touched.name && (
+                  <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    {formErrors.name}
+                  </p>
+                )}
               </div>
+
+              {/* Email Field */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email *
@@ -261,25 +429,54 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${formErrors.email && touched.email
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-300"
+                    }`}
                   placeholder="Enter email address"
                 />
+                {formErrors.email && touched.email && (
+                  <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    {formErrors.email}
+                  </p>
+                )}
               </div>
+
+              {/* Phone Field */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone *
+                  Primary No *
                 </label>
-                <input
-                  type="tel"
+                <FormPhoneInputFloating
+
                   name="phone"
                   value={formData.phone}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter phone number"
+                  onChange={handlePhoneChange}
+                  onBlur={handlePhoneBlur}
+                  required={false}
+                  country="in"
+                  background="white"
+                  className="w-full"
+                  error={formErrors.phone && touched.phone ? formErrors.phone : ""}
                 />
+                {formErrors.phone && touched.phone && (
+                  <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    {formErrors.phone}
+                  </p>
+                )}
               </div>
+
+
+
+              {/* Position Field */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Position
@@ -291,13 +488,39 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Enter position"
+                  maxLength="100"
                 />
+              </div>
+
+              {/* Status Toggle Button */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleStatusToggle}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${formData.status ? 'bg-blue-600' : 'bg-gray-300'
+                      }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.status ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                    />
+                  </button>
+                  <span className={`text-sm font-medium ${formData.status ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                    {formData.status ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
               </div>
             </div>
             <div className="flex gap-3 pt-2">
               <button
                 type="submit"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={Object.values(formErrors).some(error => error !== "") && Object.values(touched).some(t => t)}
               >
                 {editingContact ? "Update Contact" : "Create Contact"}
               </button>
@@ -313,6 +536,7 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
         </div>
       )}
 
+      {/* Rest of the component remains the same */}
       {/* Contacts List */}
       {error ? (
         <div className="text-center py-8 text-red-600">
@@ -378,7 +602,7 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
                     EMAIL
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    PHONE
+                    PRIMARY NO
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     POSITION
@@ -420,11 +644,10 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          contact.status === false
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${contact.status === false
                             ? "bg-red-100 text-red-800"
                             : "bg-green-100 text-green-800"
-                        }`}
+                          }`}
                       >
                         {contact.status === false ? "Inactive" : "Active"}
                       </span>

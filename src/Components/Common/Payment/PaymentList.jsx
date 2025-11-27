@@ -125,7 +125,8 @@ function PaymentList() {
   };
 
   const handleDelete = async (paymentId) => {
-    if (window.confirm("Are you sure you want to delete this payment?")) {
+    const result = await showDeleteConfirmation("this payment");
+    if (result.isConfirmed) {
       try {
         await axiosInstance.delete(`deletePayment/${paymentId}`);
         toast.success("Payment deleted successfully!");
@@ -362,7 +363,7 @@ function PaymentList() {
                               </div>
                               <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                 {/* Edit Button (same as leads / employee table) */}
-                               
+
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();

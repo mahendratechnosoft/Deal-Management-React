@@ -5,6 +5,7 @@ import { useLayout } from "../../Layout/useLayout";
 import toast from "react-hot-toast";
 import html2pdf from "html2pdf.js";
 import { hasPermission } from "../../BaseComponet/permissions";
+import { showConfirmDialog } from "../../BaseComponet/alertUtils";
 
 /**
  * EditPayment
@@ -43,8 +44,11 @@ function EditPayment() {
         paymentDate: "",
         paymentMode: "",
         createdBy: "",
-
     });
+
+    // Track if form has been modified
+    const [isFormModified, setIsFormModified] = useState(false);
+    const [initialForm, setInitialForm] = useState(null);
 
     // Fetch payment and proforma sequentially
     useEffect(() => {
@@ -78,7 +82,7 @@ function EditPayment() {
                 }
 
                 // initialize form using payment + proforma
-                const initialForm = {
+                const initialFormData = {
                     paymentId: pay.paymentId || "",
                     adminId: pay.adminId || "",
                     employeeId: pay.employeeId || "",
@@ -97,12 +101,13 @@ function EditPayment() {
                     paymentDate: pay.paymentDate || "",
                     paymentMode: pay.paymentMode || "",
                     createdBy: pay.createdBy || "",
-
                 };
 
                 if (mounted) {
-                    setForm(initialForm);
+                    setForm(initialFormData);
+                    setInitialForm(initialFormData);
                     setErrors({});
+                    setIsFormModified(false);
                 }
             } catch (err) {
                 console.error("Error fetching payment:", err);
@@ -145,8 +150,18 @@ function EditPayment() {
         };
     }, [proforma, paymentData, form.amount]);
 
+    // Check if form has been modified
+    useEffect(() => {
+        if (!initialForm) return;
 
+        const hasChanged = 
+            form.amount !== initialForm.amount ||
+            form.paymentDate !== initialForm.paymentDate ||
+            form.paymentMode !== initialForm.paymentMode ||
+            form.transactionId !== initialForm.transactionId;
 
+        setIsFormModified(hasChanged);
+    }, [form, initialForm]);
 
     // helpers
     const formatCurrency = (v) => {
@@ -168,6 +183,15 @@ function EditPayment() {
 
         // If amount, allow numeric and keep two decimals - but keep raw string until submit/validation
         if (name === "amount") {
+            // Validate amount doesn't exceed allowed maximum in real-time
+            const numericValue = parseFloat(value);
+            if (!isNaN(numericValue) && numericValue > derived.allowedMax) {
+                // Set to maximum allowed value
+                setForm((p) => ({ ...p, [name]: derived.allowedMax.toFixed(2) }));
+                setErrors((p) => ({ ...p, amount: `Amount cannot exceed ₹${formatCurrency(derived.allowedMax)}` }));
+                return;
+            }
+            
             // replace multiple decimals or non-numeric except dot
             const cleaned = value;
             setForm((p) => ({ ...p, [name]: cleaned }));
@@ -208,8 +232,6 @@ function EditPayment() {
         return Object.keys(newErr).length === 0;
     };
 
-
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validate()) {
@@ -227,9 +249,6 @@ function EditPayment() {
             const newPaymentAmount = Number(parseFloat(form.amount || 0).toFixed(2));
 
             const totalPaidAfter = previousPaid + newPaymentAmount;
-
-
-
 
             const payload = {
                 paymentId: form.paymentId,
@@ -251,6 +270,11 @@ function EditPayment() {
 
             await axiosInstance.put("updatePayment", payload);
             toast.success("Payment updated successfully");
+            
+            // Update initial form after successful save
+            setInitialForm(form);
+            setIsFormModified(false);
+            
             navigate(-1);
         } catch (err) {
             console.error("Update failed:", err);
@@ -260,8 +284,13 @@ function EditPayment() {
         }
     };
 
-
     const handlePrintReceipt = () => {
+        // Check if form has been modified but not saved
+        if (isFormModified) {
+            toast.error("Please save changes before printing receipt");
+            return;
+        }
+
         const element = document.getElementById("receiptPreview");
 
         if (!element) {
@@ -293,12 +322,16 @@ function EditPayment() {
         html2pdf().set(opt).from(element).save();
     };
 
-
-    const handleCancel = () => {
-        if (window.confirm("Discard changes and go back?")) {
+  const handleCancel = async () => {
+    if (isFormModified) {
+        const result = await showConfirmDialog("You have unsaved changes. Discard changes and go back?");
+        if (result.isConfirmed) {
             navigate(-1);
         }
-    };
+    } else {
+        navigate(-1);
+    }
+};
 
     if (fetchLoading) {
         return (
@@ -327,11 +360,13 @@ function EditPayment() {
                                 Back
                             </button>
                             <h1 className="text-2xl font-bold text-gray-900 mt-2">Edit Payment</h1>
-
+                           
                         </div>
 
                         <div className="flex items-center gap-2">
-
+                             {isFormModified && (
+                                <p className="text-xs text-orange-600 mt-1">You have unsaved changes</p>
+                            )}
                             <button
                                 onClick={handleCancel}
                                 className="px-4 py-2 border border-gray-300 rounded text-sm bg-white hover:bg-gray-50"
@@ -347,12 +382,11 @@ function EditPayment() {
                             {hasPermission("payment", "Edit") && (
                                 <button
                                     onClick={handleSubmit}
-                                    disabled={loading}
+                                    disabled={loading || !isFormModified}
                                     className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-60"
                                 >
                                     {loading ? "Updating..." : "Update Payment"}
                                 </button>
-
                             )}
                         </div>
                     </div>
@@ -370,6 +404,8 @@ function EditPayment() {
                                             <input
                                                 type="number"
                                                 step="0.01"
+                                                min="0"
+                                                max={derived.allowedMax}
                                                 name="amount"
                                                 value={form.amount}
                                                 onChange={handleChange}
@@ -382,16 +418,10 @@ function EditPayment() {
                                             {/* show available & original/proforma numbers */}
                                             <div className="mt-2 text-xs text-gray-600">
                                                 <div>Invoice Total: <strong>₹{formatCurrency(derived.totalAmount)}</strong></div>
-
                                                 <div>Original Payment Amount: <strong>₹{formatCurrency(derived.origPayment)}</strong></div>
                                                 <div>Available to set: <strong>₹{formatCurrency(derived.allowedMax)}</strong></div>
-
-
                                             </div>
                                         </div>
-
-
-
 
                                         {/* Payment Date */}
                                         <div>
@@ -426,7 +456,6 @@ function EditPayment() {
                                             {errors.paymentMode && <p className="text-xs text-red-600 mt-1">{errors.paymentMode}</p>}
                                         </div>
 
-
                                         {/* Transaction ID */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700">Transaction ID</label>
@@ -441,19 +470,6 @@ function EditPayment() {
                                             />
                                             {errors.transactionId && <p className="text-xs text-red-600 mt-1">{errors.transactionId}</p>}
                                         </div>
-
-
-                                        {/* Buttons */}
-                                        {/* <div className="flex justify-end gap-2">
-                                  
-                                        <button
-                                            type="submit"
-                                            disabled={loading}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-60"
-                                        >
-                                            {loading ? "Updating..." : "Update Payment"}
-                                        </button>
-                                    </div> */}
                                     </form>
                                 </div>
                             </div>
@@ -482,11 +498,6 @@ function EditPayment() {
                                             <div>Email: {proforma?.email || "N/A"}</div>
                                         </div>
                                     </div>
-
-                                    {/* <div className="text-sm text-right">
-                                        <div className="text-blue-600 font-medium">Payment</div>
-                                        <div className="text-xs text-gray-600 mt-2"></div>
-                                    </div> */}
                                 </div>
 
                                 {/* title */}
@@ -520,15 +531,12 @@ function EditPayment() {
                                                     <th className="px-1 py-2 w-24 border text-left text-xs font-medium text-gray-700">
                                                         Invoice No.
                                                     </th>
-
                                                     <th className="px-3 py-2 border text-left text-xs font-medium text-gray-700">Invoice Date</th>
-
                                                     <th className="px-3 py-2 border text-left text-xs font-medium text-gray-700">Invoice Amount</th>
                                                     <th className="px-3 py-2 border text-left text-xs font-medium text-gray-700">Payment Amount</th>
                                                     <th className="px-2 py-2 border text-left text-xs font-medium text-gray-700">
                                                         Paid Amount
                                                     </th>
-
                                                     <th className="px-3 py-2 border text-left text-xs font-medium text-red-600">Amount Due</th>
                                                 </tr>
                                             </thead>
@@ -537,15 +545,12 @@ function EditPayment() {
                                                     <td className="px-1 py-2 w-24 border text-sm">
                                                         {proforma?.proformaInvoiceNumber ?? form.proformaInvoiceNo}
                                                     </td>
-
                                                     <td className="px-3 py-2 border text-sm">{formatDate(proforma?.proformaInvoiceDate || form.paymentDate)}</td>
-
                                                     <td className="px-3 py-2 border text-sm">₹ {formatCurrency(derived.totalAmount)}</td>
                                                     <td className="px-3 py-2 border text-sm">₹ {formatCurrency(form.amount)}</td>
                                                     <td className="px-2 py-2 border text-sm">
                                                         ₹ {formatCurrency(derived.paidAmount)}
                                                     </td>
-
                                                     <td className="px-3 py-2 border text-sm text-red-600">₹ {formatCurrency(derived.amountDue)}
                                                     </td>
                                                 </tr>
@@ -557,26 +562,14 @@ function EditPayment() {
                                 {/* additional details */}
                                 <div className="mb-6 p-4 bg-gray-50 rounded border border-gray-200">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-
                                         {form.transactionId && (
                                             <div>
                                                 <div className="text-xs text-gray-600">Transaction ID</div>
                                                 <div className="text-gray-900">{form.transactionId}</div>
                                             </div>
                                         )}
-
                                     </div>
                                 </div>
-
-                                {/* footer signature + print/back */}
-                                {/* <div className="flex items-center justify-between mt-6 border-t pt-4">
-                                    <div>
-                                        <div className="text-xs text-gray-600">Payment Receipt Generated On</div>
-                                        <div className="font-semibold">{new Date().toLocaleDateString("en-IN")}</div>
-                                    </div>
-
-                                  
-                                </div> */}
                             </div>
                         </div>
                     </div> {/* grid */}
