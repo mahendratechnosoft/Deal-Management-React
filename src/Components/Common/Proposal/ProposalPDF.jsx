@@ -12,6 +12,7 @@ import {
 import { ToWords } from "to-words";
 import RobotoRegular from "../../../../public/fonts/Roboto-Regular.ttf";
 import RobotoBold from "../../../../public/fonts/Roboto-Bold.ttf";
+import { breakLongText } from "../../BaseComponet/UtilFunctions";
 
 Font.register({
   family: "Roboto",
@@ -108,7 +109,7 @@ const styles = StyleSheet.create({
     paddingTop: 30,
     paddingLeft: 40,
     paddingRight: 40,
-    paddingBottom: 60,
+    paddingBottom: 70,
     color: "#333", // Default text color
   },
   header: {
@@ -205,6 +206,7 @@ const styles = StyleSheet.create({
   itemDesc: {
     fontSize: 9,
     color: "#555",
+    width: "100%",
   },
   // Totals Section
   totalsSection: {
@@ -265,6 +267,7 @@ const styles = StyleSheet.create({
   sectionContent: {
     fontSize: 10,
     color: "#333",
+    width: "100%",
   },
 
   signatureStampSection: {
@@ -430,12 +433,12 @@ const ProposalPDF = ({ data }) => {
           <View style={styles.addressBlock}>
             <Text style={styles.subHeader}>From:</Text>
             <Text style={styles.companyName}>
-              {adminInformation?.companyName || ""}
+              {breakLongText(adminInformation?.companyName, 50)}
             </Text>
-            <Text>{adminInformation?.address || ""}</Text>
+            <Text>{breakLongText(adminInformation?.address, 50)}</Text>
             <Text>
               <Text style={styles.label}>Email: </Text>
-              {adminInformation?.companyEmail || ""}
+              {breakLongText(adminInformation?.companyEmail, 50)}
             </Text>
             <Text>
               <Text style={styles.label}>Phone: </Text>
@@ -448,15 +451,17 @@ const ProposalPDF = ({ data }) => {
           </View>
           <View style={styles.addressBlock}>
             <Text style={styles.subHeader}>To:</Text>
-            <Text style={styles.companyName}>{proposalInfo.companyName}</Text>
-            <Text>{proposalInfo.street}</Text>
+            <Text style={styles.companyName}>
+              {breakLongText(proposalInfo.companyName, 50)}
+            </Text>
+            <Text>{breakLongText(proposalInfo.street, 50)}</Text>
             <Text>
               {proposalInfo.city}, {proposalInfo.state} - {proposalInfo.zipCode}
             </Text>
             <Text>{proposalInfo.country}</Text>
             <Text>
               <Text style={styles.label}>Email: </Text>
-              {proposalInfo.email}
+              {breakLongText(proposalInfo.email, 50)}
             </Text>
             <Text>
               <Text style={styles.label}>Phone: </Text>
@@ -494,17 +499,22 @@ const ProposalPDF = ({ data }) => {
             >
               <Text style={[styles.tableCol, styles.col_s]}>{index + 1}</Text>
               <View style={[styles.tableCol, styles.col_l]}>
-                <Text>{item.item}</Text>
-                <Text style={styles.itemDesc}>{item.description}</Text>
+                <Text>{breakLongText(item.item, 40)}</Text>
+                <Text style={styles.itemDesc}>
+                  {breakLongText(item.description, 44)}
+                </Text>
               </View>
               <Text style={[styles.tableCol, styles.col_m]}>
                 {item.quantity}
               </Text>
               <Text style={[styles.tableCol, styles.col_m]}>
-                {formatCurrency(item.rate, currencyType)}
+                {breakLongText(formatCurrency(item.rate, currencyType), 15)}
               </Text>
               <Text style={[styles.tableCol, styles.col_m, styles.textRight]}>
-                {formatCurrency(item.quantity * item.rate, currencyType)}
+                {breakLongText(
+                  formatCurrency(item.quantity * item.rate, currencyType),
+                  15
+                )}
               </Text>
             </View>
           ))}
@@ -550,21 +560,23 @@ const ProposalPDF = ({ data }) => {
             </Text>
           </Text>
         </View>
-        {/* 7. Notes & Terms (NEW) */}       
+        {/* 7. Notes & Terms (NEW) */}
         {(proposalInfo.notes || proposalInfo.termsAndConditions) && (
           <View style={styles.notesAndTermsSection}>
             {proposalInfo.notes && (
               <View style={{ marginBottom: 10 }}>
                 <Text style={styles.subHeader}>Notes:</Text>
-                <Text style={styles.sectionContent}>{proposalInfo.notes}</Text>
+                <Text style={styles.sectionContent}>
+                  {breakLongText(proposalInfo.notes, 100)}
+                </Text>
               </View>
             )}
-                       
+
             {proposalInfo.termsAndConditions && (
               <View>
                 <Text style={styles.subHeader}>Terms & Conditions:</Text> 
                 <Text style={styles.sectionContent}>
-                  {proposalInfo.termsAndConditions}
+                  {breakLongText(proposalInfo.termsAndConditions, 100)}
                 </Text>
               </View>
             )}
@@ -572,7 +584,7 @@ const ProposalPDF = ({ data }) => {
         )}
         {/* 8. Signature & Stamp (NEW) */}
         {(proposalInfo.companySignature || proposalInfo.companyStamp) && (
-          <View style={styles.signatureStampSection}>
+          <View style={styles.signatureStampSection} wrap={false}>
             <View style={{ marginBottom: 10 }}>
               <Text style={styles.subHeader}>Authorization:</Text>
             </View>
@@ -600,7 +612,7 @@ const ProposalPDF = ({ data }) => {
         <View style={styles.footer} fixed>
           <Text>Thank you for your business!</Text>
           <Text style={{ fontWeight: "bold" }}>
-            {adminInformation?.companyName}
+            {breakLongText(adminInformation?.companyName, 90)}
           </Text>
         </View>
       </Page>

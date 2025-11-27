@@ -110,7 +110,7 @@ function ProformaList() {
       setProformaInvoices(data.ProformaInvoiceList || []);
       setTotalPages(data.totalPages || 1);
       setCurrentPage(data.currentPage || page);
-      setTotalItems(data.totalItems || 100);
+      setTotalItems(data.totalElements);
     } catch (err) {
       console.error("Error fetching proforma invoices:", err);
       toast.error("Failed to fetch proforma invoices. Please try again.");
@@ -238,29 +238,29 @@ function ProformaList() {
               </div>
 
               {/* Create Button */}
-               {hasPermission("proformaInvoice", "Create") && (
-              <button
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
-                // Updated Handler
-                onClick={handleCreateProforma}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              {hasPermission("proformaInvoice", "Create") && (
+                <button
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
+                  // Updated Handler
+                  onClick={handleCreateProforma}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                {/* Updated Text */}
-                Create Proforma
-              </button>
-               )}
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  {/* Updated Text */}
+                  Create Proforma
+                </button>
+              )}
             </div>
           </div>
         </div>

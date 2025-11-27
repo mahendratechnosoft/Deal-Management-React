@@ -129,10 +129,12 @@ const ProformaInvoiceDisplay = ({
         <div>
           <div className="mb-1 pl-4">
             <div className="text-sm text-gray-700 leading-relaxed">
-              <p className="font-bold text-gray-900">
+              <p className="font-bold text-gray-900 break-words">
                 {adminInformation?.companyName}
               </p>
-              {adminInformation?.address && <p>{adminInformation.address}</p>}
+              {adminInformation?.address && (
+                <p className="break-words">{adminInformation.address}</p>
+              )}
               {adminInformation?.gstNumber && (
                 <p>GST Number: {adminInformation.gstNumber}</p>
               )}
@@ -143,7 +145,9 @@ const ProformaInvoiceDisplay = ({
                 <p>Mobile No: {adminInformation.phone}</p>
               )}
               {adminInformation?.companyEmail && (
-                <p>Email: {adminInformation.companyEmail}</p>
+                <p className="break-all">
+                  Email: {adminInformation.companyEmail}
+                </p>
               )}
             </div>
           </div>
@@ -156,8 +160,10 @@ const ProformaInvoiceDisplay = ({
               Bill To
             </h3>
             <div className="text-sm text-gray-700 leading-relaxed">
-              <p className="font-bold text-gray-900">{info.companyName}</p>
-              <p>{info.billingStreet}</p>
+              <p className="font-bold text-gray-900 break-words">
+                {info.companyName}
+              </p>
+              <p className="break-words">{info.billingStreet}</p>
               <p>
                 {info.billingCity}, {info.billingState} {info.billingZipCode}
               </p>
@@ -170,7 +176,7 @@ const ProformaInvoiceDisplay = ({
                 Ship To
               </h3>
               <div className="text-sm text-gray-700 leading-relaxed ">
-                <p>{info.shippingStreet}</p>
+                <p className="break-words">{info.shippingStreet}</p>
                 <p>
                   {info.shippingCity}, {info.shippingState}{" "}
                   {info.shippingZipCode}
@@ -184,7 +190,7 @@ const ProformaInvoiceDisplay = ({
             {info?.gstin && <p>GST Number: {info.gstin}</p>}
             {info?.panNumber && <p>PAN: {info.panNumber}</p>}
             {info?.mobileNumber && <p>Mobile No: {info.mobileNumber}</p>}
-            {info?.email && <p>Email: {info.email}</p>}
+            {info?.email && <p className="break-all">Email: {info.email}</p>}
           </div>
 
           <div className="inline-block text-left bg-gray-50 p-4 rounded-lg border border-gray-100 w-full md:w-auto">
@@ -208,16 +214,16 @@ const ProformaInvoiceDisplay = ({
 
       {/* Items Table */}
       <div className="px-8">
-        <div className="overflow-x-auto border rounded-lg">
-          <table className="w-full text-sm text-left">
+        <div className="border rounded-lg">
+          <table className="w-full text-sm text-left table-fixed">
             <thead className="bg-gray-50 text-gray-600 font-medium border-b">
               <tr>
-                <th className="px-4 py-3 w-12 text-center">#</th>
-                <th className="px-4 py-3">Item</th>
-                <th className="px-4 py-3 text-right">SAC Code</th>
-                <th className="px-4 py-3 text-right">Qty</th>
-                <th className="px-4 py-3 text-right">Rate</th>
-                <th className="px-4 py-3 text-right">Amount</th>
+                <th className="px-4 py-3 text-center w-1/12">#</th>
+                <th className="px-4 py-3 w-5/12">Item</th>
+                <th className="px-4 py-3 text-right w-2/12">SAC Code</th>
+                <th className="px-4 py-3 text-right w-1/12">Qty</th>
+                <th className="px-4 py-3 text-right w-1/12">Rate</th>
+                <th className="px-4 py-3 text-right w-2/12">Amount</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -229,18 +235,22 @@ const ProformaInvoiceDisplay = ({
                   <td className="px-4 py-3 text-center text-gray-500">
                     {index + 1}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 break-words whitespace-normal">
                     <p className="font-medium text-gray-900">{item.item}</p>
                     <p className="text-gray-500 text-xs mt-0.5">
                       {item.description}
                     </p>
                   </td>
-                  <td className="px-4 py-3 text-right">{item.sacCode}</td>
-                  <td className="px-4 py-3 text-right">{item.quantity}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right align-top break-words">
+                    {item.sacCode}
+                  </td>
+                  <td className="px-4 py-3 text-right align-top break-words">
+                    {item.quantity}
+                  </td>
+                  <td className="px-4 py-3 text-right align-top break-words">
                     {formatCurrency(item.rate, currency)}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-gray-900">
+                  <td className="px-4 py-3 text-right font-medium text-gray-900 align-top break-all">
                     {formatCurrency(item.quantity * item.rate, currency)}
                   </td>
                 </tr>
@@ -335,7 +345,7 @@ const ProformaInvoiceDisplay = ({
             <p className="text-xs font-bold text-gray-900 uppercase mb-2">
               Terms & Conditions
             </p>
-            <p className="text-xs text-gray-500 whitespace-pre-line leading-relaxed border-l-2 border-gray-200 pl-3">
+            <p className="text-xs text-gray-500 whitespace-pre-line leading-relaxed border-l-2 border-gray-200 pl-3 break-all">
               {info.termsAndConditions}
             </p>
           </div>
@@ -347,7 +357,7 @@ const ProformaInvoiceDisplay = ({
             <p className="text-xs font-bold text-gray-900 uppercase mb-2">
               Notes
             </p>
-            <p className="text-xs text-gray-500 whitespace-pre-line">
+            <p className="text-xs text-gray-500 whitespace-pre-line break-all">
               {info.notes}
             </p>
           </div>
