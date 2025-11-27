@@ -9,6 +9,7 @@ import {
   FormInput,
   FormInputWithPrefix,
   FormNumberInputWithPrefix,
+  FormPhoneInputFloating,
   FormSelect,
   FormTextarea,
 } from "../../BaseComponet/CustomeFormComponents";
@@ -338,6 +339,20 @@ function CreateProposal() {
     }
   };
 
+  const handlePhoneChange = (fieldName, phone) => {
+    setProposalInfo((prev) => ({
+      ...prev,
+      [fieldName]: phone,
+    }));
+
+    if (errors[fieldName]) {
+      setErrors((prev) => ({
+        ...prev,
+        [fieldName]: "",
+      }));
+    }
+  };
+
   const handleSelectChange = (name, selectedOption) => {
     if (name === "assignTo") {
       setProposalInfo((prev) => ({
@@ -598,6 +613,13 @@ function CreateProposal() {
     if (!proposalInfo.currencyType)
       newErrors.currencyType = "Currency is required";
 
+    if (
+      !proposalInfo.mobileNumber ||
+      proposalInfo.mobileNumber.toString().length < 5
+    ) {
+      newErrors.mobileNumber = "Mobile Number is required";
+    }
+
     const combinedErrors = { ...errors, ...newErrors };
     Object.keys(combinedErrors).forEach((key) => {
       if (!combinedErrors[key]) {
@@ -856,13 +878,16 @@ function CreateProposal() {
                       error={errors.email}
                       disabled={isRecipientLoading}
                     />
-                    <FormInput
+
+                    <FormPhoneInputFloating
                       label="Mobile Number"
                       name="mobileNumber"
                       value={proposalInfo.mobileNumber}
-                      onChange={handleInfoChange}
+                      onChange={(phone) =>
+                        handlePhoneChange("mobileNumber", phone)
+                      }
                       error={errors.mobileNumber}
-                      disabled={isRecipientLoading}
+                      background="white"
                     />
                     <FormInput
                       label="Street Address"

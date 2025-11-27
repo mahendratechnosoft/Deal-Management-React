@@ -344,8 +344,8 @@ function Department() {
   };
 
   return (
-    <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
-      {/* Header Section - Consistent with other list pages */}
+    <>
+      {/* --- Header Section (Fixed) --- */}
       <div className="mb-4">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div className="flex-1">
@@ -415,7 +415,6 @@ function Department() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-4">
-        {/* Total Departments Card */}
         <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-gray-100">
@@ -445,9 +444,9 @@ function Department() {
         </div>
       </div>
 
-      {/* Table Section */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-        <div className="overflow-x-auto">
+      {/* --- Table Section (Scrollable) --- */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 h-[60vh] overflow-y-auto CRM-scroll-width-none">
+        <div className="min-w-full">
           <table className="min-w-full divide-y divide-gray-200">
             <colgroup>
               <col style={{ width: "5%" }} />
@@ -455,15 +454,15 @@ function Department() {
               <col style={{ width: "25%" }} />
             </colgroup>
 
-            <thead className="bg-gray-50 sticky top-0">
+            <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider shadow-sm">
                   #
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider shadow-sm">
                   Department Name
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider shadow-sm">
                   Actions
                 </th>
               </tr>
@@ -651,7 +650,7 @@ function Department() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 

@@ -58,7 +58,6 @@ export const DynamicFormIcon = () => (
   </svg>
 );
 
-
 const MenuIcon = () => (
   <svg
     className="w-5 h-5"
@@ -243,7 +242,7 @@ const SettingsLayout = () => {
 
               {/* Main Content Area */}
               <main
-                className={`flex-1 p-4 lg:p-6 overflow-y-auto bg-white CRM-scroll-width-none ${
+                className={`flex-1 p-4 lg:p-4 lg:pb-0 overflow-y-auto bg-white CRM-scroll-width-none ${
                   !settingsSidebarOpen ? "lg:ml-0" : ""
                 }`}
               >

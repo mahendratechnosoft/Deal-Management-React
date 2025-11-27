@@ -8,6 +8,7 @@ import { City, Country, State } from "country-state-city";
 import {
   FormInput,
   FormNumberInputWithPrefix,
+  FormPhoneInputFloating,
   FormSelect,
   FormTextarea,
 } from "../../BaseComponet/CustomeFormComponents";
@@ -499,6 +500,7 @@ function CreateProforma() {
   };
 
   const handleInfoChange = (e) => {
+    console.log(e);
     const { name, value } = e.target;
     setProformaInfo((prev) => {
       const newState = { ...prev, [name]: value };
@@ -523,6 +525,20 @@ function CreateProforma() {
         delete newErrors[name];
         return newErrors;
       });
+    }
+  };
+
+  const handlePhoneChange = (fieldName, phone) => {
+    setProformaInfo((prev) => ({
+      ...prev,
+      [fieldName]: phone,
+    }));
+
+    if (errors[fieldName]) {
+      setErrors((prev) => ({
+        ...prev,
+        [fieldName]: "",
+      }));
     }
   };
 
@@ -912,7 +928,10 @@ function CreateProforma() {
     }
 
     // 5. Mobile Number Validation
-    if (!proformaInfo.mobileNumber) {
+    if (
+      !proformaInfo.mobileNumber ||
+      proformaInfo.mobileNumber.toString().length < 5
+    ) {
       newErrors.mobileNumber = "Mobile Number is required";
     }
 
@@ -1147,7 +1166,7 @@ function CreateProforma() {
                       required
                       error={errors.email}
                     />
-                    <FormInput
+                    {/* <FormInput
                       label="Mobile Number"
                       name="mobileNumber"
                       value={proformaInfo.mobileNumber}
@@ -1155,6 +1174,17 @@ function CreateProforma() {
                       disabled={isRecipientLoading}
                       required
                       error={errors.mobileNumber}
+                    /> */}
+
+                    <FormPhoneInputFloating
+                      label="Mobile Number"
+                      name="mobileNumber"
+                      value={proformaInfo.mobileNumber}
+                      onChange={(phone) =>
+                        handlePhoneChange("mobileNumber", phone)
+                      }
+                      error={errors.mobileNumber}
+                      background="white"
                     />
                     <FormInput
                       label="GSTIN"

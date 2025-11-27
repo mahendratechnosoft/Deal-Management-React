@@ -8,6 +8,7 @@ import { City, Country, State } from "country-state-city";
 import {
   FormInput,
   FormNumberInputWithPrefix,
+  FormPhoneInputFloating,
   FormSelect,
   FormTextarea,
 } from "../../BaseComponet/CustomeFormComponents";
@@ -208,15 +209,15 @@ function EditProforma() {
         // Determine if Shipping is same as Billing
         const isAddressSame =
           proformaInvoiceInfo.shippingStreet ===
-          proformaInvoiceInfo.billingStreet &&
+            proformaInvoiceInfo.billingStreet &&
           proformaInvoiceInfo.shippingCountry ===
-          proformaInvoiceInfo.billingCountry &&
+            proformaInvoiceInfo.billingCountry &&
           proformaInvoiceInfo.shippingState ===
-          proformaInvoiceInfo.billingState &&
+            proformaInvoiceInfo.billingState &&
           proformaInvoiceInfo.shippingCity ===
-          proformaInvoiceInfo.billingCity &&
+            proformaInvoiceInfo.billingCity &&
           proformaInvoiceInfo.shippingZipCode ===
-          proformaInvoiceInfo.billingZipCode;
+            proformaInvoiceInfo.billingZipCode;
 
         setIsSameAsBilling(isAddressSame);
 
@@ -323,14 +324,14 @@ function EditProforma() {
           role === "ROLE_ADMIN"
             ? data.companySignature
             : data.admin
-              ? data.admin.companySignature
-              : null;
+            ? data.admin.companySignature
+            : null;
         let stampData =
           role === "ROLE_ADMIN"
             ? data.companyStamp
             : data.admin
-              ? data.admin.companyStamp
-              : null;
+            ? data.admin.companyStamp
+            : null;
 
         if (sigData) setSignatureUrl(`data:;base64,${sigData}`);
         if (stampData) setStampUrl(`data:;base64,${stampData}`);
@@ -409,6 +410,20 @@ function EditProforma() {
         delete n[name];
         return n;
       });
+    }
+  };
+
+  const handlePhoneChange = (fieldName, phone) => {
+    setProformaInfo((prev) => ({
+      ...prev,
+      [fieldName]: phone,
+    }));
+
+    if (errors[fieldName]) {
+      setErrors((prev) => ({
+        ...prev,
+        [fieldName]: "",
+      }));
     }
   };
 
@@ -698,10 +713,10 @@ function EditProforma() {
 
     let newStates = opt
       ? State.getStatesOfCountry(opt.value).map((s) => ({
-        value: s.isoCode,
-        label: s.name,
-        ...s,
-      }))
+          value: s.isoCode,
+          label: s.name,
+          ...s,
+        }))
       : [];
     setStates(newStates);
 
@@ -733,10 +748,10 @@ function EditProforma() {
     let newCities =
       opt && selectedCountry
         ? City.getCitiesOfState(selectedCountry.value, opt.value).map((c) => ({
-          value: c.name,
-          label: c.name,
-          ...c,
-        }))
+            value: c.name,
+            label: c.name,
+            ...c,
+          }))
         : [];
     setCities(newCities);
 
@@ -939,11 +954,20 @@ function EditProforma() {
     }
 
     // 5. Mobile Number Validation
-    if (!proformaInfo.mobileNumber) {
+    if (
+      !proformaInfo.mobileNumber ||
+      proformaInfo.mobileNumber.toString().length < 5
+    ) {
       newErrors.mobileNumber = "Mobile Number is required";
     }
 
     const combinedErrors = { ...errors, ...newErrors };
+    Object.keys(combinedErrors).forEach((key) => {
+      if (!combinedErrors[key]) {
+        delete combinedErrors[key];
+      }
+    });
+
     setErrors(combinedErrors);
     return Object.keys(combinedErrors).length === 0;
   };
@@ -1059,8 +1083,9 @@ function EditProforma() {
 
         {/* --- Form --- */}
         <div
-          className={`h-[72vh] overflow-hidden ${!canEdit ? "disabled-form" : ""
-            }`}
+          className={`h-[72vh] overflow-hidden ${
+            !canEdit ? "disabled-form" : ""
+          }`}
         >
           {isFetching ? (
             <div className="mt-4 h-full overflow-hidden animate-pulse bg-white p-6 rounded-lg border border-gray-200 space-y-8">
@@ -1117,7 +1142,6 @@ function EditProforma() {
               </div>
             </div>
           ) : (
-
             <form
               onSubmit={handleSubmit}
               id="editProformaForm"
@@ -1136,7 +1160,7 @@ function EditProforma() {
                         name="proformaInvoiceNumber"
                         prefix="P_INV-"
                         value={proformaInfo.proformaInvoiceNumber}
-                        onChange={() => { }}
+                        onChange={() => {}}
                         disabled={true}
                         className="cursor-not-allowed"
                       />
@@ -1175,12 +1199,13 @@ function EditProforma() {
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">
                       Recipient Information
                       <span
-                        className={`ml-2 inline-block px-3 py-1 rounded text-xs font-semibold uppercase tracking-wide ${proformaInfo.status === "Paid"
-                          ? "bg-green-100 text-green-600"
-                          : proformaInfo.status === "Partially Paid"
+                        className={`ml-2 inline-block px-3 py-1 rounded text-xs font-semibold uppercase tracking-wide ${
+                          proformaInfo.status === "Paid"
+                            ? "bg-green-100 text-green-600"
+                            : proformaInfo.status === "Partially Paid"
                             ? "bg-yellow-100 text-yellow-600"
                             : "bg-red-100 text-red-600"
-                          }`}
+                        }`}
                       >
                         {proformaInfo.status?.toUpperCase()}
                       </span>
@@ -1226,13 +1251,15 @@ function EditProforma() {
                         required
                         error={errors.email}
                       />
-                      <FormInput
+                      <FormPhoneInputFloating
                         label="Mobile Number"
                         name="mobileNumber"
                         value={proformaInfo.mobileNumber}
-                        onChange={handleInfoChange}
-                        required
+                        onChange={(phone) =>
+                          handlePhoneChange("mobileNumber", phone)
+                        }
                         error={errors.mobileNumber}
+                        background="white"
                       />
                       <FormInput
                         label="GSTIN"
@@ -1486,14 +1513,15 @@ function EditProforma() {
                             </td>
                             <td className="px-4 py-2 whitespace-nowrap text-center align-top">
                               <button
-
-                                className={`${canDelete ? "allow-click" : ""
-                                  } text-red-600 hover:text-red-900 font-medium transition-colors 
+                                className={`${
+                                  canDelete ? "allow-click" : ""
+                                } text-red-600 hover:text-red-900 font-medium transition-colors 
       duration-200 flex items-center gap-1 text-xs
-      ${proformaContent.length === 1 || !canDelete
-                                    ? "pointer-events-none opacity-50"
-                                    : ""
-                                  }`}
+      ${
+        proformaContent.length === 1 || !canDelete
+          ? "pointer-events-none opacity-50"
+          : ""
+      }`}
                                 onClick={() => handleRemoveItem(index)}
                                 title="Remove Item"
                                 type="button"
@@ -1677,7 +1705,6 @@ function EditProforma() {
               </div>
               <div className="h-6" />
             </form>
-
           )}
         </div>
       </div>
