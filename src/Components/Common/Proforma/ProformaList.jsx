@@ -8,11 +8,18 @@ import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
 import ProformaPDF from "./ProformaPDF";
 import ProformaInfoModal from "./ProformaInfoModal";
 import { hasPermission } from "../../BaseComponet/permissions";
-// This currency formatter utility is reused
+import {
+  AlertCard,
+  DashboardWrapper,
+  MoneyCard,
+  ProgressCard,
+} from "../../BaseComponet/FinancialDashboardComponents";
+
+// --- Utilities ---
+
 const formatCurrency = (amount, currencyCode) => {
   const value = Number(amount) || 0;
   const code = currencyCode || "INR";
-
   try {
     const formatter = new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -20,18 +27,34 @@ const formatCurrency = (amount, currencyCode) => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
-
-    const parts = formatter.formatToParts(value);
-    const symbol = parts.find((part) => part.type === "currency")?.value || "";
-    const number = parts
-      .filter((part) => part.type !== "currency")
-      .map((part) => part.value)
-      .join("");
-
-    return `${symbol} ${number}`;
+    return formatter.format(value);
   } catch (e) {
     return `${code} ${value.toFixed(2)}`;
   }
+};
+
+const formatProformaNumber = (number) => {
+  const numberString = String(number || 0);
+  return `P_INV-${numberString.padStart(6, "0")}`;
+};
+
+const getIndianFinancialYear = () => {
+  const today = new Date();
+  const month = today.getMonth();
+  const year = today.getFullYear();
+
+  let startYear = year;
+  let endYear = year + 1;
+
+  if (month < 3) {
+    startYear = year - 1;
+    endYear = year;
+  }
+
+  return {
+    startDate: `${startYear}-04-01`,
+    endDate: `${endYear}-03-31`,
+  };
 };
 
 const ProformaListSkeleton = () => {
@@ -56,18 +79,10 @@ const ProformaListSkeleton = () => {
         <div className="h-4 bg-gray-200 rounded w-16"></div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-        <div className="flex items-center gap-3">
-          <div className="h-5 w-5 bg-gray-200 rounded"></div>
-          <div className="h-5 w-5 bg-gray-200 rounded"></div>
-        </div>
+        <div className="h-5 w-5 bg-gray-200 rounded"></div>
       </td>
     </tr>
   );
-};
-
-const formatProformaNumber = (number) => {
-  const numberString = String(number || 0);
-  return `P_INV-${numberString.padStart(6, "0")}`;
 };
 
 function ProformaList() {
@@ -87,66 +102,70 @@ function ProformaList() {
   const [adminInformation, setAdminInformation] = useState(null);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [selectedProformaForInfo, setSelectedProformaForInfo] = useState(null);
-
-  // Removed PDF-related state
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [dashboardDateRange, setDashboardDateRange] = useState(
+    getIndianFinancialYear()
+  );
 
   useEffect(() => {
-    fetchProformaList(0, searchTerm); // Call the renamed fetch function
+    fetchProformaList(0, searchTerm);
   }, [pageSize, searchTerm]);
+
+  useEffect(() => {
+    if (showDashboard) {
+      fetchDashboardSummary();
+    }
+  }, [showDashboard, dashboardDateRange]);
+
+  const fetchDashboardSummary = async () => {
+    setDashboardLoading(true);
+    try {
+      const response = await axiosInstance.get(
+        `getProformaInvoiceSummary?startDate=${dashboardDateRange.startDate}&endDate=${dashboardDateRange.endDate}`
+      );
+      if (response.data && response.data.body) {
+        setDashboardData(response.data.body);
+      }
+    } catch (error) {
+      console.error("Dashboard error", error);
+      toast.error("Failed to load statistics");
+    } finally {
+      setDashboardLoading(false);
+    }
+  };
 
   async function fetchProformaList(page = 0, search = "") {
     setListLoading(true);
-
     try {
-      // Updated API endpoint
       let url = `getAllProformaInvoice/${page}/${pageSize}`;
       if (search.trim()) {
         url += `?search=${encodeURIComponent(search)}`;
       }
-
       const response = await axiosInstance.get(url);
       const data = response.data;
-
       setProformaInvoices(data.ProformaInvoiceList || []);
       setTotalPages(data.totalPages || 1);
       setCurrentPage(data.currentPage || page);
       setTotalItems(data.totalElements);
     } catch (err) {
       console.error("Error fetching proforma invoices:", err);
-      toast.error("Failed to fetch proforma invoices. Please try again.");
+      toast.error("Failed to fetch proforma invoices.");
     } finally {
       setListLoading(false);
     }
   }
 
-  // Renamed and updated navigation
-  const handleCreateProforma = () => {
-    navigate("/Proforma/Create");
-  };
-
-  const handleEdit = (proformaId) => {
-    navigate(`/Proforma/Edit/${proformaId}`);
-  };
-
-  const handlePreview = (proformaId) => {
-    navigate(`/Proforma/Preview/${proformaId}`);
-  };
-
-  // Removed handleOpenPdfPreview
-
-  const handlePageSizeChange = (newSize) => {
-    setPageSize(newSize);
-  };
-
-  const handlePageChange = (newPage) => {
-    fetchProformaList(newPage, searchTerm);
-  };
+  const handleCreateProforma = () => navigate("/Proforma/Create");
+  const handleEdit = (proformaId) => navigate(`/Proforma/Edit/${proformaId}`);
+  const handlePageSizeChange = (newSize) => setPageSize(newSize);
+  const handlePageChange = (newPage) => fetchProformaList(newPage, searchTerm);
 
   const handleOpenPdfPreview = async (proformaInvoiceId) => {
     setIsPdfLoading(true);
     setIsPdfModalOpen(true);
     setSelectedProformaData(null);
-
     try {
       let adminInformation = null;
       if (role === "ROLE_ADMIN") {
@@ -156,20 +175,14 @@ function ProformaList() {
         const employeeReponce = await axiosInstance.get(
           `/employee/getEmployeeInfo`
         );
-
-        const employeeReponceData = employeeReponce.data;
-        adminInformation = employeeReponceData.admin;
+        adminInformation = employeeReponce.data.admin;
       }
       setAdminInformation(adminInformation);
       const response = await axiosInstance.get(
         `getProformaInvoiceById/${proformaInvoiceId}`
       );
-
-      if (response.data) {
-        setSelectedProformaData(response.data);
-      }
+      if (response.data) setSelectedProformaData(response.data);
     } catch (error) {
-      console.error("Failed to fetch proforma data for PDF:", error);
       toast.error(
         error.response?.data?.message || "Failed to load proforma data."
       );
@@ -188,17 +201,143 @@ function ProformaList() {
     setIsInfoModalOpen(false);
     setSelectedProformaForInfo(null);
     fetchProformaList(currentPage, searchTerm);
+    fetchDashboardSummary();
   };
+
+  const totalDashboardDocs = dashboardData
+    ? dashboardData.paidCount +
+      dashboardData.unpaidCount +
+      dashboardData.partiallyPaidCount +
+      dashboardData.overdueCount
+    : 0;
+
   return (
     <LayoutComponent>
       <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
+        <DashboardWrapper
+          isOpen={showDashboard}
+          dateRange={dashboardDateRange}
+          setDateRange={setDashboardDateRange}
+          isLoading={dashboardLoading}
+          title="Proforma Financial Overview"
+        >
+          {dashboardData && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <MoneyCard
+                  title="Total Invoice Amount"
+                  amount={dashboardData.totalInvoiceAmount}
+                  iconColorClass="border-indigo-100 text-indigo-600"
+                  icon={
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  }
+                />
+                <MoneyCard
+                  title="Total Paid Amount"
+                  amount={dashboardData.totalPaidAmount}
+                  iconColorClass="border-emerald-100 text-emerald-600"
+                  icon={
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  }
+                />
+                <MoneyCard
+                  title="Unpaid Amount Before Due"
+                  amount={dashboardData.unpaidAmountBeforeDueDate}
+                  iconColorClass="border-blue-100 text-blue-600"
+                  icon={
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  }
+                />
+                <MoneyCard
+                  title="Unpaid Amount After Due"
+                  amount={dashboardData.unpaidAmountAfterDueDate}
+                  iconColorClass="border-red-100 text-red-600"
+                  icon={
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
+                    </svg>
+                  }
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <ProgressCard
+                  label="Paid"
+                  count={dashboardData.paidCount}
+                  total={totalDashboardDocs}
+                  barColorClass="bg-emerald-500"
+                />
+                <ProgressCard
+                  label="Unpaid"
+                  count={dashboardData.unpaidCount}
+                  total={totalDashboardDocs}
+                  barColorClass="bg-blue-500"
+                />
+                <ProgressCard
+                  label="Partial"
+                  count={dashboardData.partiallyPaidCount}
+                  total={totalDashboardDocs}
+                  barColorClass="bg-yellow-500"
+                />
+                <AlertCard label="Overdue" count={dashboardData.overdueCount} />
+              </div>
+            </>
+          )}
+        </DashboardWrapper>
+
+        {/* --- 2. Title & Search Header --- */}
         <div className="mb-4">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
                 <div>
-                  {/* Updated Text */}
                   <h1 className="text-2xl font-bold text-gray-900">
                     Proforma Invoices
                   </h1>
@@ -209,9 +348,9 @@ function ProformaList() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-              {/* Search Input */}
-              <div className="relative flex-1 sm:max-w-64">
+            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto items-center">
+              {/* Search */}
+              <div className="relative flex-1 sm:max-w-64 w-full">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg
                     className="w-4 h-4 text-gray-400"
@@ -229,19 +368,42 @@ function ProformaList() {
                 </div>
                 <input
                   type="text"
-                  // Updated Text
-                  placeholder="Search proforma invoices..."
+                  placeholder="Search..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white transition-colors duration-200"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
                 />
               </div>
+
+              {/* Toggle Statistics Button */}
+              <button
+                onClick={() => setShowDashboard(!showDashboard)}
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 border ${
+                  showDashboard
+                    ? "bg-gray-100 text-gray-700 border-gray-300"
+                    : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
+                </svg>
+                {/* {showDashboard ? "Hide Stats" : "Statistics"} */}
+              </button>
 
               {/* Create Button */}
               {hasPermission("proformaInvoice", "Create") && (
                 <button
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
-                  // Updated Handler
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md w-full sm:w-auto justify-center"
                   onClick={handleCreateProforma}
                 >
                   <svg
@@ -257,7 +419,6 @@ function ProformaList() {
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  {/* Updated Text */}
                   Create Proforma
                 </button>
               )}
@@ -265,9 +426,10 @@ function ProformaList() {
           </div>
         </div>
 
+        {/* --- 3. Table Section --- */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200 table-fixed w-full">
-            <thead className="bg-gray-50 sticky top-0">
+            <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
                 <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Proforma #
@@ -292,7 +454,6 @@ function ProformaList() {
                 </th>
               </tr>
             </thead>
-
             <tbody className="bg-white divide-y divide-gray-200">
               {listLoading
                 ? Array.from({ length: pageSize }).map((_, index) => (
@@ -304,17 +465,9 @@ function ProformaList() {
                       className="hover:bg-gray-50 transition-colors duration-150 group cursor-pointer"
                       onClick={() => handleOpenInfoModal(proforma)}
                     >
-                      <td
-                        className="px-4 py-1 truncate text-sm text-gray-900 font-bold relative"
-                        title={formatProformaNumber(
-                          proforma.proformaInvoiceNumber
-                        )}
-                      >
+                      <td className="px-4 py-1 truncate text-sm text-gray-900 font-bold relative">
                         {formatProformaNumber(proforma.proformaInvoiceNumber)}
-
-                        {/* --- Hover Actions --- */}
                         <div className="flex items-center gap-3 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          {/* Edit Button */}
                           <button
                             title="Edit"
                             onClick={(e) => {
@@ -323,23 +476,8 @@ function ProformaList() {
                             }}
                             className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
                           >
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
                             Edit
                           </button>
-
-                          {/* Preview Button */}
                           <button
                             title="Preview"
                             onClick={(e) => {
@@ -348,29 +486,8 @@ function ProformaList() {
                             }}
                             className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
                           >
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                              />
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                              />
-                            </svg>
                             Preview
                           </button>
-
-                          {/* PDF Button */}
                           <button
                             title="View PDF"
                             onClick={(e) => {
@@ -379,20 +496,6 @@ function ProformaList() {
                             }}
                             className="text-gray-500 hover:text-red-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
                           >
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                              ></path>
-                            </svg>
                             PDF
                           </button>
                         </div>
@@ -403,46 +506,25 @@ function ProformaList() {
                       >
                         {proforma.companyName}
                       </td>
-                      <td
-                        className="px-4 py-4 truncate text-sm text-gray-900"
-                        title={formatCurrency(
-                          proforma.totalAmount,
-                          proforma.currencyType
-                        )}
-                      >
+                      <td className="px-4 py-4 truncate text-sm text-gray-900">
                         {formatCurrency(
                           proforma.totalAmount,
                           proforma.currencyType
                         )}
                       </td>
-                      <td
-                        className="px-4 py-4 truncate text-sm text-gray-900"
-                        title={formatCurrency(
-                          proforma.paidAmount,
-                          proforma.currencyType
-                        )}
-                      >
+                      <td className="px-4 py-4 truncate text-sm text-gray-900">
                         {formatCurrency(
                           proforma.paidAmount,
                           proforma.currencyType
                         )}
                       </td>
-                      <td
-                        className="px-4 py-4 truncate text-sm text-gray-900"
-                        title={proforma.proformaInvoiceDate}
-                      >
+                      <td className="px-4 py-4 truncate text-sm text-gray-900">
                         {proforma.proformaInvoiceDate}
                       </td>
-                      <td
-                        className="px-4 py-4 truncate text-sm text-gray-900"
-                        title={proforma.dueDate}
-                      >
+                      <td className="px-4 py-4 truncate text-sm text-gray-900">
                         {proforma.dueDate}
                       </td>
-                      <td
-                        className="px-4 py-4 text-sm text-gray-900"
-                        title={proforma.status}
-                      >
+                      <td className="px-4 py-4 text-sm text-gray-900">
                         <span
                           className={`inline-block w-24 truncate px-3 py-1 rounded text-xs text-center font-semibold uppercase tracking-wide ${
                             proforma.status === "Paid"
@@ -451,7 +533,6 @@ function ProformaList() {
                               ? "bg-yellow-100 text-yellow-600"
                               : "bg-red-100 text-red-600"
                           }`}
-                          title={proforma.status?.toUpperCase()}
                         >
                           {proforma.status?.toUpperCase()}
                         </span>
@@ -461,7 +542,7 @@ function ProformaList() {
             </tbody>
           </table>
 
-          {/* Updated empty state */}
+          {/* Empty State */}
           {proformaInvoices.length === 0 && !listLoading && (
             <div className="text-center py-12">
               <svg
@@ -504,11 +585,11 @@ function ProformaList() {
           pageSize={pageSize}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
-          // Updated itemsName
           itemsName="proforma invoices"
         />
       </div>
 
+      {/* PDF Modal */}
       {isPdfModalOpen && (
         <div className="proposal-pdf-modal-backdrop">
           <div className="proposal-pdf-modal-content">
@@ -522,7 +603,6 @@ function ProformaList() {
                   : "Loading..."}
               </h3>
               <div style={{ display: "flex", gap: "10px" }}>
-                {/* --- Download Button --- */}
                 {!isPdfLoading && selectedProformaData && (
                   <PDFDownloadLink
                     document={
@@ -531,15 +611,10 @@ function ProformaList() {
                         adminInformation={adminInformation}
                       />
                     }
-                    fileName={
-                      `${formatProformaNumber(
-                        selectedProformaData.proformaInvoiceInfo
-                          .proformaInvoiceNumber
-                      )}-${
-                        selectedProformaData.proformaInvoiceInfo.companyName
-                      }.pdf` || "proforma.pdf"
-                    }
-                    title="Download PDF"
+                    fileName={`${formatProformaNumber(
+                      selectedProformaData.proformaInvoiceInfo
+                        .proformaInvoiceNumber
+                    )}.pdf`}
                     className="download-button-icon-wrapper"
                     style={{
                       padding: "0.25rem",
@@ -547,18 +622,14 @@ function ProformaList() {
                       borderRadius: "4px",
                       background: "#f9f9f9",
                       cursor: "pointer",
-                      textDecoration: "none",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      lineHeight: 1,
                     }}
                   >
                     {({ loading }) =>
                       loading ? (
-                        <span style={{ padding: "0 4px", color: "#333" }}>
-                          ...
-                        </span>
+                        "..."
                       ) : (
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -567,7 +638,6 @@ function ProformaList() {
                           strokeWidth="1.5"
                           stroke="currentColor"
                           style={{ width: "20px", height: "16px" }}
-                          className="proposal-download-button-icon"
                         >
                           <path
                             strokeLinecap="round"
@@ -579,8 +649,6 @@ function ProformaList() {
                     }
                   </PDFDownloadLink>
                 )}
-
-                {/* --- Close Button --- */}
                 <button
                   onClick={() => setIsPdfModalOpen(false)}
                   style={{
@@ -625,8 +693,6 @@ function ProformaList() {
           }}
         />
       )}
-
-      {/* PDF Modal Removed */}
     </LayoutComponent>
   );
 }

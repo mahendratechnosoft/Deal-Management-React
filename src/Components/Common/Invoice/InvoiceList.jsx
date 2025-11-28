@@ -11,6 +11,10 @@ import InvoiceInfoModal from "./InoviceInfoModal";
 import { useNavigate } from "react-router-dom";
 import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
 import ProformaPDF from "../Proforma/ProformaPDF";
+import {
+  DashboardWrapper,
+  MoneyCard,
+} from "../../BaseComponet/FinancialDashboardComponents";
 
 const ProformaListSkeleton = () => {
   return (
@@ -34,13 +38,29 @@ const ProformaListSkeleton = () => {
         <div className="h-4 bg-gray-200 rounded w-16"></div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-        <div className="flex items-center gap-3">
-          <div className="h-5 w-5 bg-gray-200 rounded"></div>
-          <div className="h-5 w-5 bg-gray-200 rounded"></div>
-        </div>
+        <div className="h-5 w-5 bg-gray-200 rounded"></div>
       </td>
     </tr>
   );
+};
+
+const getIndianFinancialYear = () => {
+  const today = new Date();
+  const month = today.getMonth();
+  const year = today.getFullYear();
+
+  let startYear = year;
+  let endYear = year + 1;
+
+  if (month < 3) {
+    startYear = year - 1;
+    endYear = year;
+  }
+
+  return {
+    startDate: `${startYear}-04-01`,
+    endDate: `${endYear}-03-31`,
+  };
 };
 
 function InvoiceList() {
@@ -60,12 +80,38 @@ function InvoiceList() {
   const [invoiceData, setInvoiceData] = useState(null);
   const [adminInformation, setAdminInformation] = useState(null);
   const navigate = useNavigate();
-
-  // Removed PDF-related state
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [dashboardDateRange, setDashboardDateRange] = useState(
+    getIndianFinancialYear()
+  );
 
   useEffect(() => {
     fetchInvoiceList(0, searchTerm);
   }, [pageSize, searchTerm]);
+
+  useEffect(() => {
+    if (showDashboard) {
+      fetchDashboardSummary();
+    }
+  }, [showDashboard, dashboardDateRange]);
+
+  const fetchDashboardSummary = async () => {
+    setDashboardLoading(true);
+    try {
+      const response = await axiosInstance.get(
+        `getInvoiceTaxSummary?startDate=${dashboardDateRange.startDate}&endDate=${dashboardDateRange.endDate}`
+      );
+      if (response.data && response.data.body) {
+        setDashboardData(response.data.body);
+      }
+    } catch (error) {
+      console.error("Dashboard error", error);
+    } finally {
+      setDashboardLoading(false);
+    }
+  };
 
   async function fetchInvoiceList(page = 0, search = "") {
     setListLoading(true);
@@ -104,8 +150,9 @@ function InvoiceList() {
     setIsInfoModalOpen(true);
   };
 
-  const handlePreview = (proformaId) => {
-    navigate(`/Invoice/Preview/${proformaId}`);
+  const handleCreateProforma = () => {
+    // Assuming you have a create route for invoices or re-using proforma logic
+    navigate("/Invoice/Create");
   };
 
   const handleOpenPdfPreview = async (proformaInvoiceId) => {
@@ -148,13 +195,91 @@ function InvoiceList() {
   return (
     <LayoutComponent>
       <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
+        {/* --- 1. Dashboard Section --- */}
+        <DashboardWrapper
+          isOpen={showDashboard}
+          dateRange={dashboardDateRange}
+          setDateRange={setDashboardDateRange}
+          isLoading={dashboardLoading}
+          title="Tax Invoice Summary"
+        >
+          {dashboardData && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* 1. Total Invoice Value (Green/Emerald - The big number) */}
+              <MoneyCard
+                title="Total With Tax"
+                amount={dashboardData.total_with_tax}
+                iconColorClass="border-emerald-100 text-emerald-600"
+                icon={
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                }
+              />
+
+              {/* 2. Taxable Amount (Blue - The base) */}
+              <MoneyCard
+                title="Total Without Tax"
+                amount={dashboardData.total_without_tax}
+                iconColorClass="border-blue-100 text-blue-600"
+                icon={
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                    />
+                  </svg>
+                }
+              />
+
+              {/* 3. Total Tax (Red/Rose - The Tax Component) */}
+              <MoneyCard
+                title="Total Tax"
+                amount={dashboardData.total_tax_amount}
+                iconColorClass="border-red-100 text-red-600"
+                icon={
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z"
+                    />
+                  </svg>
+                }
+              />
+            </div>
+          )}
+        </DashboardWrapper>
+
         <div className="mb-4">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
                 <div>
-                  {/* Updated Text */}
                   <h1 className="text-2xl font-bold text-gray-900">
                     Tax Invoices
                   </h1>
@@ -191,6 +316,31 @@ function InvoiceList() {
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white transition-colors duration-200"
                 />
               </div>
+
+              {/* Toggle Statistics Button */}
+              <button
+                onClick={() => setShowDashboard(!showDashboard)}
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 border ${
+                  showDashboard
+                    ? "bg-gray-100 text-gray-700 border-gray-300"
+                    : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
+                </svg>
+                {/* {showDashboard ? "Hide Stats" : "Statistics"} */}
+              </button>
             </div>
           </div>
         </div>
