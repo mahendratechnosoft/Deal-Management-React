@@ -50,6 +50,7 @@ import InvoicePreview from "./Components/Common/Invoice/InvoicePreview.jsx";
 import FamilyList from "./Components/Common/Donor/FamilyList.jsx";
 import DonorMatchingFilter from "./Components/Common/Donor/DonorMatchingFilter.jsx";
 import EditFamily from "./Components/Common/Donor/EditFamily.jsx";
+import Itemlist from "./Components/Common/Item/Itemlists.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -368,6 +369,16 @@ function App() {
             }
           />
 
+
+          <Route
+            path="/Admin/ItemList"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <Itemlist />
+              </RoleBasedRoute>
+            }
+          />
+
           <Route
             path="/Invoice/Preview/:proformaInvoiceId"
             element={
@@ -536,6 +547,14 @@ function App() {
             }
           />
 
+          <Route
+            path="/Employee/ItemList"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                <Itemlist />
+              </RoleBasedRoute>
+            }
+          />
           {/* Settings Routes */}
           <Route
             path="/Admin/Settings"
