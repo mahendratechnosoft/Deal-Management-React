@@ -135,6 +135,26 @@ function Sidebar({ isOpen, toggleSidebar }) {
       color: "from-emerald-500 to-lime-500",
     },
     {
+      name: "Item",
+      path: "/Admin/ItemList",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+          />
+        </svg>
+      ),
+      color: "from-teal-500 to-green-500",
+    },
+    {
       name: "Timesheet",
       path: "/Admin/TimesheetList",
       icon: (
@@ -302,18 +322,16 @@ function Sidebar({ isOpen, toggleSidebar }) {
 
       {/* Sidebar */}
       <div
-        className={`fixed lg:static inset-y-0 left-0 z-50 bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl transform transition-all duration-500 ease-in-out ${
-          isOpen
+        className={`fixed lg:static inset-y-0 left-0 z-50 bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl transform transition-all duration-500 ease-in-out ${isOpen
             ? "translate-x-0 w-64"
             : "-translate-x-full lg:translate-x-0 lg:w-20"
-        }`}
+          }`}
       >
         <div className="flex flex-col h-[90vh] overflow-y-auto CRM-scroll-width-none">
           {/* Sidebar Header */}
           <div
-            className={`p-4 border-b border-gray-700/50 ${
-              !isOpen && "lg:flex lg:justify-center lg:py-4"
-            }`}
+            className={`p-4 border-b border-gray-700/50 ${!isOpen && "lg:flex lg:justify-center lg:py-4"
+              }`}
           >
             {isOpen ? (
               <div className="flex items-center justify-center">
@@ -375,37 +393,31 @@ function Sidebar({ isOpen, toggleSidebar }) {
                       toggleSidebar();
                     }
                   }}
-                  className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${
-                    isActive(item.path)
+                  className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${isActive(item.path)
                       ? `bg-gradient-to-r ${item.color} shadow transform scale-105`
                       : "bg-gray-800/50 hover:bg-gray-700/70 hover:transform hover:scale-105"
-                  } ${
-                    isOpen
+                    } ${isOpen
                       ? "px-3 py-2.5 justify-start"
                       : "px-2 py-2.5 justify-center"
-                  }`}
+                    }`}
                   title={!isOpen ? item.name : ""}
                 >
                   {/* Background Glow Effect */}
                   <div
-                    className={`absolute inset-0 bg-gradient-to-r ${
-                      item.color
-                    } opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${
-                      isActive(item.path) && "opacity-20"
-                    }`}
+                    className={`absolute inset-0 bg-gradient-to-r ${item.color
+                      } opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${isActive(item.path) && "opacity-20"
+                      }`}
                   ></div>
 
                   <div
-                    className={`relative z-10 flex items-center ${
-                      isOpen ? "w-full" : "justify-center"
-                    }`}
+                    className={`relative z-10 flex items-center ${isOpen ? "w-full" : "justify-center"
+                      }`}
                   >
                     <div
-                      className={`transition-all duration-300 ${
-                        isActive(item.path)
+                      className={`transition-all duration-300 ${isActive(item.path)
                           ? "text-white scale-105"
                           : "text-gray-400 group-hover:text-white group-hover:scale-105"
-                      }`}
+                        }`}
                     >
                       {item.icon}
                     </div>
@@ -413,11 +425,10 @@ function Sidebar({ isOpen, toggleSidebar }) {
                     {isOpen && (
                       <div className="ml-3 flex-1 text-left">
                         <span
-                          className={`font-medium block text-xs transition-colors duration-300 ${
-                            isActive(item.path)
+                          className={`font-medium block text-xs transition-colors duration-300 ${isActive(item.path)
                               ? "text-white"
                               : "text-gray-300 group-hover:text-white"
-                          }`}
+                            }`}
                         >
                           {item.name}
                         </span>
@@ -438,26 +449,23 @@ function Sidebar({ isOpen, toggleSidebar }) {
 
           {/* Sidebar Footer - Logout Button */}
           <div
-            className={`p-4 border-t border-gray-700/50 ${
-              !isOpen && "lg:flex lg:justify-center"
-            }`}
+            className={`p-4 border-t border-gray-700/50 ${!isOpen && "lg:flex lg:justify-center"
+              }`}
           >
             <button
               onClick={handleLogout}
-              className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden bg-gray-800/50 hover:bg-red-500/20 hover:transform hover:scale-105 ${
-                isOpen
+              className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden bg-gray-800/50 hover:bg-red-500/20 hover:transform hover:scale-105 ${isOpen
                   ? "px-3 py-2.5 justify-start"
                   : "px-2 py-2.5 justify-center"
-              }`}
+                }`}
               title={!isOpen ? "Logout" : ""}
             >
               {/* Background Glow Effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
 
               <div
-                className={`relative z-10 flex items-center ${
-                  isOpen ? "w-full" : "justify-center"
-                }`}
+                className={`relative z-10 flex items-center ${isOpen ? "w-full" : "justify-center"
+                  }`}
               >
                 <div className="text-gray-400 group-hover:text-red-400 transition-all duration-300 group-hover:scale-105">
                   <svg
