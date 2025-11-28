@@ -148,11 +148,11 @@ function Sidebar({ isOpen, toggleSidebar }) {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
           />
         </svg>
       ),
-      color: "from-teal-500 to-green-500",
+      color: "from-teal-600 to-cyan-500",
     },
     {
       name: "Timesheet",
@@ -323,8 +323,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
       {/* Sidebar */}
       <div
         className={`fixed lg:static inset-y-0 left-0 z-50 bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl transform transition-all duration-500 ease-in-out ${isOpen
-            ? "translate-x-0 w-64"
-            : "-translate-x-full lg:translate-x-0 lg:w-20"
+          ? "translate-x-0 w-64"
+          : "-translate-x-full lg:translate-x-0 lg:w-20"
           }`}
       >
         <div className="flex flex-col h-[90vh] overflow-y-auto CRM-scroll-width-none">
@@ -394,8 +394,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
                     }
                   }}
                   className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${isActive(item.path)
-                      ? `bg-gradient-to-r ${item.color} shadow transform scale-105`
-                      : "bg-gray-800/50 hover:bg-gray-700/70 hover:transform hover:scale-105"
+                    ? `bg-gradient-to-r ${item.color} shadow transform scale-105`
+                    : "bg-gray-800/50 hover:bg-gray-700/70 hover:transform hover:scale-105"
                     } ${isOpen
                       ? "px-3 py-2.5 justify-start"
                       : "px-2 py-2.5 justify-center"
@@ -415,8 +415,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
                   >
                     <div
                       className={`transition-all duration-300 ${isActive(item.path)
-                          ? "text-white scale-105"
-                          : "text-gray-400 group-hover:text-white group-hover:scale-105"
+                        ? "text-white scale-105"
+                        : "text-gray-400 group-hover:text-white group-hover:scale-105"
                         }`}
                     >
                       {item.icon}
@@ -426,8 +426,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
                       <div className="ml-3 flex-1 text-left">
                         <span
                           className={`font-medium block text-xs transition-colors duration-300 ${isActive(item.path)
-                              ? "text-white"
-                              : "text-gray-300 group-hover:text-white"
+                            ? "text-white"
+                            : "text-gray-300 group-hover:text-white"
                             }`}
                         >
                           {item.name}
@@ -455,8 +455,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
             <button
               onClick={handleLogout}
               className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden bg-gray-800/50 hover:bg-red-500/20 hover:transform hover:scale-105 ${isOpen
-                  ? "px-3 py-2.5 justify-start"
-                  : "px-2 py-2.5 justify-center"
+                ? "px-3 py-2.5 justify-start"
+                : "px-2 py-2.5 justify-center"
                 }`}
               title={!isOpen ? "Logout" : ""}
             >
