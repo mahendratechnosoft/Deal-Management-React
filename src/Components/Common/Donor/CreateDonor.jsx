@@ -30,7 +30,7 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
     name: "",
     maritalStatus: "",
     age: "",
-    dob: "",
+    dateOfBirth: "",
     address: "",
     city: "",
     pincode: "",
@@ -39,8 +39,8 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
     height: "",
     weight: "",
     bloodGroup: "",
-    professionalQualification: "",
-    educationalQualification: "",
+    profession: "",
+    education: "",
     selfPic: null, // Will hold File object initially
     fullPic: null, // Will hold File object initially
   };
@@ -63,6 +63,13 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
     { value: "B-", label: "B-" },
     { value: "AB+", label: "AB+" },
     { value: "AB-", label: "AB-" },
+  ];
+
+  const educationOptions = [
+    { value: "UnderGraduation", label: "Under Graduation" },
+    { value: "PostGraduation", label: "Post Graduation" },
+    { value: "Masters", label: "Masters" },
+    { value: "Graduated", label: "Graduated" },
   ];
 
   // Reset form when modal closes via props
@@ -112,20 +119,19 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
 
       // Check if it's a valid File object before converting
       if (formData.selfPic instanceof File) {
-          selfPicBase64 = await convertToBase64(formData.selfPic);
+        selfPicBase64 = await convertToBase64(formData.selfPic);
       }
 
       if (formData.fullPic instanceof File) {
-          fullPicBase64 = await convertToBase64(formData.fullPic);
+        fullPicBase64 = await convertToBase64(formData.fullPic);
       }
 
-      // 2. Prepare JSON payload (regular JS object, NOT FormData)
-      // Ensure numbers are sent as numbers, not strings, if your backend requires it.
+      // 2. Prepare JSON payload
       const apiDataPayload = {
         name: formData.name,
         marriedStatus: formData.maritalStatus,
         age: Number(formData.age),
-        dateOfBirth: formData.dob,
+        dateOfBirth: formData.dateOfBirth,
         address: formData.address,
         city: formData.city,
         pincode: formData.pincode,
@@ -134,15 +140,13 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
         height: Number(formData.height),
         weight: Number(formData.weight),
         bloodGroup: formData.bloodGroup,
-        professionalQualification: formData.professionalQualification,
-        educationalQualification: formData.educationalQualification,
-        // Send the base64 string OR null
+        profession: formData.profession,
+        education: formData.education,
         selfPic: selfPicBase64,
         fullPic: fullPicBase64,
       };
 
       // 3. Send JSON data using Axios
-      // Axios automatically sets 'Content-Type': 'application/json' for objects
       const response = await axiosInstance.post("createDonor", apiDataPayload);
 
       toast.success("Donor created successfully!");
@@ -151,11 +155,10 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
       // Call onSuccess callback so parent can refresh data
       onSuccess && onSuccess();
       handleClose();
-     window.location.reload();
+      window.location.reload();
 
     } catch (error) {
       console.error("Error creating donor:", error);
-      // Extract error message from backend if available
       const errMsg = error.response?.data?.message || "Error creating donor. Please try again.";
       toast.error(errMsg);
     } finally {
@@ -178,7 +181,7 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
             disabled={isSubmitting}
             aria-label="Close modal"
           >
-             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -186,222 +189,253 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
 
         {/* Scrollable Form Body */}
         <div className="p-6 overflow-y-auto flex-grow">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Form Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <form onSubmit={handleSubmit} className="space-y-8">
 
-              {/* Name */}
-              <FormInput
-                label="Name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-                placeholder="Enter full name"
-              />
+            {/* --- SECTION 1: PERSONAL INFORMATION --- */}
+            <div>
+              <h3 className="text-lg font-bold text-gray-800 border-b pb-2 mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Personal Information
+              </h3>
 
-               {/* Marital Status */}
-               <FormSelect
-                label="Marital Status"
-                name="maritalStatus"
-                value={statusOptionsMarried.find(
-                  (o) => o.value === formData.maritalStatus
-                )}
-                onChange={(option) =>
-                  handleSelectChange(option, { name: "maritalStatus" })
-                }
-                options={statusOptionsMarried}
-                required
-                isDisabled={isSubmitting}
-                placeholder="Select status"
-              />
-
-              {/* Age */}
-              <FormInput
-                label="Age"
-                name="age"
-                type="number"
-                value={formData.age}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-                placeholder="e.g., 30"
-                min="18"
-              />
-
-              {/* Date of Birth */}
-              <FormInput
-                label="Date of Birth"
-                name="dob"
-                type="date"
-                value={formData.dob}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-              />
-
-              {/* Mobile Number */}
-              <FormInput
-                label="Mobile Number"
-                name="mobile"
-                type="tel"
-                value={formData.mobile}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-                placeholder="Enter 10-digit number"
-                pattern="[0-9]{10}"
-              />
-
-              {/* Email ID */}
-              <FormInput
-                label="Email ID"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-                placeholder="john@example.com"
-              />
-
-              {/* Address */}
-              <div className="md:col-span-2">
-                 <FormTextarea
-                  label="Address"
-                  name="address"
-                  value={formData.address}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Name */}
+                <FormInput
+                  label="Name"
+                  name="name"
+                  value={formData.name}
                   onChange={handleChange}
-                  rows={3}
                   required
                   disabled={isSubmitting}
-                  placeholder="Enter full residential address"
+                  placeholder="Enter full name"
                 />
-              </div>
 
-              {/* City */}
-              <FormInput
-                label="City"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-                placeholder="Enter city name"
-              />
+                {/* Marital Status */}
+                <FormSelect
+                  label="Marital Status"
+                  name="maritalStatus"
+                  value={statusOptionsMarried.find(
+                    (o) => o.value === formData.maritalStatus
+                  )}
+                  onChange={(option) =>
+                    handleSelectChange(option, { name: "maritalStatus" })
+                  }
+                  options={statusOptionsMarried}
+                  required
+                  isDisabled={isSubmitting}
+                  placeholder="Select status"
+                />
 
-              {/* Pincode */}
-              <FormInput
-                label="Pincode"
-                name="pincode"
-                value={formData.pincode}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-                placeholder="e.g., 400001"
-                pattern="[0-9]{6}"
-              />
+                {/* Age */}
+                <FormInput
+                  label="Age"
+                  name="age"
+                  type="number"
+                  value={formData.age}
+                  onChange={handleChange}
+                  required
+                  disabled={isSubmitting}
+                  placeholder="e.g., 30"
+                  min="18"
+                />
 
-              {/* Height */}
-              <FormInput
-                label="Height (cm)"
-                name="height"
-                type="number"
-                step="0.01"
-                value={formData.height}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-                placeholder="e.g., 175.5"
-              />
+                {/* Date of Birth */}
+                <FormInput
+                  label="Date of Birth"
+                  name="dateOfBirth"
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={handleChange}
+                  required
+                  disabled={isSubmitting}
+                />
 
-              {/* Weight */}
-              <FormInput
-                label="Weight (kg)"
-                name="weight"
-                type="number"
-                step="0.01"
-                value={formData.weight}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-                placeholder="e.g., 70.5"
-              />
+                {/* Mobile Number */}
+                <FormInput
+                  label="Mobile Number"
+                  name="mobile"
+                  type="tel"
+                  value={formData.mobile}
+                  onChange={handleChange}
+                  required
+                  disabled={isSubmitting}
+                  placeholder="Enter 10-digit number"
+                  pattern="[0-9]{10}"
+                />
 
-              {/* Blood Group */}
-              <FormSelect
-                label="Blood Group"
-                name="bloodGroup"
-                value={bloodGroupOptions.find(
-                  (o) => o.value === formData.bloodGroup
-                )}
-                onChange={(option) =>
-                  handleSelectChange(option, { name: "bloodGroup" })
-                }
-                options={bloodGroupOptions}
-                required
-                isDisabled={isSubmitting}
-                placeholder="Select Blood Group"
-              />
+                {/* Email ID */}
+                <FormInput
+                  label="Email ID"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  disabled={isSubmitting}
+                  placeholder="john@example.com"
+                />
 
+                {/* Height */}
+                <FormInput
+                  label="Height (cm)"
+                  name="height"
+                  type="number"
+                  step="0.01"
+                  value={formData.height}
+                  onChange={handleChange}
+                  required
+                  disabled={isSubmitting}
+                  placeholder="e.g., 175.5"
+                />
 
-              {/* Professional Qualification */}
-              <FormInput
-                label="Professional Qualification"
-                name="professionalQualification"
-                value={formData.professionalQualification}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-                placeholder="e.g., Software Engineer"
-              />
+                {/* Weight */}
+                <FormInput
+                  label="Weight (kg)"
+                  name="weight"
+                  type="number"
+                  step="0.01"
+                  value={formData.weight}
+                  onChange={handleChange}
+                  required
+                  disabled={isSubmitting}
+                  placeholder="e.g., 70.5"
+                />
+
+                {/* Blood Group */}
+                <FormSelect
+                  label="Blood Group"
+                  name="bloodGroup"
+                  value={bloodGroupOptions.find(
+                    (o) => o.value === formData.bloodGroup
+                  )}
+                  onChange={(option) =>
+                    handleSelectChange(option, { name: "bloodGroup" })
+                  }
+                  options={bloodGroupOptions}
+                  required
+                  isDisabled={isSubmitting}
+                  placeholder="Select Blood Group"
+                />
 
               {/* Educational Qualification */}
-              <FormInput
-                label="Educational Qualification"
-                name="educationalQualification"
-                value={formData.educationalQualification}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-                placeholder="e.g., B.Tech, MBA"
-              />
-
-              {/* File Uploads - OPTIONAL (removed 'required' attribute) */}
-              <div className="flex flex-col space-y-1">
-                <label htmlFor="selfPic" className="text-sm font-medium text-gray-700">Self Pic (Close-up) <span className="text-gray-400 text-xs">(Optional)</span></label>
-                <input
-                  id="selfPic"
-                  type="file"
-                  name="selfPic"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md cursor-pointer bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 p-1"
-                  // required attribute removed here
-                  disabled={isSubmitting}
+                <FormSelect
+                  label="Education"
+                  name="education"
+                  value={educationOptions.find((o) => o.value === formData.education)}
+                  onChange={(option) => handleSelectChange(option, { name: "education" })}
+                  options={educationOptions}
                 />
+
+                {/* Professional Qualification */}
+                <FormInput
+                  label="Professional Qualification"
+                  name="profession"
+                  value={formData.profession}
+                  onChange={handleChange}
+                  required
+                  disabled={isSubmitting}
+                  placeholder="e.g., Software Engineer"
+                />
+
+              
+                {/* <FormInput
+                  label="Educational Qualification"
+                  name="education"
+                  value={formData.education}
+                  onChange={handleChange}
+                  required
+                  disabled={isSubmitting}
+                  placeholder="e.g., B.Tech, MBA"
+                /> */}
+
+
               </div>
 
-              <div className="flex flex-col space-y-1">
-                <label htmlFor="fullPic" className="text-sm font-medium text-gray-700">Full Length Pic <span className="text-gray-400 text-xs">(Optional)</span></label>
-                <input
-                  id="fullPic"
-                  type="file"
-                  name="fullPic"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md cursor-pointer bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 p-1"
-                   // required attribute removed here
+              {/* Photos Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div className="flex flex-col space-y-1">
+                  <label htmlFor="selfPic" className="text-sm font-medium text-gray-700">Self Pic (Close-up) <span className="text-gray-400 text-xs">(Optional)</span></label>
+                  <input
+                    id="selfPic"
+                    type="file"
+                    name="selfPic"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md cursor-pointer bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 p-1"
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <label htmlFor="fullPic" className="text-sm font-medium text-gray-700">Full Length Pic <span className="text-gray-400 text-xs">(Optional)</span></label>
+                  <input
+                    id="fullPic"
+                    type="file"
+                    name="fullPic"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md cursor-pointer bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 p-1"
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* --- SECTION 2: ADDRESS INFORMATION --- */}
+            <div>
+              <h3 className="text-lg font-bold text-gray-800 border-b pb-2 mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Address Information
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Address (Full Width) */}
+                <div className="md:col-span-2">
+                  <FormTextarea
+                    label="Residential Address"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    rows={3}
+                    required
+                    disabled={isSubmitting}
+                    placeholder="Enter full residential address including street, landmark, etc."
+                  />
+                </div>
+
+                {/* City */}
+                <FormInput
+                  label="City"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  required
                   disabled={isSubmitting}
+                  placeholder="Enter city name"
+                />
+
+                {/* Pincode */}
+                <FormInput
+                  label="Pincode"
+                  name="pincode"
+                  value={formData.pincode}
+                  onChange={handleChange}
+                  required
+                  disabled={isSubmitting}
+                  placeholder="e.g., 400001"
+                  pattern="[0-9]{6}"
                 />
               </div>
-
             </div>
 
             {/* Footer - Action Buttons */}
             <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 mt-6">
-               <button
+              <button
                 type="button"
                 onClick={handleClose}
                 className="px-6 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-all"
