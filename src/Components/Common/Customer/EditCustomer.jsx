@@ -5,7 +5,12 @@ import { Country, State, City } from "country-state-city";
 import { toast } from "react-hot-toast";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
-import { FormInput, FormPhoneInputFloating, FormSelect, FormTextarea } from "../../BaseComponet/CustomeFormComponents";
+import {
+  FormInput,
+  FormPhoneInputFloating,
+  FormSelect,
+  FormTextarea,
+} from "../../BaseComponet/CustomeFormComponents";
 
 import { hasPermission } from "../../BaseComponet/permissions";
 import { showConfirmDialog } from "../../BaseComponet/alertUtils";
@@ -17,6 +22,7 @@ function EditCustomer() {
   const [fetchLoading, setFetchLoading] = useState(true);
   const { LayoutComponent, role } = useLayout();
   const canEdit = hasPermission("customer", "Edit");
+  const [originalCompanyName, setOriginalCompanyName] = useState("");
   const [formData, setFormData] = useState({
     companyName: "",
     phone: "",
@@ -198,6 +204,7 @@ function EditCustomer() {
           `getCustomerById/${customerId}`
         );
         const customer = response.data;
+        setOriginalCompanyName(customer.companyName || "");
 
         // Set form data with customer information (keep country/state as names initially)
         setFormData({
@@ -343,7 +350,7 @@ function EditCustomer() {
     formData.billingZipCode,
   ]);
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     const { name, value } = e.target;
 
     setFormData((prev) => ({
@@ -371,6 +378,40 @@ function EditCustomer() {
         ...prev,
         [name]: "",
       }));
+    }
+
+    if (name === "companyName") {
+      const customerNameError = await validateCompanyName(value);
+      setErrors((prev) => ({
+        ...prev,
+        companyName: customerNameError,
+      }));
+    }
+  };
+
+  const validateCompanyName = async (name) => {
+    if (!name) return "";
+
+    if (
+      name.trim().toLowerCase() === originalCompanyName.trim().toLowerCase()
+    ) {
+      return "";
+    }
+
+    try {
+      const response = await axiosInstance.get(
+        `checkCustomerIsExist/${encodeURIComponent(name.trim())}`
+      );
+      const data = response.data;
+      console.log(response.data, typeof response.data);
+
+      if (data) {
+        return "Company name already exists";
+      }
+      return "";
+    } catch (error) {
+      console.error("Error checking company name:", error);
+      return "Error checking company name";
     }
   };
 
@@ -536,9 +577,9 @@ function EditCustomer() {
 
   // Add this function to your EditCustomer component, right after the handleChange function
   const handlePhoneChange = (fieldName, phone) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [fieldName]: phone
+      [fieldName]: phone,
     }));
   };
   const validateForm = () => {
@@ -551,8 +592,6 @@ function EditCustomer() {
       newErrors.email = "Please enter a valid email address";
     }
 
-
-
     if (formData.website && !/^(https?:\/\/)?.+\..+/.test(formData.website)) {
       newErrors.website = "Please enter a valid website URL";
     }
@@ -563,6 +602,16 @@ function EditCustomer() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
+
+    const companyNameError = await validateCompanyName(formData.companyName);
+    if (companyNameError) {
+      setErrors((prev) => ({
+        ...prev,
+        companyName: companyNameError,
+      }));
+      toast.error(companyNameError);
+      return; // Stop execution here
+    }
 
     setLoading(true);
     try {
@@ -581,26 +630,26 @@ function EditCustomer() {
         billingCity: formData.billingCity || null,
         billingState: formData.billingState
           ? dropdownData.billingStates.find(
-            (s) => s.value === formData.billingState
-          )?.label || formData.billingState // Fallback to stored name
+              (s) => s.value === formData.billingState
+            )?.label || formData.billingState // Fallback to stored name
           : null,
         billingCountry: formData.billingCountry
           ? dropdownData.countries.find(
-            (c) => c.value === formData.billingCountry
-          )?.label || formData.billingCountry // Fallback to stored name
+              (c) => c.value === formData.billingCountry
+            )?.label || formData.billingCountry // Fallback to stored name
           : null,
         billingZipCode: formData.billingZipCode || null,
         shippingStreet: formData.shippingStreet || null,
         shippingCity: formData.shippingCity || null,
         shippingState: formData.shippingState
           ? dropdownData.shippingStates.find(
-            (s) => s.value === formData.shippingState
-          )?.label || formData.shippingState // Fallback to stored name
+              (s) => s.value === formData.shippingState
+            )?.label || formData.shippingState // Fallback to stored name
           : null,
         shippingCountry: formData.shippingCountry
           ? dropdownData.countries.find(
-            (c) => c.value === formData.shippingCountry
-          )?.label || formData.shippingCountry // Fallback to stored name
+              (c) => c.value === formData.shippingCountry
+            )?.label || formData.shippingCountry // Fallback to stored name
           : null,
         shippingZipCode: formData.shippingZipCode || null,
         description: formData.description || null,
@@ -618,7 +667,9 @@ function EditCustomer() {
     } catch (error) {
       console.error("Error updating customer:", error);
       if (error.response?.data?.message) {
-        toast.error(`Failed to update customer: ${error.response.data.message}`);
+        toast.error(
+          `Failed to update customer: ${error.response.data.message}`
+        );
       } else {
         toast.error("Failed to update customer. Please try again.");
       }
@@ -627,19 +678,19 @@ function EditCustomer() {
     }
   };
 
-const handleCancel = async () => {
-  const result = await showConfirmDialog(
-    "Are you sure you want to cancel? Any unsaved changes will be lost."
-  );
-  
-  if (result.isConfirmed) {
-    if (role === "ROLE_ADMIN") {
-      navigate("/Admin/CustomerList");
-    } else if (role === "ROLE_EMPLOYEE") {
-      navigate("/Employee/CustomerList");
+  const handleCancel = async () => {
+    const result = await showConfirmDialog(
+      "Are you sure you want to cancel? Any unsaved changes will be lost."
+    );
+
+    if (result.isConfirmed) {
+      if (role === "ROLE_ADMIN") {
+        navigate("/Admin/CustomerList");
+      } else if (role === "ROLE_EMPLOYEE") {
+        navigate("/Employee/CustomerList");
+      }
     }
-  }
-}
+  };
 
   const customStyles = {
     control: (base) => ({
@@ -798,8 +849,6 @@ const handleCancel = async () => {
     );
   }
 
-
-
   return (
     <LayoutComponent>
       <div className=" bg-white h-[90vh] overflow-y-auto CRM-scroll-width-none">
@@ -808,17 +857,37 @@ const handleCancel = async () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => navigate(role === "ROLE_ADMIN" ? "/Admin/CustomerList" : "/Employee/CustomerList")}
+                onClick={() =>
+                  navigate(
+                    role === "ROLE_ADMIN"
+                      ? "/Admin/CustomerList"
+                      : "/Employee/CustomerList"
+                  )
+                }
                 className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 p-1.5 hover:bg-gray-100 rounded transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
                 </svg>
                 <span className="hidden sm:inline">Back</span>
               </button>
               <div>
-                <h1 className="text-lg font-semibold text-gray-900">Edit Customer</h1>
-                <p className="text-xs text-gray-600">Update customer information</p>
+                <h1 className="text-lg font-semibold text-gray-900">
+                  Edit Customer
+                </h1>
+                <p className="text-xs text-gray-600">
+                  Update customer information
+                </p>
               </div>
             </div>
 
@@ -841,7 +910,7 @@ const handleCancel = async () => {
                       Saving...
                     </>
                   ) : (
-                    'Update'
+                    "Update"
                   )}
                 </button>
               )}
@@ -854,9 +923,10 @@ const handleCancel = async () => {
           <div className={!canEdit ? "pointer-events-none opacity-60" : ""}>
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Company Information</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">
+                    Company Information
+                  </h3>
 
                   {/* Left Column - Company Info */}
                   <div className="space-y-4">
@@ -883,14 +953,18 @@ const handleCancel = async () => {
                           { value: "Software Development", label: "Software" },
                           { value: "Manufacturing", label: "Manufacturing" },
                           { value: "Healthcare", label: "Healthcare" },
-                          { value: "Finance", label: "Finance" }
-                        ].find(opt => opt.value === formData.industry)}
-                        onChange={(selectedOption) => handleSelectChange(selectedOption, { name: "industry" })}
+                          { value: "Finance", label: "Finance" },
+                        ].find((opt) => opt.value === formData.industry)}
+                        onChange={(selectedOption) =>
+                          handleSelectChange(selectedOption, {
+                            name: "industry",
+                          })
+                        }
                         options={[
                           { value: "Software Development", label: "Software" },
                           { value: "Manufacturing", label: "Manufacturing" },
                           { value: "Healthcare", label: "Healthcare" },
-                          { value: "Finance", label: "Finance" }
+                          { value: "Finance", label: "Finance" },
                         ]}
                         error={errors.industry}
                       />
@@ -926,7 +1000,8 @@ const handleCancel = async () => {
                         error={errors.email}
                         background="white"
                         className=""
-                      /></div>
+                      />
+                    </div>
 
                     {/* GSTIN & PAN */}
                     <div className="grid grid-cols-2 gap-2 mb-4">
@@ -955,7 +1030,7 @@ const handleCancel = async () => {
                         label="Primary Number"
                         name="phone"
                         value={formData.mobile}
-                        onChange={(phone) => handlePhoneChange('phone', phone)}
+                        onChange={(phone) => handlePhoneChange("phone", phone)}
                         required={true}
                         error={errors.phone}
                         background="white"
@@ -964,9 +1039,8 @@ const handleCancel = async () => {
                       <FormPhoneInputFloating
                         label="Secondary Number"
                         name="mobile"
-
                         value={formData.phone}
-                        onChange={(phone) => handlePhoneChange('mobile', phone)}
+                        onChange={(phone) => handlePhoneChange("mobile", phone)}
                         error={errors.mobile}
                         background="white"
                       />
@@ -988,13 +1062,17 @@ const handleCancel = async () => {
                 {/* Right Column - Address Information */}
                 <div className="space-y-4">
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Address Information</h3>
+                    <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">
+                      Address Information
+                    </h3>
 
                     <div className="space-y-4">
                       {/* Billing Address */}
                       {/* Billing Address */}
                       <div className="space-y-3 mb-4">
-                        <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-3">Billing Address</h4>
+                        <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-3">
+                          Billing Address
+                        </h4>
 
                         <div className="space-y-3">
                           <FormInput
@@ -1011,7 +1089,9 @@ const handleCancel = async () => {
                               label="Country"
                               name="billingCountry"
                               className="setbg-white"
-                              value={dropdownData.countries.find(opt => opt.value === formData.billingCountry)}
+                              value={dropdownData.countries.find(
+                                (opt) => opt.value === formData.billingCountry
+                              )}
                               onChange={handleBillingCountryChange}
                               options={dropdownData.countries}
                               isSearchable
@@ -1023,7 +1103,9 @@ const handleCancel = async () => {
                               label="State"
                               name="billingState"
                               className="setbg-white"
-                              value={dropdownData.billingStates.find(opt => opt.value === formData.billingState)}
+                              value={dropdownData.billingStates.find(
+                                (opt) => opt.value === formData.billingState
+                              )}
                               onChange={handleBillingStateChange}
                               options={dropdownData.billingStates}
                               isSearchable
@@ -1038,7 +1120,9 @@ const handleCancel = async () => {
                               label="City"
                               name="billingCity"
                               className="setbg-white"
-                              value={dropdownData.billingCities.find(opt => opt.value === formData.billingCity)}
+                              value={dropdownData.billingCities.find(
+                                (opt) => opt.value === formData.billingCity
+                              )}
                               onChange={handleBillingCityChange}
                               options={dropdownData.billingCities}
                               isSearchable
@@ -1063,16 +1147,23 @@ const handleCancel = async () => {
                       {/* Shipping Address */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Shipping Address</h4>
+                          <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                            Shipping Address
+                          </h4>
                           <div className="flex items-center gap-1">
                             <input
                               type="checkbox"
                               id="sameAsBilling"
                               checked={sameAsBilling}
-                              onChange={(e) => setSameAsBilling(e.target.checked)}
+                              onChange={(e) =>
+                                setSameAsBilling(e.target.checked)
+                              }
                               className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                             />
-                            <label htmlFor="sameAsBilling" className="text-xs text-gray-700">
+                            <label
+                              htmlFor="sameAsBilling"
+                              className="text-xs text-gray-700"
+                            >
                               Same as billing
                             </label>
                           </div>
@@ -1097,7 +1188,9 @@ const handleCancel = async () => {
                               label="Country"
                               name="shippingCountry"
                               className="setbg-white"
-                              value={dropdownData.countries.find(opt => opt.value === formData.shippingCountry)}
+                              value={dropdownData.countries.find(
+                                (opt) => opt.value === formData.shippingCountry
+                              )}
                               onChange={handleShippingCountryChange}
                               options={dropdownData.countries}
                               isSearchable
@@ -1110,11 +1203,15 @@ const handleCancel = async () => {
                               label="State"
                               name="shippingState"
                               className="setbg-white"
-                              value={dropdownData.shippingStates.find(opt => opt.value === formData.shippingState)}
+                              value={dropdownData.shippingStates.find(
+                                (opt) => opt.value === formData.shippingState
+                              )}
                               onChange={handleShippingStateChange}
                               options={dropdownData.shippingStates}
                               isSearchable
-                              isDisabled={!formData.shippingCountry || sameAsBilling}
+                              isDisabled={
+                                !formData.shippingCountry || sameAsBilling
+                              }
                               error={errors.shippingState}
                               background="white"
                             />
@@ -1126,11 +1223,15 @@ const handleCancel = async () => {
                               label="City"
                               name="shippingCity"
                               className="setbg-white"
-                              value={dropdownData.shippingCities.find(opt => opt.value === formData.shippingCity)}
+                              value={dropdownData.shippingCities.find(
+                                (opt) => opt.value === formData.shippingCity
+                              )}
                               onChange={handleShippingCityChange}
                               options={dropdownData.shippingCities}
                               isSearchable
-                              isDisabled={!formData.shippingState || sameAsBilling}
+                              isDisabled={
+                                !formData.shippingState || sameAsBilling
+                              }
                               error={errors.shippingCity}
                               background="white"
                             />
