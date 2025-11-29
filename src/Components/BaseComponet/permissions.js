@@ -26,7 +26,7 @@ export const hasPermission = (module, action) => {
 
   // ADMIN has full access
   if (role === "ROLE_ADMIN") return true;
-
+  if (role === "ROLE_SUPERADMIN") return true;
   // Public modules - always accessible regardless of permission settings
   if (PUBLIC_MODULES.includes(module)) {
     return true;
@@ -35,7 +35,7 @@ export const hasPermission = (module, action) => {
   // For employees → moduleAccess is stored in localStorage
   const moduleAccess = JSON.parse(localStorage.getItem("moduleAccess") || "{}");
 
-  const key = module + action; 
+  const key = module + action;
   // Example key → "timeSheetCreate"
   // → "proformaInvoice" + "Access"
 

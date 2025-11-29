@@ -853,7 +853,7 @@ function CreateCustomerModal({ onClose, onSuccess }) {
             <PhoneInput
               country={"in"}
               value={mobileDisplay}
-              onChange={handlePhoneChange}
+              onChange={handleMobileChange}
               enableSearch={true}
               placeholder="Enter phone number"
               inputClass="w-full h-10 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -902,7 +902,7 @@ function CreateCustomerModal({ onClose, onSuccess }) {
             <PhoneInput
               country={"in"}
               value={phoneDisplay}
-              onChange={handleMobileChange}
+              onChange={handlePhoneChange}
               enableSearch={true}
               placeholder="Enter mobile number"
               inputClass="w-full h-10 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
