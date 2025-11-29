@@ -51,6 +51,8 @@ import FamilyList from "./Components/Common/Donor/FamilyList.jsx";
 import DonorMatchingFilter from "./Components/Common/Donor/DonorMatchingFilter.jsx";
 import EditFamily from "./Components/Common/Donor/EditFamily.jsx";
 import Itemlist from "./Components/Common/Item/Itemlists.jsx";
+import AdminList from "./Components/SuperAdmin/AdminList.jsx";
+import EditAdmin from "./Components/SuperAdmin/EditAdmin.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -82,6 +84,7 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("userData");
+     localStorage.removeItem("superAdminData");
     localStorage.removeItem("role");
     localStorage.removeItem("rememberMe");
     setIsLoggedIn(false);
@@ -95,6 +98,25 @@ function App() {
           {/* Public Routes */}
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
           <Route path="/register" element={<Register />} />
+
+        {/* SUPER ADMIN Models */}
+             <Route
+            path="/SuperAdmin/AdminList"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_SUPERADMIN"]}>
+                <AdminList />
+              </RoleBasedRoute>
+            }
+          />
+           <Route
+            path="/SuperAdmin/EditAdmin/:adminId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_SUPERADMIN"]}>
+                <EditAdmin />
+              </RoleBasedRoute>
+            }
+          />
+      
 
           {/* Admin Routes - Individual routes with layout */}
           <Route

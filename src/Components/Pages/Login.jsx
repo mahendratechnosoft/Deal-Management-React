@@ -144,6 +144,8 @@ function Login({ onSwitchToRegister, onLogin }) {
           navigate("/Admin/LeadList");
         } else if (data.role === "ROLE_EMPLOYEE") {
           navigate("/Employee/LeadList");
+        } else if (data.role === "ROLE_SUPERADMIN") {
+          navigate("/SuperAdmin/AdminList");
         } else {
           // Default fallback route
           navigate("/");

@@ -20,7 +20,11 @@ const RoleBasedRoute = ({ children, allowedRoles = [] }) => {
         return <Navigate to="/Admin/LeadList" replace />;
       } else if (userRole === "ROLE_EMPLOYEE") {
         return <Navigate to="/Employee/LeadList" replace />;
+       } else if (userRole === "ROLE_SUPERADMIN") {
+        return <Navigate to="/SuperAdmin/AdminList" replace />;
       }
+      
+      
       return <Navigate to="/login" replace />;
     }
 
