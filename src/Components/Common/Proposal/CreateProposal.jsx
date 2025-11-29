@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import Select from "react-select";
 import { City, Country, State } from "country-state-city";
 import {
+  FormFileAttachment,
   FormInput,
   FormInputWithPrefix,
   FormNumberInputWithPrefix,
@@ -49,10 +50,13 @@ function CreateProposal() {
     termsAndConditions: "",
     companySignature: "",
     companyStamp: "",
+    attachmentFile: "", // Base64 string
+    attachmentFileName: "", // Name of file
+    attachmentFileType: "", // Mime type
   });
 
   const [proposalContent, setProposalContent] = useState([
-    { item: "", description: "", quantity: 1, rate: 0 },
+    { itemId: null, item: "", description: "", quantity: 1, rate: 0 },
   ]);
 
   const [countries, setCountries] = useState([]);
@@ -68,6 +72,9 @@ function CreateProposal() {
   const [relatedIdOptions, setRelatedIdOptions] = useState([]);
   const [isRelatedIdLoading, setIsRelatedIdLoading] = useState(false);
   const [isRecipientLoading, setIsRecipientLoading] = useState(false);
+  const [itemOptions, setItemOptions] = useState([]);
+  const [isItemLoading, setIsItemLoading] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const relatedOptions = [
     { value: "lead", label: "Lead" },
@@ -457,6 +464,66 @@ function CreateProposal() {
     reader.readAsDataURL(file);
   };
 
+  const handleAttachmentUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.name.length > 200) {
+      toast.error(
+        "File name is too long. Please rename it to under 200 characters."
+      );
+      e.target.value = null;
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error("File size exceeds the 5MB limit.");
+      e.target.value = null;
+      return;
+    }
+
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "text/plain",
+      "text/csv",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error(
+        "Invalid file type. Please upload a PDF, Word, or Excel document."
+      );
+      e.target.value = null;
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result.split(",")[1];
+
+      setProposalInfo((prev) => ({
+        ...prev,
+        attachmentFile: base64String,
+        attachmentFileName: file.name,
+        attachmentFileType: file.type,
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAttachment = () => {
+    setProposalInfo((prev) => ({
+      ...prev,
+      attachmentFile: "",
+      attachmentFileName: "",
+      attachmentFileType: "",
+    }));
+  };
+
   const { subtotal, taxAmount, total } = useMemo(() => {
     const sub = proposalContent.reduce(
       (acc, item) =>
@@ -584,6 +651,78 @@ function CreateProposal() {
       }));
     }
   };
+
+  const loadItemOptions = async () => {
+    if (itemOptions.length > 0) return;
+
+    setIsItemLoading(true);
+
+    try {
+      const response = await axiosInstance.get("getItemListWithNameAndId");
+      const mappedOptions = response.data.map((item) => ({
+        label: item.name,
+        value: item.itemId,
+      }));
+
+      setItemOptions(mappedOptions);
+    } catch (error) {
+      console.error(`Failed to item list:`, error);
+      toast.error(`Failed to load item list.`);
+    } finally {
+      setIsItemLoading(false);
+    }
+  };
+
+  const handleItemDropdownChange = async (option) => {
+    if (!option) return;
+
+    try {
+      const response = await axiosInstance.get(
+        `getItemByItemId/${option.value}`
+      );
+      const fetchedItem = response.data;
+
+      setProposalContent((prevContent) => {
+        const newItemRow = {
+          itemId: fetchedItem.itemId,
+          item: fetchedItem.name,
+          description: fetchedItem.description || "",
+          quantity: 1,
+          rate: Number(fetchedItem.rate) || 0,
+        };
+
+        if (
+          prevContent.length === 1 &&
+          !prevContent[0].item &&
+          !prevContent[0].itemId
+        ) {
+          return [newItemRow];
+        }
+
+        return [...prevContent, newItemRow];
+      });
+      setSelectedItem(null);
+    } catch (error) {
+      console.error("Error fetching item details:", error);
+      toast.error("Failed to load item details");
+    }
+  };
+
+  const sortedItemOptions = useMemo(() => {
+    return [...itemOptions].sort((a, b) => {
+      const isASelected = proposalContent.some(
+        (item) => item.itemId === a.value
+      );
+      const isBSelected = proposalContent.some(
+        (item) => item.itemId === b.value
+      );
+
+      if (isASelected && !isBSelected) return 1;
+      if (!isASelected && isBSelected) return -1;
+
+      return 0;
+    });
+  }, [itemOptions, proposalContent]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -787,29 +926,7 @@ function CreateProposal() {
                       error={errors.subject}
                       className="md:col-span-1"
                     />
-                    <FormSelect
-                      label="Related To"
-                      name="relatedTo"
-                      value={relatedOptions.find(
-                        (o) => o.value === proposalInfo.relatedTo
-                      )}
-                      onChange={(opt) => handleSelectChange("relatedTo", opt)}
-                      options={relatedOptions}
-                      error={errors.relatedTo}
-                    />
-                    <FormSelect
-                      label="Related Lead/Customer"
-                      name="relatedId"
-                      value={relatedIdOptions.find(
-                        (o) => o.value === proposalInfo.relatedId
-                      )}
-                      onChange={(opt) => handleSelectChange("relatedId", opt)}
-                      options={relatedIdOptions}
-                      error={errors.relatedId}
-                      onMenuOpen={loadRelatedIdOptions}
-                      isLoading={isRelatedIdLoading || isRecipientLoading}
-                      isDisabled={!proposalInfo.relatedTo}
-                    />
+
                     <FormSelect
                       label="Assign To"
                       name="assignTo"
@@ -850,6 +967,17 @@ function CreateProposal() {
                       required
                       error={errors.status}
                     />
+
+                    <FormFileAttachment
+                      label="Attachment"
+                      name="attachment"
+                      fileName={proposalInfo.attachmentFileName}
+                      onChange={handleAttachmentUpload}
+                      onRemove={handleRemoveAttachment}
+                      error={errors.attachmentFile}
+                      background="white"
+                      className="md:col-span-1"
+                    />
                   </div>
                 </div>
 
@@ -859,6 +987,29 @@ function CreateProposal() {
                     Recipient Information
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormSelect
+                      label="Related To"
+                      name="relatedTo"
+                      value={relatedOptions.find(
+                        (o) => o.value === proposalInfo.relatedTo
+                      )}
+                      onChange={(opt) => handleSelectChange("relatedTo", opt)}
+                      options={relatedOptions}
+                      error={errors.relatedTo}
+                    />
+                    <FormSelect
+                      label="Related Lead/Customer"
+                      name="relatedId"
+                      value={relatedIdOptions.find(
+                        (o) => o.value === proposalInfo.relatedId
+                      )}
+                      onChange={(opt) => handleSelectChange("relatedId", opt)}
+                      options={relatedIdOptions}
+                      error={errors.relatedId}
+                      onMenuOpen={loadRelatedIdOptions}
+                      isLoading={isRelatedIdLoading || isRecipientLoading}
+                      isDisabled={!proposalInfo.relatedTo}
+                    />
                     <FormInput
                       label="Company Name"
                       name="companyName"
@@ -1026,9 +1177,26 @@ function CreateProposal() {
               <div className="pt-8 border-t border-gray-200">
                 <div className="mb-4 flex items-start justify-between gap-4">
                   <h2 className="text-lg font-semibold text-gray-800">
-                    {" "}
                     Proposal Items
                   </h2>
+                </div>
+                <div className="flex justify-between gap-4 mb-4">
+                  <FormSelect
+                    label="Items"
+                    name="itemId"
+                    value={selectedItem}
+                    onChange={(opt) => handleItemDropdownChange(opt)}
+                    options={sortedItemOptions}
+                    error={errors.itemId}
+                    onMenuOpen={loadItemOptions}
+                    isLoading={isItemLoading}
+                    className="w-96"
+                    isOptionDisabled={(option) =>
+                      proposalContent.some(
+                        (item) => item.itemId === option.value
+                      )
+                    }
+                  />
                   <FormSelect
                     label="Currency"
                     name="currencyType"

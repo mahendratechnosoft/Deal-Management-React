@@ -105,6 +105,9 @@ function EditProforma() {
   const [isAssignToLoading, setIsAssignToLoading] = useState(false);
   const [relatedIdOptions, setRelatedIdOptions] = useState([]);
   const [isRelatedIdLoading, setIsRelatedIdLoading] = useState(false);
+  const [itemOptions, setItemOptions] = useState([]);
+  const [isItemLoading, setIsItemLoading] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   // Static Options
   const relatedOptions = [
@@ -941,6 +944,80 @@ function EditProforma() {
       setIsRelatedIdLoading(false);
     }
   };
+
+  const loadItemOptions = async () => {
+    if (itemOptions.length > 0) return;
+
+    setIsItemLoading(true);
+
+    try {
+      const response = await axiosInstance.get("getItemListWithNameAndId");
+      const mappedOptions = response.data.map((item) => ({
+        label: item.name,
+        value: item.itemId,
+      }));
+
+      setItemOptions(mappedOptions);
+    } catch (error) {
+      console.error(`Failed to item list:`, error);
+      toast.error(`Failed to load item list.`);
+    } finally {
+      setIsItemLoading(false);
+    }
+  };
+
+  const handleItemDropdownChange = async (option) => {
+    if (!option) return;
+
+    try {
+      const response = await axiosInstance.get(
+        `getItemByItemId/${option.value}`
+      );
+      const fetchedItem = response.data;
+
+      setProformaContent((prevContent) => {
+        const newItemRow = {
+          itemId: fetchedItem.itemId,
+          item: fetchedItem.name,
+          description: fetchedItem.description || "",
+          quantity: 1,
+          rate: Number(fetchedItem.rate) || 0,
+          sacCode: fetchedItem.code || "",
+        };
+
+        if (
+          prevContent.length === 1 &&
+          !prevContent[0].item &&
+          !prevContent[0].itemId
+        ) {
+          return [newItemRow];
+        }
+
+        return [...prevContent, newItemRow];
+      });
+      setSelectedItem(null);
+    } catch (error) {
+      console.error("Error fetching item details:", error);
+      toast.error("Failed to load item details");
+    }
+  };
+
+  const sortedItemOptions = useMemo(() => {
+    return [...itemOptions].sort((a, b) => {
+      const isASelected = proformaContent.some(
+        (item) => item.itemId === a.value
+      );
+      const isBSelected = proformaContent.some(
+        (item) => item.itemId === b.value
+      );
+
+      if (isASelected && !isBSelected) return 1;
+      if (!isASelected && isBSelected) return -1;
+
+      return 0;
+    });
+  }, [itemOptions, proformaContent]);
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -1449,6 +1526,24 @@ function EditProforma() {
                     <h2 className="text-lg font-semibold text-gray-800">
                       Proforma Items
                     </h2>
+                  </div>
+                  <div className="flex justify-between gap-4 mb-4">
+                    <FormSelect
+                      label="Items"
+                      name="itemId"
+                      value={selectedItem}
+                      onChange={(opt) => handleItemDropdownChange(opt)}
+                      options={sortedItemOptions}
+                      error={errors.itemId}
+                      onMenuOpen={loadItemOptions}
+                      isLoading={isItemLoading}
+                      className="w-96"
+                      isOptionDisabled={(option) =>
+                        proformaContent.some(
+                          (item) => item.itemId === option.value
+                        )
+                      }
+                    />
                     <FormSelect
                       label="Currency"
                       name="currencyType"

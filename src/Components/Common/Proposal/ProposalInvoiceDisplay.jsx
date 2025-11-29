@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { ToWords } from "to-words";
 import {
   formatCurrency,
@@ -6,6 +6,7 @@ import {
   formatProposalNumber,
   numberToWords,
 } from "../../BaseComponet/UtilFunctions";
+import { getFileIcon } from "../../BaseComponet/CustomeFormComponents";
 
 const IconMail = ({ className }) => (
   <svg
@@ -140,12 +141,43 @@ const TaxRows = ({ taxType, taxPercentage, taxableAmount, currencyType }) => {
   );
 };
 
+const IconDownload = ({ className }) => (
+  <svg
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+    <polyline points="7 10 12 15 17 10"></polyline>
+    <line x1="12" y1="15" x2="12" y2="3"></line>
+  </svg>
+);
+
 const ProposalInvoiceDisplay = ({
   proposal,
   adminInformation,
   headerActions,
 }) => {
   const { proposalInfo, proposalContent } = proposal;
+  const [activeTab, setActiveTab] = useState("Summary");
+
+  const handleDownload = () => {
+    if (!proposalInfo.attachmentFile) return;
+
+    const link = document.createElement("a");
+    link.href = `data:${proposalInfo.attachmentFileType};base64,${proposalInfo.attachmentFile}`;
+    link.download = proposalInfo.attachmentFileName || "Attachment";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const {
     subtotal,
@@ -342,91 +374,164 @@ const ProposalInvoiceDisplay = ({
         </div>
 
         {/* Sidebar (Right) */}
-        <div className="lg:col-span-1 bg-gray-50 p-6 border-t lg:border-t-0 lg:border-l border-gray-200">
-          <div className="flex border-b border-gray-200">
-            <button className="px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
+        {/* Sidebar (Right) */}
+        <div className="lg:col-span-1 bg-gray-50 p-6 border-t lg:border-t-0 lg:border-l border-gray-200 min-h-[500px]">
+          {/* Tabs Header */}
+          <div className="flex border-b border-gray-200 mb-6">
+            <button
+              onClick={() => setActiveTab("Summary")}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === "Summary"
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
               Summary
+            </button>
+            <button
+              onClick={() => setActiveTab("Attachment")}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === "Attachment"
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Attachment
             </button>
           </div>
 
-          {/* Company Info */}
-          <div className="mt-6">
-            <h3 className="text-sm font-semibold break-words text-gray-800 mb-3">
-              {adminInformation.companyName}
-            </h3>
-            <div className="space-y-2 text-sm text-gray-600">
-              <p className="flex items-start gap-2 ">
-                <IconMapPin className="w-4 h-4 mt-0.5  shrink-0" />
-                <span className="break-words min-w-0">
-                  {adminInformation.address}
-                </span>
-              </p>
-              <p className="flex items-center gap-2">
-                <IconFileText className="w-4 h-4 shrink-0" />
-                <span>GST: {adminInformation.gstNumber}</span>
-              </p>
-              <p className="flex items-center gap-2">
-                <IconPhone className="w-4 h-4 shrink-0" />
-                <span>Mobile: {adminInformation.phone}</span>
-              </p>
-              <p className="flex items-center gap-2">
-                <IconMail className="w-4 h-4 shrink-0" />
-                <span className="break-words min-w-0">
-                  Email: {adminInformation.companyEmail}
-                </span>
-              </p>
-            </div>
-          </div>
+          {/* TAB 1: SUMMARY CONTENT */}
+          {activeTab === "Summary" && (
+            <div className="animate-fadeIn">
+              {/* Company Info */}
+              <div>
+                <h3 className="text-sm font-semibold break-words text-gray-800 mb-3">
+                  {adminInformation.companyName}
+                </h3>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <p className="flex items-start gap-2 ">
+                    <IconMapPin className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span className="break-words min-w-0">
+                      {adminInformation.address}
+                    </span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <IconFileText className="w-4 h-4 shrink-0" />
+                    <span>GST: {adminInformation.gstNumber}</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <IconPhone className="w-4 h-4 shrink-0" />
+                    <span>Mobile: {adminInformation.phone}</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <IconMail className="w-4 h-4 shrink-0" />
+                    <span className="break-words min-w-0">
+                      Email: {adminInformation.companyEmail}
+                    </span>
+                  </p>
+                </div>
+              </div>
 
-          {/* Proposal Info */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3">
-              Proposal Information
-            </h3>
-            <div className="mb-4">
-              <p className="font-semibold text-gray-800 break-words">
-                {proposalInfo.companyName}
-              </p>
-              <p className="text-sm text-gray-600 break-words">
-                {proposalInfo.street}
-              </p>
-              <p className="text-sm text-gray-600">
-                {proposalInfo.city}, {proposalInfo.state} -{" "}
-                {proposalInfo.zipCode}
-              </p>
-              <p className="text-sm text-gray-600">{proposalInfo.country}</p>
-            </div>
+              {/* Proposal Info */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h3 className="text-sm font-semibold text-gray-800 mb-3">
+                  Proposal Information
+                </h3>
+                <div className="mb-4">
+                  <p className="font-semibold text-gray-800 break-words">
+                    {proposalInfo.companyName}
+                  </p>
+                  <p className="text-sm text-gray-600 break-words">
+                    {proposalInfo.street}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {proposalInfo.city}, {proposalInfo.state} -{" "}
+                    {proposalInfo.zipCode}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {proposalInfo.country}
+                  </p>
+                </div>
 
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600 flex items-center gap-2">
-                  <IconHash className="w-4 h-4" />
-                  Status
-                </span>
-                <span className="font-medium text-xs text-gray-800 bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                  {proposalInfo.status}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 flex items-center gap-2">
-                  <IconCalendar className="w-4 h-4" />
-                  Date
-                </span>
-                <span className="font-medium text-gray-800">
-                  {formatDate(proposalInfo.proposalDate)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 flex items-center gap-2">
-                  <IconCalendar className="w-4 h-4" />
-                  Open Till
-                </span>
-                <span className="font-medium text-gray-800">
-                  {formatDate(proposalInfo.dueDate)}
-                </span>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 flex items-center gap-2">
+                      <IconHash className="w-4 h-4" />
+                      Status
+                    </span>
+                    <span className="font-medium text-xs text-gray-800 bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                      {proposalInfo.status}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 flex items-center gap-2">
+                      <IconCalendar className="w-4 h-4" />
+                      Date
+                    </span>
+                    <span className="font-medium text-gray-800">
+                      {formatDate(proposalInfo.proposalDate)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 flex items-center gap-2">
+                      <IconCalendar className="w-4 h-4" />
+                      Open Till
+                    </span>
+                    <span className="font-medium text-gray-800">
+                      {formatDate(proposalInfo.dueDate)}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
+
+          {/* TAB 2: ATTACHMENT CONTENT */}
+          {activeTab === "Attachment" && (
+            <div className="animate-fadeIn space-y-4">
+              <h3 className="text-sm font-semibold text-gray-800 mb-2">
+                Attached Files
+              </h3>
+
+              {proposalInfo.attachmentFile ? (
+                <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center min-w-0 gap-3">
+                    {/* File Icon */}
+                    <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+                      {getFileIcon(proposalInfo.attachmentFileName)}
+                    </div>
+
+                    {/* File Name with Truncate & Tooltip */}
+                    <div className="min-w-0">
+                      <p
+                        className="text-sm font-medium text-gray-900 truncate max-w-[150px]"
+                        title={proposalInfo.attachmentFileName}
+                      >
+                        {proposalInfo.attachmentFileName}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {proposalInfo.attachmentFileType || "Document"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Download Button */}
+                  <button
+                    onClick={handleDownload}
+                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                    title="Download Attachment"
+                  >
+                    <IconDownload className="w-5 h-5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-white border border-dashed border-gray-300 rounded-lg">
+                  <IconFileText className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">No attachments found</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
