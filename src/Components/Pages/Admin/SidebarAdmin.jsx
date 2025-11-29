@@ -3,10 +3,25 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
 
 import Mtech_logoOnly from "../../../../public/Images/Mtech_OnlyLogo.jpg";
+import { hasPermission } from "../../BaseComponet/permissions";
 function Sidebar({ isOpen, toggleSidebar }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+
+  // Module key mapping for permission checks
+  const moduleKeyMap = {
+    Lead: "lead",
+    Customer: "customer",
+    Proposal: "proposal",
+    Proforma: "proformaInvoice",
+    Invoice: "invoice",
+    Payment: "payment",
+    Timesheet: "timeSheet",
+    Item: "Item",
+  
+  };
+  
   const navigationItems = [
     {
       name: "Lead",
@@ -322,16 +337,18 @@ function Sidebar({ isOpen, toggleSidebar }) {
 
       {/* Sidebar */}
       <div
-        className={`fixed lg:static inset-y-0 left-0 z-50 bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl transform transition-all duration-500 ease-in-out ${isOpen
-          ? "translate-x-0 w-64"
-          : "-translate-x-full lg:translate-x-0 lg:w-20"
-          }`}
+        className={`fixed lg:static inset-y-0 left-0 z-50 bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl transform transition-all duration-500 ease-in-out ${
+          isOpen
+            ? "translate-x-0 w-64"
+            : "-translate-x-full lg:translate-x-0 lg:w-20"
+        }`}
       >
         <div className="flex flex-col h-[90vh] overflow-y-auto CRM-scroll-width-none">
           {/* Sidebar Header */}
           <div
-            className={`p-4 border-b border-gray-700/50 ${!isOpen && "lg:flex lg:justify-center lg:py-4"
-              }`}
+            className={`p-4 border-b border-gray-700/50 ${
+              !isOpen && "lg:flex lg:justify-center lg:py-4"
+            }`}
           >
             {isOpen ? (
               <div className="flex items-center justify-center">
@@ -384,88 +401,104 @@ function Sidebar({ isOpen, toggleSidebar }) {
           {/* Navigation Items */}
           <nav className="flex-1 p-4">
             <div className="space-y-1">
-              {navigationItems.map((item) => (
-                <button
-                  key={item.name}
-                  onClick={() => {
-                    navigate(item.path);
-                    if (window.innerWidth < 1024) {
-                      toggleSidebar();
-                    }
-                  }}
-                  className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${isActive(item.path)
-                    ? `bg-gradient-to-r ${item.color} shadow transform scale-105`
-                    : "bg-gray-800/50 hover:bg-gray-700/70 hover:transform hover:scale-105"
-                    } ${isOpen
-                      ? "px-3 py-2.5 justify-start"
-                      : "px-2 py-2.5 justify-center"
+              {navigationItems
+                .filter((item) => {
+                  const key = moduleKeyMap[item.name];
+                  // For admin, check if they have access to this module
+                  return hasPermission(key, "Access");
+                })
+                .map((item) => (
+                  <button
+                    key={item.name}
+                    onClick={() => {
+                      navigate(item.path);
+                      if (window.innerWidth < 1024) {
+                        toggleSidebar();
+                      }
+                    }}
+                    className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${
+                      isActive(item.path)
+                        ? `bg-gradient-to-r ${item.color} shadow transform scale-105`
+                        : "bg-gray-800/50 hover:bg-gray-700/70 hover:transform hover:scale-105"
+                    } ${
+                      isOpen
+                        ? "px-3 py-2.5 justify-start"
+                        : "px-2 py-2.5 justify-center"
                     }`}
-                  title={!isOpen ? item.name : ""}
-                >
-                  {/* Background Glow Effect */}
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-r ${item.color
-                      } opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${isActive(item.path) && "opacity-20"
-                      }`}
-                  ></div>
-
-                  <div
-                    className={`relative z-10 flex items-center ${isOpen ? "w-full" : "justify-center"
-                      }`}
+                    title={!isOpen ? item.name : ""}
                   >
+                    {/* Background Glow Effect */}
                     <div
-                      className={`transition-all duration-300 ${isActive(item.path)
-                        ? "text-white scale-105"
-                        : "text-gray-400 group-hover:text-white group-hover:scale-105"
-                        }`}
+                      className={`absolute inset-0 bg-gradient-to-r ${
+                        item.color
+                      } opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${
+                        isActive(item.path) && "opacity-20"
+                      }`}
+                    ></div>
+
+                    <div
+                      className={`relative z-10 flex items-center ${
+                        isOpen ? "w-full" : "justify-center"
+                      }`}
                     >
-                      {item.icon}
+                      <div
+                        className={`transition-all duration-300 ${
+                          isActive(item.path)
+                            ? "text-white scale-105"
+                            : "text-gray-400 group-hover:text-white group-hover:scale-105"
+                        }`}
+                      >
+                        {item.icon}
+                      </div>
+
+                      {isOpen && (
+                        <div className="ml-3 flex-1 text-left">
+                          <span
+                            className={`font-medium block text-xs transition-colors duration-300 ${
+                              isActive(item.path)
+                                ? "text-white"
+                                : "text-gray-300 group-hover:text-white"
+                            }`}
+                          >
+                            {item.name}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
-                    {isOpen && (
-                      <div className="ml-3 flex-1 text-left">
-                        <span
-                          className={`font-medium block text-xs transition-colors duration-300 ${isActive(item.path)
-                            ? "text-white"
-                            : "text-gray-300 group-hover:text-white"
-                            }`}
-                        >
-                          {item.name}
-                        </span>
+                    {/* Active Indicator */}
+                    {isActive(item.path) && (
+                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                       </div>
                     )}
-                  </div>
-
-                  {/* Active Indicator */}
-                  {isActive(item.path) && (
-                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                      <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                    </div>
-                  )}
-                </button>
-              ))}
+                  </button>
+                ))}
             </div>
           </nav>
 
           {/* Sidebar Footer - Logout Button */}
           <div
-            className={`p-4 border-t border-gray-700/50 ${!isOpen && "lg:flex lg:justify-center"
-              }`}
+            className={`p-4 border-t border-gray-700/50 ${
+              !isOpen && "lg:flex lg:justify-center"
+            }`}
           >
             <button
               onClick={handleLogout}
-              className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden bg-gray-800/50 hover:bg-red-500/20 hover:transform hover:scale-105 ${isOpen
-                ? "px-3 py-2.5 justify-start"
-                : "px-2 py-2.5 justify-center"
-                }`}
+              className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden bg-gray-800/50 hover:bg-red-500/20 hover:transform hover:scale-105 ${
+                isOpen
+                  ? "px-3 py-2.5 justify-start"
+                  : "px-2 py-2.5 justify-center"
+              }`}
               title={!isOpen ? "Logout" : ""}
             >
               {/* Background Glow Effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
 
               <div
-                className={`relative z-10 flex items-center ${isOpen ? "w-full" : "justify-center"
-                  }`}
+                className={`relative z-10 flex items-center ${
+                  isOpen ? "w-full" : "justify-center"
+                }`}
               >
                 <div className="text-gray-400 group-hover:text-red-400 transition-all duration-300 group-hover:scale-105">
                   <svg

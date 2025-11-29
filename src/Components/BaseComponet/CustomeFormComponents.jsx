@@ -149,7 +149,7 @@ export const FormInputWithPrefix = ({
         />
         <label
           htmlFor={name}
-          className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 
+          className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-1 origin-[0] bg-white px-2 left-1 
             peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
             peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none 
             ${
@@ -199,7 +199,7 @@ export const FormTextarea = ({
     />
     <label
       htmlFor={name}
-      className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 
+      className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-1 origin-[0] bg-white px-2 left-1 
         peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
         peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none 
         ${error ? "text-red-600" : "text-gray-700 peer-focus:text-blue-600"} 
@@ -234,7 +234,7 @@ export const FormSelect = ({
     <div className={`relative ${className}`}>
       <label
         htmlFor={name}
-        className={`absolute text-sm duration-300 transform z-10 origin-[0] px-2 left-1 pointer-events-none
+        className={`absolute text-sm duration-300  transform -translate-y-4 scale-75 top-2 z-10 origin-[0] px-2 left-1 pointer-events-none
           ${
             isFocused || hasValue
               ? "scale-75 -translate-y-4 top-2"
@@ -389,14 +389,16 @@ export const FormPhoneInputFloating = ({
   };
 
   return (
-    <div className={`relative ${className}`}>
-      <div className={`relative border rounded-lg transition-all duration-200 ${
-        error 
-          ? 'border-red-500 ring-2 ring-red-500 ring-opacity-20' 
-          : isFocused 
-            ? 'border-blue-500 ring-2 ring-blue-500 ring-opacity-80' 
-            : 'border-gray-300'
-      } ${disabled ? 'bg-gray-100' : ''}`}>
+    <div className={`relative ${className} z-[60]`}>
+      <div
+        className={`relative border rounded-lg transition-all duration-200 ${
+          error
+            ? "border-red-500 ring-2 ring-red-500 ring-opacity-20"
+            : isFocused
+            ? "border-blue-500 ring-2 ring-blue-500 ring-opacity-80"
+            : "border-gray-300"
+        } ${disabled ? "bg-gray-100" : ""}`}
+      >
         <PhoneInput
           country={country}
           value={value}
@@ -437,7 +439,8 @@ export const FormPhoneInputFloating = ({
             fontSize: "14px",
             zIndex: 50,
             border: "1px solid #e5e7eb",
-            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+            boxShadow:
+              "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
           }}
           searchStyle={{
             fontSize: "14px",
@@ -455,7 +458,7 @@ export const FormPhoneInputFloating = ({
 
       {/* Floating Label - Made darker to match other labels */}
       <label
-        className={`absolute text-sm duration-300 transform z-10 origin-[0] px-2 left-11 pointer-events-none 
+        className={`absolute text-sm duration-300 transform z-50 origin-[0] px-2 left-11 pointer-events-none 
           scale-75 -translate-y-4 top-2 font-medium
           ${
             error

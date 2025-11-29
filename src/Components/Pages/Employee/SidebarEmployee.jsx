@@ -15,6 +15,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
     Payment: "payment",
     Timesheet: "timeSheet",
     Item: "Item",
+    Settings:""
   };
 
   const navigationItems = [
