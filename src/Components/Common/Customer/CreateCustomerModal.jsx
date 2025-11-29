@@ -5,18 +5,14 @@ import { Country, State, City } from "country-state-city";
 import { toast } from "react-hot-toast";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
-import PhoneInput from 'react-phone-input-2';
-import 'react-phone-input-2/lib/style.css';
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 
 const customReactSelectStyles = (hasError) => ({
   control: (provided, state) => ({
     ...provided,
     minHeight: "40px",
-    borderColor: state.isFocused
-      ? "#3b82f6"
-      : hasError
-        ? "#ef4444"
-        : "#e5e7eb",
+    borderColor: state.isFocused ? "#3b82f6" : hasError ? "#ef4444" : "#e5e7eb",
     borderWidth: "1px",
     borderRadius: "6px",
     boxShadow: state.isFocused ? "0 0 0 3px rgba(59, 130, 246, 0.1)" : "none",
@@ -41,8 +37,8 @@ const customReactSelectStyles = (hasError) => ({
     backgroundColor: state.isSelected
       ? "#3b82f6"
       : state.isFocused
-        ? "#f3f4f6"
-        : "white",
+      ? "#f3f4f6"
+      : "white",
     color: state.isSelected ? "white" : "#1f2937",
     "&:active": {
       backgroundColor: "#3b82f6",
@@ -72,6 +68,26 @@ const validatePAN = (pan) => {
     return "Invalid PAN format (e.g., ABCDE1234F)";
   }
   return "";
+};
+
+const validateCompanyName = async (name) => {
+  if (!name) return "";
+
+  try {
+    const response = await axiosInstance.get(
+      `checkCustomerIsExist/${encodeURIComponent(name)}`
+    );
+    const data = response.data;
+    console.log(response.data, typeof response.data);
+
+    if (data) {
+      return "Company name already exists";
+    }
+    return "";
+  } catch (error) {
+    console.error("Error checking company name:", error);
+    return "Error checking company name";
+  }
 };
 
 // Update handleChange function to include validation:
@@ -270,7 +286,7 @@ function CreateCustomerModal({ onClose, onSuccess }) {
     formData.billingZipCode,
   ]);
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     const { name, value } = e.target;
 
     setFormData((prev) => ({
@@ -295,6 +311,14 @@ function CreateCustomerModal({ onClose, onSuccess }) {
       }));
     }
 
+    if (name === "companyName") {
+      const companyNameError = await validateCompanyName(value);
+      setErrors((prev) => ({
+        ...prev,
+        companyName: companyNameError,
+      }));
+    }
+
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -308,7 +332,9 @@ function CreateCustomerModal({ onClose, onSuccess }) {
     const countryCode = country.countryCode;
     const countryDialCode = country.dialCode;
 
-    const completeNumber = `+${countryDialCode}${value.slice(countryDialCode.length)}`;
+    const completeNumber = `+${countryDialCode}${value.slice(
+      countryDialCode.length
+    )}`;
     const displayNumber = value;
 
     setPhoneDisplay(displayNumber);
@@ -335,7 +361,9 @@ function CreateCustomerModal({ onClose, onSuccess }) {
     const countryCode = country.countryCode;
     const countryDialCode = country.dialCode;
 
-    const completeNumber = `+${countryDialCode}${value.slice(countryDialCode.length)}`;
+    const completeNumber = `+${countryDialCode}${value.slice(
+      countryDialCode.length
+    )}`;
     const displayNumber = value;
 
     setMobileDisplay(displayNumber);
@@ -560,6 +588,17 @@ function CreateCustomerModal({ onClose, onSuccess }) {
       return;
     }
 
+    const companyNameError = await validateCompanyName(formData.companyName);
+    if (companyNameError) {
+      setErrors((prev) => ({
+        ...prev,
+        companyName: companyNameError,
+      }));
+      setActiveTab("basic"); // Auto-switch to Basic tab so user sees the error
+      toast.error(companyNameError);
+      return; // Stop execution here
+    }
+
     setLoading(true);
     try {
       const submitData = {
@@ -576,26 +615,26 @@ function CreateCustomerModal({ onClose, onSuccess }) {
         billingCity: formData.billingCity || null,
         billingState: formData.billingState
           ? dropdownData.billingStates.find(
-            (s) => s.value === formData.billingState
-          )?.label
+              (s) => s.value === formData.billingState
+            )?.label
           : null,
         billingCountry: formData.billingCountry
           ? dropdownData.countries.find(
-            (c) => c.value === formData.billingCountry
-          )?.label
+              (c) => c.value === formData.billingCountry
+            )?.label
           : null,
         billingZipCode: formData.billingZipCode || null,
         shippingStreet: formData.shippingStreet || null,
         shippingCity: formData.shippingCity || null,
         shippingState: formData.shippingState
           ? dropdownData.shippingStates.find(
-            (s) => s.value === formData.shippingState
-          )?.label
+              (s) => s.value === formData.shippingState
+            )?.label
           : null,
         shippingCountry: formData.shippingCountry
           ? dropdownData.countries.find(
-            (c) => c.value === formData.shippingCountry
-          )?.label
+              (c) => c.value === formData.shippingCountry
+            )?.label
           : null,
         shippingZipCode: formData.shippingZipCode || null,
         description: formData.description || null,
@@ -615,8 +654,13 @@ function CreateCustomerModal({ onClose, onSuccess }) {
         toast.error(
           `Failed to create customer: ${error.response.data.message}`
         );
-      } else if (error.name === "TypeError" && error.message.includes("Failed to fetch")) {
-        toast.error("Cannot connect to server. Please check if the backend is running.");
+      } else if (
+        error.name === "TypeError" &&
+        error.message.includes("Failed to fetch")
+      ) {
+        toast.error(
+          "Cannot connect to server. Please check if the backend is running."
+        );
       } else {
         toast.error("Failed to create customer. Please try again.");
       }
@@ -659,14 +703,25 @@ function CreateCustomerModal({ onClose, onSuccess }) {
         <button
           type="button"
           onClick={() => setActiveTab("basic")}
-          className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${activeTab === "basic"
-            ? "border-blue-500 text-blue-600"
-            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+          className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${
+            activeTab === "basic"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+          }`}
         >
           <div className="flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+              />
             </svg>
             Basic Information
           </div>
@@ -675,15 +730,31 @@ function CreateCustomerModal({ onClose, onSuccess }) {
         <button
           type="button"
           onClick={() => setActiveTab("address")}
-          className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${activeTab === "address"
-            ? "border-blue-500 text-blue-600"
-            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+          className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${
+            activeTab === "address"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+          }`}
         >
           <div className="flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
             Address Information
           </div>
@@ -692,14 +763,25 @@ function CreateCustomerModal({ onClose, onSuccess }) {
         <button
           type="button"
           onClick={() => setActiveTab("additional")}
-          className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${activeTab === "additional"
-            ? "border-blue-500 text-blue-600"
-            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+          className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${
+            activeTab === "additional"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+          }`}
         >
           <div className="flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
             Additional Details
           </div>
@@ -723,8 +805,9 @@ function CreateCustomerModal({ onClose, onSuccess }) {
             name="companyName"
             value={formData.companyName}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.companyName ? "border-red-500" : "border-gray-300"
-              }`}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+              errors.companyName ? "border-red-500" : "border-gray-300"
+            }`}
             placeholder="Enter company name"
           />
           {errors.companyName && (
@@ -747,7 +830,6 @@ function CreateCustomerModal({ onClose, onSuccess }) {
           )}
         </div>
 
-
         {/* Industry */}
         <div className="space-y-2">
           <label className="text-sm font-semibold text-gray-700">
@@ -762,7 +844,6 @@ function CreateCustomerModal({ onClose, onSuccess }) {
               handleSelectChange(selectedOption, { name: "industry" })
             }
             menuPosition="fixed"
-
             options={industryOptions}
             menuPlacement="auto"
             maxMenuHeight={150}
@@ -781,14 +862,25 @@ function CreateCustomerModal({ onClose, onSuccess }) {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.email ? "border-red-500" : "border-gray-300"
-              }`}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+              errors.email ? "border-red-500" : "border-gray-300"
+            }`}
             placeholder="Enter email address"
           />
           {errors.email && (
             <p className="text-red-500 text-xs flex items-center gap-1">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               {errors.email}
             </p>
@@ -812,16 +904,15 @@ function CreateCustomerModal({ onClose, onSuccess }) {
 
         {/* Website */}
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-gray-700">
-            Website
-          </label>
+          <label className="text-sm font-semibold text-gray-700">Website</label>
           <input
             type="text"
             name="website"
             value={formData.website}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.website ? "border-red-500" : "border-gray-300"
-              }`}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+              errors.website ? "border-red-500" : "border-gray-300"
+            }`}
             placeholder="Enter website URL"
           />
           {errors.website && (
@@ -849,7 +940,11 @@ function CreateCustomerModal({ onClose, onSuccess }) {
           <label className="text-sm font-semibold text-gray-700">
             Primary Number
           </label>
-          <div className={`phone-input-wrapper ${errors.phone ? "border-red-500 rounded-lg" : ""}`}>
+          <div
+            className={`phone-input-wrapper ${
+              errors.phone ? "border-red-500 rounded-lg" : ""
+            }`}
+          >
             <PhoneInput
               country={"in"}
               value={mobileDisplay}
@@ -898,7 +993,11 @@ function CreateCustomerModal({ onClose, onSuccess }) {
           <label className="text-sm font-semibold text-gray-700">
             Secondary Number
           </label>
-          <div className={`phone-input-wrapper ${errors.mobile ? "border-red-500 rounded-lg" : ""}`}>
+          <div
+            className={`phone-input-wrapper ${
+              errors.mobile ? "border-red-500 rounded-lg" : ""
+            }`}
+          >
             <PhoneInput
               country={"in"}
               value={phoneDisplay}
@@ -954,7 +1053,9 @@ function CreateCustomerModal({ onClose, onSuccess }) {
           <h4 className="font-medium text-gray-700">Billing Address</h4>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Street Address</label>
+            <label className="text-sm font-semibold text-gray-700">
+              Street Address
+            </label>
             <input
               type="text"
               name="billingStreet"
@@ -966,7 +1067,9 @@ function CreateCustomerModal({ onClose, onSuccess }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Country</label>
+            <label className="text-sm font-semibold text-gray-700">
+              Country
+            </label>
             <Select
               name="billingCountry"
               value={dropdownData.countries.find(
@@ -983,7 +1086,9 @@ function CreateCustomerModal({ onClose, onSuccess }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700">State</label>
+              <label className="text-sm font-semibold text-gray-700">
+                State
+              </label>
               <Select
                 key={`billing-state-${formData.billingCountry}`}
                 name="billingState"
@@ -1001,7 +1106,9 @@ function CreateCustomerModal({ onClose, onSuccess }) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700">City</label>
+              <label className="text-sm font-semibold text-gray-700">
+                City
+              </label>
               <Select
                 key={`billing-city-${formData.billingState}`}
                 name="billingCity"
@@ -1020,7 +1127,9 @@ function CreateCustomerModal({ onClose, onSuccess }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">ZIP Code</label>
+            <label className="text-sm font-semibold text-gray-700">
+              ZIP Code
+            </label>
             <input
               type="text"
               name="billingZipCode"
@@ -1051,7 +1160,9 @@ function CreateCustomerModal({ onClose, onSuccess }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Street Address</label>
+            <label className="text-sm font-semibold text-gray-700">
+              Street Address
+            </label>
             <input
               type="text"
               name="shippingStreet"
@@ -1064,7 +1175,9 @@ function CreateCustomerModal({ onClose, onSuccess }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Country</label>
+            <label className="text-sm font-semibold text-gray-700">
+              Country
+            </label>
             <Select
               name="shippingCountry"
               value={dropdownData.countries.find(
@@ -1082,7 +1195,9 @@ function CreateCustomerModal({ onClose, onSuccess }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700">State</label>
+              <label className="text-sm font-semibold text-gray-700">
+                State
+              </label>
               <Select
                 key={`shipping-state-${formData.shippingCountry}`}
                 name="shippingState"
@@ -1100,7 +1215,9 @@ function CreateCustomerModal({ onClose, onSuccess }) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700">City</label>
+              <label className="text-sm font-semibold text-gray-700">
+                City
+              </label>
               <Select
                 key={`shipping-city-${formData.shippingState}`}
                 name="shippingCity"
@@ -1119,7 +1236,9 @@ function CreateCustomerModal({ onClose, onSuccess }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">ZIP Code</label>
+            <label className="text-sm font-semibold text-gray-700">
+              ZIP Code
+            </label>
             <input
               type="text"
               name="shippingZipCode"
@@ -1141,19 +1260,18 @@ function CreateCustomerModal({ onClose, onSuccess }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* GSTIN */}
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-gray-700">
-            GSTIN
-          </label>
+          <label className="text-sm font-semibold text-gray-700">GSTIN</label>
           <input
             type="text"
             name="gstin"
             value={formData.gstin}
             onChange={handleChange}
             maxLength={15}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 uppercase ${errors.gstin ? "border-red-500" : "border-gray-300"
-              }`}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 uppercase ${
+              errors.gstin ? "border-red-500" : "border-gray-300"
+            }`}
             placeholder="Enter GSTIN (optional)"
-            style={{ textTransform: 'uppercase' }}
+            style={{ textTransform: "uppercase" }}
           />
           {errors.gstin && (
             <p className="text-red-500 text-xs flex items-center gap-1">
@@ -1204,10 +1322,11 @@ function CreateCustomerModal({ onClose, onSuccess }) {
             value={formData.panNumber}
             onChange={handleChange}
             maxLength={10}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 uppercase ${errors.panNumber ? "border-red-500" : "border-gray-300"
-              }`}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 uppercase ${
+              errors.panNumber ? "border-red-500" : "border-gray-300"
+            }`}
             placeholder="Enter PAN number (optional)"
-            style={{ textTransform: 'uppercase' }}
+            style={{ textTransform: "uppercase" }}
           />
           {errors.panNumber && (
             <p className="text-red-500 text-xs flex items-center gap-1">
@@ -1440,21 +1559,15 @@ function CreateCustomerModal({ onClose, onSuccess }) {
         </div>
       </div>
 
-
-
       <style jsx>{`
-      
-      .react-tel-input .country-list {
-  position: fixed !important;
-  z-index: 9999 !important;
-  max-height: 200px;
-  overflow-y: auto;
- }
+        .react-tel-input .country-list {
+          position: fixed !important;
+          z-index: 9999 !important;
+          max-height: 200px;
+          overflow-y: auto;
+        }
       `}</style>
     </div>
-
-
-
   );
 }
 

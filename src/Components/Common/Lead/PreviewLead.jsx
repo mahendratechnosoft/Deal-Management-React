@@ -189,28 +189,31 @@ function PreviewLead({ leadId, onClose, onEdit, onConvert }) {
         <div className="border-b border-gray-200">
           <div className="flex -mb-px">
             <button
-              className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors duration-200 ${activeTab === "profile"
+              className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                activeTab === "profile"
                   ? "border-blue-500 text-blue-600"
                   : "border-transparent text-gray-500 hover:text-gray-700"
-                }`}
+              }`}
               onClick={() => setActiveTab("profile")}
             >
               Profile
             </button>
             <button
-              className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors duration-200 ${activeTab === "proposal"
+              className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                activeTab === "proposal"
                   ? "border-blue-500 text-blue-600"
                   : "border-transparent text-gray-500 hover:text-gray-700"
-                }`}
+              }`}
               onClick={() => setActiveTab("proposal")}
             >
               Proposal
             </button>
             <button
-              className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors duration-200 ${activeTab === "activity"
+              className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                activeTab === "activity"
                   ? "border-blue-500 text-blue-600"
                   : "border-transparent text-gray-500 hover:text-gray-700"
-                }`}
+              }`}
               onClick={() => setActiveTab("activity")}
             >
               Activity Log
@@ -275,20 +278,23 @@ function PreviewLead({ leadId, onClose, onEdit, onConvert }) {
                         </button>
                         <button
                           onClick={handleConvertToCustomer}
-                          disabled={converting || leadData.converted}
-                          className={`px-3 py-1.5 rounded-md transition-colors duration-200 font-medium flex items-center gap-1.5 text-xs ${leadData.converted
+                          disabled={
+                            converting || leadData.status === "Converted"
+                          }
+                          className={`px-3 py-1.5 rounded-md transition-colors duration-200 font-medium flex items-center gap-1.5 text-xs ${
+                            leadData.status === "Converted"
                               ? "bg-gray-400 text-white cursor-not-allowed"
                               : converting
-                                ? "bg-green-500 text-white cursor-not-allowed"
-                                : "bg-green-600 hover:bg-green-700 text-white"
-                            }`}
+                              ? "bg-green-500 text-white cursor-not-allowed"
+                              : "bg-green-600 hover:bg-green-700 text-white"
+                          }`}
                         >
                           {converting ? (
                             <>
                               <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
                               Converting...
                             </>
-                          ) : leadData.converted ? (
+                          ) : leadData.status === "Converted" ? (
                             <>
                               <svg
                                 className="w-3.5 h-3.5"
@@ -328,24 +334,25 @@ function PreviewLead({ leadId, onClose, onEdit, onConvert }) {
                     </div>
                     <div className="flex items-center gap-3">
                       <span
-                        className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${leadData.status === "New Lead"
+                        className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                          leadData.status === "New Lead"
                             ? "bg-blue-100 text-blue-800"
                             : leadData.status === "Contacted"
-                              ? "bg-purple-100 text-purple-800"
-                              : leadData.status === "Qualified"
-                                ? "bg-green-100 text-green-800"
-                                : leadData.status === "Proposal"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : leadData.status === "Negotiation"
-                                    ? "bg-orange-100 text-orange-800"
-                                    : leadData.status === "Won"
-                                      ? "bg-green-500 text-white"
-                                      : leadData.status === "Lost"
-                                        ? "bg-red-500 text-white"
-                                        : leadData.converted
-                                          ? "bg-green-500 text-white"
-                                          : "bg-gray-100 text-gray-800"
-                          }`}
+                            ? "bg-purple-100 text-purple-800"
+                            : leadData.status === "Qualified"
+                            ? "bg-green-100 text-green-800"
+                            : leadData.status === "Proposal"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : leadData.status === "Negotiation"
+                            ? "bg-orange-100 text-orange-800"
+                            : leadData.status === "Won"
+                            ? "bg-green-500 text-white"
+                            : leadData.status === "Lost"
+                            ? "bg-red-500 text-white"
+                            : leadData.converted
+                            ? "bg-green-500 text-white"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
                       >
                         {leadData.converted
                           ? "Converted"
@@ -523,7 +530,9 @@ function PreviewLead({ leadId, onClose, onEdit, onConvert }) {
                             Follow-Up Date
                           </label>
                           <p className="text-gray-900">
-                            {leadData.followUp ? formatDate(leadData.followUp) : "N/A"}
+                            {leadData.followUp
+                              ? formatDate(leadData.followUp)
+                              : "N/A"}
                           </p>
                         </div>
 
@@ -556,7 +565,6 @@ function PreviewLead({ leadId, onClose, onEdit, onConvert }) {
                       {leadData.description || "N/A"}
                     </p>
                   </div>
-
                 </>
               ) : (
                 <div className="text-center text-gray-500 py-8">
