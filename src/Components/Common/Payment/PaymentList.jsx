@@ -284,7 +284,7 @@ function PaymentList() {
               </div>
 
               {/* Create Button */}
-              {hasPermission("payment", "create") && (
+              {hasPermission("payment", "Create") && (
                 <button
                   className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
                   onClick={handleCreatePayment}

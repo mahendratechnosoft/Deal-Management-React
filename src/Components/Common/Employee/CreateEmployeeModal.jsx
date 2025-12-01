@@ -130,7 +130,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
 
     paymentAccess: false,
     paymentViewAll: false,
-    paymentcreate: false,
+    paymentCreate: false,
     paymentDelete: false,
     paymentEdit: false,
 
@@ -433,7 +433,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
         invoiceEdit: role.invoiceEdit,
         paymentAccess: role.paymentAccess,
         paymentViewAll: role.paymentViewAll,
-        paymentcreate: role.paymentcreate,
+        paymentCreate: role.paymentCreate,
         paymentDelete: role.paymentDelete,
         paymentEdit: role.paymentEdit,
         timeSheetAccess: role.timeSheetAccess,
@@ -491,7 +491,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
       invoiceEdit: false,
       paymentAccess: false,
       paymentViewAll: false,
-      paymentcreate: false,
+      paymentCreate: false,
       paymentDelete: false,
       paymentEdit: false,
       timeSheetAccess: false,
@@ -559,7 +559,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
 
           paymentAccess: selectedRole.paymentAccess || false,
           paymentViewAll: selectedRole.paymentViewAll || false,
-          paymentcreate: selectedRole.paymentcreate || false,
+          paymentCreate: selectedRole.paymentCreate || false,
           paymentDelete: selectedRole.paymentDelete || false,
           paymentEdit: selectedRole.paymentEdit || false,
 
@@ -613,7 +613,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
         invoiceEdit: false,
         paymentAccess: false,
         paymentViewAll: false,
-        paymentcreate: false,
+        paymentCreate: false,
         paymentDelete: false,
         paymentEdit: false,
         timeSheetAccess: false,
@@ -1454,7 +1454,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                     permissions={[
                       { label: "Access", field: "paymentAccess" },
                       { label: "View All", field: "paymentViewAll" },
-                      { label: "Create", field: "paymentcreate" },
+                      { label: "Create", field: "paymentCreate" },
                       { label: "Edit", field: "paymentEdit" },
                       { label: "Delete", field: "paymentDelete" },
                     ]}

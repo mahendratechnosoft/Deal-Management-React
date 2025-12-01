@@ -570,17 +570,37 @@ function EditLead() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => navigate(role === "ROLE_ADMIN" ? "/Admin/LeadList" : "/Employee/LeadList")}
+                onClick={() =>
+                  navigate(
+                    role === "ROLE_ADMIN"
+                      ? "/Admin/LeadList"
+                      : "/Employee/LeadList"
+                  )
+                }
                 className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 p-1.5 hover:bg-gray-100 rounded transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
                 </svg>
                 <span className="hidden sm:inline">Back</span>
               </button>
               <div>
-                <h1 className="text-lg font-semibold text-gray-900">Edit Lead</h1>
-                <p className="text-xs text-gray-600">Update lead information for {formData.clientName}</p>
+                <h1 className="text-lg font-semibold text-gray-900">
+                  Edit Lead
+                </h1>
+                <p className="text-xs text-gray-600">
+                  Update lead information for {formData.clientName}
+                </p>
               </div>
             </div>
 
@@ -603,7 +623,39 @@ function EditLead() {
                       Updating...
                     </>
                   ) : (
-                    'Update Lead'
+                    "Update Lead"
+                  )}
+                </button>
+              )}
+              {hasPermission("lead", "Edit") && (
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Updating...
+                    </>
+                  ) : (
+                    "Update Lead"
+                  )}
+                </button>
+              )}
+              {hasPermission("lead", "Edit") && (
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Updating...
+                    </>
+                  ) : (
+                    "Update Lead"
                   )}
                 </button>
               )}
@@ -618,7 +670,9 @@ function EditLead() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Left Column - Basic Information */}
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Lead Details</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">
+                    Lead Details
+                  </h3>
 
                   <div className="space-y-4">
                     {/* Client Name & Company Name */}
@@ -650,7 +704,9 @@ function EditLead() {
                         label="Primary Number"
                         name="mobileNumber"
                         value={formData.mobileNumber}
-                        onChange={(phone) => handlePhoneChange('mobileNumber', phone)}
+                        onChange={(phone) =>
+                          handlePhoneChange("mobileNumber", phone)
+                        }
                         required={true}
                         error={errors.mobileNumber}
                         background="white"
@@ -660,7 +716,9 @@ function EditLead() {
                         label="Secondary Number"
                         name="phoneNumber"
                         value={formData.phoneNumber}
-                        onChange={(phone) => handlePhoneChange('phoneNumber', phone)}
+                        onChange={(phone) =>
+                          handlePhoneChange("phoneNumber", phone)
+                        }
                         error={errors.phoneNumber}
                         background="white"
                       />
@@ -701,9 +759,13 @@ function EditLead() {
                           { value: "Manufacturing", label: "Manufacturing" },
                           { value: "Retail", label: "Retail" },
                           { value: "Real Estate", label: "Real Estate" },
-                          { value: "Other", label: "Other" }
-                        ].find(opt => opt.value === formData.industry)}
-                        onChange={(selectedOption) => handleSelectChange(selectedOption, { name: "industry" })}
+                          { value: "Other", label: "Other" },
+                        ].find((opt) => opt.value === formData.industry)}
+                        onChange={(selectedOption) =>
+                          handleSelectChange(selectedOption, {
+                            name: "industry",
+                          })
+                        }
                         options={[
                           { value: "Technology", label: "Technology" },
                           { value: "Healthcare", label: "Healthcare" },
@@ -712,7 +774,7 @@ function EditLead() {
                           { value: "Manufacturing", label: "Manufacturing" },
                           { value: "Retail", label: "Retail" },
                           { value: "Real Estate", label: "Real Estate" },
-                          { value: "Other", label: "Other" }
+                          { value: "Other", label: "Other" },
                         ]}
                         background="white"
                       />
@@ -720,7 +782,6 @@ function EditLead() {
                       <FormSelect
                         label="Source"
                         name="source"
-                        className="setbg-white"
                         value={[
                           { value: "Instagram", label: "Instagram" },
                           { value: "Website", label: "Website" },
@@ -728,9 +789,11 @@ function EditLead() {
                           { value: "Social Media", label: "Social Media" },
                           { value: "Trade Show", label: "Trade Show" },
                           { value: "Email Campaign", label: "Email Campaign" },
-                          { value: "Website Form", label: "Website Form" }
-                        ].find(opt => opt.value === formData.source)}
-                        onChange={(selectedOption) => handleSelectChange(selectedOption, { name: "source" })}
+                          { value: "Website Form", label: "Website Form" },
+                        ].find((opt) => opt.value === formData.source)}
+                        onChange={(selectedOption) =>
+                          handleSelectChange(selectedOption, { name: "source" })
+                        }
                         options={[
                           { value: "Instagram", label: "Instagram" },
                           { value: "Website", label: "Website" },
@@ -738,14 +801,13 @@ function EditLead() {
                           { value: "Social Media", label: "Social Media" },
                           { value: "Trade Show", label: "Trade Show" },
                           { value: "Email Campaign", label: "Email Campaign" },
-                          { value: "Website Form", label: "Website Form" }
+                          { value: "Website Form", label: "Website Form" },
                         ]}
                         background="white"
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
-
                       <FormInput
                         label="Follow-Up Date & Time"
                         name="followUp"
@@ -754,15 +816,10 @@ function EditLead() {
                         type="datetime-local"
                         background="white"
                       />
-
-
                     </div>
                   </div>
 
-
-
                   <div className="grid grid-cols-1 gap-2 mt-4">
-
                     <FormTextarea
                       label="Description"
                       name="description"
@@ -771,7 +828,6 @@ function EditLead() {
                       rows={2}
                       background="white"
                     />
-
                   </div>
                 </div>
 
@@ -779,10 +835,11 @@ function EditLead() {
                 <div className="space-y-4">
                   {/* Lead Details */}
 
-
                   {/* Address Information */}
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Address Information</h3>
+                    <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">
+                      Address Information
+                    </h3>
 
                     <div className="space-y-4">
                       <FormInput
@@ -798,7 +855,9 @@ function EditLead() {
                           label="Country"
                           name="country"
                           className="setbg-white"
-                          value={dropdownData.countries.find(opt => opt.value === formData.country)}
+                          value={dropdownData.countries.find(
+                            (opt) => opt.value === formData.country
+                          )}
                           onChange={handleCountryChange}
                           options={dropdownData.countries}
                           isSearchable
@@ -810,7 +869,9 @@ function EditLead() {
                           label="State"
                           name="state"
                           className="setbg-white"
-                          value={dropdownData.states.find(opt => opt.value === formData.state)}
+                          value={dropdownData.states.find(
+                            (opt) => opt.value === formData.state
+                          )}
                           onChange={handleStateChange}
                           options={dropdownData.states}
                           isSearchable
@@ -825,7 +886,9 @@ function EditLead() {
                           label="City"
                           name="city"
                           className="setbg-white"
-                          value={dropdownData.cities.find(opt => opt.value === formData.city)}
+                          value={dropdownData.cities.find(
+                            (opt) => opt.value === formData.city
+                          )}
                           onChange={handleCityChange}
                           options={dropdownData.cities}
                           isSearchable
@@ -844,12 +907,9 @@ function EditLead() {
                       </div>
                     </div>
                   </div>
-
-
                 </div>
               </div>
             </form>
-
           </div>
         </div>
       </div>

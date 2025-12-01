@@ -3,9 +3,33 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
 
 import Mtech_logoOnly from "../../../../public/Images/Mtech_OnlyLogo.jpg";
+import { hasPermission } from "../../BaseComponet/permissions";
 function Sidebar({ isOpen, toggleSidebar }) {
   const navigate = useNavigate();
   const location = useLocation();
+
+
+  // Module key mapping for permission checks
+  const moduleKeyMap = {
+    Lead: "lead",
+    Customer: "customer",
+    Proposal: "proposal",
+    Proforma: "proformaInvoice",
+    Invoice: "invoice",
+    Payment: "payment",
+    Timesheet: "timeSheet",
+    Item: "item",
+    Setting: "setting",
+    Employee: "employee",
+
+    Donar: "donor",
+    ShortlistedDonar: "ShortlistedDonar",
+    FamilyList: "FamilyList",
+    Matchingdonor: "Matchingdonor",
+
+  };
+
+
 
   const navigationItems = [
     {
@@ -195,7 +219,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
       color: "from-indigo-500 to-purple-600",
     },
     {
-      name: "Settings",
+      name: "Setting",
       path: "/Admin/Settings",
       icon: (
         <svg
@@ -241,7 +265,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
       color: "from-rose-500 to-pink-500",
     },
     {
-      name: "Shortlisted Donar",
+      name: "ShortlistedDonar",
       path: "/Admin/SelectedDonarList",
       icon: (
         <svg
@@ -261,7 +285,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
       color: "from-green-500 to-emerald-500",
     },
     {
-      name: "Family List",
+      name: "FamilyList",
       path: "/Admin/FamilyList",
       icon: (
         <svg
@@ -281,7 +305,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
       color: "from-orange-500 to-amber-500",
     },
     {
-      name: "Matching donor",
+      name: "Matchingdonor",
       path: "/Admin/PreviewMatchingDonors/:familyId",
       icon: (
         <svg
@@ -310,6 +334,17 @@ function Sidebar({ isOpen, toggleSidebar }) {
     console.log("Logging out...");
   };
 
+
+
+  const checkModuleAccess = (moduleName, moduleKey) => {
+    // Check if Donar access grants access to related modules
+    if (["ShortlistedDonar", "FamilyList", "Matchingdonor"].includes(moduleName)) {
+      const donorHasAccess = hasPermission("donor", "Access");
+      const specificModuleHasAccess = hasPermission(moduleKey, "Access");
+      return donorHasAccess || specificModuleHasAccess;
+    }
+    return hasPermission(moduleKey, "Access");
+  };
   return (
     <>
       {/* Overlay for mobile */}
@@ -381,69 +416,73 @@ function Sidebar({ isOpen, toggleSidebar }) {
             )}
           </div>
 
-          {/* Navigation Items */}
-          <nav className="flex-1 p-4">
-            <div className="space-y-1">
-              {navigationItems.map((item) => (
-                <button
-                  key={item.name}
-                  onClick={() => {
-                    navigate(item.path);
-                    if (window.innerWidth < 1024) {
-                      toggleSidebar();
-                    }
-                  }}
-                  className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${isActive(item.path)
-                    ? `bg-gradient-to-r ${item.color} shadow transform scale-105`
-                    : "bg-gray-800/50 hover:bg-gray-700/70 hover:transform hover:scale-105"
-                    } ${isOpen
-                      ? "px-3 py-2.5 justify-start"
-                      : "px-2 py-2.5 justify-center"
-                    }`}
-                  title={!isOpen ? item.name : ""}
-                >
-                  {/* Background Glow Effect */}
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-r ${item.color
-                      } opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${isActive(item.path) && "opacity-20"
-                      }`}
-                  ></div>
 
-                  <div
-                    className={`relative z-10 flex items-center ${isOpen ? "w-full" : "justify-center"
+
+          {/* Navigation Items */}
+          < nav className="flex-1 p-4" >
+            <div className="space-y-1">
+              {navigationItems
+                .filter((item) => checkModuleAccess(item.name, moduleKeyMap[item.name]))
+                .map((item) => (
+                  <button
+                    key={item.name}
+                    onClick={() => {
+                      navigate(item.path);
+                      if (window.innerWidth < 1024) {
+                        toggleSidebar();
+                      }
+                    }}
+                    className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${isActive(item.path)
+                      ? `bg-gradient-to-r ${item.color} shadow transform scale-105`
+                      : "bg-gray-800/50 hover:bg-gray-700/70 hover:transform hover:scale-105"
+                      } ${isOpen
+                        ? "px-3 py-2.5 justify-start"
+                        : "px-2 py-2.5 justify-center"
                       }`}
+                    title={!isOpen ? item.name : ""}
                   >
+                    {/* Background Glow Effect */}
                     <div
-                      className={`transition-all duration-300 ${isActive(item.path)
-                        ? "text-white scale-105"
-                        : "text-gray-400 group-hover:text-white group-hover:scale-105"
+                      className={`absolute inset-0 bg-gradient-to-r ${item.color
+                        } opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${isActive(item.path) && "opacity-20"
+                        }`}
+                    ></div>
+
+                    <div
+                      className={`relative z-10 flex items-center ${isOpen ? "w-full" : "justify-center"
                         }`}
                     >
-                      {item.icon}
+                      <div
+                        className={`transition-all duration-300 ${isActive(item.path)
+                          ? "text-white scale-105"
+                          : "text-gray-400 group-hover:text-white group-hover:scale-105"
+                          }`}
+                      >
+                        {item.icon}
+                      </div>
+
+                      {isOpen && (
+                        <div className="ml-3 flex-1 text-left">
+                          <span
+                            className={`font-medium block text-xs transition-colors duration-300 ${isActive(item.path)
+                              ? "text-white"
+                              : "text-gray-300 group-hover:text-white"
+                              }`}
+                          >
+                            {item.name}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
-                    {isOpen && (
-                      <div className="ml-3 flex-1 text-left">
-                        <span
-                          className={`font-medium block text-xs transition-colors duration-300 ${isActive(item.path)
-                            ? "text-white"
-                            : "text-gray-300 group-hover:text-white"
-                            }`}
-                        >
-                          {item.name}
-                        </span>
+                    {/* Active Indicator */}
+                    {isActive(item.path) && (
+                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                       </div>
                     )}
-                  </div>
-
-                  {/* Active Indicator */}
-                  {isActive(item.path) && (
-                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                      <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                    </div>
-                  )}
-                </button>
-              ))}
+                  </button>
+                ))}
             </div>
           </nav>
 
@@ -497,7 +536,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
             </button>
           </div>
         </div>
-      </div>
+      </div >
     </>
   );
 }
