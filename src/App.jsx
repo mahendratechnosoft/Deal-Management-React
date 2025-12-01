@@ -42,8 +42,8 @@ import ProformaPreview from "./Components/Common/Proforma/ProformaPreview.jsx";
 import DonorList from "./Components/Common/Donor/DonorList.jsx";
 import EditDonar from "./Components/Common/Donor/EditDonar.jsx";
 import SelectedDonarList from "./Components/Common/Donor/SelectedDonarList.jsx";
-import SampleReport from "./Components/Common/Donor/SampleReport.jsx";
-import SampleList from "./Components/Common/Donor/SampleList.jsx";
+
+
 import TimeSheetList from "./Components/Common/Timesheet/TimeSheetList.jsx";
 import InvoiceList from "./Components/Common/Invoice/InvoiceList.jsx";
 import InvoicePreview from "./Components/Common/Invoice/InvoicePreview.jsx";
@@ -250,23 +250,23 @@ function App() {
           />
 
 
-            <Route
+            {/* <Route
             path="/Admin/SampleList/:sampleReportId"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                 <SampleList />
               </RoleBasedRoute>
             }
-          />
+          /> */}
 
-                <Route
+                {/* <Route
             path="/Admin/SampleReport/:donorId/:uin"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                 <SampleReport />
               </RoleBasedRoute>
             }
-          />
+          /> */}
 
           
             <Route
