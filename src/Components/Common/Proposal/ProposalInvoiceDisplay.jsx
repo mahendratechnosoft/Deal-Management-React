@@ -432,6 +432,29 @@ const ProposalInvoiceDisplay = ({
                 </div>
               </div>
 
+              {/* Bank Details */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h3 className="text-sm font-semibold text-gray-800 mb-3">
+                  Bank Details
+                </h3>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <p className="flex items-center gap-2">
+                    <span>Bank Name: {adminInformation.bankName}</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <span>
+                      Account Holder: {adminInformation.accountHolderName}
+                    </span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <span>Account No: {adminInformation.accountNumber}</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <span>IFSC: {adminInformation.ifscCode}</span>
+                  </p>
+                </div>
+              </div>
+
               {/* Proposal Info */}
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <h3 className="text-sm font-semibold text-gray-800 mb-3">

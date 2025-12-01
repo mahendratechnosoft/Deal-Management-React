@@ -244,15 +244,14 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   termsText: {
-    fontSize: 8,
-    color: "#6b7280",
+    fontSize: 10,
     lineHeight: 1.4,
     borderLeftWidth: 2,
     borderLeftColor: "#e5e7eb",
     paddingLeft: 6,
   },
   notesText: {
-    fontSize: 8,
+    fontSize: 10,
     color: "#6b7280",
     lineHeight: 1.4,
     marginTop: 8,
@@ -474,14 +473,34 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
             </Text>
             <Text style={styles.addressText}>
               {breakLongText(adminInformation?.address, 50)}
-              {adminInformation?.gstNumber &&
-                `\nGST Number: ${adminInformation.gstNumber}`}
-              {adminInformation?.panNumber &&
-                `\nPAN: ${adminInformation.panNumber}`}
-              {adminInformation?.phone &&
-                `\nMobile No: ${adminInformation.phone}`}
-              {adminInformation?.companyEmail &&
-                `\nEmail: ${breakLongText(adminInformation.companyEmail, 30)}`}
+              {adminInformation?.gstNumber && (
+                <>
+                  {"\n"}
+                  <Text style={{ fontWeight: "bold" }}>GST Number:</Text>{" "}
+                  {adminInformation.gstNumber}
+                </>
+              )}
+              {adminInformation?.panNumber && (
+                <>
+                  {"\n"}
+                  <Text style={{ fontWeight: "bold" }}>PAN:</Text>{" "}
+                  {adminInformation.panNumber}
+                </>
+              )}
+              {adminInformation?.phone && (
+                <>
+                  {"\n"}
+                  <Text style={{ fontWeight: "bold" }}>Mobile No:</Text>{" "}
+                  {adminInformation.phone}
+                </>
+              )}
+              {adminInformation?.companyEmail && (
+                <>
+                  {"\n"}
+                  <Text style={{ fontWeight: "bold" }}>Email:</Text>{" "}
+                  {breakLongText(adminInformation.companyEmail, 30)}
+                </>
+              )}
             </Text>
           </View>
           <View style={styles.addressBlockRight}>
@@ -512,10 +531,33 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
             )}
 
             <Text style={{ ...styles.addressText, marginTop: 8 }}>
-              {info?.gstin && `GST Number: ${info.gstin}`}
-              {info?.panNumber && `\nPAN: ${info.panNumber}`}
-              {info?.mobileNumber && `\nMobile No: ${info.mobileNumber}`}
-              {info?.email && `\nEmail: ${breakLongText(info.email, 30)}`}
+              {info?.gstin && (
+                <>
+                  <Text style={{ fontWeight: "bold" }}>GST Number:</Text>{" "}
+                  {info.gstin}
+                </>
+              )}
+              {info?.panNumber && (
+                <>
+                  {"\n"}
+                  <Text style={{ fontWeight: "bold" }}>PAN:</Text>{" "}
+                  {info.panNumber}
+                </>
+              )}
+              {info?.mobileNumber && (
+                <>
+                  {"\n"}
+                  <Text style={{ fontWeight: "bold" }}>Mobile No:</Text>{" "}
+                  {info.mobileNumber}
+                </>
+              )}
+              {info?.email && (
+                <>
+                  {"\n"}
+                  <Text style={{ fontWeight: "bold" }}>Email:</Text>{" "}
+                  {breakLongText(info.email, 30)}
+                </>
+              )}
             </Text>
 
             <View style={styles.dateBox}>
@@ -641,26 +683,61 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
 
         {/* Footer (Terms, Notes, Auth) */}
         <View style={styles.footerSection}>
-          {info.termsAndConditions && (
-            <View>
-              <Text style={[styles.sectionTitle, { color: "#111827" }]}>
-                Terms & Conditions
-              </Text>
-              <Text style={styles.termsText}>
-                {breakLongText(info.termsAndConditions, 128)}
-              </Text>
-            </View>
-          )}
-          {info.notes && (
-            <View style={{ marginTop: 8 }}>
-              <Text style={[styles.sectionTitle, { color: "#111827" }]}>
-                Notes
-              </Text>
-              <Text style={styles.notesText}>
-                {breakLongText(info.notes, 128)}
-              </Text>
-            </View>
-          )}
+          <View style={{ marginBottom: 10 }}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: "#111827", fontSize: 10, fontWeight: "bold" },
+              ]}
+            >
+              Bank Details
+            </Text>
+            <Text style={styles.termsText}>
+              <>
+                <Text style={{ fontWeight: "bold" }}>Bank Name:</Text>{" "}
+                {adminInformation.bankName}
+                {"\n"}
+                <Text style={{ fontWeight: "bold" }}>Account Number:</Text>{" "}
+                {adminInformation.accountNumber}
+                {"\n"}
+                <Text style={{ fontWeight: "bold" }}>
+                  Account Holder Name:
+                </Text>{" "}
+                {adminInformation.accountHolderName}
+                {"\n"}
+                <Text style={{ fontWeight: "bold" }}>IFSC Code:</Text>{" "}
+                {adminInformation.ifscCode}
+                {"\n"}
+              </>
+            </Text>
+          </View>
+          <View>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: "#111827", fontSize: 10, fontWeight: "bold" },
+              ]}
+            >
+              Terms & Conditions
+            </Text>
+            <Text style={[styles.termsText, { color: "#6b7280" }]}>
+              {breakLongText(info.termsAndConditions || "NA", 128)}
+            </Text>
+          </View>
+
+          <View style={{ marginTop: 8 }}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: "#111827", fontSize: 10, fontWeight: "bold" },
+              ]}
+            >
+              Notes
+            </Text>
+            <Text style={styles.notesText}>
+              {breakLongText(info.notes || "NA", 128)}
+            </Text>
+          </View>
           <View wrap={false}>
             <Text
               style={[styles.sectionTitle, { color: "#111827", marginTop: 16 }]}

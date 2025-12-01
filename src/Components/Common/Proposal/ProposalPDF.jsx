@@ -561,27 +561,43 @@ const ProposalPDF = ({ data }) => {
           </Text>
         </View>
         {/* 7. Notes & Terms (NEW) */}
-        {(proposalInfo.notes || proposalInfo.termsAndConditions) && (
-          <View style={styles.notesAndTermsSection}>
-            {proposalInfo.notes && (
-              <View style={{ marginBottom: 10 }}>
-                <Text style={styles.subHeader}>Notes:</Text>
-                <Text style={styles.sectionContent}>
-                  {breakLongText(proposalInfo.notes, 100)}
-                </Text>
-              </View>
-            )}
 
-            {proposalInfo.termsAndConditions && (
-              <View>
-                <Text style={styles.subHeader}>Terms & Conditions:</Text> 
-                <Text style={styles.sectionContent}>
-                  {breakLongText(proposalInfo.termsAndConditions, 100)}
-                </Text>
-              </View>
-            )}
+        <View style={styles.notesAndTermsSection}>
+          <View style={{ marginBottom: 10 }}>
+            <Text style={styles.subHeader}>Bank Details:</Text>
+            <Text style={styles.sectionContent}>
+              <>
+                <Text style={{ fontWeight: "bold" }}>Bank Name:</Text>{" "}
+                {adminInformation.bankName}
+                {"\n"}
+                <Text style={{ fontWeight: "bold" }}>Account Number:</Text>{" "}
+                {adminInformation.accountNumber}
+                {"\n"}
+                <Text style={{ fontWeight: "bold" }}>
+                  Account Holder Name:
+                </Text>{" "}
+                {adminInformation.accountHolderName}
+                {"\n"}
+                <Text style={{ fontWeight: "bold" }}>IFSC Code:</Text>{" "}
+                {adminInformation.ifscCode}
+                {"\n"}
+              </>
+            </Text>
           </View>
-        )}
+          <View style={{ marginBottom: 10 }}>
+            <Text style={styles.subHeader}>Notes:</Text>
+            <Text style={styles.sectionContent}>
+              {breakLongText(proposalInfo.notes || "NA", 100)}
+            </Text>
+          </View>
+
+          <View>
+            <Text style={styles.subHeader}>Terms & Conditions:</Text> 
+            <Text style={styles.sectionContent}>
+              {breakLongText(proposalInfo.termsAndConditions || "NA", 100)}
+            </Text>
+          </View>
+        </View>
         {/* 8. Signature & Stamp (NEW) */}
         {(proposalInfo.companySignature || proposalInfo.companyStamp) && (
           <View style={styles.signatureStampSection} wrap={false}>
