@@ -119,9 +119,9 @@ function QualifiedDonorList() {
 
     const donorInfo = (donorId) => {
         if (role === "ROLE_ADMIN") {
-            navigate(`/Admin/DonarEdit/${donorId}`);
+            navigate(`/Admin/DonorEdit/${donorId}`);
         } else if (role === "ROLE_EMPLOYEE") {
-            navigate(`/Employee/DonarEdit/${donorId}`);
+            navigate(`/Employee/DonorEdit/${donorId}`);
         }
     };
 

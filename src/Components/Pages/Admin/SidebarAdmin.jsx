@@ -22,8 +22,10 @@ function Sidebar({ isOpen, toggleSidebar }) {
     Setting: "setting",
     Employee: "employee",
 
-    Donar: "donor",
-    ShortlistedDonar: "ShortlistedDonar",
+    Prospects: "Prospects",
+    Shortlisted: "Shortlisted",
+    Qualified:"Qualified",
+    Donor:"Donor",
     FamilyList: "FamilyList",
     Matchingdonor: "Matchingdonor",
 
@@ -245,8 +247,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
       color: "from-slate-600 to-gray-500",
     },
     {
-      name: "Donar",
-      path: "/Admin/donarList",
+      name: "Prospects",
+      path: "/Admin/donorList",
       icon: (
         <svg
           className="w-5 h-5"
@@ -265,8 +267,48 @@ function Sidebar({ isOpen, toggleSidebar }) {
       color: "from-rose-500 to-pink-500",
     },
     {
-      name: "ShortlistedDonar",
-      path: "/Admin/SelectedDonarList",
+      name: "Shortlisted",
+      path: "/Admin/SelectedDonorList",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      ),
+      color: "from-green-500 to-emerald-500",
+    },
+     {
+      name: "Qualified",
+      path: "/Admin/QualifiedDonorList",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      ),
+      color: "from-green-500 to-emerald-500",
+    },
+    {
+      name: "Donor",
+      path: "/Admin/ConfirmDonorList",
       icon: (
         <svg
           className="w-5 h-5"
@@ -338,7 +380,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
 
   const checkModuleAccess = (moduleName, moduleKey) => {
     // Check if Donar access grants access to related modules
-    if (["ShortlistedDonar", "FamilyList", "Matchingdonor"].includes(moduleName)) {
+    if (["Prospects","Shortlisted","Qualified","Donor", "FamilyList", "Matchingdonor",].includes(moduleName)) {
       const donorHasAccess = hasPermission("donor", "Access");
       const specificModuleHasAccess = hasPermission(moduleKey, "Access");
       return donorHasAccess || specificModuleHasAccess;

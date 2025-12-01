@@ -496,9 +496,9 @@ function DonorMatchingFilter() {
 
     const handleEdit = (donorId) => {
         if (role === 'ROLE_ADMIN') {
-            navigate(`/Admin/DonarEdit/${donorId}`);
+            navigate(`/Admin/DonorEdit/${donorId}`);
         } else {
-            navigate(`/Employee/DonarEdit/${donorId}`);
+            navigate(`/Employee/DonorEdit/${donorId}`);
         }
     };
 
