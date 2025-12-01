@@ -293,7 +293,7 @@ function App() {
 
 
                <Route
-            path="/Admin/EditFamily"
+            path="/Admin/EditFamily/:familyInfoId"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                 <EditFamily />
@@ -501,7 +501,7 @@ function App() {
           />
 
            <Route
-            path="/Employee/DonarList"
+            path="/Employee/DonorList"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
                 <DonorList />
