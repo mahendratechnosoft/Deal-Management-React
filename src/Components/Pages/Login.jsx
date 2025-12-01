@@ -102,10 +102,10 @@ function Login({ onSwitchToRegister, onLogin }) {
 
         // Store role separately for easy access
         localStorage.setItem("role", data.role);
-         localStorage.setItem(
-           "moduleAccess",
-           JSON.stringify(data.moduleAccess)
-         );
+        localStorage.setItem(
+          "moduleAccess",
+          JSON.stringify(data.moduleAccess)
+        );
 
 
         // Store loginUserName separately for easy access
@@ -144,11 +144,24 @@ function Login({ onSwitchToRegister, onLogin }) {
           });
         }
 
+
         // Navigate based on the role from API response (not from localStorage)
         if (data.role === "ROLE_ADMIN") {
-          navigate("/Admin/LeadList");
+          if (data.moduleAccess.donorAccess === true) {
+            navigate("/Admin/donorList");
+          }
+          else {
+            navigate("/Admin/LeadList");
+
+          }
         } else if (data.role === "ROLE_EMPLOYEE") {
-          navigate("/Employee/LeadList");
+          if (data.moduleAccess.donorAccess === true) {
+            navigate("/Employee/donorList");
+          }
+          else {
+            navigate("/Employee/LeadList");
+          }
+
         } else if (data.role === "ROLE_SUPERADMIN") {
           navigate("/SuperAdmin/AdminList");
         } else {
