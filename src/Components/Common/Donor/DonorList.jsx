@@ -20,7 +20,7 @@ function DonorList() {
     const [totaldonors, setTotaldonors] = useState(0);
     const [pageSize, setPageSize] = useState(10);
     const [openModal, setOpenModal] = useState(false);
-
+    const [donorStatusAndCount, setDonorStatusAndCount] = useState();
 
 
 
@@ -87,6 +87,7 @@ function DonorList() {
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             fetchDonors(0, searchTerm);
+            fetchDonorStatusCount()
         }, 500);
 
         return () => clearTimeout(timeoutId);
@@ -98,6 +99,20 @@ function DonorList() {
             fetchDonors(newPage, searchTerm);
         }
     };
+
+    const fetchDonorStatusCount = async () => {
+
+        try {
+            const response = await axiosInstance.get("getDonorStatusCount");
+
+            setDonorStatusAndCount(response.data)
+            console.log(response.data)
+
+        } catch (err) {
+            console.error("Error fetching donors status", err);
+            setError("Failed to load donor Status");
+        }
+    }
 
     // 🔥 MODAL HANDLERS - Most Important
     const handleCreateDonor = () => {
@@ -166,7 +181,7 @@ function DonorList() {
             //         d.donorId === donorId ? { ...d, status: newStatus } : d
             //     )
             // );
-
+            fetchDonorStatusCount()
             toast.success("Status updated");
 
         } catch (err) {
@@ -328,7 +343,7 @@ function DonorList() {
 
                 <div className="flex gap-2">
 
-                    <div className="flex-1 bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+                    {/* <div className="flex-1 bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-2">
                             <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-gray-100">
                                 <svg
@@ -349,10 +364,10 @@ function DonorList() {
                                 <p className="text-gray-500 text-[12px] font-medium truncate">
                                     Total Donor
                                 </p>
-                                <p className="text-gray-900 text-sm font-bold truncate">1000</p>
+                                <p className="text-gray-900 text-sm font-bold truncate">{donorStatusAndCount?.["Donor"]?? 0+donorStatusAndCount?.["New Donor"]?? 0+donorStatusAndCount?.["Qualified"]?? 0+donorStatusAndCount?.["Shortlisted"] ?? 0}</p>
                             </div>
                         </div>
-                    </div>
+                    </div> */}
 
                     <div className="flex-1 bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-2">
@@ -375,7 +390,7 @@ function DonorList() {
                                 <p className="text-gray-500 text-[12px] font-medium truncate">
                                     New Donor
                                 </p>
-                                <p className="text-gray-900 text-sm font-bold truncate">250</p>
+                                <p className="text-gray-900 text-sm font-bold truncate">{donorStatusAndCount?.["New Donor"] ?? 0}</p>
                             </div>
                         </div>
                     </div>
@@ -401,7 +416,7 @@ function DonorList() {
                                 <p className="text-gray-500 text-[12px] font-medium truncate">
                                     Qualified
                                 </p>
-                                <p className="text-gray-900 text-sm font-bold truncate">200</p>
+                                <p className="text-gray-900 text-sm font-bold truncate">{donorStatusAndCount?.["Qualified"] ?? 0}</p>
                             </div>
                         </div>
                     </div>
@@ -427,7 +442,7 @@ function DonorList() {
                                 <p className="text-gray-500 text-[12px] font-medium truncate">
                                     Shortlisted
                                 </p>
-                                <p className="text-gray-900 text-sm font-bold truncate">300</p>
+                                <p className="text-gray-900 text-sm font-bold truncate">{donorStatusAndCount?.["Shortlisted"] ?? 0}</p>
                             </div>
                         </div>
                     </div>
@@ -450,9 +465,9 @@ function DonorList() {
                             </div>
                             <div className="min-w-0 flex-1">
                                 <p className="text-gray-500 text-[12px] font-medium truncate">
-                                    Rejected
+                                    Donor
                                 </p>
-                                <p className="text-gray-900 text-sm font-bold truncate">250</p>
+                                <p className="text-gray-900 text-sm font-bold truncate">{donorStatusAndCount?.["Donor"] ?? 0}</p>
                             </div>
                         </div>
                     </div>
@@ -636,7 +651,7 @@ function DonorList() {
                 <CreateDonar
                     isOpen={openModal}
                     onClose={() => setOpenModal(false)}
-                    onSuccess={() => {  fetchDonors(0, searchTerm);}}
+                    onSuccess={() => { fetchDonors(0, searchTerm);fetchDonorStatusCount() }}
                 />
             </div>
 

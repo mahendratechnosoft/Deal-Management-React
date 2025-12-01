@@ -535,8 +535,8 @@ function EditDonar() {
                     <div className="flex items-center gap-2 mb-2">
                         <button
                             onClick={() => {
-                                if (role === "ROLE_ADMIN") navigate("/Admin/donarList");
-                                else if (role === "ROLE_EMPLOYEE") navigate("/Employee/donarList");
+                                if (role === "ROLE_ADMIN") navigate("/Admin/donorList");
+                                else if (role === "ROLE_EMPLOYEE") navigate("/Employee/donorList");
                             }}
                             className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200"
                         >
