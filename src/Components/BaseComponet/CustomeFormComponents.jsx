@@ -72,6 +72,7 @@ export const FormInput = ({
   disabled = false,
   className = "",
   background = "transparent",
+  ...props
 }) => (
   <div className={`relative ${className}`}>
     <input
@@ -82,6 +83,7 @@ export const FormInput = ({
       onChange={onChange}
       placeholder=" "
       disabled={disabled}
+      {...props}
       style={{
         backgroundColor: background === "white" ? "#ffffff" : "transparent",
       }}
