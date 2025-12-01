@@ -23,7 +23,7 @@ const convertToBase64 = (file) => {
 
 const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
   const navigate = useNavigate();
-  const { LayoutComponent } = useLayout();
+ 
 
   // Initial state constant to avoid repetition
   const initialFormState = {
@@ -155,7 +155,7 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
       // Call onSuccess callback so parent can refresh data
       onSuccess && onSuccess();
       handleClose();
-      window.location.reload();
+      
 
     } catch (error) {
       console.error("Error creating donor:", error);
