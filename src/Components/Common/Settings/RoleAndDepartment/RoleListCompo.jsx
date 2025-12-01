@@ -188,7 +188,7 @@ function RoleListCompo() {
 
     paymentAccess: false,
     paymentViewAll: false,
-    paymentcreate: false,
+    paymentCreate: false,
     paymentDelete: false,
     paymentEdit: false,
 
@@ -233,7 +233,7 @@ function RoleListCompo() {
 
     paymentAccess: false,
     paymentViewAll: false,
-    paymentcreate: false,
+    paymentCreate: false,
     paymentDelete: false,
     paymentEdit: false,
 
@@ -322,7 +322,7 @@ function RoleListCompo() {
       invoiceEdit: false,
       paymentAccess: false,
       paymentViewAll: false,
-      paymentcreate: false,
+      paymentCreate: false,
       paymentDelete: false,
       paymentEdit: false,
       timeSheetAccess: false,
@@ -408,7 +408,7 @@ function RoleListCompo() {
 
         paymentAccess: role.paymentAccess || false,
         paymentViewAll: role.paymentViewAll || false,
-        paymentcreate: role.paymentcreate || false,
+        paymentCreate: role.paymentCreate || false,
         paymentDelete: role.paymentDelete || false,
         paymentEdit: role.paymentEdit || false,
 
@@ -919,7 +919,7 @@ function RoleListCompo() {
                       permissions={[
                         { label: "Access", field: "paymentAccess" },
                         { label: "View All", field: "paymentViewAll" },
-                        { label: "Create", field: "paymentcreate" },
+                        { label: "Create", field: "paymentCreate" },
                         { label: "Edit", field: "paymentEdit" },
                         { label: "Delete", field: "paymentDelete" },
                       ]}
@@ -1157,7 +1157,7 @@ function RoleListCompo() {
                       permissions={[
                         { label: "Access", field: "paymentAccess" },
                         { label: "View All", field: "paymentViewAll" },
-                        { label: "Create", field: "paymentcreate" },
+                        { label: "Create", field: "paymentCreate" },
                         { label: "Edit", field: "paymentEdit" },
                         { label: "Delete", field: "paymentDelete" },
                       ]}
