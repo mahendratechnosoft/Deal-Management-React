@@ -136,17 +136,27 @@ const ProformaInvoiceDisplay = ({
                 <p className="break-words">{adminInformation.address}</p>
               )}
               {adminInformation?.gstNumber && (
-                <p>GST Number: {adminInformation.gstNumber}</p>
+                <p>
+                  <span className="font-bold">GST Number: </span>
+                  {adminInformation.gstNumber}
+                </p>
               )}
               {adminInformation?.panNumber && (
-                <p>PAN: {adminInformation.panNumber}</p>
+                <p>
+                  <span className="font-bold">PAN: </span>
+                  {adminInformation.panNumber}
+                </p>
               )}
               {adminInformation?.phone && (
-                <p>Mobile No: {adminInformation.phone}</p>
+                <p>
+                  <span className="font-bold">Mobile No: </span>
+                  {adminInformation.phone}
+                </p>
               )}
               {adminInformation?.companyEmail && (
                 <p className="break-all">
-                  Email: {adminInformation.companyEmail}
+                  <span className="font-bold">Email: </span>
+                  {adminInformation.companyEmail}
                 </p>
               )}
             </div>
@@ -187,10 +197,27 @@ const ProformaInvoiceDisplay = ({
           )}
 
           <div className="text-sm text-gray-700 leading-relaxed">
-            {info?.gstin && <p>GST Number: {info.gstin}</p>}
-            {info?.panNumber && <p>PAN: {info.panNumber}</p>}
-            {info?.mobileNumber && <p>Mobile No: {info.mobileNumber}</p>}
-            {info?.email && <p className="break-all">Email: {info.email}</p>}
+            {info?.gstin && (
+              <p>
+                <span className="font-bold">GST Number:</span> {info.gstin}
+              </p>
+            )}
+            {info?.panNumber && (
+              <p>
+                <span className="font-bold">PAN:</span> {info.panNumber}
+              </p>
+            )}
+            {info?.mobileNumber && (
+              <p>
+                <span className="font-bold">Mobile No:</span>{" "}
+                {info.mobileNumber}
+              </p>
+            )}
+            {info?.email && (
+              <p className="break-all">
+                <span className="font-bold">Email:</span> {info.email}
+              </p>
+            )}
           </div>
 
           <div className="inline-block text-left bg-gray-50 p-4 rounded-lg border border-gray-100 w-full md:w-auto">
@@ -340,28 +367,41 @@ const ProformaInvoiceDisplay = ({
       </div>
       <div className="p-8">
         {/* Terms */}
-        {info.termsAndConditions && (
-          <div className="mb-6">
-            <p className="text-xs font-bold text-gray-900 uppercase mb-2">
-              Terms & Conditions
-            </p>
-            <p className="text-xs text-gray-500 whitespace-pre-line leading-relaxed border-l-2 border-gray-200 pl-3 break-all">
-              {info.termsAndConditions}
-            </p>
-          </div>
-        )}
+
+        <div className="mb-6">
+          <p className="font-bold text-gray-900 uppercase mb-2">Bank Details</p>
+          <p className="text-xs text-gray-900 whitespace-pre-line leading-relaxed border-l-2 border-gray-200 pl-3 break-all">
+            <span className="font-bold">Bank Name: </span>
+            {adminInformation.bankName || "NA"}
+            <br />
+            <span className="font-bold">Account Number: </span>
+            {adminInformation.accountNumber || "NA"}
+            <br />
+            <span className="font-bold">Account Holder Name: </span>
+            {adminInformation.accountHolderName || "NA"}
+            <br />
+            <span className="font-bold">IFSC Code: </span>
+            {adminInformation.ifscCode || "NA"}
+          </p>
+        </div>
+
+        <div className="mb-6">
+          <p className="font-bold text-gray-900 uppercase mb-2">
+            Terms & Conditions
+          </p>
+          <p className="text-xs text-gray-500 whitespace-pre-line leading-relaxed border-l-2 border-gray-200 pl-3 break-all">
+            {info.termsAndConditions || "NA"}
+          </p>
+        </div>
 
         {/* Notes */}
-        {info.notes && (
-          <div>
-            <p className="text-xs font-bold text-gray-900 uppercase mb-2">
-              Notes
-            </p>
-            <p className="text-xs text-gray-500 whitespace-pre-line break-all">
-              {info.notes}
-            </p>
-          </div>
-        )}
+
+        <div>
+          <p className="font-bold text-gray-900 uppercase mb-2">Notes</p>
+          <p className="text-xs text-gray-500 whitespace-pre-line break-all">
+            {info.notes || "NA"}
+          </p>
+        </div>
       </div>
 
       {/* Footer: Signatures */}
