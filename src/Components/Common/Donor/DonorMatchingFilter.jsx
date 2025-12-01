@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLayout } from "../../Layout/useLayout";
+import { FormInput, FormSelect } from "../../BaseComponet/CustomeFormComponents";
+import axiosInstance from "../../BaseComponet/axiosInstance";
+import Pagination from "../pagination";
+import { toast } from "react-hot-toast";
 
 // ==============================
-// 1. Filter Component with Input Fields
+// 1. Filter Component (Compact & Merged Header)
 // ==============================
-const DonorFilters = ({ onFilterChange, activeFilters }) => {
-    // Initialize with default empty object
-    const safeActiveFilters = activeFilters || {};
-
-    // State now holds string values for inputs, not booleans
-    // Keys match the data structure in getDonorsList
+const DonorFilters = ({ onFilterChange, activeFilters, familyOptions }) => {
     const [filters, setFilters] = useState({
-        name: '',
+        familyInfoId: '',
         bloodGroup: '',
         height: '',
         weight: '',
@@ -19,106 +19,278 @@ const DonorFilters = ({ onFilterChange, activeFilters }) => {
         eyeColor: '',
         religion: '',
         education: '',
-        district: ''
+        city: '',
+        profession: ''
     });
 
-    // Sync local state with props if they change externally
-    useEffect(() => {
-        if (safeActiveFilters && Object.keys(safeActiveFilters).length > 0) {
-            setFilters(prev => ({
-                ...prev,
-                ...safeActiveFilters
-            }));
-        }
-    }, [safeActiveFilters]);
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [selectedMember, setSelectedMember] = useState(""); 
+    const [familyDetails, setFamilyDetails] = useState(null);
 
-    // Handle text changes in input fields
-    const handleInputChange = (field, value) => {
-        const newFilters = {
-            ...filters,
-            [field]: value
-        };
-        setFilters(newFilters);
-        // Debounce could be added here in a real app for performance
-        onFilterChange && onFilterChange(newFilters);
+    // Check if UIN is selected to enable/disable radios
+    const isUinSelected = Boolean(filters.familyInfoId && filters.familyInfoId !== "");
+
+    const createOptions = (arr) => [
+        { value: "", label: "Select" },
+        ...arr.map(item => ({ value: item, label: item }))
+    ];
+
+    const optionsMap = {
+        bloodGroup: createOptions(["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"]),
+        skinColor: createOptions(["Fair", "Wheatish", "Dark"]),
+        eyeColor: createOptions(["Brown", "Black", "Gray", "Blue", "Green", "Hazel", "Amber"]),
+        education: createOptions(["Under Graduation", "Post Graduation", "Masters", "Graduated", "Diploma"])
     };
 
-    // Clear all inputs
+    useEffect(() => {
+        if (activeFilters) {
+            setFilters(prev => ({ ...prev, ...activeFilters }));
+        }
+    }, [activeFilters]);
+
+    const parseNum = (val) => {
+        const num = parseFloat(val);
+        return isNaN(num) ? 0 : num;
+    };
+
+    const applyMemberFilters = (memberType, data) => {
+        if (!data) return;
+        let newFilters = { ...filters };
+
+        if (memberType === 'husband') {
+            newFilters.height = parseNum(data.husbandHeight);
+            newFilters.weight = parseNum(data.husbandWeight);
+            newFilters.bloodGroup = data.husbandBloodGroup || '';
+            newFilters.skinColor = data.husbandSkinColor || '';
+            newFilters.eyeColor = data.husbandEyeColor || '';
+            newFilters.religion = data.husbandReligion || '';
+            newFilters.education = data.husbandEducation || '';
+            newFilters.city = data.husbandDistrict || ''; 
+        } 
+        else if (memberType === 'wife') {
+            newFilters.height = parseNum(data.wifeHeight);
+            newFilters.weight = parseNum(data.wifeWeight);
+            newFilters.bloodGroup = data.wifeBloodGroup || '';
+            newFilters.skinColor = data.wifeSkinColor || '';
+            newFilters.eyeColor = data.wifeEyeColor || '';
+            newFilters.religion = data.wifeReligion || '';
+            newFilters.education = data.wifeEducation || '';
+            newFilters.city = data.wifeDistrict || '';
+        } 
+        else if (memberType === 'both') {
+            const hHeight = parseNum(data.husbandHeight);
+            const wHeight = parseNum(data.wifeHeight);
+            const avgHeight = (hHeight + wHeight) / 2;
+
+            const hWeight = parseNum(data.husbandWeight);
+            const wWeight = parseNum(data.wifeWeight);
+            const avgWeight = (hWeight + wWeight) / 2;
+
+            newFilters.height = avgHeight > 0 ? avgHeight : '';
+            newFilters.weight = avgWeight > 0 ? avgWeight : '';
+            
+            newFilters.bloodGroup = '';
+            newFilters.skinColor = '';
+            newFilters.eyeColor = '';
+            newFilters.religion = '';
+            newFilters.education = '';
+        }
+
+        setFilters(newFilters);
+        onFilterChange(newFilters);
+        setIsExpanded(true);
+    };
+
+    const handleMemberChange = (e) => {
+        const member = e.target.value;
+        setSelectedMember(member);
+        
+        if (familyDetails) {
+            applyMemberFilters(member, familyDetails);
+        }
+    };
+
+    const handleUINChange = async (selectedOption) => {
+        const id = selectedOption ? selectedOption.value : '';
+        const updatedFilters = { ...filters, familyInfoId: id };
+        setFilters(updatedFilters);
+        onFilterChange(updatedFilters);
+
+        // Reset radio and details when UIN changes
+        setSelectedMember(""); 
+        setFamilyDetails(null);
+
+        if (id) {
+            try {
+                const response = await axiosInstance.get(`/admin/getFamilyById/${id}`);
+                if (response.data) {
+                    setFamilyDetails(response.data);
+                    toast.success("Family loaded.");
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+    };
+
+    const handleTextChange = (e) => {
+        const { name, value } = e.target;
+        const newFilters = { ...filters, [name]: value };
+        setFilters(newFilters);
+        onFilterChange(newFilters);
+    };
+
+    const handleSelectChange = (selectedOption, name) => {
+        const value = selectedOption ? selectedOption.value : '';
+        const newFilters = { ...filters, [name]: value };
+        setFilters(newFilters);
+        onFilterChange(newFilters);
+    };
+
     const handleClearAll = () => {
-        // Reset all keys to empty strings
         const allEmpty = Object.keys(filters).reduce((acc, key) => {
             acc[key] = '';
             return acc;
         }, {});
         setFilters(allEmpty);
-        onFilterChange && onFilterChange(allEmpty);
+        setSelectedMember("");
+        onFilterChange(allEmpty);
+        setIsExpanded(false);
     };
 
-    // Configuration for filter fields corresponding to data keys
     const filterFields = [
-        { key: 'name', label: 'Name' },
-        { key: 'bloodGroup', label: 'Blood Group' },
-        { key: 'district', label: 'District' },
-        { key: 'height', label: 'Height' },
-        { key: 'weight', label: 'Weight' },
-        { key: 'skinColor', label: 'Skin Color' },
-        { key: 'eyeColor', label: 'Eye Color' },
-        { key: 'religion', label: 'Religion' },
-        { key: 'education', label: 'Education' },
-        { key: 'profession', label: 'Profession' },
+        { key: 'bloodGroup', label: 'Blood Group', type: 'select' },
+        { key: 'city', label: 'City', type: 'text' },
+        { key: 'height', label: 'Height (cm)', type: 'number' },
+        { key: 'weight', label: 'Weight (kg)', type: 'number' },
+        { key: 'skinColor', label: 'Skin Color', type: 'select' },
+        { key: 'eyeColor', label: 'Eye Color', type: 'select' },
+        { key: 'religion', label: 'Religion', type: 'text' },
+        { key: 'education', label: 'Education', type: 'select' },
+        { key: 'profession', label: 'Profession', type: 'text' },
     ];
 
-    // Count how many inputs have text in them
-    const activeFilterCount = Object.values(filters).filter(val => val && val.trim() !== '').length;
+    const activeDetailFilters = Object.entries(filters)
+        .filter(([key, val]) => key !== 'familyInfoId' && val && String(val).trim() !== '').length;
 
     return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-                <div>
-                    <h3 className="text-lg font-semibold text-gray-800">
-                        Filter Donors
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                        Type in fields to refine search criteria
-                    </p>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-3 flex-shrink-0 transition-all duration-300">
+            
+            {/* --- HEADER + CONTROLS (Merged Row) --- */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-3 pb-3 border-b border-gray-100">
+                
+                {/* 1. Main Title Inside Box */}
+                <div className="flex-shrink-0">
+                    <h1 className="text-lg font-bold text-gray-800 leading-tight">Donor Matching System</h1>
+                    <p className="text-xs text-gray-500 mt-0.5">Filter matching donors by UIN or specific criteria</p>
                 </div>
 
-                <div className="flex items-center gap-4 mt-4 sm:mt-0">
-                    {activeFilterCount > 0 && (
-                        <span className="text-sm text-gray-600">
-                            {activeFilterCount} field{activeFilterCount !== 1 ? 's' : ''} active
+                {/* 2. Control Buttons */}
+                <div className="flex items-center gap-2 self-end">
+                     {activeDetailFilters > 0 && !isExpanded && (
+                        <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-1 rounded-full">
+                            {activeDetailFilters} Active
                         </span>
                     )}
-                    <button
-                        onClick={handleClearAll}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium transition-colors"
-                        type="button"
+                    <button 
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="text-blue-600 hover:text-blue-800 text-xs font-semibold flex items-center gap-1 focus:outline-none px-2 py-1 rounded hover:bg-blue-50"
                     >
-                        Clear Filters
+                        {isExpanded ? 'Collapse Filters' : 'Expand Filters'}
+                        <svg className={`w-3 h-3 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
                     </button>
-                    {/* "Select All" removed as it doesn't apply to text inputs */}
+                    
+                    <button onClick={handleClearAll} className="px-3 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 text-xs font-semibold transition-colors">
+                        Clear
+                    </button>
                 </div>
             </div>
 
-            {/* Input Fields Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filterFields.map((field) => (
-                    <div key={field.key} className="flex flex-col">
-                        <label htmlFor={`filter-${field.key}`} className="text-sm font-medium text-gray-700 mb-1">
-                            {field.label}
-                        </label>
-                        <input
-                            type="text"
-                            id={`filter-${field.key}`}
-                            value={filters[field.key] || ''}
-                            onChange={(e) => handleInputChange(field.key, e.target.value)}
-                            placeholder={`Search ${field.label}...`}
-                            className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors"
-                            autoComplete="off"
-                        />
+            {/* --- PRIMARY FILTERS (UIN & RADIO) --- */}
+            <div className="flex flex-col lg:flex-row gap-4 lg:items-end">
+                {/* UIN Dropdown */}
+                <div className="flex-grow lg:w-1/3">
+                    <FormSelect
+                        label="Select Family UIN"
+                        name="familyInfoId"
+                        value={familyOptions.find(o => o.value === filters.familyInfoId)}
+                        options={[{ value: "", label: "Select" }, ...familyOptions]}
+                        onChange={handleUINChange}
+                        placeholder="Search UIN..."
+                        className="text-sm"
+                    />
+                </div>
+
+                {/* Member Radio Buttons */}
+                <div className="lg:w-2/3 pb-1">
+                    <label className={`block text-xs font-semibold mb-2 uppercase tracking-wide ${!isUinSelected ? 'text-gray-300' : 'text-gray-500'}`}>
+                        Auto-Fill Criteria:
+                    </label>
+                    
+                    <div className="flex flex-wrap items-center gap-3"> 
+                        {['husband', 'wife', 'both'].map((type) => (
+                            <label 
+                                key={type} 
+                                className={`
+                                    flex items-center gap-2 px-3 py-1.5 rounded border transition-all select-none
+                                    ${!isUinSelected 
+                                        ? 'bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed' // Disabled Style
+                                        : selectedMember === type 
+                                            ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200 text-blue-700 cursor-pointer' // Active Style
+                                            : 'border-gray-200 hover:bg-gray-50 text-gray-600 cursor-pointer' // Default Style
+                                    }
+                                `}
+                            >
+                                <input 
+                                    type="radio" 
+                                    name="memberSelect" 
+                                    value={type}
+                                    checked={selectedMember === type}
+                                    onChange={handleMemberChange}
+                                    disabled={!isUinSelected} // DISABLE LOGIC
+                                    className="w-3.5 h-3.5 text-blue-600 focus:ring-blue-500 border-gray-300 disabled:bg-gray-100"
+                                />
+                                <span className="text-xs font-medium capitalize">
+                                    {type === 'both' ? 'Both (Avg)' : type}
+                                </span>
+                            </label>
+                        ))}
                     </div>
-                ))}
+                </div>
             </div>
+
+            {/* --- ADVANCED FILTERS (COLLAPSIBLE) --- */}
+            {isExpanded && (
+                <div className="mt-4 pt-4 border-t border-gray-100 animate-fadeIn">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                        {filterFields.map((field) => (
+                            <div key={field.key}>
+                                {field.type === 'select' ? (
+                                    <FormSelect
+                                        label={field.label}
+                                        name={field.key}
+                                        value={optionsMap[field.key]?.find(o => o.value === filters[field.key]) || { value: "", label: "Select" }}
+                                        options={optionsMap[field.key]}
+                                        onChange={(option) => handleSelectChange(option, field.key)}
+                                        placeholder="Select"
+                                    />
+                                ) : (
+                                    <FormInput
+                                        label={field.label}
+                                        name={field.key}
+                                        value={filters[field.key]}
+                                        onChange={handleTextChange}
+                                        placeholder={field.type === 'number' ? '0' : 'Search...'}
+                                        type={field.type}
+                                    />
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -126,101 +298,82 @@ const DonorFilters = ({ onFilterChange, activeFilters }) => {
 // ==============================
 // 2. Donor List Component
 // ==============================
-// This component now receives an already-filtered list
-const DonorList = ({ donors }) => {
-    const safeDonors = donors || [];
-
-    if (safeDonors.length === 0) {
+const DonorList = ({ donors, onEdit }) => {
+    if (!donors || donors.length === 0) {
         return (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                <div className="flex flex-col items-center justify-center">
-                    <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+            <div className="flex-grow flex items-center justify-center bg-white rounded-xl border border-gray-200 p-12">
+                <div className="text-center">
                     <p className="text-gray-600 text-lg mb-2">No matching donors found</p>
-                    <p className="text-gray-500 text-sm">Try adjusting your filter criteria.</p>
+                    <p className="text-gray-500 text-sm">Try selecting a UIN or adjusting your filters.</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-            {/* Header with count */}
-            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                    <div>
-                        <h3 className="text-lg font-semibold text-gray-800">
-                            Search Results
-                        </h3>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
-                            {safeDonors.length} matching donors
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Table */}
-            <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col flex-grow overflow-hidden">
+            <div className="overflow-auto">
+                <table className="min-w-full divide-y divide-gray-200 table-fixed">
+                    <thead className="bg-gray-50 sticky top-0 z-10">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID & Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Blood Group</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Physical Stats</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                            <th className="w-[10%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Images</th>
+                            <th className="w-[20%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID & Name</th>
+                            <th className="w-[10%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Blood</th>
+                            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stats</th>
+                            <th className="w-[30%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {safeDonors.map((donor, index) => (
-                            <tr key={donor.id || index} className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                                <td className="px-6 py-4 whitespace-nowrapData">
-                                    <div className="text-sm font-medium text-blue-600">{donor.id || 'N/A'}</div>
-                                    <div className="text-sm font-semibold text-gray-900">{donor.name || 'N/A'}</div>
+                        {donors.map((donor, index) => (
+                            <tr key={donor.donorId || index} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                    <div className="flex -space-x-2 overflow-hidden">
+                                        {donor.selfeImage ? (
+                                            <img
+                                                className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover"
+                                                src={`data:image/jpeg;base64,${donor.selfeImage}`}
+                                                alt="Selfie"
+                                            />
+                                        ) : (
+                                            <div className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gray-200 flex items-center justify-center text-[10px] text-gray-500">No</div>
+                                        )}
+                                        {donor.fullLengthImage && (
+                                            <img
+                                                className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover"
+                                                src={`data:image/jpeg;base64,${donor.fullLengthImage}`}
+                                                alt="Full"
+                                            />
+                                        )}
+                                    </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                        donor.bloodGroup === 'O+' ? 'bg-red-100 text-red-800' :
-                                        donor.bloodGroup === 'A+' ? 'bg-blue-100 text-blue-800' :
-                                        donor.bloodGroup === 'B+' ? 'bg-green-100 text-green-800' :
-                                        donor.bloodGroup === 'AB+' ? 'bg-purple-100 text-purple-800' :
-                                        'bg-gray-100 text-gray-800'
-                                    }`}>
+                                <td className="px-4 py-3">
+                                    <div className="text-xs font-medium text-blue-600 truncate" title={donor.uin}>{donor.uin || 'N/A'}</div>
+                                    <div className="text-sm font-bold text-gray-900 truncate">{donor.name}</div>
+                                    <div className="text-xs text-gray-500">Age: {donor.age}</div>
+                                </td>
+                                <td className="px-4 py-3">
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${donor.bloodGroup === 'O+' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                                        }`}>
                                         {donor.bloodGroup || 'N/A'}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <div className="flex flex-col gap-1">
-                                        <div>H: <span className="text-gray-900">{donor.height}</span></div>
-                                        <div>W: <span className="text-gray-900">{donor.weight}</span></div>
-                                    </div>
+                                <td className="px-4 py-3 text-xs text-gray-600">
+                                    <div>H: {donor.height}</div>
+                                    <div>W: {donor.weight}</div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                     <div className="flex flex-col gap-1">
-                                        <div className="flex items-center">
-                                            Skin: 
-                                            <span className={`w-2 h-2 rounded-full mx-1 border border-gray-300 ${
-                                                donor.skinColor === 'Fair' ? 'bg-amber-100' : donor.skinColor === 'Dark' ? 'bg-amber-800' : 'bg-amber-400'
-                                            }`}></span>
-                                            <span className="text-gray-900">{donor.skinColor}</span>
-                                        </div>
-                                        <div className="flex items-center">
-                                            Eye: 
-                                             <span className={`w-2 h-2 rounded-full mx-1 border border-gray-300 ${
-                                                 donor.eyeColor === 'Blue' ? 'bg-blue-400' : donor.eyeColor === 'Green' ? 'bg-green-500' : 'bg-amber-900'
-                                             }`}></span>
-                                            <span className="text-gray-900">{donor.eyeColor}</span>
-                                        </div>
-                                        <div>Rel: <span className="text-gray-900">{donor.religion}</span></div>
-                                        <div>Edu: <span className="text-gray-900">{donor.education}</span></div>
-                                         <div>Prof: <span className="text-gray-900">{donor.profession}</span></div>
-                                    </div>
+                                <td className="px-4 py-3 text-xs text-gray-600">
+                                    <div className="truncate">Skin: {donor.skinColor}</div>
+                                    <div className="truncate">Eye: {donor.eyeColor}</div>
+                                    <div className="truncate text-xs text-gray-400">{donor.city}</div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    {donor.district || 'N/A'}
+                                <td className="px-4 py-3 text-sm font-medium">
+                                    <button
+                                        onClick={() => onEdit(donor.donorId)}
+                                        className="text-blue-600 hover:text-blue-900 text-xs border border-blue-200 px-3 py-1 rounded hover:bg-blue-50 transition-colors"
+                                    >
+                                        View
+                                    </button>
                                 </td>
                             </tr>
                         ))}
@@ -232,108 +385,165 @@ const DonorList = ({ donors }) => {
 };
 
 // ==============================
-// 3. Main Component (Parent)
+// 3. Main Container
 // ==============================
 function DonorMatchingFilter() {
-    const { LayoutComponent } = useLayout();
-    const [rawDonors, setRawDonors] = useState([]); // Renamed to indicate raw data
+    const { LayoutComponent, role } = useLayout();
+    const navigate = useNavigate();
+
+    // State
+    const [donors, setDonors] = useState([]);
     const [activeFilters, setActiveFilters] = useState({});
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [familyOptions, setFamilyOptions] = useState([]);
 
-    // Fetch donors data on component mount
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalElements, setTotalElements] = useState(0);
+    const [pageSize, setPageSize] = useState(10);
+
+    // --- 1. Fetch Family List for Dropdown ---
     useEffect(() => {
-        const fetchDonors = async () => {
-            setLoading(true);
-            // ... (Simulated API call remains the same)
-            setTimeout(() => {
-                 try {
-                     setRawDonors(getDonorsList());
-                     setLoading(false);
-                 } catch (e) { setError('Failed'); setLoading(false);}
-            }, 1000);
+        const fetchFamilyList = async () => {
+            try {
+                const response = await axiosInstance.get('/admin/getFamilyList');
+                if (response.data) {
+                    const options = response.data
+                        .filter(item => item.uin !== null && item.uin !== "")
+                        .map(item => ({
+                            value: item.familyInfoId,
+                            label: item.uin
+                        }));
+                    setFamilyOptions(options);
+                }
+            } catch (error) {
+                console.error("Error fetching family list:", error);
+                toast.error("Could not load UIN list");
+            }
         };
-        fetchDonors();
+        fetchFamilyList();
     }, []);
 
-    // Handler for filter updates from child component
+    // --- 2. Fetch Donors ---
+    const fetchDonors = useCallback(async (page = 0, currentFilters = activeFilters) => {
+        setLoading(true);
+        try {
+            const queryParams = {};
+            Object.entries(currentFilters).forEach(([key, value]) => {
+                if (value === null || value === undefined) return;
+                if (typeof value === 'string') {
+                    const cleanValue = value.trim();
+                    if (cleanValue === '') return;
+                    if (key === 'height' || key === 'weight') {
+                        const numVal = Number(cleanValue);
+                        if (!isNaN(numVal) && numVal > 0) queryParams[key] = numVal;
+                    } else {
+                        queryParams[key] = cleanValue;
+                    }
+                } else if (typeof value === 'number') {
+                    if ((key === 'height' || key === 'weight')) {
+                        if (value > 0) queryParams[key] = value;
+                    } else {
+                        queryParams[key] = value;
+                    }
+                }
+            });
+
+            const response = await axiosInstance.get(
+                `/admin/getAllMatchingDonorList/${page}/${pageSize}`,
+                { params: queryParams }
+            );
+
+            const data = response.data;
+            setDonors(data.donarList || []);
+            setTotalPages(data.totalPages || 1);
+            setCurrentPage(data.currentPage || 0);
+            setTotalElements(data.totalElements || 0);
+
+        } catch (error) {
+            console.error("Error fetching donors:", error);
+            if (error.response?.status === 400 || error.response?.status === 500) {
+                toast.error("Invalid criteria.");
+            } else {
+                toast.error("Failed to load matching donors.");
+            }
+        } finally {
+            setLoading(false);
+        }
+    }, [pageSize]);
+
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            fetchDonors(0, activeFilters);
+        }, 600);
+        return () => clearTimeout(delayDebounceFn);
+    }, [activeFilters, fetchDonors]);
+
     const handleFilterChange = (newFilters) => {
         setActiveFilters(newFilters);
     };
 
-    // ==============================
-    // ACTUAL FILTERING LOGIC HERE
-    // ==============================
-    const filteredDonors = useMemo(() => {
-        if (loading || rawDonors.length === 0) return [];
-
-        // Check if any filters actually have text in them
-        const hasActiveFilters = Object.values(activeFilters).some(value => value && value.trim() !== '');
-        
-        if (!hasActiveFilters) {
-            return rawDonors; // Return all if no filters are active
+    const handlePageChange = (newPage) => {
+        if (newPage >= 0 && newPage < totalPages) {
+            fetchDonors(newPage, activeFilters);
         }
+    };
 
-        return rawDonors.filter(donor => {
-            // We use every() to ensure ALL active filters match (AND logic)
-            return Object.entries(activeFilters).every(([key, filterValue]) => {
-                // Skip empty filter fields
-                if (!filterValue || filterValue.trim() === '') return true;
+    const handlePageSizeChange = (newSize) => {
+        setPageSize(newSize);
+    };
 
-                const donorValue = donor[key];
-                
-                // Perform case-insensitive "includes" check
-                // Convert donorValue to string to safely handle numbers if necessary
-                return donorValue && 
-                       donorValue.toString().toLowerCase().includes(filterValue.toLowerCase().trim());
-            });
-        });
-    }, [rawDonors, activeFilters, loading]);
+    const handleEdit = (donorId) => {
+        if (role === 'ROLE_ADMIN') {
+            navigate(`/Admin/DonarEdit/${donorId}`);
+        } else {
+            navigate(`/Employee/DonarEdit/${donorId}`);
+        }
+    };
 
+    const TableSkeleton = () => (
+        <div className="bg-white rounded-xl p-6 animate-pulse space-y-4 flex-grow">
+            {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-12 bg-gray-200 rounded w-full"></div>
+            ))}
+        </div>
+    );
 
     return (
         <LayoutComponent>
-            <div className="p-6 overflow-x-auto bg-gray-50 min-h-screen">
-                {/* Header */}
-                <div className="mb-6">
-                     <h1 className="text-2xl font-bold text-gray-900">Donor Matching System</h1>
-                     <p className="text-sm text-gray-600 mt-1">Use inputs below to filter the donor list.</p>
-                </div>
-
-                {error && <div className="text-red-500 mb-4">{error}</div>}
-
-                {/* Filters Section (Inputs) */}
+            <div className="p-4 pb-0 h-[90vh] flex flex-col bg-gray-50">
+                {/* Header is now inside DonorFilters, main text removed from here */}
+                
                 <DonorFilters
                     onFilterChange={handleFilterChange}
                     activeFilters={activeFilters}
+                    familyOptions={familyOptions}
                 />
 
-                {/* Loading State or Results List */}
                 {loading ? (
-                    <div className="text-center p-12 bg-white rounded-lg border">Loading donors...</div>
+                    <TableSkeleton />
                 ) : (
-                    // Pass the filtered list down
-                    <DonorList donors={filteredDonors} />
+                    <DonorList donors={donors} onEdit={handleEdit} />
+                )}
+
+                {!loading && donors.length > 0 && (
+                    <div className="bg-white border-t border-gray-200 mt-auto flex-shrink-0 rounded-b-xl">
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            totalItems={totalElements}
+                            pageSize={pageSize}
+                            onPageChange={handlePageChange}
+                            onPageSizeChange={handlePageSizeChange}
+                            itemsName="donors"
+                            showPageSize={true}
+                        />
+                    </div>
                 )}
             </div>
         </LayoutComponent>
     );
 }
-
-// Mock API function (Unchanged data)
-const getDonorsList = () => {
-    return [
-        { id: "D001", name: "Rajesh Kumar", bloodGroup: "B+", height: "5'10\"", weight: "74kg", skinColor: "Fair", eyeColor: "Brown", religion: "Hindu", education: "Graduate",profession: "CA", district: "Pune" },
-        { id: "D002", name: "Amit Sharma", bloodGroup: "O+", height: "5'9\"", weight: "72kg", skinColor: "Wheatish", eyeColor: "Black", religion: "Hindu", education: "Post Graduate",profession: "CA", district: "Mumbai" },
-        { id: "D003", name: "Suresh Patel", bloodGroup: "B+", height: "5'11\"", weight: "76kg", skinColor: "Fair", eyeColor: "Brown", religion: "Hindu", education: "Graduate",profession: "CA", district: "Pune" },
-        { id: "D004", name: "Priya Singh", bloodGroup: "A+", height: "5'4\"", weight: "58kg", skinColor: "Fair", eyeColor: "Brown", religion: "Hindu", education: "Graduate",profession: "CA", district: "Delhi" },
-        { id: "D005", name: "Neha Gupta", bloodGroup: "O+", height: "5'5\"", weight: "60kg", skinColor: "Wheatish", eyeColor: "Black", religion: "Hindu", education: "Post Graduate",profession: "CA", district: "Bangalore" },
-        { id: "D006", name: "Rahul Verma", bloodGroup: "AB+", height: "5'8\"", weight: "70kg", skinColor: "Fair", eyeColor: "Blue", religion: "Hindu", education: "Graduate",profession: "CA", district: "Hyderabad" },
-        { id: "D007", name: "Sanjay Joshi", bloodGroup: "O+", height: "5'7\"", weight: "68kg", skinColor: "Wheatish", eyeColor: "Brown", religion: "Hindu", education: "Diploma",profession: "CA", district: "Pune" },
-        { id: "D008", name: "Anita Desai", bloodGroup: "A+", height: "5'3\"", weight: "55kg", skinColor: "Fair", eyeColor: "Black", religion: "Hindu", education: "Post Graduate",profession: "CA", district: "Mumbai" },
-        { id: "D009", name: "Vikram Malhotra", bloodGroup: "B+", height: "5'10\"", weight: "75kg", skinColor: "Wheatish", eyeColor: "Brown", religion: "Hindu", education: "Graduate",profession: "CA", district: "Delhi" },
-        { id: "D010", name: "Sunita Reddy", bloodGroup: "O+", height: "5'2\"", weight: "52kg", skinColor: "Fair", eyeColor: "Brown", religion: "Hindu", education: "Graduate",profession: "CA", district: "Hyderabad" }
-    ];
-};
 
 export default DonorMatchingFilter;

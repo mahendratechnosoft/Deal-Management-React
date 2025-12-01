@@ -177,10 +177,11 @@ function EditDonar() {
         const payload = [];
 
         for (let i = 0; i < maxLen; i++) {
-            const bro = brothers[i] || { age: "", profession: "", kidsCount: "", illness: "" };
-            const sis = sisters[i] || { age: "", profession: "", kidsCount: "", illness: "" };
+            const bro = brothers[i] || { age: "", profession: "", kidsCount: "", illness: "" ,donorFamailyId:"",};
+            const sis = sisters[i] || { age: "", profession: "", kidsCount: "", illness: "",donorFamailyId:"" };
 
             payload.push({
+                donorFamailyId:bro.donorFamailyId,
                 donorId: donorId,
                 brotherAge: bro.age,
                 brotherProfession: bro.profession,
@@ -352,7 +353,13 @@ function EditDonar() {
             setSisters(list);
         };
         const addSister = () => setSisters([...sisters, { age: "", profession: "", kidsCount: "", illness: "" }]);
-        const removeSister = (index) => {
+        const removeSister =async (index,donorFamailyId) => {
+               try {
+                await axiosInstance.delete(`deleteDonorFamilyInfo/${donorFamailyId}`);
+                toast.success("Info Deleted");
+            } catch (error) {
+                toast.error("Update failed.");
+            }
             const list = [...sisters];
             list.splice(index, 1);
             setSisters(list);
@@ -372,6 +379,7 @@ function EditDonar() {
                     </div>
                     {brothers.map((item, index) => (
                         <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 items-end">
+                            <input type="hidden" name="donorFamailyId" value={item.donorFamailyId || ""}/>
                             <FormInput label="Age" name="age" value={item.age} onChange={(e) => handleBrotherChange(index, e)} type="number" />
                             <FormInput label="Profession" name="profession" value={item.profession} onChange={(e) => handleBrotherChange(index, e)} />
                             <FormInput label="Kids" name="kidsCount" value={item.kidsCount} onChange={(e) => handleBrotherChange(index, e)} type="number" />
@@ -390,11 +398,12 @@ function EditDonar() {
                     </div>
                     {sisters.map((item, index) => (
                         <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 items-end">
+                             <input type="hidden" name="donorFamailyId" value={item.donorFamailyId || ""}/>
                             <FormInput label="Age" name="age" value={item.age} onChange={(e) => handleSisterChange(index, e)} type="number" />
                             <FormInput label="Profession" name="profession" value={item.profession} onChange={(e) => handleSisterChange(index, e)} />
                             <FormInput label="Kids" name="kidsCount" value={item.kidsCount} onChange={(e) => handleSisterChange(index, e)} type="number" />
                             <FormInput label="Illness" name="illness" value={item.illness} onChange={(e) => handleSisterChange(index, e)} />
-                            <button type="button" onClick={() => removeSister(index)} className="text-red-500 hover:text-red-700 text-sm font-medium mb-2 border border-red-200 px-2 py-1 rounded bg-white">Remove</button>
+                            <button type="button" onClick={() => removeSister(index,item.donorFamailyId)} className="text-red-500 hover:text-red-700 text-sm font-medium mb-2 border border-red-200 px-2 py-1 rounded bg-white">Remove</button>
                         </div>
                     ))}
                     {sisters.length === 0 && <p className="text-sm text-gray-500">No sisters added.</p>}
@@ -437,6 +446,7 @@ function EditDonar() {
                             <span>Report #{index + 1}</span>
                             <button type="button" onClick={() => removeReport(index,report.donorBloodReportId)} className="text-red-500 text-xs">Remove</button>
                         </div>
+                         <input type="hidden" name="donorFamailyId" value={report.donorBloodReportId || ""}/>
                         <FormInput label="Date & Time" name="reportDateTime" type="datetime-local" value={report.reportDateTime} onChange={(e) => handleBloodChange(index, e)} />
                         <FormInput label="Report Type" name="reportType" value={report.reportType} onChange={(e) => handleBloodChange(index, e)} />
                         <FormInput label="Blood Group" name="bloodGroup" value={report.bloodGroup} onChange={(e) => handleBloodChange(index, e)} />
