@@ -53,6 +53,8 @@ import EditFamily from "./Components/Common/Donor/EditFamily.jsx";
 import Itemlist from "./Components/Common/Item/Itemlists.jsx";
 import AdminList from "./Components/SuperAdmin/AdminList.jsx";
 import EditAdmin from "./Components/SuperAdmin/EditAdmin.jsx";
+import QualifiedDonorList from "./Components/Common/Donor/QualifiedDonorList.jsx";
+import ConfirmDonorList from "./Components/Common/Donor/ConfirmDonorList.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -223,7 +225,7 @@ function App() {
 
 
           <Route
-            path="/Admin/DonarList"
+            path="/Admin/DonorList"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                 <DonorList />
@@ -232,7 +234,7 @@ function App() {
           />
 
           <Route
-            path="/Admin/DonarEdit/:donorId"
+            path="/Admin/DonorEdit/:donorId"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                 <EditDonar />
@@ -241,7 +243,7 @@ function App() {
           />
 
           <Route
-            path="/Admin/SelectedDonarList"
+            path="/Admin/SelectedDonorList"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                 <SelectedDonarList />
@@ -249,24 +251,24 @@ function App() {
             }
           />
 
-
-            {/* <Route
-            path="/Admin/SampleList/:sampleReportId"
+         <Route
+            path="/Admin/QualifiedDonorList"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
-                <SampleList />
+                <QualifiedDonorList />
               </RoleBasedRoute>
             }
-          /> */}
+          />
 
-                {/* <Route
-            path="/Admin/SampleReport/:donorId/:uin"
+          <Route
+            path="/Admin/ConfirmDonorList"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
-                <SampleReport />
+                <ConfirmDonorList />
               </RoleBasedRoute>
             }
-          /> */}
+          />
+           
 
           
             <Route
