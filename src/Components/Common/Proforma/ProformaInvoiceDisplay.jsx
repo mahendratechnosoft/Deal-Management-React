@@ -369,10 +369,8 @@ const ProformaInvoiceDisplay = ({
         {/* Terms */}
 
         <div className="mb-6">
-          <p className="text-xs font-bold text-gray-900 uppercase mb-2">
-            Bank Details
-          </p>
-          <p className="text-xs text-gray-500 whitespace-pre-line leading-relaxed border-l-2 border-gray-200 pl-3 break-all">
+          <p className="font-bold text-gray-900 uppercase mb-2">Bank Details</p>
+          <p className="text-xs text-gray-900 whitespace-pre-line leading-relaxed border-l-2 border-gray-200 pl-3 break-all">
             <span className="font-bold">Bank Name: </span>
             {adminInformation.bankName || "NA"}
             <br />
@@ -388,7 +386,7 @@ const ProformaInvoiceDisplay = ({
         </div>
 
         <div className="mb-6">
-          <p className="text-xs font-bold text-gray-900 uppercase mb-2">
+          <p className="font-bold text-gray-900 uppercase mb-2">
             Terms & Conditions
           </p>
           <p className="text-xs text-gray-500 whitespace-pre-line leading-relaxed border-l-2 border-gray-200 pl-3 break-all">
@@ -399,9 +397,7 @@ const ProformaInvoiceDisplay = ({
         {/* Notes */}
 
         <div>
-          <p className="text-xs font-bold text-gray-900 uppercase mb-2">
-            Notes
-          </p>
+          <p className="font-bold text-gray-900 uppercase mb-2">Notes</p>
           <p className="text-xs text-gray-500 whitespace-pre-line break-all">
             {info.notes || "NA"}
           </p>
