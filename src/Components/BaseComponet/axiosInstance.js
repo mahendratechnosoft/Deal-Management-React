@@ -3,8 +3,8 @@ import axios from "axios";
 import Swal from "sweetalert2";
 
 const axiosInstance = axios.create({
-   baseURL: "http://localhost:8080",
-  //baseURL: "https://api.mtechnosoft.xpertbizsolutions.com",
+ //  baseURL: "http://localhost:8080",
+   baseURL: "https://api.mtechnosoft.xpertbizsolutions.com",
 });
 
 axiosInstance.interceptors.request.use(
