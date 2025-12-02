@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
 
@@ -8,6 +8,12 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
   const [userData, setUserData] = useState(null);
   const [notificationCount, setNotificationCount] = useState(3); // Example count
   const navigate = useNavigate();
+
+  // Refs for dropdown containers
+  const userMenuRef = useRef(null);
+  const notificationRef = useRef(null);
+  const userButtonRef = useRef(null);
+  const notificationButtonRef = useRef(null);
 
   // Get user data from localStorage on component mount
   useEffect(() => {
@@ -20,6 +26,60 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
       }
     }
   }, []);
+
+  // Handle click outside to close dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Close user menu if clicked outside
+      if (
+        showUserMenu &&
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target) &&
+        userButtonRef.current &&
+        !userButtonRef.current.contains(event.target)
+      ) {
+        setShowUserMenu(false);
+      }
+
+      // Close notifications if clicked outside
+      if (
+        showNotifications &&
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target) &&
+        notificationButtonRef.current &&
+        !notificationButtonRef.current.contains(event.target)
+      ) {
+        setShowNotifications(false);
+      }
+    };
+
+    // Add event listener
+    document.addEventListener("mousedown", handleClickOutside);
+    
+    // Cleanup
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showUserMenu, showNotifications]);
+
+  // Function to truncate text if it's too long
+  const truncateText = (text, maxLength = 20) => {
+    if (!text || text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "...";
+  };
+
+  // Function to truncate email - show first part and domain
+  const truncateEmail = (email, maxNameLength = 12) => {
+    if (!email || email.length <= maxNameLength + 10) return email;
+    
+    const [username, domain] = email.split('@');
+    if (!domain) return truncateText(email, maxNameLength + 10);
+    
+    if (username.length > maxNameLength) {
+      return `${username.substring(0, maxNameLength)}...@${domain}`;
+    }
+    return email;
+  };
 
   // Get initials from user name
   const getUserInitials = () => {
@@ -59,11 +119,24 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
 
   // Toggle notifications dropdown
   const toggleNotifications = () => {
+    // Close user menu if open
+    if (showUserMenu) {
+      setShowUserMenu(false);
+    }
     setShowNotifications(!showNotifications);
     // If opening notifications, you might want to clear the count
     if (!showNotifications && notificationCount > 0) {
       setNotificationCount(0);
     }
+  };
+
+  // Toggle user menu
+  const toggleUserMenu = () => {
+    // Close notifications if open
+    if (showNotifications) {
+      setShowNotifications(false);
+    }
+    setShowUserMenu(!showUserMenu);
   };
 
   return (
@@ -104,6 +177,7 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
             {/* Notifications */}
             <div className="relative">
               <button
+                ref={notificationButtonRef}
                 onClick={toggleNotifications}
                 className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative"
                 title="Notifications"
@@ -132,7 +206,10 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
 
               {/* Notifications Dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+                <div 
+                  ref={notificationRef}
+                  className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50"
+                >
                   <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
                     <h3 className="font-semibold text-gray-800 text-sm">
                       Notifications
@@ -207,18 +284,21 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
           {/* User Profile */}
           <div className="relative">
             <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
+              ref={userButtonRef}
+              onClick={toggleUserMenu}
               className="flex items-center space-x-2 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group"
             >
               <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center text-white font-medium shadow group-hover:scale-105 transition-transform duration-300 text-xs">
                 {getUserInitials()}
               </div>
-              <div className="text-left hidden lg:block">
-                <p className="text-white font-medium text-xs">
-                  {userData?.loginUserName || "User Name"}
+              <div className="text-left hidden lg:block min-w-0">
+                <p className="text-white font-medium text-xs truncate max-w-[120px]" 
+                   title={userData?.loginUserName || "User Name"}>
+                  {truncateText(userData?.loginUserName || "User Name", 15)}
                 </p>
-                <p className="text-blue-200 text-xs">
-                  {userData?.loginEmail || "Administrator"}
+                <p className="text-blue-200 text-xs truncate max-w-[120px]"
+                   title={userData?.loginEmail || "Administrator"}>
+                  {truncateEmail(userData?.loginEmail || "Administrator", 10)}
                 </p>
               </div>
               <svg
@@ -240,13 +320,18 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
 
             {/* User Menu Dropdown */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow border border-gray-200 py-1 z-50">
+              <div 
+                ref={userMenuRef}
+                className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow border border-gray-200 py-1 z-50"
+              >
                 <div className="px-3 py-2 border-b border-gray-100">
-                  <p className="font-medium text-gray-800 text-sm">
-                    {userData?.loginUserName || "User Name"}
+                  <p className="font-medium text-gray-800 text-sm truncate"
+                     title={userData?.loginUserName || "User Name"}>
+                    {truncateText(userData?.loginUserName || "User Name", 25)}
                   </p>
-                  <p className="text-xs text-gray-600">
-                    {userData?.loginEmail || "admin@example.com"}
+                  <p className="text-xs text-gray-600 truncate"
+                     title={userData?.loginEmail || "admin@example.com"}>
+                    {truncateEmail(userData?.loginEmail || "admin@example.com", 15)}
                   </p>
                 </div>
                 <div className="py-1">
