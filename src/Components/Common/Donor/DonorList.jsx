@@ -156,15 +156,15 @@ function DonorList() {
 
       await axiosInstance.put("updateDonorStatus", payload);
 
-      setdonors((prev) => prev.filter((d) => d.donorId !== donorId));
+      // setdonors((prev) => prev.filter((d) => d.donorId !== donorId));
       //     toast.success("Donor Moved To Shortlisted");
 
       // // Update UI locally without reloading
-      // setdonors(prev =>
-      //     prev.map(d =>
-      //         d.donorId === donorId ? { ...d, status: newStatus } : d
-      //     )
-      // );
+      setdonors((prev) =>
+        prev.map((d) =>
+          d.donorId === donorId ? { ...d, status: newStatus } : d
+        )
+      );
       fetchDonorStatusCount();
       toast.success("Status updated");
     } catch (err) {
@@ -594,6 +594,7 @@ function DonorList() {
                           <option value="Not Shortlisted">
                             Not Shortlisted
                           </option>
+                          <option value="Donor">Donor</option>
                           <option value="Rejected">Rejected</option>
                         </select>
                       </td>
@@ -632,10 +633,10 @@ function DonorList() {
               </p>
               {!searchTerm && industryFilter === "all" && (
                 <button
-                  onClick={handleCreateDonor}
+                  onClick={() => setOpenModal(true)}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
                 >
-                  Create Your First Lead
+                  Create Your First Donor
                 </button>
               )}
             </div>
