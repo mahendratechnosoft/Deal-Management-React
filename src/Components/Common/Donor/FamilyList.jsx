@@ -229,13 +229,13 @@ function FamilyList() {
                             <EditIcon />
                           </button>
                           
-                          <button
+                          {/* <button
                             title="Preview"
                             onClick={() => handleEditFamily(family.familyInfoId)}
                             className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-50"
                           >
                             <PreviewIcon />
-                          </button>
+                          </button> */}
                         </div>
                       </td>
                     </tr>
