@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import SidebarSuperAdmin from "../Pages/SuperAdmin/SidebarSuperAdmin";
-import TopbarSuperAdmin from "../Pages/SuperAdmin/TopbarSuperAdmin";
+import SidebarSuperAdmin from "./SuperAdmin/SidebarSuperAdmin";
+import TopbarSuperAdmin from "./SuperAdmin/TopbarSuperAdmin";
 
 const SuperAdminLayout = ({ children, onLogout }) => {
     const [sidebarOpen, setSidebarOpen] = useState(true);

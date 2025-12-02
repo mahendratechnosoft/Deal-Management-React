@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useLayout } from "../Layout/useLayout";
-import axiosInstance from "../BaseComponet/axiosInstance";
+import { useLayout } from "../../Layout/useLayout";
+import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
-import Pagination from "../Common/pagination";
+import Pagination from "../pagination";
 import CreateAdminModal from "./CreateAdminModal";
 import { useNavigate } from "react-router-dom";
 
