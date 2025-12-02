@@ -4,6 +4,7 @@ import { useLayout } from "../../Layout/useLayout";
 import toast from "react-hot-toast";
 import Select from "react-select";
 import EditTimesheetModal from "./EditTimesheetModal";
+import { hasPermission } from "../../BaseComponet/permissions";
 
 
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
@@ -520,7 +521,7 @@ function TimeSheetList() {
                         </div>
 
                         {/* RIGHT SECTION - All Controls */}
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1 ml-auto">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1 ml-auto justify-end">
                             {/* View Controls */}
                             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                                 {/* View dropdown */}
@@ -564,9 +565,10 @@ function TimeSheetList() {
                                     </button>
                                 </div>
                             </div>
+                            {hasPermission("timeSheet", "ViewAll") && (
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                    {/* {role !== "ROLE_EMPLOYEE" && ( */}
 
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                {/* {role !== "ROLE_EMPLOYEE" && ( */}
                                     <div className="w-64">
                                         <Select
                                             className="basic-single"
@@ -577,8 +579,9 @@ function TimeSheetList() {
                                             placeholder="Select Employee"
                                         />
                                     </div>
-                                {/* )} */}
-                            </div>
+
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -638,16 +641,20 @@ function TimeSheetList() {
                             </div>
 
                             {/* Employee dropdown on right */}
-                            <div className="w-48">
-                                <Select
-                                    className="basic-single"
-                                    classNamePrefix="select"
-                                    options={employeeOptions}
-                                    value={selectedEmployee}
-                                    onChange={setSelectedEmployee}
-                                    placeholder="Select Employee"
-                                />
-                            </div>
+
+                            {hasPermission("timeSheet", "ViewAll") && (
+                                <div className="w-48">asdsad
+                                    <Select
+                                        className="basic-single"
+                                        classNamePrefix="select"
+                                        options={employeeOptions}
+                                        value={selectedEmployee}
+                                        onChange={setSelectedEmployee}
+                                        placeholder="Select Employee"
+
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
