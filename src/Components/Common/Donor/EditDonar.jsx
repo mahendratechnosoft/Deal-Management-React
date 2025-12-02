@@ -9,6 +9,61 @@ import {
   FormTextarea,
 } from "../../BaseComponet/CustomeFormComponents";
 
+const EditDonorPageSkeleton = () => {
+  return (
+    <div className="p-4 bg-gray-50 h-full animate-pulse">
+      {/* Header Skeleton */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="h-8 bg-gray-300 rounded w-1/4"></div> {/* Title */}
+        <div className="h-10 bg-gray-300 rounded w-20"></div>{" "}
+        {/* Back Button */}
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* Tabs Skeleton */}
+        <div className="border-b border-gray-200 px-4 pt-4">
+          <div className="flex gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-10 w-32 bg-gray-200 rounded-t-lg"></div>
+            ))}
+          </div>
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="p-6 space-y-6">
+          {/* Images Section Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="border p-4 rounded bg-gray-50 flex flex-col items-center">
+              <div className="h-40 w-40 rounded-full bg-gray-300 mb-3"></div>
+              <div className="h-8 w-24 bg-gray-300 rounded"></div>
+            </div>
+            <div className="border p-4 rounded bg-gray-50 flex flex-col items-center">
+              <div className="h-40 w-40 rounded bg-gray-300 mb-3"></div>
+              <div className="h-8 w-24 bg-gray-300 rounded"></div>
+            </div>
+          </div>
+
+          {/* Form Inputs Grid Skeleton */}
+          <div>
+            <div className="h-6 w-40 bg-gray-300 rounded mb-4"></div>{" "}
+            {/* Section Title */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {[...Array(12)].map((_, i) => (
+                <div key={i}>
+                  <div className="h-4 w-20 bg-gray-200 rounded mb-1"></div>{" "}
+                  {/* Label */}
+                  <div className="h-10 w-full bg-gray-200 rounded"></div>{" "}
+                  {/* Input */}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function EditDonar() {
   const navigate = useNavigate();
   const { donorId } = useParams();
@@ -104,6 +159,29 @@ function EditDonar() {
     { value: "Graduated", label: "Graduated" },
   ];
 
+  const visibleTabs = tabs.filter((tab) => {
+    const status = personalInfo.status;
+    console.log("Status:", status);
+
+    if (status === "New Donor") {
+      return (
+        tab.id !== "semen" &&
+        tab.id !== "sample" &&
+        tab.id !== "blood" &&
+        tab.id !== "family"
+      );
+    }
+
+    if (status === "Selected") {
+      return tab.id !== "semen" && tab.id !== "sample";
+    }
+
+    if (status === "Shortlisted") {
+      return tab.id !== "sample";
+    }
+    return true;
+  });
+
   // --- Data Fetching ---
   useEffect(() => {
     const fetchData = async () => {
@@ -186,6 +264,13 @@ function EditDonar() {
     };
     if (donorId) fetchData();
   }, [activeTab, donorId]);
+
+  useEffect(() => {
+    const isTabVisible = visibleTabs.some((t) => t.id === activeTab);
+    if (!isTabVisible && visibleTabs.length > 0) {
+      setActiveTab("personal");
+    }
+  }, [personalInfo.status, activeTab]);
 
   // --- Generic Handlers ---
   const handleObjectChange = (e, stateSetter) => {
@@ -1173,6 +1258,14 @@ function EditDonar() {
     }
   };
 
+  if (loading && !personalInfo.name) {
+    return (
+      <LayoutComponent>
+        <EditDonorPageSkeleton />
+      </LayoutComponent>
+    );
+  }
+
   return (
     <LayoutComponent>
       <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
@@ -1206,6 +1299,7 @@ function EditDonar() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-gray-900">Edit Donor</h1>
+              <p className="text-sm text-gray-600">{personalInfo.status}</p>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -1224,7 +1318,7 @@ function EditDonar() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
               <div className="border-b border-gray-200">
                 <ul className="flex flex-wrap text-sm font-medium text-center text-gray-500">
-                  {tabs.map((tab) => (
+                  {visibleTabs.map((tab) => (
                     <li key={tab.id} className="me-2">
                       <button
                         type="button"
