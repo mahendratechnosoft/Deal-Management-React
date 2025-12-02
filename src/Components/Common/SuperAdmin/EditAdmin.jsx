@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axiosInstance from "../BaseComponet/axiosInstance";
+import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
-import { useLayout } from "../Layout/useLayout";
+import { useLayout } from "../../Layout/useLayout";
 import {
     FormInput,
     FormTextarea,
     FormPhoneInputFloating,
-} from "../BaseComponet/CustomeFormComponents";
-import { showConfirmDialog } from "../BaseComponet/alertUtils";
+} from "../../BaseComponet/CustomeFormComponents";
+import { showConfirmDialog } from "../../BaseComponet/alertUtils";
 
 function EditAdmin() {
     const { LayoutComponent, role } = useLayout();

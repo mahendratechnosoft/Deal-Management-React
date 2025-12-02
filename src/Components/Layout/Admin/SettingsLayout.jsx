@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
-import TopBar from "../TopBarAdmin";
-import Sidebar from "../SidebarAdmin";
+import TopBar from "../../../Layout/Admin/TopBarAdmin";
+import Sidebar from "../../../Layout/Admin/SidebarAdmin";
 
 // --- Icons (No Changes) ---
 const GeneralIcon = () => (
