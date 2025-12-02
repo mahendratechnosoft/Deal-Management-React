@@ -633,10 +633,10 @@ function DonorList() {
               </p>
               {!searchTerm && industryFilter === "all" && (
                 <button
-                  onClick={handleCreateDonor}
+                  onClick={() => setOpenModal(true)}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
                 >
-                  Create Your First Lead
+                  Create Your First Donor
                 </button>
               )}
             </div>
