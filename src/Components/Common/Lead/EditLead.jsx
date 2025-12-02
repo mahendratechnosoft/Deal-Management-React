@@ -627,38 +627,7 @@ function EditLead() {
                   )}
                 </button>
               )}
-              {hasPermission("lead", "Edit") && (
-                <button
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Updating...
-                    </>
-                  ) : (
-                    "Update Lead"
-                  )}
-                </button>
-              )}
-              {hasPermission("lead", "Edit") && (
-                <button
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Updating...
-                    </>
-                  ) : (
-                    "Update Lead"
-                  )}
-                </button>
-              )}
+        
             </div>
           </div>
         </div>

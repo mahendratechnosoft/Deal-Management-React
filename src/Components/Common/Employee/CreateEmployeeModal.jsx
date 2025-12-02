@@ -7,6 +7,7 @@ import { useLayout } from "../../Layout/useLayout";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { Country, State, City } from "country-state-city";
+import { hasPermission } from "../../BaseComponet/permissions";
 
 const customReactSelectStyles = (hasError) => ({
   control: (provided, state) => ({
@@ -32,8 +33,8 @@ const customReactSelectStyles = (hasError) => ({
     backgroundColor: state.isSelected
       ? "#3b82f6"
       : state.isFocused
-      ? "#f3f4f6"
-      : "white",
+        ? "#f3f4f6"
+        : "white",
     color: state.isSelected ? "white" : "#1f2937",
     "&:active": {
       backgroundColor: "#3b82f6",
@@ -139,6 +140,18 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
     timeSheetCreate: false,
     timeSheetDelete: false,
     timeSheetEdit: false,
+
+    donorAccess: false,
+    donorViewAll: false,
+    donorCreate: false,
+    donorDelete: false,
+    donorEdit: false,
+
+    itemAccess: false,
+    itemViewAll: false,
+    itemCreate: false,
+    itemDelete: false,
+    itemEdit: false,
   });
 
   // =======================================COUNTrY STATE CITY DROPDOWN START__>===================================
@@ -441,6 +454,18 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
         timeSheetCreate: role.timeSheetCreate,
         timeSheetDelete: role.timeSheetDelete,
         timeSheetEdit: role.timeSheetEdit,
+
+        donorAccess: role.donorAccess,
+        donorViewAll: role.donorViewAll,
+        donorCreate: role.donorCreate,
+        donorDelete: role.donorDelete,
+        donorEdit: role.donorEdit,
+
+        itemAccess: role.itemAccess,
+        itemViewAll: role.itemViewAll,
+        itemCreate: role.itemCreate,
+        itemDelete: role.itemDelete,
+        itemEdit: role.itemEdit,
       }));
       setRoleOptions(options);
     } catch (error) {
@@ -499,6 +524,18 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
       timeSheetCreate: false,
       timeSheetDelete: false,
       timeSheetEdit: false,
+
+      donorAccess: false,
+      donorViewAll: false,
+      donorCreate: false,
+      donorDelete: false,
+      donorEdit: false,
+
+      itemAccess: false,
+      itemViewAll: false,
+      itemCreate: false,
+      itemDelete: false,
+      itemEdit: false,
     });
 
     if (errors.departmentId) {
@@ -568,6 +605,20 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
           timeSheetCreate: selectedRole.timeSheetCreate || false,
           timeSheetDelete: selectedRole.timeSheetDelete || false,
           timeSheetEdit: selectedRole.timeSheetEdit || false,
+
+          donorAccess: selectedRole.donorAccess || false,
+          donorViewAll: selectedRole.donorViewAll || false,
+          donorCreate: selectedRole.donorCreate || false,
+          donorDelete: selectedRole.donorDelete || false,
+          donorEdit: selectedRole.donorEdit || false,
+
+          itemAccess: selectedRole.itemAccess || false,
+          itemViewAll: selectedRole.itemViewAll || false,
+          itemCreate: selectedRole.itemCreate || false,
+          itemDelete: selectedRole.itemDelete || false,
+          itemEdit: selectedRole.itemEdit || false,
+
+
         });
 
         // Show success message
@@ -621,6 +672,18 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
         timeSheetCreate: false,
         timeSheetDelete: false,
         timeSheetEdit: false,
+
+        donorAccess: false,
+        donorViewAll: false,
+        donorCreate: false,
+        donorDelete: false,
+        donorEdit: false,
+
+        itemAccess: false,
+        itemViewAll: false,
+        itemCreate: false,
+        itemDelete: false,
+        itemEdit: false,
       });
 
       toast.success("Permissions reset");
@@ -724,7 +787,9 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
 
   // Access Toggle Component
   const AccessToggle = ({ field, label, isChecked, onChange }) => {
-    const handleToggle = () => {
+    const handleToggle = (e) => {
+      e.preventDefault(); // Prevent default behavior
+      e.stopPropagation(); // Stop event bubbling
       onChange(!isChecked);
     };
 
@@ -732,6 +797,7 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
       <label
         htmlFor={field}
         className="flex items-center cursor-pointer select-none"
+        onClick={handleToggle}
       >
         <div className="relative">
           <input
@@ -742,14 +808,12 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
             className="sr-only"
           />
           <div
-            className={`block w-10 h-6 rounded-full transition-colors ${
-              isChecked ? "bg-blue-600" : "bg-gray-300"
-            }`}
+            className={`block w-10 h-6 rounded-full transition-colors ${isChecked ? "bg-blue-600" : "bg-gray-300"
+              }`}
           ></div>
           <div
-            className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${
-              isChecked ? "translate-x-4" : "translate-x-0"
-            }`}
+            className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${isChecked ? "translate-x-4" : "translate-x-0"
+              }`}
           ></div>
         </div>
         <span className="ml-2 text-sm text-gray-700">{label}</span>
@@ -827,17 +891,25 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
           >
             Clear All
           </button>
-          <button
+          {/* <button
             type="button"
             onClick={onSelectAll}
             className="px-2 py-1 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 transition-colors duration-200"
           >
             Select All Access
-          </button>
+          </button> */}
         </div>
       </div>
     );
   };
+
+
+
+
+  
+    const hasModulePermission = (moduleName) => {
+      return hasPermission(moduleName, "Access");
+    };
 
   // Replace the entire return statement with this updated version:
   return (
@@ -897,22 +969,20 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
             <button
               type="button"
               onClick={() => setActiveTab("personal")}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors duration-200 ${
-                activeTab === "personal"
-                  ? "border-blue-600 text-blue-600 bg-blue-50"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
+              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors duration-200 ${activeTab === "personal"
+                ? "border-blue-600 text-blue-600 bg-blue-50"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
             >
               Personal Information
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("permissions")}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors duration-200 ${
-                activeTab === "permissions"
-                  ? "border-blue-600 text-blue-600 bg-blue-50"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
+              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors duration-200 ${activeTab === "permissions"
+                ? "border-blue-600 text-blue-600 bg-blue-50"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
             >
               Module Access
             </button>
@@ -938,9 +1008,8 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
-                        errors.name ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.name ? "border-red-500" : "border-gray-300"
+                        }`}
                       placeholder="Enter full name"
                     />
                     {errors.name && (
@@ -974,9 +1043,8 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                       name="loginEmail"
                       value={formData.loginEmail}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
-                        errors.loginEmail ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.loginEmail ? "border-red-500" : "border-gray-300"
+                        }`}
                       placeholder="Enter email address"
                     />
                     {errors.loginEmail && (
@@ -1011,9 +1079,8 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                         name="password"
                         value={formData.password}
                         onChange={handleChange}
-                        className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
-                          errors.password ? "border-red-500" : "border-gray-300"
-                        }`}
+                        className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.password ? "border-red-500" : "border-gray-300"
+                          }`}
                         placeholder="Enter password"
                       />
                       <button
@@ -1085,9 +1152,8 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                       <span className="text-red-500">*</span>
                     </label>
                     <div
-                      className={`phone-input-wrapper ${
-                        errors.phone ? "border-red-500 rounded-lg" : ""
-                      }`}
+                      className={`phone-input-wrapper ${errors.phone ? "border-red-500 rounded-lg" : ""
+                        }`}
                     >
                       <PhoneInput
                         country={"in"}
@@ -1379,102 +1445,154 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 m-0">
                   {/* Leads Permissions */}
-                  <ModuleAccessGroup
-                    title="Leads"
-                    permissions={[
-                      { label: "Access", field: "leadAccess" },
-                      { label: "View All", field: "leadViewAll" },
-                      { label: "Create", field: "leadCreate" },
-                      { label: "Edit", field: "leadEdit" },
-                      { label: "Delete", field: "leadDelete" },
-                    ]}
-                    getAccess={getAccess}
-                    handleAccessChange={handleAccessChange}
-                  />
 
-                  {/* Customer Permissions */}
-                  <ModuleAccessGroup
-                    title="Customer"
-                    permissions={[
-                      { label: "Access", field: "customerAccess" },
-                      { label: "View All", field: "customerViewAll" },
-                      { label: "Create", field: "customerCreate" },
-                      { label: "Edit", field: "customerEdit" },
-                      { label: "Delete", field: "customerDelete" },
-                    ]}
-                    getAccess={getAccess}
-                    handleAccessChange={handleAccessChange}
-                  />
+                  {!hasPermission("donor", "Access") && (
+                    <>
 
-                  {/* Proposal Permissions */}
-                  <ModuleAccessGroup
-                    title="Proposal"
-                    permissions={[
-                      { label: "Access", field: "proposalAccess" },
-                      { label: "View All", field: "proposalViewAll" },
-                      { label: "Create", field: "proposalCreate" },
-                      { label: "Edit", field: "proposalEdit" },
-                      { label: "Delete", field: "proposalDelete" },
-                    ]}
-                    getAccess={getAccess}
-                    handleAccessChange={handleAccessChange}
-                  />
+                      {hasModulePermission("lead") && (
+                        <ModuleAccessGroup
+                          title="Leads"
+                          permissions={[
+                            { label: "Access", field: "leadAccess" },
+                            { label: "View All", field: "leadViewAll" },
+                            { label: "Create", field: "leadCreate" },
+                            { label: "Edit", field: "leadEdit" },
+                            { label: "Delete", field: "leadDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
 
-                  {/* Proforma Invoice Permissions */}
-                  <ModuleAccessGroup
-                    title="Proforma Invoice"
-                    permissions={[
-                      { label: "Access", field: "proformaInvoiceAccess" },
-                      { label: "View All", field: "proformaInvoiceViewAll" },
-                      { label: "Create", field: "proformaInvoiceCreate" },
-                      { label: "Edit", field: "proformaInvoiceEdit" },
-                      { label: "Delete", field: "proformaInvoiceDelete" },
-                    ]}
-                    getAccess={getAccess}
-                    handleAccessChange={handleAccessChange}
-                  />
 
-                  {/* Invoice Permissions */}
-                  <ModuleAccessGroup
-                    title="Invoice"
-                    permissions={[
-                      { label: "Access", field: "invoiceAccess" },
-                      { label: "View All", field: "invoiceViewAll" },
-                      { label: "Create", field: "invoiceCreate" },
-                      { label: "Edit", field: "invoiceEdit" },
-                      { label: "Delete", field: "invoiceDelete" },
-                    ]}
-                    getAccess={getAccess}
-                    handleAccessChange={handleAccessChange}
-                  />
+                      {hasModulePermission("customer") && (
+                        <ModuleAccessGroup
+                          title="Customer"
+                          permissions={[
+                            { label: "Access", field: "customerAccess" },
+                            { label: "View All", field: "customerViewAll" },
+                            { label: "Create", field: "customerCreate" },
+                            { label: "Edit", field: "customerEdit" },
+                            { label: "Delete", field: "customerDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
 
-                  {/* Payment Permissions */}
-                  <ModuleAccessGroup
-                    title="Payment"
-                    permissions={[
-                      { label: "Access", field: "paymentAccess" },
-                      { label: "View All", field: "paymentViewAll" },
-                      { label: "Create", field: "paymentCreate" },
-                      { label: "Edit", field: "paymentEdit" },
-                      { label: "Delete", field: "paymentDelete" },
-                    ]}
-                    getAccess={getAccess}
-                    handleAccessChange={handleAccessChange}
-                  />
 
-                  {/* Timesheet Permissions */}
-                  <ModuleAccessGroup
-                    title="Timesheet"
-                    permissions={[
-                      { label: "Access", field: "timeSheetAccess" },
-                      { label: "View All", field: "timeSheetViewAll" },
-                      { label: "Create", field: "timeSheetCreate" },
-                      { label: "Edit", field: "timeSheetEdit" },
-                      { label: "Delete", field: "timeSheetDelete" },
-                    ]}
-                    getAccess={getAccess}
-                    handleAccessChange={handleAccessChange}
-                  />
+                      {hasModulePermission("proposal") && (
+                        <ModuleAccessGroup
+                          title="Proposal"
+                          permissions={[
+                            { label: "Access", field: "proposalAccess" },
+                            { label: "View All", field: "proposalViewAll" },
+                            { label: "Create", field: "proposalCreate" },
+                            { label: "Edit", field: "proposalEdit" },
+                            { label: "Delete", field: "proposalDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
+
+
+                      {hasModulePermission("proformaInvoice") && (
+                        <ModuleAccessGroup
+                          title="Proforma Invoice"
+                          permissions={[
+                            { label: "Access", field: "proformaInvoiceAccess" },
+                            { label: "View All", field: "proformaInvoiceViewAll" },
+                            { label: "Create", field: "proformaInvoiceCreate" },
+                            { label: "Edit", field: "proformaInvoiceEdit" },
+                            { label: "Delete", field: "proformaInvoiceDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
+
+
+                      {hasModulePermission("invoice") && (
+                        <ModuleAccessGroup
+                          title="Invoice"
+                          permissions={[
+                            { label: "Access", field: "invoiceAccess" },
+                            { label: "View All", field: "invoiceViewAll" },
+                            { label: "Create", field: "invoiceCreate" },
+                            { label: "Edit", field: "invoiceEdit" },
+                            { label: "Delete", field: "invoiceDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
+
+
+                      {hasModulePermission("payment") && (
+                        <ModuleAccessGroup
+                          title="Payment"
+                          permissions={[
+                            { label: "Access", field: "paymentAccess" },
+                            { label: "View All", field: "paymentViewAll" },
+                            { label: "Create", field: "paymentCreate" },
+                            { label: "Edit", field: "paymentEdit" },
+                            { label: "Delete", field: "paymentDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
+
+
+                      {hasModulePermission("timeSheet") && (
+                        <ModuleAccessGroup
+                          title="TimeSheet"
+                          permissions={[
+                            { label: "Access", field: "timeSheetAccess" },
+                            { label: "View All", field: "timeSheetViewAll" },
+                            { label: "Create", field: "timeSheetCreate" },
+                            { label: "Edit", field: "timeSheetEdit" },
+                            { label: "Delete", field: "timeSheetDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
+
+
+                      {hasModulePermission("lead") && (
+                        <ModuleAccessGroup
+                          title="Item Permissions"
+                          permissions={[
+                            { label: "Access", field: "itemAccess" },
+                            { label: "View All", field: "itemViewAll" },
+                            { label: "Create", field: "itemCreate" },
+                            { label: "Edit", field: "itemEdit" },
+                            { label: "Delete", field: "itemDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
+                    </>
+                  )}
+
+
+                  {hasPermission("donor", "Access") && (
+                    <ModuleAccessGroup
+                      title="Donor Permissions"
+                      permissions={[
+                        { label: "Access", field: "donorAccess" },
+                        { label: "View All", field: "donorViewAll" },
+                        { label: "Create", field: "donorCreate" },
+                        { label: "Edit", field: "donorEdit" },
+                        { label: "Delete", field: "donorDelete" },
+                      ]}
+                      getAccess={getAccess}
+                      handleAccessChange={handleAccessChange}
+                    />
+                  )}
                 </div>
               </div>
             )}
