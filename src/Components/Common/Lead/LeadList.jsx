@@ -13,6 +13,7 @@ import { hasPermission } from "../../BaseComponet/permissions";
 import { showDeleteConfirmation } from "../../BaseComponet/alertUtils";
 import CustomFilterWindow from "../../BaseComponet/CustomFilterWindow";
 import { FormInput } from "../../BaseComponet/CustomeFormComponents";
+import axios from "axios";
 
 // Table Body Skeleton Component (for search operations)
 const TableBodySkeleton = ({ rows = 5, columns = 7 }) => {
@@ -162,6 +163,7 @@ function LeadList() {
   const [showCreateLeadModal, setShowCreateLeadModal] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [isExcelDownloading, setIsExcelDownloading] = useState(false);
 
   // Default columns
   const [columns, setColumns] = useState([
@@ -1200,6 +1202,49 @@ function LeadList() {
     fetchLeads(0, searchTerm, statusFilter, true, newStart, newEnd);
   };
 
+  const handleDownloadExcel = async () => {
+    setIsExcelDownloading(true);
+
+    try {
+      const response = await axiosInstance.get(
+        `leadExcelExport?leadStatus=${
+          statusFilter === "all" ? "" : statusFilter
+        }&startDate=${startDate}&endDate=${endDate}`,
+        {
+          responseType: "blob",
+        }
+      );
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      // 3. Create a temporary URL for the Blob
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      let fileName = "";
+      if (startDate && endDate) {
+        fileName = `Leads_Export_${startDate}_${endDate}.xlsx`;
+      } else {
+        fileName = `Leads_Export_${new Date()
+          .toLocaleString()
+          .replace(" ", "")}.xlsx`;
+      }
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading Excel file:", error);
+      toast.error("Failed to download Excel file. Please try again.");
+    } finally {
+      setIsExcelDownloading(false);
+    }
+  };
+
   // Use TableSkeleton instead of loading spinner
   if (loading) {
     return (
@@ -1419,7 +1464,7 @@ function LeadList() {
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  Create Lead
+                  Create
                 </button>
               )}
 
@@ -1440,7 +1485,44 @@ function LeadList() {
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                Import Lead
+                Import
+              </button>
+
+              <button
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
+                onClick={handleDownloadExcel}
+              >
+                {isExcelDownloading ? (
+                  <svg
+                    className="w-4 h-4 animate-spin"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      strokeWidth={2}
+                      d="M19 10V4a1 1 0 0 0-1-1H9.914a1 1 0 0 0-.707.293L5.293 7.207A1 1 0 0 0 5 7.914V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2M10 3v4a1 1 0 0 1-1 1H5m5 6h9m0 0-2-2m2 2-2 2"
+                    />
+                  </svg>
+                )}
+                Export
               </button>
 
               {/* <CustomFilterWindow
