@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import axiosInstance from '../BaseComponet/axiosInstance';
+import axiosInstance from '../../BaseComponet/axiosInstance';
 import toast from "react-hot-toast";
 import {
   GlobalInputField,
   GlobalTextAreaField,
   GlobalPhoneInputField
-} from '../BaseComponet/CustomerFormInputs';
+} from '../../BaseComponet/CustomerFormInputs';
 
 function CreateAdminModal({ onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);

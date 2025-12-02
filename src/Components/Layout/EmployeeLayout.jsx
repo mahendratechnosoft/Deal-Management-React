@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import SidebarEmployee from "../Pages/Employee/SidebarEmployee";
-import TopBarEmployee from "../Pages/Employee/TopBarEmployee";
+import SidebarEmployee from "../Layout/Employee/SidebarEmployee";
+import TopBarEmployee from "../Layout/Employee/TopBarEmployee";
 
 const EmployeeLayout = ({ children, onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
