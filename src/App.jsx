@@ -12,9 +12,6 @@ import Register from "./Components/Pages/Register";
 import PageNotFound from "./Components/Pages/PageNotFound";
 import CreateLead from "./Components/Common/Lead/CreateLead";
 import EditLead from "./Components/Common/Lead/EditLead";
-import DealList from "./Components/Common/Deals/DealList.jsx";
-import EmployeeListAdmin from "./Components/Common/Employee/EmployeeList.jsx";
-import CreateEmployee from "./Components/Common/Employee/CreateEmployee.jsx";
 import EditEmployee from "./Components/Common/Employee/EditEmployee.jsx";
 import CustomToaster from "./Components/Common/Toaster";
 import SettingsLayout from "./Components/Pages/Admin/Settings/SettingsLayout.jsx";
@@ -43,7 +40,6 @@ import DonorList from "./Components/Common/Donor/DonorList.jsx";
 import EditDonar from "./Components/Common/Donor/EditDonar.jsx";
 import SelectedDonarList from "./Components/Common/Donor/SelectedDonarList.jsx";
 
-
 import TimeSheetList from "./Components/Common/Timesheet/TimeSheetList.jsx";
 import InvoiceList from "./Components/Common/Invoice/InvoiceList.jsx";
 import InvoicePreview from "./Components/Common/Invoice/InvoicePreview.jsx";
@@ -55,6 +51,7 @@ import AdminList from "./Components/SuperAdmin/AdminList.jsx";
 import EditAdmin from "./Components/SuperAdmin/EditAdmin.jsx";
 import QualifiedDonorList from "./Components/Common/Donor/QualifiedDonorList.jsx";
 import ConfirmDonorList from "./Components/Common/Donor/ConfirmDonorList.jsx";
+import EmployeeList from "./Components/Common/Employee/EmployeeList.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -86,7 +83,7 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("userData");
-     localStorage.removeItem("superAdminData");
+    localStorage.removeItem("superAdminData");
     localStorage.removeItem("role");
     localStorage.removeItem("rememberMe");
     setIsLoggedIn(false);
@@ -101,8 +98,8 @@ function App() {
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
           <Route path="/register" element={<Register />} />
 
-        {/* SUPER ADMIN Models */}
-             <Route
+          {/* SUPER ADMIN Models */}
+          <Route
             path="/SuperAdmin/AdminList"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_SUPERADMIN"]}>
@@ -110,7 +107,7 @@ function App() {
               </RoleBasedRoute>
             }
           />
-           <Route
+          <Route
             path="/SuperAdmin/EditAdmin/:adminId"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_SUPERADMIN"]}>
@@ -118,7 +115,6 @@ function App() {
               </RoleBasedRoute>
             }
           />
-      
 
           {/* Admin Routes - Individual routes with layout */}
           <Route
@@ -141,18 +137,11 @@ function App() {
             path="/Admin/EmployeeList"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
-                <EmployeeListAdmin />
+                <EmployeeList />
               </RoleBasedRoute>
             }
           />
-          <Route
-            path="/Admin/CreateEmployee"
-            element={
-              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
-                <CreateEmployee />
-              </RoleBasedRoute>
-            }
-          />
+
           <Route
             path="/Admin/EditEmployee/:employeeId"
             element={
@@ -222,8 +211,6 @@ function App() {
             }
           />
 
-
-
           <Route
             path="/Admin/DonorList"
             element={
@@ -243,7 +230,7 @@ function App() {
           />
 
           <Route
-            path="/Admin/SelectedDonorList"
+            path="/Admin/DonorList/:pageName"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                 <SelectedDonarList />
@@ -251,27 +238,7 @@ function App() {
             }
           />
 
-         <Route
-            path="/Admin/QualifiedDonorList"
-            element={
-              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
-                <QualifiedDonorList />
-              </RoleBasedRoute>
-            }
-          />
-
           <Route
-            path="/Admin/ConfirmDonorList"
-            element={
-              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
-                <ConfirmDonorList />
-              </RoleBasedRoute>
-            }
-          />
-           
-
-          
-            <Route
             path="/Admin/FamilyList"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
@@ -280,9 +247,7 @@ function App() {
             }
           />
 
-
-           
-            <Route
+          <Route
             path="/Admin/PreviewMatchingDonors/:familyId"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
@@ -291,8 +256,7 @@ function App() {
             }
           />
 
-
-               <Route
+          <Route
             path="/Admin/EditFamily/:familyInfoId"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
@@ -300,8 +264,6 @@ function App() {
               </RoleBasedRoute>
             }
           />
-
-
 
           <Route
             path="/Proposal"
@@ -392,7 +354,6 @@ function App() {
               </RoleBasedRoute>
             }
           />
-
 
           <Route
             path="/Admin/ItemList"
@@ -500,7 +461,7 @@ function App() {
             }
           />
 
-           <Route
+          <Route
             path="/Employee/DonorList"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
