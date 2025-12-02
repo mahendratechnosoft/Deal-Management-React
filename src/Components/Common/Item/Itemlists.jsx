@@ -129,31 +129,31 @@ function ItemList() {
     fetchItems(currentPage, searchTerm);
   };
 
-const handleDelete = async (itemId, itemName) => {
-  try {
-    const result = await showDeleteConfirmation(itemName || "this item");
+  const handleDelete = async (itemId, itemName) => {
+    try {
+      const result = await showDeleteConfirmation(itemName || "this item");
 
-    if (result.isConfirmed) {
-      // Remove the item from local state immediately
-      setItems(prevItems => prevItems.filter(item => item.itemId !== itemId));
-      
-      // Update total items count
-      setTotalItems(prevTotal => prevTotal - 1);
-      
-      // Only call delete API, no fetch call
-      await axiosInstance.delete(`deleteItem/${itemId}`);
-      showSuccessAlert("Item deleted successfully!");
+      if (result.isConfirmed) {
+        // Remove the item from local state immediately
+        setItems(prevItems => prevItems.filter(item => item.itemId !== itemId));
+
+        // Update total items count
+        setTotalItems(prevTotal => prevTotal - 1);
+
+        // Only call delete API, no fetch call
+        await axiosInstance.delete(`deleteItem/${itemId}`);
+        showSuccessAlert("Item deleted successfully!");
+      }
+
+    } catch (error) {
+      console.error("Error deleting item:", error);
+
+      // If delete fails, revert the local state changes by refreshing from server
+      // fetchItems(currentPage, searchTerm);
+
+      showErrorAlert("Failed to delete item. Please try again.");
     }
-
-  } catch (error) {
-    console.error("Error deleting item:", error);
-    
-    // If delete fails, revert the local state changes by refreshing from server
-    // fetchItems(currentPage, searchTerm);
-    
-    showErrorAlert("Failed to delete item. Please try again.");
-  }
-};
+  };
   const getInitials = (name) => {
     if (!name) return "??";
     return name
@@ -264,8 +264,8 @@ const handleDelete = async (itemId, itemName) => {
                   />
                 </div>
               </div>
-              
-          
+
+              {hasPermission("item", "Create") && (
                 <button
                   className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
                   onClick={handleCreateItem}
@@ -285,7 +285,7 @@ const handleDelete = async (itemId, itemName) => {
                   </svg>
                   Create Item
                 </button>
-            
+              )}
             </div>
           </div>
         </div>
@@ -327,7 +327,7 @@ const handleDelete = async (itemId, itemName) => {
 
 
 
-                  
+
         </div>
 
         {/* Table View */}
@@ -379,58 +379,58 @@ const handleDelete = async (itemId, itemName) => {
                               </div>
                               <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                 {/* Edit Button */}
-                               
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleEdit(item.itemId);
-                                    }}
-                                    className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs"
-                                    title="Edit Item"
+
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEdit(item.itemId);
+                                  }}
+                                  className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs"
+                                  title="Edit Item"
+                                >
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
                                   >
-                                    <svg
-                                      className="w-3 h-3"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                      />
-                                    </svg>
-                                    Edit
-                                  </button>
-                             
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                    />
+                                  </svg>
+                                  Edit
+                                </button>
+
 
                                 {/* Delete Button */}
-                              
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDelete(item.itemId);
-                                    }}
-                                    className="text-gray-500 hover:text-red-600 transition-colors duration-200 flex items-center gap-1 text-xs"
-                                    title="Delete Item"
+
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(item.itemId);
+                                  }}
+                                  className="text-gray-500 hover:text-red-600 transition-colors duration-200 flex items-center gap-1 text-xs"
+                                  title="Delete Item"
+                                >
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
                                   >
-                                    <svg
-                                      className="w-3 h-3"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                      />
-                                    </svg>
-                                    Delete
-                                  </button>
-                                
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                  Delete
+                                </button>
+
                               </div>
                             </div>
                           </div>
@@ -453,7 +453,7 @@ const handleDelete = async (itemId, itemName) => {
                           <span className="font-semibold text-gray-900">
                             {item.quantity || 0}
                           </span>
-                    
+
                         </div>
                       </td>
 
