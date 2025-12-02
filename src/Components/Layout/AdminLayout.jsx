@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../Pages/Admin/SidebarAdmin";
-import TopBar from "../Pages/Admin/TopBarAdmin";
+import Sidebar from "./Admin/SidebarAdmin";
+import TopBar from "./Admin/TopBarAdmin";
 
 const AdminLayout = ({ children, onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
