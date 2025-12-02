@@ -1023,17 +1023,17 @@ function EditEmployee() {
                     >
                       Clear All
                     </button>
-                    <button
+                    {/* <button
                       type="button"
                       onClick={handleSetAllAccess}
                       className="px-3 py-1.5 text-xs border border-green-300 text-green-700 rounded bg-white hover:bg-green-50 transition-colors"
                     >
                       Set All
-                    </button>
+                    </button> */}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 
                   {!hasPermission("donor", "Access") && (
                     <>

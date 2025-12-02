@@ -206,7 +206,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
       {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 lg:hidden backdrop-blur-sm"
           onClick={toggleSidebar}
         ></div>
       )}
@@ -238,7 +238,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
                 </div>
                 <button
                   onClick={toggleSidebar}
-                  className="lg:hidden p-1.5 rounded-lg bg-gray-700/50 hover:bg-gray-700 transition-colors duration-300"
+                  className="lg:hidden p-1.5 rounded-lg bg-gray-700/50 hover:bg-gray-700 transition-colors duration-300 mx-3"
                 >
                   <svg
                     className="w-4 h-4 text-gray-400"
@@ -348,7 +348,11 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
               }`}
           >
             <button
-              onClick={handleLogout}
+
+              onClick={() => {
+                handleLogout();
+                navigate("/login");
+              }}
               className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden bg-gray-800/50 hover:bg-red-500/20 hover:transform hover:scale-105 ${isOpen
                 ? "px-3 py-2.5 justify-start"
                 : "px-2 py-2.5 justify-center"
@@ -381,7 +385,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
                 {isOpen && (
                   <div
                     className="ml-3 flex-1 text-left"
-                    onClick={() => navigate("/login")}
+
                   >
                     <span className="font-medium block text-xs text-gray-300 group-hover:text-red-400 transition-colors duration-300">
                       Logout

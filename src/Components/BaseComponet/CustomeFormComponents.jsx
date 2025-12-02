@@ -391,7 +391,7 @@ export const FormPhoneInputFloating = ({
   };
 
   return (
-    <div className={`relative ${className} z-[60]`}>
+    <div className={`relative ${className} z-[49]`}>
       <div
         className={`relative border rounded-lg transition-all duration-200 ${
           error
@@ -460,7 +460,7 @@ export const FormPhoneInputFloating = ({
 
       {/* Floating Label - Made darker to match other labels */}
       <label
-        className={`absolute text-sm duration-300 transform z-50 origin-[0] px-2 left-11 pointer-events-none 
+        className={`absolute text-sm duration-300 transform z-49 origin-[0] px-2 left-11 pointer-events-none 
           scale-75 -translate-y-4 top-2 font-medium
           ${
             error
