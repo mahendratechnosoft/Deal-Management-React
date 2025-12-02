@@ -5,7 +5,13 @@ import CreateFamily from "./CreateFamily";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import { toast } from "react-hot-toast";
 import Pagination from "../pagination"; // Ensure this path is correct
+import FamilyListPDFModal from "./FamilyListPDFModal";
 
+const PdfIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+  </svg>
+);
 // --- Icons ---
 const EditIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -23,19 +29,29 @@ const PreviewIcon = () => (
 function FamilyList() {
   const { LayoutComponent, role } = useLayout();
   const navigate = useNavigate();
-  const [openModal, setOpenModal] = useState(false);
-  
+
+
   // --- Data State ---
   const [familyList, setFamilyList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // --- Pagination State ---
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
+  const [openModal, setOpenModal] = useState(false);
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [selectedFamilyId, setSelectedFamilyId] = useState(null);
+
+
+  // 3. Add PDF handler
+  const handleViewPDF = (familyInfoId) => {
+    setSelectedFamilyId(familyInfoId);
+    setPdfModalOpen(true);
+  };
   // --- Fetch Data ---
   const fetchFamilyList = useCallback(
     async (page = 0, search = "") => {
@@ -44,13 +60,13 @@ function FamilyList() {
         const response = await axiosInstance.get(
           `/admin/getAllFamilyList/${page}/${pageSize}`,
           {
-              params: {
-                  search: search
-              }
+            params: {
+              search: search
+            }
           }
         );
         const data = response.data;
-        
+
         setFamilyList(data.familyList || []);
         setTotalPages(data.totalPages || 1);
         setCurrentPage(data.currentPage || 0);
@@ -73,7 +89,7 @@ function FamilyList() {
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, fetchFamilyList]); 
+  }, [searchTerm, fetchFamilyList]);
 
   // --- Handlers ---
   const handleSearchChange = (e) => {
@@ -82,9 +98,9 @@ function FamilyList() {
 
   const handleEditFamily = (familyInfoId) => {
     if (role === 'ROLE_ADMIN') {
-        navigate(`/Admin/EditFamily/${familyInfoId}`);
+      navigate(`/Admin/EditFamily/${familyInfoId}`);
     } else {
-        navigate(`/Employee/EditFamily/${familyInfoId}`);
+      navigate(`/Employee/EditFamily/${familyInfoId}`);
     }
   };
 
@@ -95,11 +111,11 @@ function FamilyList() {
   };
 
   const handlePageSizeChange = (newSize) => {
-      setPageSize(newSize);
+    setPageSize(newSize);
   };
 
   const handleSuccess = () => {
-      fetchFamilyList(currentPage, searchTerm);
+    fetchFamilyList(currentPage, searchTerm);
   };
 
   // --- Skeleton Loader ---
@@ -107,17 +123,17 @@ function FamilyList() {
     const r = Array.from({ length: rows });
     const c = Array.from({ length: cols });
     return (
-        <tbody>
-            {r.map((_, i) => (
-                <tr key={i} className="animate-pulse border-b border-gray-100">
-                    {c.map((_, j) => (
-                        <td key={j} className="px-4 py-4">
-                            <div className="h-4 bg-gray-200 rounded w-full" />
-                        </td>
-                    ))}
-                </tr>
+      <tbody>
+        {r.map((_, i) => (
+          <tr key={i} className="animate-pulse border-b border-gray-100">
+            {c.map((_, j) => (
+              <td key={j} className="px-4 py-4">
+                <div className="h-4 bg-gray-200 rounded w-full" />
+              </td>
             ))}
-        </tbody>
+          </tr>
+        ))}
+      </tbody>
     );
   };
 
@@ -127,8 +143,8 @@ function FamilyList() {
           - h-[90vh] ensures it takes up viewport height.
           - flex flex-col makes children stack vertically.
       */}
-      <div className="p-6 pb-0 h-[90vh] flex flex-col"> 
-        
+      <div className="p-6 pb-0 h-[90vh] flex flex-col">
+
         {/* Header Section (Fixed Height) */}
         <div className="mb-4 flex-shrink-0">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -178,7 +194,7 @@ function FamilyList() {
             - flex flex-col: Stacks table and pagination.
         */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col flex-grow overflow-hidden">
-          
+
           {/* Table Wrapper: 
               - flex-grow: Takes up all space not used by pagination.
               - overflow-auto: Enables internal scrolling for the table body.
@@ -204,7 +220,7 @@ function FamilyList() {
                     <td colSpan="6" className="px-4 py-10 text-center text-gray-500">
                       <div className="flex flex-col items-center justify-center">
                         <svg className="w-12 h-12 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                         <p>No families found.</p>
                       </div>
@@ -218,7 +234,7 @@ function FamilyList() {
                       <td className="px-4 py-4 truncate text-sm text-gray-900">{family.wifeName}</td>
                       <td className="px-4 py-4 truncate text-sm text-gray-900">{family.referHospital}</td>
                       <td className="px-4 py-4 truncate text-sm text-gray-900">{family.referDoctor}</td>
-                      
+
                       <td className="px-4 py-1 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center gap-3">
                           <button
@@ -228,7 +244,7 @@ function FamilyList() {
                           >
                             <EditIcon />
                           </button>
-                          
+
                           {/* <button
                             title="Preview"
                             onClick={() => handleEditFamily(family.familyInfoId)}
@@ -236,6 +252,14 @@ function FamilyList() {
                           >
                             <PreviewIcon />
                           </button> */}
+
+                          <button
+                            title="Generate PDF"
+                            onClick={() => handleViewPDF(family.familyInfoId)}
+                            className="text-red-600 hover:text-red-900 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                          >
+                            <PdfIcon />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -248,27 +272,32 @@ function FamilyList() {
           {/* Pagination Component (Fixed at Bottom of Container) */}
           {!loading && (
             <div className="border-t border-gray-200 bg-white flex-shrink-0">
-                <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalItems={totalElements}
-                    pageSize={pageSize}
-                    onPageChange={handlePageChange}
-                    onPageSizeChange={handlePageSizeChange}
-                    itemsName="families"
-                    showPageSize={true}
-                />
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalElements}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+                itemsName="families"
+                showPageSize={true}
+              />
             </div>
           )}
         </div>
       </div>
+      <FamilyListPDFModal
+        isOpen={pdfModalOpen}
+        onClose={() => setPdfModalOpen(false)}
+        familyId={selectedFamilyId}
+      />
 
       {/* Modal */}
       <CreateFamily
         isOpen={openModal}
         onClose={() => setOpenModal(false)}
         onSuccess={handleSuccess}
-        donorId={null} 
+        donorId={null}
       />
     </LayoutComponent>
   );
