@@ -1,14 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 function TopbarSuperAdmin({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
-    const [showQuickActions, setShowQuickActions] = useState(false);
     const [userData, setUserData] = useState(null);
     const [notificationCount, setNotificationCount] = useState(5);
-    const [systemStatus, setSystemStatus] = useState("healthy");
     const navigate = useNavigate();
+
+    // Refs for dropdown containers
+    const userMenuRef = useRef(null);
+    const notificationRef = useRef(null);
+    const userButtonRef = useRef(null);
+    const notificationButtonRef = useRef(null);
 
     // Get superadmin data from localStorage
     useEffect(() => {
@@ -20,17 +24,60 @@ function TopbarSuperAdmin({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
                 console.error("Error parsing superadmin data:", error);
             }
         }
-
-        // Simulate system status check
-        checkSystemStatus();
     }, []);
 
-    const checkSystemStatus = async () => {
-        // Simulate API call for system status
-        setTimeout(() => {
-            const statuses = ["healthy", "degraded", "maintenance"];
-            setSystemStatus(statuses[Math.floor(Math.random() * statuses.length)]);
-        }, 1000);
+    // Handle click outside to close dropdowns
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            // Close user menu if clicked outside
+            if (
+                showUserMenu &&
+                userMenuRef.current &&
+                !userMenuRef.current.contains(event.target) &&
+                userButtonRef.current &&
+                !userButtonRef.current.contains(event.target)
+            ) {
+                setShowUserMenu(false);
+            }
+
+            // Close notifications if clicked outside
+            if (
+                showNotifications &&
+                notificationRef.current &&
+                !notificationRef.current.contains(event.target) &&
+                notificationButtonRef.current &&
+                !notificationButtonRef.current.contains(event.target)
+            ) {
+                setShowNotifications(false);
+            }
+        };
+
+        // Add event listener
+        document.addEventListener("mousedown", handleClickOutside);
+        
+        // Cleanup
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [showUserMenu, showNotifications]);
+
+    // Function to truncate text if it's too long
+    const truncateText = (text, maxLength = 20) => {
+        if (!text || text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + "...";
+    };
+
+    // Function to truncate email - show first part and domain
+    const truncateEmail = (email, maxNameLength = 12) => {
+        if (!email || email.length <= maxNameLength + 10) return email;
+        
+        const [username, domain] = email.split('@');
+        if (!domain) return truncateText(email, maxNameLength + 10);
+        
+        if (username.length > maxNameLength) {
+            return `${username.substring(0, maxNameLength)}...@${domain}`;
+        }
+        return email;
     };
 
     // Get initials from superadmin name
@@ -81,15 +128,27 @@ function TopbarSuperAdmin({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
 
     // Toggle notifications
     const toggleNotifications = () => {
+        // Close user menu if open
+        if (showUserMenu) {
+            setShowUserMenu(false);
+        }
         setShowNotifications(!showNotifications);
-        setShowQuickActions(false);
         if (!showNotifications && notificationCount > 0) {
             setNotificationCount(0);
         }
     };
 
-    const handleLogout = () => {
+    // Toggle user menu
+    const toggleUserMenu = () => {
+        // Close notifications if open
+        if (showNotifications) {
+            setShowNotifications(false);
+        }
+        setShowUserMenu(!showUserMenu);
+    };
 
+    const handleLogout = () => {
+        handleSignOut();
         navigate("/login");
     };
 
@@ -119,19 +178,16 @@ function TopbarSuperAdmin({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
                             />
                         </svg>
                     </button>
-
-
                 </div>
 
                 {/* Right Section */}
                 <div className="flex items-center space-x-3">
                     {/* Quick Actions */}
                     <div className="flex items-center space-x-1">
-
-
                         {/* Notifications */}
                         <div className="relative">
                             <button
+                                ref={notificationButtonRef}
                                 onClick={toggleNotifications}
                                 className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative"
                                 title="Notifications"
@@ -160,7 +216,10 @@ function TopbarSuperAdmin({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
 
                             {/* Notifications Dropdown */}
                             {showNotifications && (
-                                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+                                <div 
+                                    ref={notificationRef}
+                                    className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50"
+                                >
                                     <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
                                         <h3 className="font-semibold text-gray-800 text-sm">
                                             System Notifications
@@ -235,18 +294,21 @@ function TopbarSuperAdmin({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
                     {/* User Profile */}
                     <div className="relative">
                         <button
-                            onClick={() => setShowUserMenu(!showUserMenu)}
+                            ref={userButtonRef}
+                            onClick={toggleUserMenu}
                             className="flex items-center space-x-2 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group"
                         >
                             <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-medium shadow group-hover:scale-105 transition-transform duration-300 text-xs border border-white/20">
                                 {getUserInitials()}
                             </div>
-                            <div className="text-left hidden lg:block">
-                                <p className="text-white font-medium text-xs">
-                                    {userData?.name || "Super Admin"}
+                            <div className="text-left hidden lg:block min-w-0">
+                                <p className="text-white font-medium text-xs truncate max-w-[120px]"
+                                   title={userData?.name || "Super Admin"}>
+                                    {truncateText(userData?.name || "Super Admin", 15)}
                                 </p>
-                                <p className="text-indigo-200 text-xs">
-                                    {userData?.email || "superadmin@system.com"}
+                                <p className="text-indigo-200 text-xs truncate max-w-[120px]"
+                                   title={userData?.email || "superadmin@system.com"}>
+                                    {truncateEmail(userData?.email || "superadmin@system.com", 10)}
                                 </p>
                             </div>
                             <svg
@@ -267,57 +329,62 @@ function TopbarSuperAdmin({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
 
                         {/* User Menu Dropdown */}
                         {showUserMenu && (
-                            <div className="absolute right-0 mt-1 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
+                            <div 
+                                ref={userMenuRef}
+                                className="absolute right-0 mt-1 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50"
+                            >
                                 <div className="px-3 py-2 border-b border-gray-100">
-                                    <p className="font-medium text-gray-800 text-sm">
-                                        {userData?.name || "Super Admin"}
+                                    <p className="font-medium text-gray-800 text-sm truncate"
+                                       title={userData?.name || "Super Admin"}>
+                                        {truncateText(userData?.name || "Super Admin", 25)}
                                     </p>
-                                    <p className="text-xs text-gray-600">
-                                        {userData?.email || "superadmin@system.com"}
+                                    <p className="text-xs text-gray-600 truncate"
+                                       title={userData?.email || "superadmin@system.com"}>
+                                        {truncateEmail(userData?.email || "superadmin@system.com", 20)}
                                     </p>
                                     <div className="mt-1">
-                                        <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                                        <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full truncate max-w-full">
                                             Super Administrator
                                         </span>
                                     </div>
                                 </div>
                                 <div className="py-1">
                                     <button
-
+                                        onClick={handleProfile}
                                         className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-purple-50 transition-colors duration-200 flex items-center space-x-2"
                                     >
                                         <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
-                                        <span>My Profile</span>
+                                        <span className="truncate">My Profile</span>
                                     </button>
                                     <button
-
+                                        onClick={handleAdminManagement}
                                         className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-purple-50 transition-colors duration-200 flex items-center space-x-2"
                                     >
                                         <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                         </svg>
-                                        <span>Admin Management</span>
+                                        <span className="truncate">Admin Management</span>
                                     </button>
                                     <button
-
+                                        onClick={handleSystemSettings}
                                         className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-purple-50 transition-colors duration-200 flex items-center space-x-2"
                                     >
                                         <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
-                                        <span>System Settings</span>
+                                        <span className="truncate">System Settings</span>
                                     </button>
                                     <button
-
+                                        onClick={handleAuditLogs}
                                         className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-purple-50 transition-colors duration-200 flex items-center space-x-2"
                                     >
                                         <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
-                                        <span>Audit Logs</span>
+                                        <span className="truncate">Audit Logs</span>
                                     </button>
                                 </div>
                                 <div className="border-t border-gray-100 pt-1">
