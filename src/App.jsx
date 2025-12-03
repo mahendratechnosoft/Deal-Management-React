@@ -471,6 +471,51 @@ function App() {
           />
 
           <Route
+            path="/Employee/DonorEdit/:donorId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                <EditDonar />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Employee/DonorList/:pageName"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                <SelectedDonarList />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Employee/FamilyList"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                <FamilyList />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Employee/PreviewMatchingDonors/:familyId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                <DonorMatchingFilter />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
+            path="/Employee/EditFamily/:familyInfoId"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                <EditFamily />
+              </RoleBasedRoute>
+            }
+          />
+
+          <Route
             path="/Proposal/Create"
             element={
               <RoleBasedRoute allowedRoles={["ROLE_ADMIN", "ROLE_EMPLOYEE"]}>
