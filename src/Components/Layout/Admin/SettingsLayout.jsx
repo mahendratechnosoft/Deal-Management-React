@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import TopBar from "./TopBarAdmin";
 import Sidebar from "./SidebarAdmin";
+import { hasPermission } from "../../BaseComponet/permissions";
 
 // --- Icons (No Changes) ---
 const GeneralIcon = () => (
@@ -225,15 +226,17 @@ const SettingsLayout = () => {
                           </span>
                         </NavLink>
 
-                        <NavLink
-                          to="/Admin/Settings/Form"
-                          className={getNavLinkClass}
-                        >
-                          <DynamicFormIcon />
-                          <span className="ml-3 font-medium block text-xs">
-                            Dynamic Form
-                          </span>
-                        </NavLink>
+                        {!hasPermission("donor", "Access") && (
+                          <NavLink
+                            to="/Admin/Settings/Form"
+                            className={getNavLinkClass}
+                          >
+                            <DynamicFormIcon />
+                            <span className="ml-3 font-medium block text-xs">
+                              Dynamic Form
+                            </span>
+                          </NavLink>
+                        )}
                       </div>
                     </div>
                   </nav>

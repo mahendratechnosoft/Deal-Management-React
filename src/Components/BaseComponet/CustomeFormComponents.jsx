@@ -569,6 +569,8 @@ export const FormFileAttachment = ({
   fileName,
   fileType,
   onChange,
+  onDownload,
+  onPreview,
   onRemove,
   required = false,
   error,
@@ -610,31 +612,85 @@ export const FormFileAttachment = ({
                 {fileName}
               </span>
             </div>
+            <div className="flex items-center gap-1">
+              {onDownload && (
+                <button
+                  type="button"
+                  onClick={onDownload}
+                  className="p-1.5 rounded-full text-gray-500 hover:text-green-600 hover:bg-green-50 transition-colors"
+                  title="Download with Correct Name"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      strokeWidth={2}
+                      d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                    />
+                  </svg>
+                </button>
+              )}
 
-            {/* Remove Button */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove();
-              }}
-              disabled={disabled}
-              className="p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors z-20"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+              {onPreview && (
+                <button
+                  type="button"
+                  onClick={onPreview}
+                  className="p-1.5 rounded-full text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                  title="Preview File"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
+                  </svg>
+                </button>
+              )}
+
+              {/* Remove Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove();
+                }}
+                disabled={disabled}
+                className="p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors z-20"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         ) : (
           /* Empty State */
