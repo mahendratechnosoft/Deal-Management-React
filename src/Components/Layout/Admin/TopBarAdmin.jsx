@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
+import { hasPermission } from "../../BaseComponet/permissions";
 
 function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -55,7 +56,7 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
 
     // Add event listener
     document.addEventListener("mousedown", handleClickOutside);
-    
+
     // Cleanup
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -71,10 +72,10 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
   // Function to truncate email - show first part and domain
   const truncateEmail = (email, maxNameLength = 12) => {
     if (!email || email.length <= maxNameLength + 10) return email;
-    
-    const [username, domain] = email.split('@');
+
+    const [username, domain] = email.split("@");
     if (!domain) return truncateText(email, maxNameLength + 10);
-    
+
     if (username.length > maxNameLength) {
       return `${username.substring(0, maxNameLength)}...@${domain}`;
     }
@@ -173,113 +174,116 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
         {/* Right Section */}
         <div className="flex items-center space-x-3">
           {/* Quick Actions */}
-          <div className="flex items-center space-x-1">
-            {/* Notifications */}
-            <div className="relative">
-              <button
-                ref={notificationButtonRef}
-                onClick={toggleNotifications}
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative"
-                title="Notifications"
-              >
-                <svg
-                  className="w-5 h-5 text-white group-hover:scale-110 transition-transform duration-300"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+          {!hasPermission("donor", "Access") && (
+            <div className="flex items-center space-x-1">
+              {/* Notifications */}
+              <div className="relative">
+                <button
+                  ref={notificationButtonRef}
+                  onClick={toggleNotifications}
+                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative"
+                  title="Notifications"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 17h5l-5 5v-5zM10.24 8.56a5.97 5.97 0 01-4.66-6.24M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                
-                {/* Notification Badge */}
-                {notificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
-                    {notificationCount > 9 ? '9+' : notificationCount}
-                  </span>
-                )}
-              </button>
+                  <svg
+                    className="w-5 h-5 text-white group-hover:scale-110 transition-transform duration-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 17h5l-5 5v-5zM10.24 8.56a5.97 5.97 0 01-4.66-6.24M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
 
-              {/* Notifications Dropdown */}
-              {showNotifications && (
-                <div 
-                  ref={notificationRef}
-                  className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50"
-                >
-                  <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
-                    <h3 className="font-semibold text-gray-800 text-sm">
-                      Notifications
-                    </h3>
-                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                      {notificationCount} new
+                  {/* Notification Badge */}
+                  {notificationCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                      {notificationCount > 9 ? "9+" : notificationCount}
                     </span>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto">
-                    {/* Sample notifications */}
-                    <div className="px-4 py-3 hover:bg-blue-50 transition-colors duration-200 border-b border-gray-50">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                        <div className="flex-1">
-                          <p className="text-sm text-gray-800 font-medium">
-                            New lead assigned
-                          </p>
-                          <p className="text-xs text-gray-600 mt-1">
-                            You have been assigned a new lead from website inquiry.
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            2 minutes ago
-                          </p>
+                  )}
+                </button>
+
+                {/* Notifications Dropdown */}
+                {showNotifications && (
+                  <div
+                    ref={notificationRef}
+                    className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50"
+                  >
+                    <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
+                      <h3 className="font-semibold text-gray-800 text-sm">
+                        Notifications
+                      </h3>
+                      <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                        {notificationCount} new
+                      </span>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {/* Sample notifications */}
+                      <div className="px-4 py-3 hover:bg-blue-50 transition-colors duration-200 border-b border-gray-50">
+                        <div className="flex items-start space-x-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-800 font-medium">
+                              New lead assigned
+                            </p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              You have been assigned a new lead from website
+                              inquiry.
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              2 minutes ago
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="px-4 py-3 hover:bg-blue-50 transition-colors duration-200 border-b border-gray-50">
+                        <div className="flex items-start space-x-3">
+                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-800 font-medium">
+                              Meeting reminder
+                            </p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              Team meeting starts in 30 minutes.
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              1 hour ago
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="px-4 py-3 hover:bg-blue-50 transition-colors duration-200">
+                        <div className="flex items-start space-x-3">
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-800 font-medium">
+                              System update
+                            </p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              New features available in the latest update.
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              3 hours ago
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="px-4 py-3 hover:bg-blue-50 transition-colors duration-200 border-b border-gray-50">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                        <div className="flex-1">
-                          <p className="text-sm text-gray-800 font-medium">
-                            Meeting reminder
-                          </p>
-                          <p className="text-xs text-gray-600 mt-1">
-                            Team meeting starts in 30 minutes.
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            1 hour ago
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="px-4 py-3 hover:bg-blue-50 transition-colors duration-200">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
-                        <div className="flex-1">
-                          <p className="text-sm text-gray-800 font-medium">
-                            System update
-                          </p>
-                          <p className="text-xs text-gray-600 mt-1">
-                            New features available in the latest update.
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            3 hours ago
-                          </p>
-                        </div>
-                      </div>
+                    <div className="px-4 py-2 border-t border-gray-100">
+                      <button className="w-full text-center text-xs text-blue-600 hover:text-blue-800 font-medium py-2">
+                        View All Notifications
+                      </button>
                     </div>
                   </div>
-                  <div className="px-4 py-2 border-t border-gray-100">
-                    <button className="w-full text-center text-xs text-blue-600 hover:text-blue-800 font-medium py-2">
-                      View All Notifications
-                    </button>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* User Profile */}
           <div className="relative">
@@ -292,12 +296,16 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
                 {getUserInitials()}
               </div>
               <div className="text-left hidden lg:block min-w-0">
-                <p className="text-white font-medium text-xs truncate max-w-[120px]" 
-                   title={userData?.loginUserName || "User Name"}>
+                <p
+                  className="text-white font-medium text-xs truncate max-w-[120px]"
+                  title={userData?.loginUserName || "User Name"}
+                >
                   {truncateText(userData?.loginUserName || "User Name", 15)}
                 </p>
-                <p className="text-blue-200 text-xs truncate max-w-[120px]"
-                   title={userData?.loginEmail || "Administrator"}>
+                <p
+                  className="text-blue-200 text-xs truncate max-w-[120px]"
+                  title={userData?.loginEmail || "Administrator"}
+                >
                   {truncateEmail(userData?.loginEmail || "Administrator", 10)}
                 </p>
               </div>
@@ -320,18 +328,25 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
 
             {/* User Menu Dropdown */}
             {showUserMenu && (
-              <div 
+              <div
                 ref={userMenuRef}
                 className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow border border-gray-200 py-1 z-50"
               >
                 <div className="px-3 py-2 border-b border-gray-100">
-                  <p className="font-medium text-gray-800 text-sm truncate"
-                     title={userData?.loginUserName || "User Name"}>
+                  <p
+                    className="font-medium text-gray-800 text-sm truncate"
+                    title={userData?.loginUserName || "User Name"}
+                  >
                     {truncateText(userData?.loginUserName || "User Name", 25)}
                   </p>
-                  <p className="text-xs text-gray-600 truncate"
-                     title={userData?.loginEmail || "admin@example.com"}>
-                    {truncateEmail(userData?.loginEmail || "admin@example.com", 15)}
+                  <p
+                    className="text-xs text-gray-600 truncate"
+                    title={userData?.loginEmail || "admin@example.com"}
+                  >
+                    {truncateEmail(
+                      userData?.loginEmail || "admin@example.com",
+                      15
+                    )}
                   </p>
                 </div>
                 <div className="py-1">

@@ -102,11 +102,7 @@ function Login({ onSwitchToRegister, onLogin }) {
 
         // Store role separately for easy access
         localStorage.setItem("role", data.role);
-        localStorage.setItem(
-          "moduleAccess",
-          JSON.stringify(data.moduleAccess)
-        );
-
+        localStorage.setItem("moduleAccess", JSON.stringify(data.moduleAccess));
 
         // Store loginUserName separately for easy access
         if (data.loginUserName) {
@@ -144,24 +140,19 @@ function Login({ onSwitchToRegister, onLogin }) {
           });
         }
 
-
         // Navigate based on the role from API response (not from localStorage)
         if (data.role === "ROLE_ADMIN") {
           if (data.moduleAccess.donorAccess === true) {
             navigate("/Admin/donorList");
-          }
-          else {
+          } else {
             navigate("/Admin/LeadList");
-
           }
         } else if (data.role === "ROLE_EMPLOYEE") {
           if (data.moduleAccess.donorAccess === true) {
-            navigate("/Employee/donorList");
-          }
-          else {
+            navigate("/Employee/DonorList");
+          } else {
             navigate("/Employee/LeadList");
           }
-
         } else if (data.role === "ROLE_SUPERADMIN") {
           navigate("/SuperAdmin/AdminList");
         } else {
@@ -365,10 +356,11 @@ function Login({ onSwitchToRegister, onLogin }) {
                     type="email"
                     value={formData.username}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 ${errors.username
-                      ? "border-red-300 bg-red-50"
-                      : "border-gray-300 hover:border-blue-300"
-                      }`}
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 ${
+                      errors.username
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300 hover:border-blue-300"
+                    }`}
                     placeholder="Enter your email"
                   />
                   {errors.username && (
@@ -403,10 +395,11 @@ function Login({ onSwitchToRegister, onLogin }) {
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 pr-10 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 ${errors.password
-                        ? "border-red-300 bg-red-50"
-                        : "border-gray-300 hover:border-blue-300"
-                        }`}
+                      className={`w-full px-4 py-3 pr-10 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 ${
+                        errors.password
+                          ? "border-red-300 bg-red-50"
+                          : "border-gray-300 hover:border-blue-300"
+                      }`}
                       placeholder="Enter your password"
                     />
                     <button
