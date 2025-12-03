@@ -4,6 +4,7 @@ import { toast } from "react-hot-toast";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
 import {
+  FormFileAttachment,
   FormInput,
   FormSelect,
   FormTextarea,
@@ -106,6 +107,7 @@ function EditDonar() {
     prolongedIllnessStatus: false,
     prolongedIllnessReason: "",
     status: "",
+    geneticElements: "",
   });
 
   // 2. Family Info State (Split into Brothers and Sisters)
@@ -161,7 +163,6 @@ function EditDonar() {
 
   const visibleTabs = tabs.filter((tab) => {
     const status = personalInfo.status;
-    console.log("Status:", status);
 
     if (status === "New Donor") {
       return (
@@ -309,6 +310,137 @@ function EditDonar() {
         toast.error("Error processing image");
       }
     }
+  };
+
+  const handleAttachmentUpload = (e, index) => {
+    console.log("Index:", index);
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.name.length > 200) {
+      toast.error(
+        "File name is too long. Please rename it to under 200 characters."
+      );
+      e.target.value = null;
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error("File size exceeds the 5MB limit.");
+      e.target.value = null;
+      return;
+    }
+
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "text/plain",
+      "text/csv",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error(
+        "Invalid file type. Please upload a PDF, Word, or Excel document."
+      );
+      e.target.value = null;
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result.split(",")[1];
+      if (index !== undefined) {
+        setBloodReports((prev) => {
+          const newList = [...prev];
+          newList[index] = {
+            ...newList[index],
+            attachmentFile: base64String,
+            attachmentFileName: file.name,
+            attachmentFileType: file.type,
+          };
+          return newList;
+        });
+      } else {
+        setSemenReport((prev) => ({
+          ...prev,
+          attachmentFile: base64String,
+          attachmentFileName: file.name,
+          attachmentFileType: file.type,
+        }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAttachment = (index) => {
+    if (index !== undefined) {
+      setBloodReports((prev) => {
+        const newList = [...prev];
+        newList[index] = {
+          ...newList[index],
+          attachmentFile: "",
+          attachmentFileName: "",
+          attachmentFileType: "",
+        };
+        return newList;
+      });
+    } else {
+      setSemenReport((prev) => ({
+        ...prev,
+        attachmentFile: "",
+        attachmentFileName: "",
+        attachmentFileType: "",
+      }));
+    }
+  };
+
+  const downloadFile = (base64String, fileName, mimeType) => {
+    if (!base64String) return;
+    const byteCharacters = atob(base64String);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const previewFile = (base64String, mimeType) => {
+    if (!base64String) return;
+    const previewableTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+    ];
+    if (!previewableTypes.includes(mimeType)) {
+      toast.error("Preview not available for this file type. Please download.");
+      return;
+    }
+
+    const byteCharacters = atob(base64String);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+
+    window.open(url, "_blank");
   };
 
   // --- SUBMIT HANDLERS (Per Tab) ---
@@ -739,6 +871,15 @@ function EditDonar() {
             )}
           </div>
         </div>
+        <div className="border p-3 rounded mt-4">
+          <FormTextarea
+            label="Genetic Elements"
+            name="geneticElements"
+            value={personalInfo.geneticElements}
+            onChange={(e) => handleObjectChange(e, setPersonalInfo)}
+            rows={2}
+          />
+        </div>
       </div>
     </form>
   );
@@ -951,6 +1092,9 @@ function EditDonar() {
           hbelectrophoresis: "",
           srcreatinine: "",
           cmv: "",
+          attachmentFile: null,
+          attachmentFileName: null,
+          attachmentFileType: null,
         },
       ]);
     const removeReport = async (index, bloodReportId) => {
@@ -1073,6 +1217,34 @@ function EditDonar() {
               value={report.cmv}
               onChange={(e) => handleBloodChange(index, e)}
             />
+
+            <FormFileAttachment
+              label="Attachment"
+              name="attachment"
+              fileName={report.attachmentFileName || ""}
+              onChange={(e) => handleAttachmentUpload(e, index)}
+              onRemove={() => handleRemoveAttachment(index)}
+              onDownload={() =>
+                downloadFile(
+                  report.attachmentFile,
+                  report.attachmentFileName,
+                  report.attachmentFileType
+                )
+              }
+              onPreview={
+                ["application/pdf", "image/jpeg", "image/png"].includes(
+                  report.attachmentFileType
+                )
+                  ? () =>
+                      previewFile(
+                        report.attachmentFile,
+                        report.attachmentFileType
+                      )
+                  : undefined
+              }
+              background="white"
+              className="md:col-span-1"
+            />
           </div>
         ))}
       </form>
@@ -1103,9 +1275,9 @@ function EditDonar() {
           onChange={(e) => handleObjectChange(e, setSemenReport)}
         />
         <FormInput
-          label="Media"
+          label="Color"
           name="media"
-          value={semenReport.media}
+          value={semenReport.media || ""}
           onChange={(e) => handleObjectChange(e, setSemenReport)}
         />
         <FormInput
@@ -1133,6 +1305,22 @@ function EditDonar() {
           name="morphology"
           value={semenReport.morphology}
           onChange={(e) => handleObjectChange(e, setSemenReport)}
+        />
+        <FormFileAttachment
+          label="Attachment"
+          name="attachment"
+          fileName={semenReport.attachmentFileName || ""}
+          onChange={(e) => handleAttachmentUpload(e, undefined)}
+          onRemove={() => handleRemoveAttachment(undefined)}
+          background="white"
+          className="md:col-span-1"
+          onDownload={() =>
+            downloadBase64File(
+              semenReport.attachmentFile,
+              semenReport.attachmentFileName,
+              semenReport.attachmentFileType
+            )
+          }
         />
 
         <div className="md:col-span-3 border p-3 rounded bg-gray-50">
@@ -1202,7 +1390,7 @@ function EditDonar() {
         <FormInput
           label="Cane No"
           name="caneNo"
-          value={sampleReport.caneNo}
+          value={sampleReport.caneNo || ""}
           onChange={(e) => handleObjectChange(e, setSampleReport)}
         />
         <FormInput

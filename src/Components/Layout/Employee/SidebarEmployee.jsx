@@ -194,7 +194,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
       color: "from-fuchsia-500 to-purple-600",
     },
     {
-      name: "Prospects",
+      name: "Under Screening",
       path: "/Employee/DonorList",
       icon: (
         <svg
@@ -356,7 +356,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
     // Check if Donar access grants access to related modules
     if (
       [
-        "Prospects",
+        "Under Screening",
         "Shortlisted",
         "Qualified",
         "Donor",
