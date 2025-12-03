@@ -26,6 +26,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
     Donor: "Donor",
     FamilyList: "FamilyList",
     Matchingdonor: "Matchingdonor",
+    TaskList: "TaskList",
   };
 
   const navigationItems = [
@@ -174,6 +175,27 @@ function Sidebar({ isOpen, toggleSidebar }) {
         </svg>
       ),
       color: "from-teal-600 to-cyan-500",
+    },
+    {
+      name: "TaskList",
+      path: "/Admin/TaskList",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 5l2 2 4-4M5 11h14M5 17h14"
+          />
+        </svg>
+      ),
+
+     color: "from-red-500 to-rose-600",
     },
     {
       name: "Timesheet",

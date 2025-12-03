@@ -52,6 +52,7 @@ import EditAdmin from "./Components/Common/SuperAdmin/EditAdmin.jsx";
 import QualifiedDonorList from "./Components/Common/Donor/QualifiedDonorList.jsx";
 import ConfirmDonorList from "./Components/Common/Donor/ConfirmDonorList.jsx";
 import EmployeeList from "./Components/Common/Employee/EmployeeList.jsx";
+import TaskList from "./Components/Common/Task/TaskList.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -372,6 +373,16 @@ function App() {
               </RoleBasedRoute>
             }
           />
+
+          <Route
+            path="/Admin/TaskList"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <TaskList />
+              </RoleBasedRoute>
+            }
+          />
+
 
           {/* Employee Routes - Individual routes with layout */}
           <Route
