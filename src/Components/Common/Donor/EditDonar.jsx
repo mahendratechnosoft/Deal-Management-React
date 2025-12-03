@@ -352,7 +352,7 @@ function EditDonar() {
       };
 
       payload.push({
-        donorFamailyId: bro.donorFamailyId,
+        donorFamailyId: bro.donorFamailyId || null,
         donorId: donorId,
         brotherAge: bro.age,
         brotherProfession: bro.profession,
