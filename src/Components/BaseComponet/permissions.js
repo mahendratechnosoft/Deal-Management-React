@@ -17,7 +17,7 @@
 // BaseComponet/permissions.js
 
 // List of modules that are always accessible (don't require permission setup)
-const PUBLIC_MODULES = ["Item"]; 
+const PUBLIC_MODULES = [];
 
 export const hasPermission = (module, action) => {
   const role = localStorage.getItem("role");
