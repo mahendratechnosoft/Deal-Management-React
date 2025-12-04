@@ -16,8 +16,10 @@ const DonorFilters = ({ onFilterChange, activeFilters, familyOptions }) => {
   const [filters, setFilters] = useState({
     familyInfoId: "",
     bloodGroup: "",
-    height: "",
-    weight: "",
+    minHeight: "",
+    maxHeight: "",
+    minWeight: "",
+    maxWeight: "",
     skinColor: "",
     eyeColor: "",
     religion: "",
@@ -86,8 +88,10 @@ const DonorFilters = ({ onFilterChange, activeFilters, familyOptions }) => {
     let newFilters = { ...filters };
 
     if (memberType === "husband") {
-      newFilters.height = parseNum(data.husbandHeight);
-      newFilters.weight = parseNum(data.husbandWeight);
+      newFilters.minHeight = setRange(data.husbandHeight);
+      newFilters.maxHeight = setRange(data.husbandHeight);
+      newFilters.minWeight = setRange(data.husbandWeight);
+      newFilters.maxWeight = setRange(data.husbandWeight);
       newFilters.bloodGroup = data.husbandBloodGroup || "";
       newFilters.skinColor = data.husbandSkinColor || "";
       newFilters.eyeColor = data.husbandEyeColor || "";
@@ -95,8 +99,10 @@ const DonorFilters = ({ onFilterChange, activeFilters, familyOptions }) => {
       newFilters.education = data.husbandEducation || "";
       newFilters.city = data.husbandDistrict || "";
     } else if (memberType === "wife") {
-      newFilters.height = parseNum(data.wifeHeight);
-      newFilters.weight = parseNum(data.wifeWeight);
+      newFilters.minHeight = setRange(data.wifeHeight);
+      newFilters.maxHeight = setRange(data.wifeHeight);
+      newFilters.minWeight = setRange(data.wifeWeight);
+      newFilters.maxWeight = setRange(data.wifeWeight);
       newFilters.bloodGroup = data.wifeBloodGroup || "";
       newFilters.skinColor = data.wifeSkinColor || "";
       newFilters.eyeColor = data.wifeEyeColor || "";
@@ -112,8 +118,10 @@ const DonorFilters = ({ onFilterChange, activeFilters, familyOptions }) => {
       const wWeight = parseNum(data.wifeWeight);
       const avgWeight = (hWeight + wWeight) / 2;
 
-      newFilters.height = avgHeight > 0 ? avgHeight : "";
-      newFilters.weight = avgWeight > 0 ? avgWeight : "";
+      newFilters.minHeight = avgHeight > 0 ? avgHeight : "";
+      newFilters.maxHeight = avgHeight > 0 ? avgHeight : "";
+      newFilters.minWeight = avgWeight > 0 ? avgWeight : "";
+      newFilters.maxWeight = avgWeight > 0 ? avgWeight : "";
 
       newFilters.bloodGroup = "";
       newFilters.skinColor = "";
@@ -187,12 +195,15 @@ const DonorFilters = ({ onFilterChange, activeFilters, familyOptions }) => {
   const filterFields = [
     { key: "bloodGroup", label: "Blood Group", type: "select" },
     { key: "city", label: "City", type: "text" },
-    { key: "height", label: "Height (cm)", type: "number" },
-    { key: "weight", label: "Weight (kg)", type: "number" },
+    { key: "religion", label: "Religion", type: "text" },
+
+    { key: "minHeight", label: "Min Height (cm)", type: "number" },
+    { key: "maxHeight", label: "Max Height (cm)", type: "number" },
     { key: "skinColor", label: "Skin Color", type: "select" },
     { key: "eyeColor", label: "Eye Color", type: "select" },
-    { key: "religion", label: "Religion", type: "text" },
     { key: "education", label: "Education", type: "select" },
+    { key: "minWeight", label: "Min Weight (kg)", type: "number" },
+    { key: "maxWeight", label: "Max Weight (kg)", type: "number" },
     { key: "profession", label: "Profession", type: "text" },
   ];
 

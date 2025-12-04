@@ -10,6 +10,20 @@ import {
   FormTextarea,
 } from "../../BaseComponet/CustomeFormComponents";
 
+const bloodGroupOptions = [
+  { value: "O+", label: "O+" },
+  { value: "O-", label: "O-" },
+  { value: "A+", label: "A+" },
+  { value: "A-", label: "A-" },
+  { value: "B-", label: "B-" },
+  { value: "AB+", label: "AB+" },
+  { value: "AB-", label: "AB-" },
+];
+
+const reportOptions = [
+  { value: "Positive", label: "Positive" },
+  { value: "Negative", label: "Negative" },
+];
 const EditDonorPageSkeleton = () => {
   return (
     <div className="p-4 bg-gray-50 h-full animate-pulse">
@@ -115,10 +129,10 @@ function EditDonar() {
   const [sisters, setSisters] = useState([]);
 
   // 3. Blood Reports State
-  const [bloodReports, setBloodReports] = useState([]);
 
+  const [bloodReports, setBloodReports] = useState([]);
   // 4. Semen Report State
-  const [semenReport, setSemenReport] = useState({});
+  const [semenReport, setSemenReport] = useState([]);
 
   // 5. Sample Report State
   const [sampleReport, setSampleReport] = useState({});
@@ -250,7 +264,7 @@ function EditDonar() {
           const res = await axiosInstance.get(
             `getSemenReportByDonorId/${donorId}`
           );
-          setSemenReport(res.data || { donorId: donorId });
+          setSemenReport(res.data || []);
         } else if (activeTab === "sample") {
           const res = await axiosInstance.get(
             `getSampleReportByDonorId/${donorId}`
@@ -312,7 +326,7 @@ function EditDonar() {
     }
   };
 
-  const handleAttachmentUpload = (e, index) => {
+  const handleAttachmentUpload = (e, index, type) => {
     console.log("Index:", index);
     const file = e.target.files[0];
     if (!file) return;
@@ -353,48 +367,43 @@ function EditDonar() {
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64String = reader.result.split(",")[1];
-      if (index !== undefined) {
-        setBloodReports((prev) => {
-          const newList = [...prev];
-          newList[index] = {
-            ...newList[index],
-            attachmentFile: base64String,
-            attachmentFileName: file.name,
-            attachmentFileType: file.type,
-          };
-          return newList;
-        });
-      } else {
-        setSemenReport((prev) => ({
-          ...prev,
+
+      const updateList = (prevList) => {
+        const newList = [...prevList];
+        newList[index] = {
+          ...newList[index],
           attachmentFile: base64String,
           attachmentFileName: file.name,
           attachmentFileType: file.type,
-        }));
+        };
+        return newList;
+      };
+
+      if (type === "blood") {
+        setBloodReports(updateList);
+      } else if (type === "semen") {
+        setSemenReport(updateList);
       }
     };
     reader.readAsDataURL(file);
   };
 
-  const handleRemoveAttachment = (index) => {
-    if (index !== undefined) {
-      setBloodReports((prev) => {
-        const newList = [...prev];
-        newList[index] = {
-          ...newList[index],
-          attachmentFile: "",
-          attachmentFileName: "",
-          attachmentFileType: "",
-        };
-        return newList;
-      });
-    } else {
-      setSemenReport((prev) => ({
-        ...prev,
+  const handleRemoveAttachment = (index, type) => {
+    const updateList = (prevList) => {
+      const newList = [...prevList];
+      newList[index] = {
+        ...newList[index],
         attachmentFile: "",
         attachmentFileName: "",
         attachmentFileType: "",
-      }));
+      };
+      return newList;
+    };
+
+    if (type === "blood") {
+      setBloodReports(updateList);
+    } else if (type === "semen") {
+      setSemenReport(updateList);
     }
   };
 
@@ -871,14 +880,19 @@ function EditDonar() {
             )}
           </div>
         </div>
-        <div className="border p-3 rounded mt-4">
-          <FormTextarea
-            label="Genetic Elements"
-            name="geneticElements"
-            value={personalInfo.geneticElements}
-            onChange={(e) => handleObjectChange(e, setPersonalInfo)}
-            rows={2}
-          />
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-3 mt-3 border-b pb-2">
+            Genetic Illness
+          </h3>
+          <div className="border p-3 rounded mt-4">
+            <FormTextarea
+              label="Genetic Illness"
+              name="geneticElements"
+              value={personalInfo.geneticElements}
+              onChange={(e) => handleObjectChange(e, setPersonalInfo)}
+              rows={2}
+            />
+          </div>
         </div>
       </div>
     </form>
@@ -1076,12 +1090,19 @@ function EditDonar() {
       list[index][e.target.name] = e.target.value;
       setBloodReports(list);
     };
-    const addReport = () =>
+    const addReport = () => {
+      const now = new Date();
+      const currentDateTime = new Date(
+        now.getTime() - now.getTimezoneOffset() * 60000
+      )
+        .toISOString()
+        .slice(0, 16);
+
       setBloodReports([
         ...bloodReports,
         {
           donorId: donorId,
-          reportDateTime: "",
+          reportDateTime: currentDateTime,
           bloodGroup: "",
           bsl: "",
           reportType: "",
@@ -1095,8 +1116,10 @@ function EditDonar() {
           attachmentFile: null,
           attachmentFileName: null,
           attachmentFileType: null,
+          stage: personalInfo.status || "Unknown",
         },
       ]);
+    };
     const removeReport = async (index, bloodReportId) => {
       try {
         await axiosInstance.delete(`deleteDonorBloodReport/${bloodReportId}`);
@@ -1137,13 +1160,22 @@ function EditDonar() {
           >
             <div className="md:col-span-4 flex justify-between font-bold text-gray-500 border-b pb-1 mb-2">
               <span>Report #{index + 1}</span>
-              <button
-                type="button"
-                onClick={() => removeReport(index, report.donorBloodReportId)}
-                className="text-red-500 text-xs"
-              >
-                Remove
-              </button>
+              <div className="flex items-center gap-3">
+                {/* Stage Badge - Display Only */}
+                {report.stage && (
+                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-50 text-gray-700 border border-gray-300">
+                    Stage: {report.stage}
+                  </span>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => removeReport(index, report.donorBloodReportId)}
+                  className="text-red-500 hover:text-red-700 text-xs transition-colors"
+                >
+                  Remove
+                </button>
+              </div>
             </div>
             <input
               type="hidden"
@@ -1157,72 +1189,129 @@ function EditDonar() {
               value={report.reportDateTime}
               onChange={(e) => handleBloodChange(index, e)}
             />
-            <FormInput
+            {/* <FormInput
               label="Report Type"
               name="reportType"
               value={report.reportType}
               onChange={(e) => handleBloodChange(index, e)}
-            />
-            <FormInput
+            /> */}
+
+            <FormSelect
               label="Blood Group"
               name="bloodGroup"
-              value={report.bloodGroup}
-              onChange={(e) => handleBloodChange(index, e)}
+              value={bloodGroupOptions.find(
+                (o) => o.value === report.bloodGroup
+              )}
+              options={bloodGroupOptions}
+              onChange={(selectedOption) => {
+                const list = [...bloodReports];
+                list[index]["bloodGroup"] = selectedOption
+                  ? selectedOption.value
+                  : "";
+                setBloodReports(list);
+              }}
             />
+
             <FormInput
               label="BSL"
               name="bsl"
+              type="number"
               value={report.bsl}
               onChange={(e) => handleBloodChange(index, e)}
             />
-            <FormInput
+
+            <FormSelect
               label="HIV"
               name="hiv"
-              value={report.hiv}
-              onChange={(e) => handleBloodChange(index, e)}
+              value={reportOptions.find((o) => o.value === report.hiv)}
+              options={reportOptions}
+              onChange={(selectedOption) => {
+                const list = [...bloodReports];
+                list[index]["hiv"] = selectedOption ? selectedOption.value : "";
+                setBloodReports(list);
+              }}
             />
-            <FormInput
+            <FormSelect
               label="HBSAG"
               name="hbsag"
-              value={report.hbsag}
-              onChange={(e) => handleBloodChange(index, e)}
+              value={reportOptions.find((o) => o.value === report.hbsag)}
+              options={reportOptions}
+              onChange={(selectedOption) => {
+                const list = [...bloodReports];
+                list[index]["hbsag"] = selectedOption
+                  ? selectedOption.value
+                  : "";
+                setBloodReports(list);
+              }}
             />
-            <FormInput
+            <FormSelect
               label="VDRL"
               name="vdrl"
-              value={report.vdrl}
-              onChange={(e) => handleBloodChange(index, e)}
+              value={reportOptions.find((o) => o.value === report.vdrl)}
+              options={reportOptions}
+              onChange={(selectedOption) => {
+                const list = [...bloodReports];
+                list[index]["vdrl"] = selectedOption
+                  ? selectedOption.value
+                  : "";
+                setBloodReports(list);
+              }}
             />
-            <FormInput
+            <FormSelect
               label="HCV"
               name="hcv"
-              value={report.hcv}
-              onChange={(e) => handleBloodChange(index, e)}
+              value={reportOptions.find((o) => o.value === report.hcv)}
+              options={reportOptions}
+              onChange={(selectedOption) => {
+                const list = [...bloodReports];
+                list[index]["hcv"] = selectedOption ? selectedOption.value : "";
+                setBloodReports(list);
+              }}
             />
-            <FormInput
+            <FormSelect
               label="HB Electrophoresis"
               name="hbelectrophoresis"
-              value={report.hbelectrophoresis}
-              onChange={(e) => handleBloodChange(index, e)}
+              value={reportOptions.find(
+                (o) => o.value === report.hbelectrophoresis
+              )}
+              options={reportOptions}
+              onChange={(selectedOption) => {
+                const list = [...bloodReports];
+                list[index]["hbelectrophoresis"] = selectedOption
+                  ? selectedOption.value
+                  : "";
+                setBloodReports(list);
+              }}
             />
-            <FormInput
+            <FormSelect
               label="SR. Creatinine"
               name="srcreatinine"
-              value={report.srcreatinine}
-              onChange={(e) => handleBloodChange(index, e)}
+              value={reportOptions.find((o) => o.value === report.srcreatinine)}
+              options={reportOptions}
+              onChange={(selectedOption) => {
+                const list = [...bloodReports];
+                list[index]["srcreatinine"] = selectedOption
+                  ? selectedOption.value
+                  : "";
+                setBloodReports(list);
+              }}
             />
-            <FormInput
+            <FormSelect
               label="CMV"
               name="cmv"
-              value={report.cmv}
-              onChange={(e) => handleBloodChange(index, e)}
+              value={reportOptions.find((o) => o.value === report.cmv)}
+              options={reportOptions}
+              onChange={(selectedOption) => {
+                const list = [...bloodReports];
+                list[index]["cmv"] = selectedOption ? selectedOption.value : "";
+                setBloodReports(list);
+              }}
             />
-
             <FormFileAttachment
               label="Attachment"
               name="attachment"
               fileName={report.attachmentFileName || ""}
-              onChange={(e) => handleAttachmentUpload(e, index)}
+              onChange={(e) => handleAttachmentUpload(e, index, "blood")}
               onRemove={() => handleRemoveAttachment(index)}
               onDownload={() =>
                 downloadFile(
@@ -1251,119 +1340,223 @@ function EditDonar() {
     );
   };
 
-  const renderSemenReport = () => (
-    <form onSubmit={updateSemen} className="space-y-6">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">
-          Semen Analysis Report
-        </h3>
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Update Semen Report
-        </button>
-      </div>
+  const renderSemenReport = () => {
+    const handleSemenChange = (index, e) => {
+      const list = [...semenReport];
+      list[index][e.target.name] = e.target.value;
+      setSemenReport(list);
+    };
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <FormInput
-          label="Date & Time"
-          name="dateAndTime"
-          type="datetime-local"
-          value={semenReport.dateAndTime}
-          onChange={(e) => handleObjectChange(e, setSemenReport)}
-        />
-        <FormInput
-          label="Color"
-          name="media"
-          value={semenReport.media || ""}
-          onChange={(e) => handleObjectChange(e, setSemenReport)}
-        />
-        <FormInput
-          label="Volume"
-          name="volumne"
-          value={semenReport.volumne}
-          onChange={(e) => handleObjectChange(e, setSemenReport)}
-          type="number"
-        />
-        <FormInput
-          label="Concentration"
-          name="spermConcentration"
-          value={semenReport.spermConcentration}
-          onChange={(e) => handleObjectChange(e, setSemenReport)}
-        />
-        <FormInput
-          label="Million/ML"
-          name="million"
-          value={semenReport.million}
-          onChange={(e) => handleObjectChange(e, setSemenReport)}
-          type="number"
-        />
-        <FormInput
-          label="Morphology"
-          name="morphology"
-          value={semenReport.morphology}
-          onChange={(e) => handleObjectChange(e, setSemenReport)}
-        />
-        <FormFileAttachment
-          label="Attachment"
-          name="attachment"
-          fileName={semenReport.attachmentFileName || ""}
-          onChange={(e) => handleAttachmentUpload(e, undefined)}
-          onRemove={() => handleRemoveAttachment(undefined)}
-          background="white"
-          className="md:col-span-1"
-          onDownload={() =>
-            downloadBase64File(
-              semenReport.attachmentFile,
-              semenReport.attachmentFileName,
-              semenReport.attachmentFileType
-            )
-          }
-        />
+    const addSemenReport = () => {
+      const now = new Date();
+      const currentDateTime = new Date(
+        now.getTime() - now.getTimezoneOffset() * 60000
+      )
+        .toISOString()
+        .slice(0, 16);
+      setSemenReport([
+        ...semenReport,
+        {
+          donorId: donorId,
+          stage: personalInfo.status || "Unknown", // Capture Stage
+          dateAndTime: currentDateTime,
+          media: "",
+          volumne: "", // Preserving your original spelling
+          spermConcentration: "",
+          million: "",
+          morphology: "",
+          progressiveMotilityA: "",
+          progressiveMotilityB: "",
+          progressiveMotilityC: "",
+          abnormality: "",
+          attachmentFile: "",
+          attachmentFileName: "",
+          attachmentFileType: "",
+        },
+      ]);
+    };
 
-        <div className="md:col-span-3 border p-3 rounded bg-gray-50">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Progressive Motility (%)
-          </label>
-          <div className="grid grid-cols-3 gap-4">
-            <FormInput
-              label="A %"
-              name="progressiveMotilityA"
-              value={semenReport.progressiveMotilityA}
-              onChange={(e) => handleObjectChange(e, setSemenReport)}
-              type="number"
-            />
-            <FormInput
-              label="B %"
-              name="progressiveMotilityB"
-              value={semenReport.progressiveMotilityB}
-              onChange={(e) => handleObjectChange(e, setSemenReport)}
-              type="number"
-            />
-            <FormInput
-              label="C %"
-              name="progressiveMotilityC"
-              value={semenReport.progressiveMotilityC}
-              onChange={(e) => handleObjectChange(e, setSemenReport)}
-              type="number"
-            />
+    const removeSemenReport = async (index, semenReportId) => {
+      if (semenReportId) {
+        try {
+          await axiosInstance.delete(`deleteSemenReport/${semenReportId}`);
+          toast.success("Report Deleted");
+        } catch (error) {
+          toast.error("Delete failed.");
+          return; // Stop if API fails
+        }
+      }
+      const list = [...semenReport];
+      list.splice(index, 1);
+      setSemenReport(list);
+    };
+
+    return (
+      <form onSubmit={updateSemen} className="space-y-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">
+            Semen Analysis Reports
+          </h3>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={addSemenReport}
+              className="text-sm bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600"
+            >
+              + Add Report
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+            >
+              Update Semen Reports
+            </button>
           </div>
         </div>
 
-        <div className="md:col-span-3">
-          <FormTextarea
-            label="Abnormality"
-            name="abnormality"
-            value={semenReport.abnormality}
-            onChange={(e) => handleObjectChange(e, setSemenReport)}
-            rows={3}
-          />
-        </div>
-      </div>
-    </form>
-  );
+        {semenReport.map((report, index) => (
+          <div
+            key={index}
+            className="border p-4 rounded bg-gray-50 relative mb-6 shadow-sm"
+          >
+            {/* --- HEADER WITH STAGE BADGE --- */}
+            <div className="flex justify-between items-center border-b pb-2 mb-4">
+              <span className="font-bold text-gray-500">
+                Semen Report #{index + 1}
+              </span>
+              <div className="flex items-center gap-3">
+                {report.stage && (
+                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-700 border border-gray-300">
+                    Stage: {report.stage}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeSemenReport(index, report.semenReportId)}
+                  className="text-red-500 hover:text-red-700 text-xs font-medium"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+
+            {/* Hidden ID Field */}
+            <input
+              type="hidden"
+              name="semenReportId"
+              value={report.semenReportId || ""}
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormInput
+                label="Date & Time"
+                name="dateAndTime"
+                type="datetime-local"
+                value={report.dateAndTime}
+                onChange={(e) => handleSemenChange(index, e)}
+              />
+              <FormInput
+                label="Color"
+                name="media"
+                value={report.media || ""}
+                onChange={(e) => handleSemenChange(index, e)}
+              />
+              <FormInput
+                label="Volume"
+                name="volumne"
+                value={report.volumne}
+                onChange={(e) => handleSemenChange(index, e)}
+                type="number"
+              />
+              <FormInput
+                label="Concentration"
+                name="spermConcentration"
+                value={report.spermConcentration}
+                onChange={(e) => handleSemenChange(index, e)}
+              />
+              <FormInput
+                label="Million/ML"
+                name="million"
+                value={report.million}
+                onChange={(e) => handleSemenChange(index, e)}
+                type="number"
+              />
+              <FormInput
+                label="Morphology"
+                name="morphology"
+                value={report.morphology}
+                onChange={(e) => handleSemenChange(index, e)}
+              />
+
+              <FormInput
+                label="MSC"
+                name="msc"
+                value={report.msc}
+                onChange={(e) => handleSemenChange(index, e)}
+              />
+
+              <FormFileAttachment
+                label="Attachment"
+                name="attachment"
+                fileName={report.attachmentFileName || ""}
+                onChange={(e) => handleAttachmentUpload(e, index, "semen")}
+                onRemove={() => handleRemoveAttachment(index, "semen")}
+                background="white"
+                className="md:col-span-1"
+                onDownload={() =>
+                  downloadFile(
+                    report.attachmentFile,
+                    report.attachmentFileName,
+                    report.attachmentFileType
+                  )
+                }
+              />
+
+              <div className="md:col-span-3 border p-3 rounded bg-white">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Progressive Motility (%)
+                </label>
+                <div className="grid grid-cols-3 gap-4">
+                  <FormInput
+                    label="A %"
+                    name="progressiveMotilityA"
+                    value={report.progressiveMotilityA}
+                    onChange={(e) => handleSemenChange(index, e)}
+                    type="number"
+                  />
+                  <FormInput
+                    label="B %"
+                    name="progressiveMotilityB"
+                    value={report.progressiveMotilityB}
+                    onChange={(e) => handleSemenChange(index, e)}
+                    type="number"
+                  />
+                  <FormInput
+                    label="C %"
+                    name="progressiveMotilityC"
+                    value={report.progressiveMotilityC}
+                    onChange={(e) => handleSemenChange(index, e)}
+                    type="number"
+                  />
+                </div>
+              </div>
+
+              <div className="md:col-span-3">
+                <FormTextarea
+                  label="Abnormality"
+                  name="abnormality"
+                  value={report.abnormality}
+                  onChange={(e) => handleSemenChange(index, e)}
+                  rows={3}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </form>
+    );
+  };
 
   const renderSampleReport = () => (
     <form onSubmit={updateSample} className="space-y-6">
@@ -1487,7 +1680,6 @@ function EditDonar() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-gray-900">Edit Donor</h1>
-              <p className="text-sm text-gray-600">{personalInfo.status}</p>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -1504,6 +1696,21 @@ function EditDonar() {
         <div className="flex-1 overflow-y-auto h-[72vh] CRM-scroll-width-none mt-4">
           <div className="p-4">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="flex flex-wrap items-center gap-3 mt-1 py-1 px-4">
+                <div>
+                  <span className="text-lg font-semibold text-gray-700">
+                    {personalInfo.name || "Unknown Name"}
+                  </span>
+
+                  <div className="text-sm text-gray-500 font-mono">
+                    UIN: {personalInfo.uin || "Unknown UIN"}
+                  </div>
+                </div>
+
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium border bg-gray-100 text-gray-800 border-gray-200 ml-auto">
+                  {personalInfo.status || "New Donor"}
+                </span>
+              </div>
               <div className="border-b border-gray-200">
                 <ul className="flex flex-wrap text-sm font-medium text-center text-gray-500">
                   {visibleTabs.map((tab) => (

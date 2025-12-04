@@ -156,17 +156,19 @@ function DonorList() {
 
       await axiosInstance.put("updateDonorStatus", payload);
 
-      // setdonors((prev) => prev.filter((d) => d.donorId !== donorId));
-      //     toast.success("Donor Moved To Shortlisted");
+      if (newStatus === "Not Shortlisted") {
+        setdonors((prev) => prev.filter((d) => d.donorId !== donorId));
+        toast.success("Donor removed from active list");
+      } else {
+        setdonors((prev) =>
+          prev.map((d) =>
+            d.donorId === donorId ? { ...d, status: newStatus } : d
+          )
+        );
+        toast.success("Status updated");
+      }
 
-      // // Update UI locally without reloading
-      setdonors((prev) =>
-        prev.map((d) =>
-          d.donorId === donorId ? { ...d, status: newStatus } : d
-        )
-      );
       fetchDonorStatusCount();
-      toast.success("Status updated");
     } catch (err) {
       console.error(err);
       toast.error("Failed to update status");
@@ -585,17 +587,15 @@ function DonorList() {
                             handleStatusChange(donor.donorId, e.target.value)
                           }
                         >
-                          <option value="New Donor">New Donor</option>
-                          <option value="Qualified">Qualified</option>
-                          <option value="Not Qualified">Not Qualified</option>
+                          <option value="New Donor">Under Screening</option>
                           <option value="Selected">Selected</option>
-                          <option value="Not Selected">Not Selected</option>
                           <option value="Shortlisted">Shortlisted</option>
+                          <option value="Qurantined">Qurantined</option>
+                          <option value="Qualified">Qualified</option>
+                          <option value="Donor">Donor</option>
                           <option value="Not Shortlisted">
                             Not Shortlisted
                           </option>
-                          <option value="Donor">Donor</option>
-                          <option value="Rejected">Rejected</option>
                         </select>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm truncate max-w-[150px]">

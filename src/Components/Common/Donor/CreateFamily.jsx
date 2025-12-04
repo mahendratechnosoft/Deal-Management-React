@@ -8,6 +8,8 @@ import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 
 const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
+  const [errors, setErrors] = useState({});
+
   const [formData, setFormData] = useState({
     referHospital: "",
     referHospitalAddress: "",
@@ -79,11 +81,57 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
   if (!isOpen) return null;
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    const mobileFields = [
+      "referDoctorContactNumber",
+      "husbandMobile",
+      "wifeMobile",
+    ];
+
+    if (mobileFields.includes(name)) {
+      const numericValue = value.replace(/[^0-9]/g, "");
+      if (numericValue.length <= 10) {
+        setFormData({ ...formData, [name]: numericValue });
+
+        if (errors[name]) {
+          setErrors({ ...errors, [name]: "" });
+        }
+      }
+      return;
+    }
+    setFormData({ ...formData, [name]: value });
+
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: "" });
+    }
+  };
+
+  const validateForm = () => {
+    let tempErrors = {};
+    let isValid = true;
+
+    const validateMobile = (fieldName, label) => {
+      const value = formData[fieldName];
+      if (value && value.length !== 10) {
+        tempErrors[fieldName] = `${label} must be exactly 10 digits`;
+        isValid = false;
+      }
+    };
+
+    validateMobile("referDoctorContactNumber", "Doctor Contact");
+    validateMobile("husbandMobile", "Husband Mobile");
+    validateMobile("wifeMobile", "Wife Mobile");
+
+    setErrors(tempErrors);
+    return isValid;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) {
+      toast.error("Please correct the errors in the form");
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -247,6 +295,7 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
                   type="text"
                   placeholder="Enter doctor contact"
                   disabled={isSubmitting}
+                  error={errors.referDoctorContactNumber}
                 />
               </div>
             </div>
@@ -274,6 +323,7 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
                   type="text"
                   placeholder="Enter Contact Number"
                   disabled={isSubmitting}
+                  error={errors.husbandMobile}
                 />
                 <FormInput
                   label="Height"
@@ -408,6 +458,7 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
                   type="text"
                   placeholder="Enter Contact Number"
                   disabled={isSubmitting}
+                  error={errors.wifeMobile}
                 />
                 <FormInput
                   label="Height"
