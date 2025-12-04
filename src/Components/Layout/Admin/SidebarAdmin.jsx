@@ -195,7 +195,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
         </svg>
       ),
 
-     color: "from-red-500 to-rose-600",
+      color: "from-red-500 to-rose-600",
     },
     {
       name: "Timesheet",
@@ -260,6 +260,26 @@ function Sidebar({ isOpen, toggleSidebar }) {
     {
       name: "Shortlisted",
       path: "/Admin/DonorList/ShortlistedDonorList",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      ),
+      color: "from-green-500 to-emerald-500",
+    },
+    {
+      name: "Quarantined",
+      path: "/Admin/DonorList/QuarantinedDonorList",
       icon: (
         <svg
           className="w-5 h-5"
@@ -424,6 +444,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
         "FamilyList",
         "Matching Donor",
         "Selected",
+        "Quarantined",
       ].includes(moduleName)
     ) {
       const donorHasAccess = hasPermission("donor", "Access");

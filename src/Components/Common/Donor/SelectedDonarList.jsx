@@ -54,6 +54,8 @@ function SelectedDonarList() {
         status = "Shortlisted";
       } else if (pageName === "SelectedDonorList") {
         status = "Selected";
+      } else if (pageName === "QuarantinedDonorList") {
+        status = "Quarantined";
       } else if (pageName === "QualifiedDonorList") {
         status = "Qualified";
       } else if (pageName === "ConfirmDonorList") {
@@ -211,7 +213,7 @@ function SelectedDonarList() {
     if (pageName === "SelectedDonorList") return "Selected Donor List";
     if (pageName === "QualifiedDonorList") return "Qualified Donor List";
     if (pageName === "ConfirmDonorList") return "Confirmed  Donors List";
-    return "Donor List";
+    if (pageName === "QuarantinedDonorList") return "Quarantined Donor List";
   };
 
   if (error) {
@@ -438,17 +440,13 @@ function SelectedDonarList() {
                               handleStatusChange(Donor.donorId, e.target.value)
                             }
                           >
-                            {/* Options for Qualified Page */}
-                            {pageName === "QualifiedDonorList" && (
+                            {pageName === "SelectedDonorList" && (
                               <>
-                                <option value="Qualified">Qualified</option>
-                                <option value="Not Qualified">
-                                  Not Qualified
+                                <option value="Selected">Selected</option>
+                                <option value="Shortlisted">Shortlisted</option>
+                                <option value="Not Shortlisted">
+                                  Not Shortlisted
                                 </option>
-                                <option value="Sperm Report">
-                                  Sperm Report
-                                </option>
-                                <option value="Donor">Donor</option>
                               </>
                             )}
 
@@ -456,21 +454,31 @@ function SelectedDonarList() {
                             {pageName === "ShortlistedDonorList" && (
                               <>
                                 <option value="Shortlisted">Shortlisted</option>
-                                <option value="Qualified">Qualified</option>
-                                <option value="Quarantine">Quarantine</option>
-                                <option value="Report Pending">
-                                  Report Pending
+                                <option value="Quarantined">Quarantined</option>
+                                <option value="Not Shortlisted">
+                                  Not Shortlisted
                                 </option>
-                                <option value="Rejected">Send Prospects</option>
                               </>
                             )}
 
-                            {pageName === "SelectedDonorList" && (
+                            {/* Options for Confirm Page */}
+                            {pageName === "QuarantinedDonorList" && (
                               <>
-                                <option value="Shortlisted">Shortlisted</option>
-                                <option value="Selected">Selected</option>
-                                <option value="Not Selected">
-                                  Not Selected
+                                <option value="Quarantined">Quarantined</option>
+                                <option value="Qualified">Qualified</option>
+                                <option value="Not Shortlisted">
+                                  Not Shortlisted
+                                </option>
+                              </>
+                            )}
+
+                            {/* Options for Qualified Page */}
+                            {pageName === "QualifiedDonorList" && (
+                              <>
+                                <option value="Qualified">Qualified</option>
+                                <option value="Donor">Donor</option>
+                                <option value="Not Shortlisted">
+                                  Not Shortlisted
                                 </option>
                               </>
                             )}
