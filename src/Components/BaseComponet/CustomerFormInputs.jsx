@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Select from 'react-select';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+
+
+
 
 /* ---------------------------------------------
    🔹 GlobalInputField — Text Input with Standard Label
@@ -369,6 +372,143 @@ export const GlobalDateTimeField = ({
   );
 };
 
+
+
+
+
+
+/* ---------------------------------------------
+   🔹 GlobalMultiSelectField — Multi-Select using react-select
+--------------------------------------------- */
+export const GlobalMultiSelectField = ({
+  label,
+  name,
+  value = [],
+  onChange,
+  options = [],
+  placeholder = 'Select options...',
+  error,
+  required = false,
+  disabled = false,
+  loading = false,
+  className = '',
+  helpText = '',
+  isSearchable = true,
+  closeMenuOnSelect = false,  // Keep menu open after selection (optional)
+}) => {
+  const customStyles = {
+    control: (base, state) => ({
+      ...base,
+      minHeight: "40px",
+      borderColor: state.isFocused
+        ? "#3b82f6"
+        : error
+        ? "#ef4444"
+        : "#e5e7eb",
+      borderWidth: "1px",
+      borderRadius: "6px",
+      boxShadow: state.isFocused ? "0 0 0 3px rgba(59, 130, 246, 0.1)" : "none",
+      "&:hover": {
+        borderColor: state.isFocused ? "#3b82f6" : "#9ca3af",
+      },
+      backgroundColor: disabled ? "#f9fafb" : "white",
+    }),
+    menu: (base) => ({
+      ...base,
+      zIndex: 50,
+      borderRadius: "6px",
+      boxShadow: "0 10px 25px rgba(0, 0, 0, 0.15)",
+    }),
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isSelected
+        ? "#3b82f6"
+        : state.isFocused
+        ? "#f3f4f6"
+        : "white",
+      color: state.isSelected ? "white" : "#1f2937",
+      "&:active": {
+        backgroundColor: "#3b82f6",
+        color: "white",
+      },
+    }),
+    multiValue: (base) => ({
+      ...base,
+      backgroundColor: "#dbeafe",
+      borderRadius: "4px",
+    }),
+    multiValueLabel: (base) => ({
+      ...base,
+      color: "#1e40af",
+      fontWeight: "500",
+    }),
+    multiValueRemove: (base) => ({
+      ...base,
+      color: "#3b82f6",
+      ":hover": {
+        backgroundColor: "#bfdbfe",
+        color: "#1e40af",
+      },
+    }),
+  };
+
+  // Convert array of IDs to react-select format
+  const selectedValues = options.filter(option => 
+    Array.isArray(value) && value.includes(option.value)
+  );
+
+  const handleChange = (selectedOptions) => {
+    // Convert selected options back to array of IDs
+    const selectedIds = selectedOptions ? selectedOptions.map(option => option.value) : [];
+    onChange(selectedIds);
+  };
+
+  return (
+    <div className={`space-y-2 ${className}`}>
+      {/* Label */}
+      {label && (
+        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+          <span>{label}</span>
+          {required && <span className="text-red-500">*</span>}
+        </label>
+      )}
+      
+      <Select
+        isMulti
+        name={name}
+        value={selectedValues}
+        onChange={handleChange}
+        options={options}
+        placeholder={placeholder}
+        isSearchable={isSearchable}
+        isDisabled={disabled || loading}
+        isLoading={loading}
+        closeMenuOnSelect={closeMenuOnSelect} // Optional: Keep menu open after selection
+        // hideSelectedOptions prop is removed, so it defaults to true
+        styles={customStyles}
+        menuPlacement="auto"
+        noOptionsMessage={() => "No options found"}
+        loadingMessage={() => "Loading..."}
+      />
+      
+      {/* Help Text */}
+      {helpText && !error && (
+        <p className="text-xs text-gray-500">{helpText}</p>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <p className="text-red-500 text-xs flex items-center gap-1">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {error}
+        </p>
+      )}
+    </div>
+  );
+};
+
 /* ---------------------------------------------
    🔹 GlobalFormSection — Section Wrapper
 --------------------------------------------- */
@@ -399,3 +539,5 @@ function GlobalFormInputs() {
 }
 
 export default GlobalFormInputs;
+
+
