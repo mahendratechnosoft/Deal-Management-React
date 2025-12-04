@@ -4,14 +4,11 @@ import axiosInstance from "../../BaseComponet/axiosInstance.js";
 import { useLayout } from "../../Layout/useLayout";
 import toast from "react-hot-toast";
 import Pagination from "../pagination";
-
-// import EditTaskModal from "./EditTaskModal";
 import { hasPermission } from "../../BaseComponet/permissions";
 import { showDeleteConfirmation } from "../../BaseComponet/alertUtils";
 import CreateTaskModal from "./CreateTaskModal.jsx";
 import PreviewTaskModal from "./PreviewTaskModal.jsx";
 import EditTaskModal from "./EditTaskModal.jsx";
-
 
 function TaskList() {
     const navigate = useNavigate();
@@ -30,8 +27,6 @@ function TaskList() {
     const [statusFilter, setStatusFilter] = useState("all");
     const [priorityFilter, setPriorityFilter] = useState("all");
     const [assigneeFilter, setAssigneeFilter] = useState("all");
-
-
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [previewTaskId, setPreviewTaskId] = useState(null);
 
@@ -60,155 +55,73 @@ function TaskList() {
         );
     };
 
-    // Mock data for dropdowns (replace with API calls later)
-    const statusOptions = [
-        { value: "all", label: "All Status" },
-        { value: "pending", label: "Pending" },
-        { value: "in-progress", label: "In Progress" },
-        { value: "completed", label: "Completed" },
-        { value: "on-hold", label: "On Hold" }
-    ];
-
-    const priorityOptions = [
-        { value: "all", label: "All Priority" },
-        { value: "low", label: "Low" },
-        { value: "medium", label: "Medium" },
-        { value: "high", label: "High" },
-        { value: "urgent", label: "Urgent" }
-    ];
-
-    const assigneeOptions = [
-        { value: "all", label: "All Assignees" },
-        { value: "aditya-lohar", label: "Aditya Lohar" },
-        { value: "john-doe", label: "John Doe" },
-        { value: "jane-smith", label: "Jane Smith" }
-    ];
-
     // Fetch tasks with search and filters
     const fetchTasks = useCallback(
         async (page = 0, search = "", status = "all", priority = "all", assignee = "all") => {
             try {
                 setLoading(true);
 
-                // TODO: Replace with actual API call
-                // let url = `getAllTasks/${page}/${pageSize}`;
-                // const params = new URLSearchParams();
-                // if (search.trim()) params.append('search', search);
-                // if (status !== 'all') params.append('status', status);
-                // if (priority !== 'all') params.append('priority', priority);
-                // if (assignee !== 'all') params.append('assignee', assignee);
-                // if (params.toString()) url += `?${params.toString()}`;
-                // const response = await axiosInstance.get(url);
+                // Build API URL with parameters
+                let url = `getAllTaskList/${page}/${pageSize}`;
+                const params = new URLSearchParams();
 
-                // Mock data for now
-                await new Promise(resolve => setTimeout(resolve, 800));
+                if (search.trim()) params.append('search', search);
+                if (status !== 'all') params.append('status', status);
+                if (priority !== 'all') params.append('priority', priority);
+                if (assignee !== 'all') params.append('assignee', assignee);
 
-                const mockTasks = [
-                    {
-                        id: 1,
-                        subject: "Design Homepage Layout",
-                        description: "Create responsive homepage design with mobile-first approach",
-                        status: "in-progress",
-                        priority: "high",
-                        assignees: ["Aditya Lohar", "Jane Smith"],
-                        startDate: "2024-12-01",
-                        dueDate: "2024-12-15",
-                        hourlyRate: 50,
-                        estimateHours: 40,
-                        tags: ["design", "frontend"],
-                        isPublic: true,
-                        isBillable: true,
-                        createdBy: "Admin User",
-                        createdAt: "2024-11-28"
-                    },
-                    {
-                        id: 2,
-                        subject: "API Integration",
-                        description: "Integrate payment gateway API with proper error handling",
-                        status: "pending",
-                        priority: "medium",
-                        assignees: ["John Doe"],
-                        startDate: "2024-12-05",
-                        dueDate: "2024-12-12",
-                        hourlyRate: 45,
-                        estimateHours: 25,
-                        tags: ["backend", "api"],
-                        isPublic: false,
-                        isBillable: true,
-                        createdBy: "Admin User",
-                        createdAt: "2024-11-29"
-                    },
-                    {
-                        id: 3,
-                        subject: "Bug Fixes",
-                        description: "Fix reported bugs from testing team",
-                        status: "completed",
-                        priority: "low",
-                        assignees: ["Aditya Lohar", "John Doe"],
-                        startDate: "2024-11-20",
-                        dueDate: "2024-11-28",
-                        hourlyRate: 40,
-                        estimateHours: 15,
-                        tags: ["bugfix", "maintenance"],
-                        isPublic: true,
-                        isBillable: false,
-                        createdBy: "Admin User",
-                        createdAt: "2024-11-25"
-                    },
-                    {
-                        id: 4,
-                        subject: "Database Optimization",
-                        description: "Optimize database queries and add indexing",
-                        status: "on-hold",
-                        priority: "medium",
-                        assignees: ["Jane Smith"],
-                        startDate: "2024-12-10",
-                        dueDate: "2024-12-20",
-                        hourlyRate: 55,
-                        estimateHours: 30,
-                        tags: ["database", "optimization"],
-                        isPublic: true,
-                        isBillable: true,
-                        createdBy: "Admin User",
-                        createdAt: "2024-11-30"
-                    }
-                ];
+                if (params.toString()) url += `?${params.toString()}`;
 
-                // Apply filters (mock filtering for now)
-                let filteredTasks = mockTasks;
+                const response = await axiosInstance.get(url);
+                const data = response.data;
 
-                if (search.trim()) {
-                    const searchLower = search.toLowerCase();
-                    filteredTasks = filteredTasks.filter(task =>
-                        task.subject.toLowerCase().includes(searchLower) ||
-                        task.description.toLowerCase().includes(searchLower) ||
-                        task.tags.some(tag => tag.toLowerCase().includes(searchLower))
-                    );
+                if (data && data.taskList) {
+                    // Transform API data to match our UI structure
+                    const transformedTasks = data.taskList.map(task => ({
+                        id: task.taskId,
+                        taskId: task.taskId,
+                        subject: task.subject,
+                        description: "", // Not provided in API, you might need to adjust
+                        status: task.status || "pending", // Adjust based on your API
+                        priority: (task.priority || "").toLowerCase(),
+                        assignees: task.assignedEmployees ?
+                            task.assignedEmployees.map(emp => emp.name || emp.employeeName || "Unnamed") :
+                            [],
+                        startDate: task.startDate,
+                        dueDate: task.endDate,
+                        hourlyRate: task.hourlyRate || 0,
+                        estimateHours: task.estimatedHours || 0,
+                        tags: task.relatedTo ? [task.relatedTo] : [],
+                        isPublic: true, // Adjust based on your business logic
+                        isBillable: true, // Adjust based on your business logic
+                        createdBy: task.createdBy,
+                        createdAt: task.createdAt,
+                        // Add additional fields from API
+                        adminId: task.adminId,
+                        employeeId: task.employeeId,
+                        relatedTo: task.relatedTo,
+                        relatedToId: task.relatedToId,
+                        relatedToName: task.relatedToName,
+                        followersEmployees: task.followersEmployees || []
+                    }));
+
+                    setTasks(transformedTasks);
+                    setTotalPages(data.totalPages || 1);
+                    setCurrentPage(data.currentPage || 0);
+                    setTotalItems(data.totalElement || 0);
+                } else {
+                    setTasks([]);
+                    setTotalPages(1);
+                    setCurrentPage(0);
+                    setTotalItems(0);
                 }
 
-                if (status !== "all") {
-                    filteredTasks = filteredTasks.filter(task => task.status === status);
-                }
-
-                if (priority !== "all") {
-                    filteredTasks = filteredTasks.filter(task => task.priority === priority);
-                }
-
-                if (assignee !== "all") {
-                    filteredTasks = filteredTasks.filter(task =>
-                        task.assignees.some(a => a.toLowerCase().includes(assignee.toLowerCase()))
-                    );
-                }
-
-                setTasks(filteredTasks);
-                setTotalPages(1); // Mock pagination
-                setCurrentPage(page);
-                setTotalItems(filteredTasks.length);
                 setError(null);
             } catch (err) {
                 console.error("Error fetching tasks:", err);
-                setError(err.message);
+                setError(err.response?.data?.message || err.message || "Failed to load tasks");
                 toast.error("Failed to load tasks");
+                setTasks([]);
             } finally {
                 setLoading(false);
             }
@@ -232,7 +145,6 @@ function TaskList() {
         }
     };
 
-
     // Preview Modal handlers
     const handlePreview = (taskId) => {
         setPreviewTaskId(taskId);
@@ -243,7 +155,6 @@ function TaskList() {
         setShowPreviewModal(false);
         setPreviewTaskId(null);
     };
-
 
     // Create Modal handlers
     const handleCreateTask = () => {
@@ -288,20 +199,18 @@ function TaskList() {
 
             if (result.isConfirmed) {
                 // Remove the task from local state immediately
-                setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
-
-                // Update total items count
+                setTasks(prevTasks => prevTasks.filter(task => task.taskId !== taskId));
                 setTotalItems(prevTotal => prevTotal - 1);
 
-                // TODO: Uncomment when API is available
-                // await axiosInstance.delete(`deleteTask/${taskId}`);
-
+                // Call actual API to delete task
+                await axiosInstance.delete(`deleteTask/${taskId}`);
                 toast.success("Task deleted successfully!");
             }
-
         } catch (error) {
             console.error("Error deleting task:", error);
             toast.error("Failed to delete task. Please try again.");
+            // Refresh to get actual data
+            handleRefresh();
         }
     };
 
@@ -310,13 +219,12 @@ function TaskList() {
             // Optimistically update UI
             setTasks(prevTasks =>
                 prevTasks.map(task =>
-                    task.id === taskId ? { ...task, status: newStatus } : task
+                    task.taskId === taskId ? { ...task, status: newStatus } : task
                 )
             );
 
-            // TODO: Uncomment when API is available
-            // await axiosInstance.patch(`updateTaskStatus/${taskId}`, { status: newStatus });
-
+            // Call actual API to update status
+            await axiosInstance.patch(`updateTaskStatus/${taskId}`, { status: newStatus });
             toast.success("Task status updated!");
         } catch (error) {
             console.error("Error updating status:", error);
@@ -371,6 +279,28 @@ function TaskList() {
         if (task.status === "on-hold") return 25;
         return 50; // in-progress
     };
+
+    // Filter options (you might want to fetch these from API)
+    const statusOptions = [
+        { value: "all", label: "All Status" },
+        { value: "pending", label: "Pending" },
+        { value: "in-progress", label: "In Progress" },
+        { value: "completed", label: "Completed" },
+        { value: "on-hold", label: "On Hold" }
+    ];
+
+    const priorityOptions = [
+        { value: "all", label: "All Priority" },
+        { value: "low", label: "Low" },
+        { value: "medium", label: "Medium" },
+        { value: "high", label: "High" },
+        { value: "urgent", label: "Urgent" }
+    ];
+
+    const assigneeOptions = [
+        { value: "all", label: "All Assignees" },
+        // You can populate this from the API response
+    ];
 
     if (error) {
         return (
@@ -451,7 +381,6 @@ function TaskList() {
                                 </div>
                             </div>
 
-
                             <button
                                 className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
                                 onClick={handleCreateTask}
@@ -471,132 +400,106 @@ function TaskList() {
                                 </svg>
                                 Create Task
                             </button>
-
                         </div>
                     </div>
                 </div>
 
                 {/* Filter Section */}
-<div className="mb-4 bg-white rounded-lg shadow-xs p-3 border border-gray-100">
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-        {/* Filter Section */}
-        <div className="flex-1 w-full">
-            <div className="flex flex-wrap items-center gap-2">
-                {/* Status Filter */}
-                <div className="min-w-[140px] flex-1">
-                    <label className="block text-xs font-medium text-gray-600 mb-0.5">
-                        Status
-                    </label>
-                    <div className="relative">
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full px-3 py-1.5 pl-8 text-xs border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
-                        >
-                            {statusOptions.map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                        <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                            <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                            </svg>
+                <div className="mb-4 bg-white rounded-lg shadow-xs p-3 border border-gray-100">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        {/* Filter Section */}
+                        <div className="flex-1 w-full">
+                            <div className="flex flex-wrap items-center gap-2">
+                                {/* Status Filter */}
+                                <div className="min-w-[140px] flex-1">
+                                    <label className="block text-xs font-medium text-gray-600 mb-0.5">
+                                        Status
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            value={statusFilter}
+                                            onChange={(e) => setStatusFilter(e.target.value)}
+                                            className="w-full px-3 py-1.5 pl-8 text-xs border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+                                        >
+                                            {statusOptions.map(option => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                            <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Priority Filter */}
+                                <div className="min-w-[140px] flex-1">
+                                    <label className="block text-xs font-medium text-gray-600 mb-0.5">
+                                        Priority
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            value={priorityFilter}
+                                            onChange={(e) => setPriorityFilter(e.target.value)}
+                                            className="w-full px-3 py-1.5 pl-8 text-xs border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
+                                        >
+                                            {priorityOptions.map(option => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                            <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Reset Filters Button */}
+                                <div className="self-end mt-0.5">
+                                    <button
+                                        onClick={() => {
+                                            setStatusFilter('all');
+                                            setPriorityFilter('all');
+                                            setAssigneeFilter('all');
+                                        }}
+                                        className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-md transition-colors duration-150 flex items-center gap-1 border border-gray-200"
+                                    >
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                        </svg>
+                                        Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Quick Stats */}
+                        <div className="flex items-center gap-4 border-l border-gray-100 pl-4 mt-2 sm:mt-0">
+                            <div className="text-center min-w-[60px]">
+                                <div className="text-base font-semibold text-gray-900">{totalItems}</div>
+                                <div className="text-[10px] text-gray-500">Total</div>
+                            </div>
+                            <div className="text-center min-w-[60px]">
+                                <div className="text-base font-semibold text-green-600">
+                                    {tasks.filter(t => t.status === "completed").length}
+                                </div>
+                                <div className="text-[10px] text-gray-500">Done</div>
+                            </div>
+                            <div className="text-center min-w-[60px]">
+                                <div className="text-base font-semibold text-blue-600">
+                                    {tasks.filter(t => t.status === "in-progress").length}
+                                </div>
+                                <div className="text-[10px] text-gray-500">Active</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                {/* Priority Filter */}
-                <div className="min-w-[140px] flex-1">
-                    <label className="block text-xs font-medium text-gray-600 mb-0.5">
-                        Priority
-                    </label>
-                    <div className="relative">
-                        <select
-                            value={priorityFilter}
-                            onChange={(e) => setPriorityFilter(e.target.value)}
-                            className="w-full px-3 py-1.5 pl-8 text-xs border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
-                        >
-                            {priorityOptions.map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                        <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                            <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Assignee Filter */}
-                <div className="min-w-[140px] flex-1">
-                    <label className="block text-xs font-medium text-gray-600 mb-0.5">
-                        Assignee
-                    </label>
-                    <div className="relative">
-                        <select
-                            value={assigneeFilter}
-                            onChange={(e) => setAssigneeFilter(e.target.value)}
-                            className="w-full px-3 py-1.5 pl-8 text-xs border border-gray-200 rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-400 bg-white"
-                        >
-                            {assigneeOptions.map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                        <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                            <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Reset Filters Button */}
-                <div className="self-end mt-0.5">
-                    <button
-                        onClick={() => {
-                            setStatusFilter('all');
-                            setPriorityFilter('all');
-                            setAssigneeFilter('all');
-                        }}
-                        className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-md transition-colors duration-150 flex items-center gap-1 border border-gray-200"
-                    >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        Reset
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        {/* Quick Stats - Compact */}
-        <div className="flex items-center gap-4 border-l border-gray-100 pl-4 mt-2 sm:mt-0">
-            <div className="text-center min-w-[60px]">
-                <div className="text-base font-semibold text-gray-900">{totalItems}</div>
-                <div className="text-[10px] text-gray-500">Total</div>
-            </div>
-            <div className="text-center min-w-[60px]">
-                <div className="text-base font-semibold text-green-600">
-                    {tasks.filter(t => t.status === "completed").length}
-                </div>
-                <div className="text-[10px] text-gray-500">Done</div>
-            </div>
-            <div className="text-center min-w-[60px]">
-                <div className="text-base font-semibold text-blue-600">
-                    {tasks.filter(t => t.status === "in-progress").length}
-                </div>
-                <div className="text-[10px] text-gray-500">Active</div>
-            </div>
-        </div>
-    </div>
-</div>
 
                 {/* Table View */}
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
@@ -623,18 +526,17 @@ function TaskList() {
                                         RATE/HOURS
                                     </th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        TAGS
+                                        RELATED TO
                                     </th>
-                               
                                 </tr>
                             </thead>
                             {loading ? (
-                                <TableSkeleton rows={6} cols={8} />
+                                <TableSkeleton rows={6} cols={7} />
                             ) : (
                                 <tbody className="bg-white divide-y divide-gray-200 overflow-x-auto">
                                     {tasks.map((task) => (
                                         <tr
-                                            key={task.id}
+                                            key={task.taskId}
                                             className="hover:bg-gray-50 transition-colors duration-150 group"
                                         >
                                             {/* Task Details */}
@@ -643,20 +545,11 @@ function TaskList() {
                                                     <div className="font-semibold text-gray-900 mb-1 truncate" title={task.subject}>
                                                         {task.subject}
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                            <span className="text-xs text-gray-500">Progress:</span>
-                                                            <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                                                <div
-                                                                    className="h-full bg-blue-600 rounded-full"
-                                                                    style={{ width: `${calculateProgress(task)}%` }}
-                                                                />
-                                                            </div>
-                                                            <span className="text-xs font-medium">{calculateProgress(task)}%</span>
-                                                        </div>
+
                                                     <div className="mt-2">
                                                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                                             <button
-                                                                onClick={() => handleEdit(task.id)}
+                                                                onClick={() => handleEdit(task.taskId)}
                                                                 className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                                                                 title="Edit Task"
                                                             >
@@ -666,7 +559,7 @@ function TaskList() {
                                                             </button>
 
                                                             <button
-                                                                onClick={() => handleDelete(task.id, task.subject)}
+                                                                onClick={() => handleDelete(task.taskId, task.subject)}
                                                                 className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
                                                                 title="Delete Task"
                                                             >
@@ -676,7 +569,7 @@ function TaskList() {
                                                             </button>
 
                                                             <button
-                                                                onClick={() => handlePreview(task.id)}
+                                                                onClick={() => handlePreview(task.taskId)}
                                                                 className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
                                                                 title="View Details"
                                                             >
@@ -694,7 +587,7 @@ function TaskList() {
                                             <td className="px-4 py-3 whitespace-nowrap">
                                                 <select
                                                     value={task.status}
-                                                    onChange={(e) => handleStatusChange(task.id, e.target.value)}
+                                                    onChange={(e) => handleStatusChange(task.taskId, e.target.value)}
                                                     className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusColor(task.status)} border-none focus:ring-0 focus:border-none cursor-pointer`}
                                                 >
                                                     <option value="pending">Pending</option>
@@ -707,19 +600,39 @@ function TaskList() {
                                             {/* Priority */}
                                             <td className="px-4 py-3 whitespace-nowrap">
                                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
-                                                    {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                                                    {task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) : "Medium"}
                                                 </span>
                                             </td>
 
                                             {/* Assignees */}
+                                            {/* Replace the current assignees cell */}
                                             <td className="px-4 py-3">
-                                                <div className="flex flex-wrap gap-1">
-                                                    {task.assignees.map((assignee, index) => (
-                                                        <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
-                                                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
-                                                            {assignee}
-                                                        </span>
-                                                    ))}
+                                                <div className="flex items-center">
+                                                    {task.assignees.length > 0 ? (
+                                                        <div className="flex -space-x-2">
+                                                            {task.assignees.slice(0, 3).map((assignee, index) => (
+                                                                <div
+                                                                    key={index}
+                                                                    className="relative group"
+                                                                    title={`${assignee}${index === 2 && task.assignees.length > 3 ? ` +${task.assignees.length - 3} more` : ''}`}
+                                                                >
+                                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-semibold border-2 border-white shadow-sm">
+                                                                        {assignee.charAt(0).toUpperCase()}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                            {task.assignees.length > 3 && (
+                                                                <div
+                                                                    className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 text-xs font-semibold border-2 border-white shadow-sm"
+                                                                    title={`${task.assignees.slice(3).join(', ')}`}
+                                                                >
+                                                                    +{task.assignees.length - 3}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-500 italic">Unassigned</span>
+                                                    )}
                                                 </div>
                                             </td>
 
@@ -743,30 +656,28 @@ function TaskList() {
                                             <td className="px-4 py-3 whitespace-nowrap text-sm">
                                                 <div className="flex flex-col gap-1">
                                                     <span className="font-semibold">{formatCurrency(task.hourlyRate)}/hr</span>
-                                                    <span className="text-gray-600">{task.estimateHours} hrs estimate</span>
-                                                    <div className="flex items-center gap-1 text-xs">
-                                                        <span className={`inline-flex items-center gap-1 ${task.isPublic ? 'text-green-600' : 'text-gray-500'}`}>
-                                                            {task.isPublic ? 'Public' : 'Private'}
-                                                        </span>
-                                                        <span>•</span>
-                                                        <span className={task.isBillable ? 'text-blue-600' : 'text-gray-500'}>
-                                                            {task.isBillable ? 'Billable' : 'Non-billable'}
-                                                        </span>
+                                                    <span className="text-gray-600">{task.estimateHours || 0} hrs estimate</span>
+                                                    <div className="text-xs text-gray-500">
+                                                        Created by: {task.createdBy}
                                                     </div>
                                                 </div>
                                             </td>
 
-                                            {/* Tags */}
+                                            {/* Related To */}
                                             <td className="px-4 py-3">
-                                                <div className="flex flex-wrap gap-1 max-w-[150px]">
-                                                    {task.tags.map((tag, index) => (
-                                                        <span key={index} className="inline-flex px-2 py-1 rounded-full text-xs bg-blue-50 text-blue-700 border border-blue-100">
-                                                            {tag}
+                                                <div className="flex flex-col gap-1">
+                                                    {task.relatedTo && (
+                                                        <span className="inline-flex px-2 py-1 rounded-full text-xs bg-blue-50 text-blue-700 border border-blue-100">
+                                                            {task.relatedTo}
                                                         </span>
-                                                    ))}
+                                                    )}
+                                                    {task.relatedToName && (
+                                                        <span className="text-xs text-gray-600 truncate" title={task.relatedToName}>
+                                                            {task.relatedToName}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
-
                                         </tr>
                                     ))}
                                 </tbody>
@@ -841,6 +752,7 @@ function TaskList() {
                     onClose={handleClosePreviewModal}
                 />
             )}
+
             {/* Edit Task Modal */}
             {showEditModal && selectedTaskId && (
                 <EditTaskModal
