@@ -191,7 +191,7 @@ function EditDonar() {
       return tab.id !== "semen" && tab.id !== "sample";
     }
 
-    if (status === "Shortlisted") {
+    if (status === "Shortlisted" || status === "Quarantined") {
       return tab.id !== "sample";
     }
     return true;
@@ -1377,6 +1377,7 @@ function EditDonar() {
     };
 
     const removeSemenReport = async (index, semenReportId) => {
+      console.log("Removing semen report:", semenReportId);
       if (semenReportId) {
         try {
           await axiosInstance.delete(`deleteSemenReport/${semenReportId}`);
@@ -1433,7 +1434,9 @@ function EditDonar() {
                 )}
                 <button
                   type="button"
-                  onClick={() => removeSemenReport(index, report.semenReportId)}
+                  onClick={() =>
+                    removeSemenReport(index, report.sampleReportId)
+                  }
                   className="text-red-500 hover:text-red-700 text-xs font-medium"
                 >
                   Remove
