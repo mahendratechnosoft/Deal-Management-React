@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
+
 import {
   FormInput,
   FormSelect,
@@ -11,20 +12,23 @@ import {
 
 function EditFamily() {
   const navigate = useNavigate();
-  const { familyInfoId } = useParams(); // Using ID from URL
+  const { familyInfoId } = useParams();
   const { LayoutComponent, role } = useLayout();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("family");
   const [errors, setErrors] = useState({});
+  const [pdfLoading, setPdfLoading] = useState(false);
 
-  // --- State Management ---
+  // State for allocation data
+  const [allocations, setAllocations] = useState([]);
+  const [allocationsLoading, setAllocationsLoading] = useState(false);
 
   // 1. Family Info State
   const [familyInfo, setFamilyInfo] = useState({
-    familyInfoId: "", // Hidden but needed for update
-    adminId: "", // Hidden
-    employeeId: "", // Hidden
-    uin: "", // Read-only / Display
+    familyInfoId: "",
+    adminId: "",
+    employeeId: "",
+    uin: "",
     referHospital: "",
     referHospitalAddress: "",
     referDoctor: "",
@@ -55,48 +59,21 @@ function EditFamily() {
     wifeGenticIllness: "",
   });
 
-  // 2. Linked Donors List State (Mock or Fetch later)
-  const [donorsList, setDonorsList] = useState([]);
-
   const tabs = [
     { id: "family", label: "Family Information" },
-    // { id: "donorList", label: "Linked Donors" },
+    { id: "donorList", label: "Linked Donors" },
   ];
 
-  // --- Data Fetching ---
+  // Fetch family data
   useEffect(() => {
     const fetchFamilyData = async () => {
       setLoading(true);
       try {
-        // Fetch Family Details
         if (activeTab === "family") {
           const res = await axiosInstance.get(`getFamilyById/${familyInfoId}`);
           setFamilyInfo(res.data);
-        }
-        // Fetch Linked Donors (Example API call)
-        else if (activeTab === "donorList") {
-          // const res = await axiosInstance.get(`getDonorsByFamilyId/${familyInfoId}`);
-          // setDonorsList(res.data);
-
-          // Mock Data for now
-          setDonorsList([
-            {
-              id: 101,
-              name: "Rahul Kumar",
-              age: 28,
-              gender: "Male",
-              sampleReceivedDate: "2023-10-15",
-              status: "Processed",
-            },
-            {
-              id: 102,
-              name: "Amit Sharma",
-              age: 30,
-              gender: "Male",
-              sampleReceivedDate: "2023-11-01",
-              status: "Rejected",
-            },
-          ]);
+        } else if (activeTab === "donorList") {
+          fetchAllocations();
         }
       } catch (err) {
         console.error("Failed to fetch family data", err);
@@ -109,7 +86,287 @@ function EditFamily() {
     if (familyInfoId) fetchFamilyData();
   }, [activeTab, familyInfoId]);
 
-  // --- Handlers ---
+  // Fetch allocations data
+  const fetchAllocations = async () => {
+    setAllocationsLoading(true);
+    try {
+      const res = await axiosInstance.get(
+        `getAllFinalReportByFamilyId/${familyInfoId}`
+      );
+      setAllocations(res.data || []);
+    } catch (err) {
+      console.error("Failed to fetch allocations", err);
+      toast.error("Failed to load donor allocations.");
+      setAllocations([]);
+    } finally {
+      setAllocationsLoading(false);
+    }
+  };
+
+  // Fetch final report data and generate PDF
+  const handleGenerateDonorReport = async (allocationId) => {
+    setPdfLoading(true);
+
+    try {
+      const response = await axiosInstance.get(`getFinalReport/${allocationId}`);
+      const reportData = response.data;
+
+      const { jsPDF } = await import("jspdf");
+      const autoTable = (await import("jspdf-autotable")).default;
+
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      // ************** ONE-PAGE SAFE MARGINS **************** //
+      const margin = 8;
+      let y = margin;
+
+      // Reduce font sizes globally
+      const HEADER_SIZE = 14;
+      const SUBHEADER_SIZE = 10;
+      const SECTION_TITLE = 10;
+      const NORMAL = 8;
+
+      const compactTableStyles = {
+        theme: "grid",
+        headStyles: {
+          fillColor: [245, 245, 245],
+          textColor: 0,
+          fontSize: 8,
+          fontStyle: "bold",
+          cellPadding: 1,
+          lineWidth: 0.1,
+        },
+        bodyStyles: {
+          textColor: 0,
+          fontSize: 8,
+          cellPadding: 1,
+          lineWidth: 0.1,
+        },
+        // 🔥 EQUAL COLUMN WIDTHS FOR ALL TABLES
+        columnStyles: {
+          0: { cellWidth: 45 },
+          1: { cellWidth: 45 },
+          2: { cellWidth: 45 },
+          3: { cellWidth: 45 },
+        }
+      };
+
+
+      // Prevent ANY page break from autoTable
+      const noBreak = {
+        pageBreak: "avoid",
+        rowPageBreak: "avoid",
+        avoidHeight: 2000,
+      };
+
+      // =====================================================
+      // HEADER (COMPACT)
+      // =====================================================
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(HEADER_SIZE);
+      doc.text("PUNE SPERM BANK", pageWidth / 2, y, { align: "center" });
+      y += 5;
+
+      doc.setFontSize(SUBHEADER_SIZE);
+      doc.text("ASHWINI HOSPITAL - ART BANK", pageWidth / 2, y, {
+        align: "center",
+      });
+      y += 4;
+
+      doc.setFontSize(NORMAL);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        "Amega, S.No. 1/8, Plot 4, Dawa Chowk, Pune - 411043",
+        pageWidth / 2,
+        y,
+        { align: "center" }
+      );
+      y += 3;
+
+      doc.text("Phone: 9975035364 | Web: www.punespermbank.com", pageWidth / 2, y, {
+        align: "center",
+      });
+      y += 4;
+
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.3);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 4;
+
+      // =====================================================
+      // MAIN TITLE
+      // =====================================================
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(SECTION_TITLE + 1);
+      doc.text("FROZEN DONOR SEMEN REPORT", pageWidth / 2, y, {
+        align: "center",
+      });
+      y += 5;
+
+      // =====================================================
+      // UNIVERSAL FUNC – Four Column Tables (Improved Spacing)
+      // =====================================================
+const makeTable = (startY, title, rows) => {
+
+  // Add top space ALWAYS
+  startY += 4;
+
+  // Title
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(SECTION_TITLE);
+  doc.text(title, margin, startY);
+
+  // Add clean spacing below title
+  startY += 6;
+
+  autoTable(doc, {
+    startY,
+    head: [["Parameter", "Value", "Parameter", "Value"]],
+    body: rows,
+    margin: { left: margin, right: margin },
+    ...compactTableStyles,
+    ...noBreak,
+  });
+
+  return doc.lastAutoTable.finalY + 4;
+};
+
+
+
+
+      // =====================================================
+      // SECTION — HOSPITAL & FAMILY INFO
+      // =====================================================
+      // SECTION — HOSPITAL & FAMILY INFO
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(SECTION_TITLE);
+      doc.text("Hospital & Family Information", margin, y);
+      y += 6;
+
+      autoTable(doc, {
+        startY: y,
+        head: [],
+        body: [
+          ["Refer Hospital", reportData.referHospitalAddress || "-", "Refer Doctor", reportData.referDoctor || "-"],
+          ["Husband Name", reportData.husbandName || "-", "Wife Name", reportData.wifeName || "-"],
+          ["Family UIN", reportData.familyUin || "-", "", ""], // Remove Donor UIN
+        ],
+        margin: { left: margin, right: margin },
+        ...compactTableStyles,
+        ...noBreak,
+      });
+
+      y = doc.lastAutoTable.finalY + 3;
+
+
+      // =====================================================
+      // DONOR INFORMATION
+      // =====================================================
+      y = makeTable(y, "Donor Information", [
+        // Sample ID = donorUIN
+        ["Sample ID", reportData.donorUin || "-", "Height", "-"],
+
+        // REMOVE Donor ID row COMPLETELY
+
+        ["Donor ID", reportData.donorId || "-", "Blood Group", reportData.bloodGroup || "-"],
+        ["Skin Tone", reportData.skinColor || "-", "Eyes", reportData.eyeColor || "-"],
+        ["Education", reportData.education || "-", "Profession", reportData.profession || "-"],
+        ["Religion", reportData.religion || "-", "Vials Assigned", reportData.vialsAssignedCount || "0"],
+      ]);
+
+      // =====================================================
+      // BLOOD REPORT
+      // =====================================================
+      y = makeTable(y, "Blood Report", [
+        ["Blood Group", reportData.bloodGroup || "-", "HIV I & II", reportData.hiv || "-"],
+        ["HBsAg", reportData.hbsag || "-", "VDRL", reportData.vdrl || "-"],
+        ["HCV", reportData.hcv || "-", "HB Electrophoresis", reportData.hbelectrophoresis || "-"],
+        ["BSL", reportData.bsl || "-", "Serum Creatinine", reportData.srcreatinine || "-"],
+        ["CMV", reportData.cmv || "-", "", ""],
+      ]);
+
+      // =====================================================
+      // SEMEN REPORT
+      // =====================================================
+      y = makeTable(y, "Semen Report", [
+        [
+          "Date",
+          reportData.semenReportDateAndTime
+            ? new Date(reportData.semenReportDateAndTime).toLocaleDateString("en-GB")
+            : "-",
+          "Time",
+          reportData.semenReportDateAndTime
+            ? new Date(reportData.semenReportDateAndTime).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+            : "-",
+        ],
+        ["Media", reportData.media || "-", "Volume", reportData.volumne ? `${reportData.volumne} ml` : "-"],
+        ["Report", "-", "Concentration", reportData.spermConcentration || "-"],
+        [
+          "Motility A",
+          reportData.progressiveMotilityA ? `${reportData.progressiveMotilityA}%` : "-",
+          "Motility B",
+          reportData.progressiveMotilityB ? `${reportData.progressiveMotilityB}%` : "-",
+        ],
+        [
+          "Motility C",
+          reportData.progressiveMotilityC ? `${reportData.progressiveMotilityC}%` : "-",
+          "Morphology",
+          reportData.morphology || "-",
+        ],
+        ["Abnormality", reportData.abnormality || "-", "", ""],
+      ]);
+
+      // =====================================================
+      // DECLARATION
+      // =====================================================
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(SECTION_TITLE);
+      doc.text("Declaration:", margin, y);
+      y += 3;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(NORMAL);
+      doc.text(
+        "The semen donor has been tested for HIV 1&2, HCV, HBsAg, VDRL & Thalassemia and found medically fit.",
+        margin,
+        y,
+        { maxWidth: pageWidth - margin * 2 }
+      );
+      y += 10;
+
+      doc.setLineWidth(0.2);
+      doc.line(pageWidth - 60, y, pageWidth - margin, y);
+      doc.text("Signature & Stamp", pageWidth - 45, y + 4);
+
+      // =====================================================
+      // SAVE PDF
+      // =====================================================
+      const date = new Date().toLocaleDateString("en-GB").replace(/\//g, "-");
+      const fileName = `Frozen_Donor_Semen_Report_${reportData.donorUin}_${date}.pdf`;
+      doc.save(fileName);
+
+      toast.success("PDF generated successfully!");
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      toast.error("Failed to generate PDF report");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+
+
+  // Handlers (same as before)
   const handleChange = (e) => {
     const { name, value } = e.target;
     const mobileFields = [
@@ -130,7 +387,6 @@ function EditFamily() {
       return;
     }
 
-    // Add character limit for genetic illness fields
     if (name === "husbandGenticIllness" || name === "wifeGenticIllness") {
       if (value.length <= 500) {
         setFamilyInfo({ ...familyInfo, [name]: value });
@@ -156,7 +412,6 @@ function EditFamily() {
       }
     };
 
-    // Add validation for genetic illness character limit
     if (familyInfo.husbandGenticIllness && familyInfo.husbandGenticIllness.length > 500) {
       tempErrors.husbandGenticIllness = "Genetic illness cannot exceed 500 characters";
       isValid = false;
@@ -175,7 +430,6 @@ function EditFamily() {
     return isValid;
   };
 
-  // --- Submit Handler (Family Update) ---
   const updateFamilyInfo = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
@@ -229,6 +483,17 @@ function EditFamily() {
       ...prev,
       [fieldName]: option ? option.value : "",
     }));
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
 
   // --- Render Functions ---
@@ -496,89 +761,95 @@ function EditFamily() {
   const renderDonorList = () => (
     <div className="bg-white rounded-lg">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Linked Donors</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Allocated Donors</h3>
         <button
           type="button"
           className="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-medium"
-          onClick={() => console.log("Add new donor logic")}
+          onClick={fetchAllocations}
+          disabled={allocationsLoading}
         >
-          + Link New Donor
+          {allocationsLoading ? "Refreshing..." : "↻ Refresh"}
         </button>
       </div>
 
-      <div className="overflow-x-auto border border-gray-200 rounded-lg">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                ID
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Details
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Action
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {donorsList.length > 0 ? (
-              donorsList.map((donor) => (
-                <tr
-                  key={donor.id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    #{donor.id}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                    {donor.name}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {donor.age} / {donor.gender}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {donor.sampleReceivedDate}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            ${donor.status === "Processed"
-                          ? "bg-green-100 text-green-800"
-                          : donor.status === "Rejected"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+      {allocationsLoading ? (
+        <div className="text-center py-8">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p className="mt-2 text-gray-500">Loading allocations...</p>
+        </div>
+      ) : allocations.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          No donor allocations found for this family.
+        </div>
+      ) : (
+        <div className="overflow-x-auto border border-gray-200 rounded-lg">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Action
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Donor UIN
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Donor Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Vials Assigned
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Allocation Date
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {allocations.map((allocation) => (
+                <tr key={allocation.allocationId} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() => handleGenerateDonorReport(allocation.allocationId)}
+                      disabled={pdfLoading}
+                      className="px-3 py-1 text-xs bg-green-100 text-green-700 hover:bg-green-200 rounded font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {donor.status}
+                      {pdfLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-700"></div>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Generate PDF
+                        </>
+                      )}
+                    </button>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {allocation.donarUin || "N/A"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {allocation.donarName || "N/A"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {allocation.vialsAssignedCount}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-blue-600 cursor-pointer hover:underline">
-                    View
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatDate(allocation.allocationDate)}
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
-                  No linked donors found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
+
 
   const renderTabContent = () => {
     if (loading && !familyInfo.familyInfoId)
@@ -678,6 +949,9 @@ function EditFamily() {
           </div>
         </div>
       </div>
+
+
+
     </LayoutComponent>
   );
 }
