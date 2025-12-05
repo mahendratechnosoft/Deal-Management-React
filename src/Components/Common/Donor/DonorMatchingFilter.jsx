@@ -397,8 +397,11 @@ const DonorList = ({ donors, onEdit }) => {
               <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Stats
               </th>
-              <th className="w-[30%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="w-[20%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Details
+              </th>
+              <th className="w-[10%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Balanced Vials
               </th>
               <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Action
@@ -466,6 +469,9 @@ const DonorList = ({ donors, onEdit }) => {
                   <div className="truncate text-xs text-gray-400">
                     {donor.city}
                   </div>
+                </td>
+                <td className="px-4 py-3 text-xs text-gray-600">
+                  {donor.balancedVials || "N/A"}
                 </td>
                 <td className="px-4 py-3 text-sm font-medium">
                   <button
