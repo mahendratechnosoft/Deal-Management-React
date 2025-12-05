@@ -79,7 +79,6 @@ const EditDonorPageSkeleton = () => {
   );
 };
 
-
 const validateName = (name) => {
   if (!name?.trim()) return "Name is required";
   if (name.length < 2) return "Name must be at least 2 characters";
@@ -134,7 +133,7 @@ const validatePincode = (pincode) => {
   if (!pincodeRegex.test(pincode)) {
     return "Please enter a valid 6-digit pincode";
   }
-  if (pincode.startsWith('0')) {
+  if (pincode.startsWith("0")) {
     return "Pincode cannot start with 0";
   }
   return "";
@@ -189,7 +188,6 @@ const validateBloodGroup = (bloodGroup) => {
   return "";
 };
 
-
 const validateGeneticIllness = (text) => {
   if (!text) return ""; // Optional field
   if (text.length > 500) return "Genetic illness cannot exceed 500 characters";
@@ -203,7 +201,6 @@ function EditDonar() {
   const [activeTab, setActiveTab] = useState("personal");
   const [personalErrors, setPersonalErrors] = useState({});
   // --- State Management ---
-
 
   // 1. Personal Info State
   const [personalInfo, setPersonalInfo] = useState({
@@ -314,39 +311,36 @@ function EditDonar() {
     return true;
   });
 
-
-
-
   // ADD THESE VALIDATION FUNCTIONS INSIDE THE COMPONENT
   const validatePersonalField = (name, value) => {
     switch (name) {
-      case 'name':
+      case "name":
         return validateName(value);
-      case 'age':
+      case "age":
         return validateAge(value);
-      case 'dateOfBirth':
+      case "dateOfBirth":
         return validateDateOfBirth(value);
-      case 'height':
+      case "height":
         return validateHeight(value);
-      case 'weight':
+      case "weight":
         return validateWeight(value);
-      case 'phoneNumber':
+      case "phoneNumber":
         return validateMobile(value);
-      case 'email':
+      case "email":
         return validateEmail(value);
-      case 'pincode':
+      case "pincode":
         return validatePincode(value);
-      case 'city':
+      case "city":
         return validateCity(value);
-      case 'profession':
+      case "profession":
         return validateProfession(value);
-      case 'address':
+      case "address":
         return validateAddress(value);
-      case 'marriedStatus':
+      case "marriedStatus":
         return validateMaritalStatus(value);
-      case 'bloodGroup':
+      case "bloodGroup":
         return validateBloodGroup(value);
-      case 'geneticElements':
+      case "geneticElements":
         return validateGeneticIllness(value);
       // Aadhar, Religion, Kids counts are NOT required (optional in edit form)
       default:
@@ -354,16 +348,27 @@ function EditDonar() {
     }
   };
 
-
   const validatePersonalForm = () => {
     const errors = {};
 
     // Only validate fields that exist in Create form
-    const createFormFields = ['name', 'marriedStatus', 'age', 'dateOfBirth',
-      'address', 'city', 'pincode', 'phoneNumber', 'email',
-      'height', 'weight', 'bloodGroup', 'profession'];
+    const createFormFields = [
+      "name",
+      "marriedStatus",
+      "age",
+      "dateOfBirth",
+      "address",
+      "city",
+      "pincode",
+      "phoneNumber",
+      "email",
+      "height",
+      "weight",
+      "bloodGroup",
+      "profession",
+    ];
 
-    createFormFields.forEach(field => {
+    createFormFields.forEach((field) => {
       const error = validatePersonalField(field, personalInfo[field]);
       if (error) {
         errors[field] = error;
@@ -379,8 +384,6 @@ function EditDonar() {
     setPersonalErrors(errors);
     return Object.keys(errors).length === 0;
   };
-
-
 
   // --- Data Fetching ---
   useEffect(() => {
@@ -420,27 +423,27 @@ function EditDonar() {
             bList.length
               ? bList
               : [
-                {
-                  age: "",
-                  profession: "",
-                  kidsCount: "",
-                  illness: "",
-                  donorFamailyId: "",
-                },
-              ]
+                  {
+                    age: "",
+                    profession: "",
+                    kidsCount: "",
+                    illness: "",
+                    donorFamailyId: "",
+                  },
+                ]
           );
           setSisters(
             sList.length
               ? sList
               : [
-                {
-                  age: "",
-                  profession: "",
-                  kidsCount: "",
-                  illness: "",
-                  donorFamailyId: "",
-                },
-              ]
+                  {
+                    age: "",
+                    profession: "",
+                    kidsCount: "",
+                    illness: "",
+                    donorFamailyId: "",
+                  },
+                ]
           );
         } else if (activeTab === "blood") {
           const res = await axiosInstance.get(`getDonorBloodReport/${donorId}`);
@@ -482,20 +485,19 @@ function EditDonar() {
 
     // Clear error when user types
     if (personalErrors[name]) {
-      setPersonalErrors(prev => ({ ...prev, [name]: "" }));
+      setPersonalErrors((prev) => ({ ...prev, [name]: "" }));
     }
 
     // ADD REAL-TIME VALIDATION FOR GENETIC ELEMENTS
-    if (name === 'geneticElements') {
+    if (name === "geneticElements") {
       const error = validateGeneticIllness(value);
       if (error) {
-        setPersonalErrors(prev => ({ ...prev, geneticElements: error }));
+        setPersonalErrors((prev) => ({ ...prev, geneticElements: error }));
       } else if (personalErrors.geneticElements) {
-        setPersonalErrors(prev => ({ ...prev, geneticElements: "" }));
+        setPersonalErrors((prev) => ({ ...prev, geneticElements: "" }));
       }
     }
   };
-
 
   const handleSelectChange = (option, name, stateSetter) => {
     stateSetter((prev) => ({
@@ -505,10 +507,9 @@ function EditDonar() {
 
     // Clear error when user selects
     if (personalErrors[name]) {
-      setPersonalErrors(prev => ({ ...prev, [name]: "" }));
+      setPersonalErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
-
 
   // --- Image Handling ---
   const convertToBase64 = (file) => {
@@ -681,8 +682,6 @@ function EditDonar() {
     }
   };
 
-
-
   const renderFormInput = (fieldConfig, isRequired = true) => {
     const { label, name, type = "text", ...props } = fieldConfig;
     const error = personalErrors[name];
@@ -701,15 +700,13 @@ function EditDonar() {
           }
           name={name}
           type={type}
-          value={personalInfo[name] || ''}
+          value={personalInfo[name] || ""}
           onChange={(e) => handleObjectChange(e, setPersonalInfo)}
           disabled={loading}
           placeholder={props.placeholder}
           {...props}
         />
-        {error && (
-          <p className="mt-1 text-sm text-red-600">{error}</p>
-        )}
+        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
       </div>
     );
   };
@@ -731,16 +728,14 @@ function EditDonar() {
             )
           }
           name={name}
-          value={options.find(o => o.value === personalInfo[name])}
+          value={options.find((o) => o.value === personalInfo[name])}
           onChange={(o) => handleSelectChange(o, name, setPersonalInfo)}
           options={options}
           isDisabled={loading}
           placeholder={props.placeholder || `Select ${label.toLowerCase()}`}
           {...props}
         />
-        {error && (
-          <p className="mt-1 text-sm text-red-600">{error}</p>
-        )}
+        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
       </div>
     );
   };
@@ -762,16 +757,14 @@ function EditDonar() {
             )
           }
           name={name}
-          value={personalInfo[name] || ''}
+          value={personalInfo[name] || ""}
           onChange={(e) => handleObjectChange(e, setPersonalInfo)}
           rows={rows}
           disabled={loading}
           placeholder={props.placeholder}
           {...props}
         />
-        {error && (
-          <p className="mt-1 text-sm text-red-600">{error}</p>
-        )}
+        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
       </div>
     );
   };
@@ -989,7 +982,7 @@ function EditDonar() {
           <FormInput
             label="Aadhar No"
             name="adharCardNo"
-            value={personalInfo.adharCardNo || ''}
+            value={personalInfo.adharCardNo || ""}
             onChange={(e) => handleObjectChange(e, setPersonalInfo)}
             disabled={loading}
             placeholder="Enter 12-digit Aadhar number"
@@ -998,7 +991,7 @@ function EditDonar() {
           <FormInput
             label="Male Kids"
             name="maleKidsCount"
-            value={personalInfo.maleKidsCount || ''}
+            value={personalInfo.maleKidsCount || ""}
             onChange={(e) => handleObjectChange(e, setPersonalInfo)}
             type="number"
             disabled={loading}
@@ -1008,30 +1001,39 @@ function EditDonar() {
           <FormInput
             label="Female Kids"
             name="femaleKidsCount"
-            value={personalInfo.femaleKidsCount || ''}
+            value={personalInfo.femaleKidsCount || ""}
             onChange={(e) => handleObjectChange(e, setPersonalInfo)}
             type="number"
             disabled={loading}
             placeholder="e.g., 1"
           />
 
-          {renderFormSelect({
-            label: "Skin Color",
-            name: "skinColor",
-            options: skinColorOptions,
-          }, false)}
+          {renderFormSelect(
+            {
+              label: "Skin Color",
+              name: "skinColor",
+              options: skinColorOptions,
+            },
+            false
+          )}
 
-          {renderFormSelect({
-            label: "Eye Color",
-            name: "eyeColor",
-            options: eyeColorOptions,
-          }, false)}
+          {renderFormSelect(
+            {
+              label: "Eye Color",
+              name: "eyeColor",
+              options: eyeColorOptions,
+            },
+            false
+          )}
 
-          {renderFormSelect({
-            label: "Education",
-            name: "education",
-            options: educationOptions,
-          }, false)}
+          {renderFormSelect(
+            {
+              label: "Education",
+              name: "education",
+              options: educationOptions,
+            },
+            false
+          )}
 
           {renderFormInput({
             label: "Profession",
@@ -1042,7 +1044,7 @@ function EditDonar() {
           <FormInput
             label="Religion"
             name="religion"
-            value={personalInfo.religion || ''}
+            value={personalInfo.religion || ""}
             onChange={(e) => handleObjectChange(e, setPersonalInfo)}
             disabled={loading}
             placeholder="e.g., Hindu"
@@ -1197,10 +1199,9 @@ function EditDonar() {
           </h3>
           <div className="border p-3 rounded mt-4">
             <div>
-
               <FormTextarea
                 name="geneticElements"
-                value={personalInfo.geneticElements || ''}
+                value={personalInfo.geneticElements || ""}
                 onChange={(e) => handleObjectChange(e, setPersonalInfo)}
                 rows={2}
                 placeholder="Enter genetic illness details"
@@ -1208,7 +1209,9 @@ function EditDonar() {
               <div className="flex justify-between items-center mt-1">
                 <div>
                   {personalErrors.geneticElements && (
-                    <p className="text-sm text-red-600">{personalErrors.geneticElements}</p>
+                    <p className="text-sm text-red-600">
+                      {personalErrors.geneticElements}
+                    </p>
                   )}
                 </div>
                 <div className="text-xs text-gray-500">
@@ -1487,7 +1490,7 @@ function EditDonar() {
               <div className="flex items-center gap-3">
                 {/* Stage Badge - Display Only */}
                 {report.stage && (
-                 <span className="px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
                     Stage: {report.stage}
                   </span>
                 )}
@@ -1649,10 +1652,10 @@ function EditDonar() {
                   report.attachmentFileType
                 )
                   ? () =>
-                    previewFile(
-                      report.attachmentFile,
-                      report.attachmentFileType
-                    )
+                      previewFile(
+                        report.attachmentFile,
+                        report.attachmentFileType
+                      )
                   : undefined
               }
               background="white"
@@ -1752,7 +1755,7 @@ function EditDonar() {
               </span>
               <div className="flex items-center gap-3">
                 {report.stage && (
-        <span className="px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
                     Stage: {report.stage}
                   </span>
                 )}
@@ -1924,7 +1927,14 @@ function EditDonar() {
           name="numberOfVials"
           type="number"
           value={sampleReport.numberOfVials}
-          onChange={(e) => handleObjectChange(e, setSampleReport)}
+          onChange={(e) => {
+            const { value } = e.target;
+            setSampleReport((prev) => ({
+              ...prev,
+              numberOfVials: value,
+              balancedVials: value,
+            }));
+          }}
         />
         <FormInput
           label="Balanced Vials"
@@ -1932,6 +1942,7 @@ function EditDonar() {
           type="number"
           value={sampleReport.balancedVials}
           onChange={(e) => handleObjectChange(e, setSampleReport)}
+          disabled={true}
         />
         <div className="md:col-span-3">
           <FormTextarea
@@ -2034,8 +2045,7 @@ function EditDonar() {
                   </div>
                 </div>
 
-          <span className="px-2.5 py-0.5 rounded-full text-base font-medium border bg-indigo-50 text-indigo-700 border-indigo-200 ml-auto">
-
+                <span className="px-2.5 py-0.5 rounded-full text-base font-medium border bg-indigo-50 text-indigo-700 border-indigo-200 ml-auto">
                   {personalInfo.status || "New Donor"}
                 </span>
               </div>
@@ -2046,10 +2056,11 @@ function EditDonar() {
                       <button
                         type="button"
                         onClick={() => setActiveTab(tab.id)}
-                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${activeTab === tab.id
-                          ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
-                          : "hover:text-gray-700 hover:bg-gray-50"
-                          }`}
+                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${
+                          activeTab === tab.id
+                            ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
+                            : "hover:text-gray-700 hover:bg-gray-50"
+                        }`}
                       >
                         {tab.label}
                       </button>
