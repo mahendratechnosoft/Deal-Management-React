@@ -195,7 +195,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
     },
     {
       name: "Under Screening",
-      path: "/Employee/DonorList",
+      path: "/Employee/DonorList/UnderScreeningDonorList",
       icon: (
         <svg
           className="w-5 h-5"
@@ -236,6 +236,26 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
     {
       name: "Shortlisted",
       path: "/Employee/DonorList/ShortlistedDonorList",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      ),
+      color: "from-green-500 to-emerald-500",
+    },
+    {
+      name: "Quarantined",
+      path: "/Employee/DonorList/QuarantinedDonorList",
       icon: (
         <svg
           className="w-5 h-5"
@@ -314,7 +334,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
       color: "from-orange-500 to-amber-500",
     },
     {
-      name: "Matching Donor",
+      name: "Search Donor",
       path: "/Employee/PreviewMatchingDonors/:familyId",
       icon: (
         <svg
@@ -361,8 +381,9 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
         "Qualified",
         "Donor",
         "FamilyList",
-        "Matching Donor",
+        "Search Donor",
         "Selected",
+        "Quarantined",
       ].includes(moduleName)
     ) {
       const donorHasAccess = hasPermission("donor", "Access");

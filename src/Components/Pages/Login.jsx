@@ -149,7 +149,7 @@ function Login({ onSwitchToRegister, onLogin }) {
           }
         } else if (data.role === "ROLE_EMPLOYEE") {
           if (data.moduleAccess.donorAccess === true) {
-            navigate("/Employee/DonorList");
+            navigate("/Employee/DonorList/UnderScreeningDonorList");
           } else {
             navigate("/Employee/LeadList");
           }
