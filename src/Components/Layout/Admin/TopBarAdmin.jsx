@@ -1,22 +1,27 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
+import axiosInstance from "../../BaseComponet/axiosInstance";
 import { hasPermission } from "../../BaseComponet/permissions";
 
 function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showAttendanceList, setShowAttendanceList] = useState(false);
   const [userData, setUserData] = useState(null);
-  const [notificationCount, setNotificationCount] = useState(3); // Example count
+  const [notificationCount, setNotificationCount] = useState(3);
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [loadingAttendance, setLoadingAttendance] = useState(false);
   const navigate = useNavigate();
 
   // Refs for dropdown containers
   const userMenuRef = useRef(null);
   const notificationRef = useRef(null);
+  const attendanceRef = useRef(null);
   const userButtonRef = useRef(null);
   const notificationButtonRef = useRef(null);
+  const attendanceButtonRef = useRef(null);
 
-  // Get user data from localStorage on component mount
+  // Get user data from localStorage
   useEffect(() => {
     const storedUserData = localStorage.getItem("userData");
     if (storedUserData) {
@@ -28,10 +33,79 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
     }
   }, []);
 
+  // Function to fetch today's attendance data
+  const fetchTodayAttendance = async () => {
+    setLoadingAttendance(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const response = await axiosInstance.get(`getAttendanceBetween?fromDate=${today}&toDate=${today}`);
+      
+      let processedData = [];
+      
+      if (typeof response.data === 'object' && response.data !== null) {
+        Object.keys(response.data).forEach(employeeName => {
+          const employeeData = response.data[employeeName];
+          const todayKey = Object.keys(employeeData).find(key => key.includes(today));
+          
+          if (todayKey && employeeData[todayKey]) {
+            const records = employeeData[todayKey];
+            const sortedRecords = [...records].sort((a, b) => a.timeStamp - b.timeStamp);
+            
+            // Get latest record
+            let status = "not-checked-in";
+            let lastTime = null;
+            
+            if (sortedRecords.length > 0) {
+              const lastRecord = sortedRecords[sortedRecords.length - 1];
+              status = lastRecord.status ? "checked-in" : "checked-out";
+              lastTime = new Date(lastRecord.timeStamp);
+            }
+            
+            processedData.push({
+              employeeName,
+              status,
+              lastTime
+            });
+          } else {
+            processedData.push({
+              employeeName,
+              status: "not-checked-in",
+              lastTime: null
+            });
+          }
+        });
+      }
+      
+      // Sort: checked-in first, then checked-out, then not-checked-in
+      processedData.sort((a, b) => {
+        const statusOrder = { 'checked-in': 1, 'checked-out': 2, 'not-checked-in': 3 };
+        return statusOrder[a.status] - statusOrder[b.status];
+      });
+      
+      setAttendanceData(processedData);
+    } catch (error) {
+      console.error("Error fetching attendance data:", error);
+      setAttendanceData([]);
+    } finally {
+      setLoadingAttendance(false);
+    }
+  };
+
+  // Function to toggle attendance list
+  const toggleAttendanceList = () => {
+    if (!showAttendanceList) {
+      fetchTodayAttendance();
+    }
+    setShowAttendanceList(!showAttendanceList);
+    
+    if (showUserMenu) setShowUserMenu(false);
+    if (showNotifications) setShowNotifications(false);
+  };
+
   // Handle click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Close user menu if clicked outside
+      // Close user menu
       if (
         showUserMenu &&
         userMenuRef.current &&
@@ -42,7 +116,7 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
         setShowUserMenu(false);
       }
 
-      // Close notifications if clicked outside
+      // Close notifications
       if (
         showNotifications &&
         notificationRef.current &&
@@ -52,43 +126,64 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
       ) {
         setShowNotifications(false);
       }
+
+      // Close attendance list
+      if (
+        showAttendanceList &&
+        attendanceRef.current &&
+        !attendanceRef.current.contains(event.target) &&
+        attendanceButtonRef.current &&
+        !attendanceButtonRef.current.contains(event.target)
+      ) {
+        setShowAttendanceList(false);
+      }
     };
 
-    // Add event listener
     document.addEventListener("mousedown", handleClickOutside);
-
-    // Cleanup
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showUserMenu, showNotifications]);
+  }, [showUserMenu, showNotifications, showAttendanceList]);
 
-  // Function to truncate text if it's too long
-  const truncateText = (text, maxLength = 20) => {
-    if (!text || text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + "...";
+  // Function to format time (e.g., "9:32 am")
+  const formatTime = (date) => {
+    if (!date) return "";
+    return date.toLocaleTimeString("en-IN", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true
+    }).toLowerCase();
   };
 
-  // Function to truncate email - show first part and domain
-  const truncateEmail = (email, maxNameLength = 12) => {
-    if (!email || email.length <= maxNameLength + 10) return email;
-
-    const [username, domain] = email.split("@");
-    if (!domain) return truncateText(email, maxNameLength + 10);
-
-    if (username.length > maxNameLength) {
-      return `${username.substring(0, maxNameLength)}...@${domain}`;
+  // Function to get status color
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "checked-in":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "checked-out":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      default:
+        return "bg-gray-100 text-gray-600 border-gray-200";
     }
-    return email;
+  };
+
+  // Function to get status icon
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "checked-in":
+        return "🟢"; // Green circle
+      case "checked-out":
+        return "🔵"; // Blue circle
+      default:
+        return "⚪"; // White/gray circle
+    }
   };
 
   // Get initials from user name
   const getUserInitials = () => {
     if (!userData?.loginUserName) return "UN";
-
     const name = userData.loginUserName.trim();
     if (name.length === 0) return "UN";
-
     const nameParts = name.split(" ");
     if (nameParts.length === 1) {
       return nameParts[0].charAt(0).toUpperCase();
@@ -98,19 +193,32 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
     ).toUpperCase();
   };
 
-  // Handle navigation to settings
+  // Rest of your existing functions remain the same
+  const truncateText = (text, maxLength = 20) => {
+    if (!text || text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "...";
+  };
+
+  const truncateEmail = (email, maxNameLength = 12) => {
+    if (!email || email.length <= maxNameLength + 10) return email;
+    const [username, domain] = email.split("@");
+    if (!domain) return truncateText(email, maxNameLength + 10);
+    if (username.length > maxNameLength) {
+      return `${username.substring(0, maxNameLength)}...@${domain}`;
+    }
+    return email;
+  };
+
   const handleSettings = () => {
     setShowUserMenu(false);
     navigate("/Admin/Settings");
   };
 
-  // Handle navigation to profile
   const handleProfile = () => {
     setShowUserMenu(false);
-    navigate("/Admin/Settings"); // Same link for both as requested
+    navigate("/Admin/Settings");
   };
 
-  // Handle sign out
   const handleSignOut = () => {
     setShowUserMenu(false);
     if (onSwitchToLogin) {
@@ -118,25 +226,18 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
     }
   };
 
-  // Toggle notifications dropdown
   const toggleNotifications = () => {
-    // Close user menu if open
-    if (showUserMenu) {
-      setShowUserMenu(false);
-    }
+    if (showUserMenu) setShowUserMenu(false);
+    if (showAttendanceList) setShowAttendanceList(false);
     setShowNotifications(!showNotifications);
-    // If opening notifications, you might want to clear the count
     if (!showNotifications && notificationCount > 0) {
       setNotificationCount(0);
     }
   };
 
-  // Toggle user menu
   const toggleUserMenu = () => {
-    // Close notifications if open
-    if (showNotifications) {
-      setShowNotifications(false);
-    }
+    if (showNotifications) setShowNotifications(false);
+    if (showAttendanceList) setShowAttendanceList(false);
     setShowUserMenu(!showUserMenu);
   };
 
@@ -145,7 +246,6 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
       <div className="flex items-center justify-between px-4 py-2">
         {/* Left Section */}
         <div className="flex items-center space-x-4">
-          {/* Toggle Button */}
           <button
             onClick={toggleSidebar}
             className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group"
@@ -167,16 +267,145 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
               />
             </svg>
           </button>
-
-          {/* <img src={Mtech_logo} alt="" className="w-20" /> */}
         </div>
 
         {/* Right Section */}
         <div className="flex items-center space-x-3">
+          {/* Attendance Status Button */}
+          <div className="relative">
+            <button
+              ref={attendanceButtonRef}
+              onClick={toggleAttendanceList}
+              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative"
+              title="Today's Attendance Status"
+            >
+              <svg
+                className="w-5 h-5 text-white group-hover:scale-110 transition-transform duration-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </button>
+
+            {/* Attendance List Dropdown - SIMPLIFIED */}
+          {showAttendanceList && (
+  <div
+    ref={attendanceRef}
+    className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 py-0 z-50 overflow-hidden"
+  >
+    {/* Header - Simplified */}
+    <div className="px-4 py-3 border-b border-gray-100">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h3 className="font-semibold text-gray-800 text-sm">Today's Status</h3>
+        </div>
+        <span className="text-xs text-gray-500">
+          {new Date().toLocaleDateString('en-IN', { 
+            day: 'numeric',
+            month: 'short'
+          })}
+        </span>
+      </div>
+    </div>
+    
+    {/* Employee List - Compact */}
+    <div className="max-h-80 overflow-y-auto">
+      {loadingAttendance ? (
+        <div className="flex justify-center items-center py-6">
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+        </div>
+      ) : attendanceData.length === 0 ? (
+        <div className="px-4 py-6 text-center">
+          <p className="text-gray-500 text-sm">No attendance data</p>
+        </div>
+      ) : (
+        <div className="px-3 py-2">
+          {attendanceData.map((employee, index) => (
+            <div 
+              key={index} 
+              className="py-2 px-1"
+            >
+              {/* Visual separator line between different status groups */}
+              {index > 0 && 
+                attendanceData[index].status !== attendanceData[index - 1].status && (
+                <div className="my-2 border-t border-gray-200 border-dashed"></div>
+              )}
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {/* Small profile circle */}
+                  <div className="relative">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                      <span className="text-blue-600 font-medium text-xs">
+                        {employee.employeeName?.charAt(0)?.toUpperCase() || "E"}
+                      </span>
+                    </div>
+                    {/* Tiny status dot */}
+                    <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${
+                      employee.status === "checked-in" ? "bg-green-500" :
+                      employee.status === "checked-out" ? "bg-blue-500" :
+                      "bg-gray-400"
+                    }`}></div>
+                  </div>
+                  
+                  {/* Name */}
+                  <span className="text-sm text-gray-800 font-medium truncate max-w-[100px]">
+                    {employee.employeeName}
+                  </span>
+                </div>
+                
+                {/* Status & Time - Compact */}
+                <div className="text-right">
+                  {employee.status === "checked-in" && employee.lastTime && (
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                      <span className="text-xs text-gray-600">
+                        at {formatTime(employee.lastTime)}
+                      </span>
+                    </div>
+                  )}
+                  {employee.status === "checked-out" && employee.lastTime && (
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                      <span className="text-xs text-gray-600">
+                        at {formatTime(employee.lastTime)}
+                      </span>
+                    </div>
+                  )}
+                  {employee.status === "not-checked-in" && (
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                      <span className="text-xs text-gray-500">
+                        Not in
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+
+  </div>
+)}
+            
+          </div>
+
           {/* Quick Actions */}
           {!hasPermission("donor", "Access") && (
             <div className="flex items-center space-x-1">
-              {/* Notifications */}
               <div className="relative">
                 <button
                   ref={notificationButtonRef}
@@ -198,7 +427,6 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
                     />
                   </svg>
 
-                  {/* Notification Badge */}
                   {notificationCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
                       {notificationCount > 9 ? "9+" : notificationCount}
