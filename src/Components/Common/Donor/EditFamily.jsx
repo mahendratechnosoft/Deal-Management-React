@@ -110,7 +110,6 @@ function EditFamily() {
   }, [activeTab, familyInfoId]);
 
   // --- Handlers ---
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     const mobileFields = [
@@ -130,7 +129,15 @@ function EditFamily() {
       }
       return;
     }
-    setFamilyInfo({ ...familyInfo, [name]: value });
+
+    // Add character limit for genetic illness fields
+    if (name === "husbandGenticIllness" || name === "wifeGenticIllness") {
+      if (value.length <= 500) {
+        setFamilyInfo({ ...familyInfo, [name]: value });
+      }
+    } else {
+      setFamilyInfo({ ...familyInfo, [name]: value });
+    }
 
     if (errors[name]) {
       setErrors({ ...errors, [name]: "" });
@@ -148,6 +155,17 @@ function EditFamily() {
         isValid = false;
       }
     };
+
+    // Add validation for genetic illness character limit
+    if (familyInfo.husbandGenticIllness && familyInfo.husbandGenticIllness.length > 500) {
+      tempErrors.husbandGenticIllness = "Genetic illness cannot exceed 500 characters";
+      isValid = false;
+    }
+
+    if (familyInfo.wifeGenticIllness && familyInfo.wifeGenticIllness.length > 500) {
+      tempErrors.wifeGenticIllness = "Genetic illness cannot exceed 500 characters";
+      isValid = false;
+    }
 
     validateMobile("referDoctorContactNumber", "Doctor Contact");
     validateMobile("husbandMobile", "Husband Mobile");
@@ -206,10 +224,10 @@ function EditFamily() {
     { value: "AB-", label: "AB-" },
   ];
 
-  const handleSelectChange = (option, name, stateSetter) => {
-    stateSetter((prev) => ({
+  const handleSelectChange = (option, fieldName) => {
+    setFamilyInfo((prev) => ({
       ...prev,
-      [name]: option ? option.value : "",
+      [fieldName]: option ? option.value : "",
     }));
   };
 
@@ -282,13 +300,13 @@ function EditFamily() {
             error={errors.husbandMobile}
           />
           <FormInput
-            label="Height"
+            label="Height(cm)"
             name="husbandHeight"
             value={familyInfo.husbandHeight}
             onChange={handleChange}
           />
           <FormInput
-            label="Weight"
+            label="Weight(kg)"
             name="husbandWeight"
             value={familyInfo.husbandWeight}
             onChange={handleChange}
@@ -357,7 +375,13 @@ function EditFamily() {
               value={familyInfo.husbandGenticIllness}
               onChange={handleChange}
               rows={2}
+              error={errors.husbandGenticIllness}
             />
+            <div className="text-right mt-1">
+              <span className={`text-xs ${familyInfo.husbandGenticIllness.length > 500 ? 'text-red-500' : 'text-gray-500'}`}>
+                {familyInfo.husbandGenticIllness.length}/500 characters
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -456,7 +480,13 @@ function EditFamily() {
               value={familyInfo.wifeGenticIllness}
               onChange={handleChange}
               rows={2}
+              error={errors.wifeGenticIllness}
             />
+            <div className="text-right mt-1">
+              <span className={`text-xs ${familyInfo.wifeGenticIllness.length > 500 ? 'text-red-500' : 'text-gray-500'}`}>
+                {familyInfo.wifeGenticIllness.length}/500 characters
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -522,13 +552,12 @@ function EditFamily() {
                   <td className="px-6 py-4">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            ${
-                                              donor.status === "Processed"
-                                                ? "bg-green-100 text-green-800"
-                                                : donor.status === "Rejected"
-                                                ? "bg-red-100 text-red-800"
-                                                : "bg-yellow-100 text-yellow-800"
-                                            }`}
+                                            ${donor.status === "Processed"
+                          ? "bg-green-100 text-green-800"
+                          : donor.status === "Rejected"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
                     >
                       {donor.status}
                     </span>
@@ -631,11 +660,10 @@ function EditFamily() {
                       <button
                         type="button"
                         onClick={() => setActiveTab(tab.id)}
-                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${
-                          activeTab === tab.id
-                            ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
-                            : "hover:text-gray-700 hover:bg-gray-50"
-                        }`}
+                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${activeTab === tab.id
+                          ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
+                          : "hover:text-gray-700 hover:bg-gray-50"
+                          }`}
                       >
                         {tab.label}
                       </button>

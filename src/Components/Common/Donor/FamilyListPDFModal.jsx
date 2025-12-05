@@ -26,172 +26,212 @@ function FamilyListPDFModal({ isOpen, onClose, familyId }) {
     }
   };
 
- const generatePDF = (download = false) => {
-  if (!familyData) return;
+  const generatePDF = (download = false) => {
+    if (!familyData) return;
 
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 15;
-  const tableWidth = pageWidth - (margin * 2);
-  let yPos = margin;
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 15;
+    const tableWidth = pageWidth - (margin * 2);
+    let yPos = margin;
 
-  // Form Title - Arial Black
-doc.setFont("helvetica", "bold");
+    // ==================== HEADER SECTION ====================
 
-  doc.setFontSize(15);
-  const subtitleText = "FORM TO BE FILLED BY COUPLE BEFORE DONOR IUI";
-  const subtitleWidth = doc.getTextWidth(subtitleText);
-  doc.text(subtitleText, (pageWidth - subtitleWidth) / 2, yPos);
 
-  // Draw full-width border below the form title
-  yPos += 3;
-  doc.setLineWidth(0.3);
-  doc.line(margin, yPos, pageWidth - margin, yPos);
+    // ==================== FORM TITLE ====================
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(15);
+    const subtitleText = "FORM TO BE FILLED BY COUPLE BEFORE DONOR IUI";
+    const subtitleWidth = doc.getTextWidth(subtitleText);
+    doc.text(subtitleText, (pageWidth - subtitleWidth) / 2, yPos);
 
-  yPos += 10;
+    // Draw full-width border below the form title
+    yPos += 3;
+    doc.line(margin, yPos, pageWidth - margin, yPos);
 
-  // Define table properties with proper column widths
-  const col1Width = 75; // Specification column (wider for long labels)
-  const col2Width = 55; // Husband column
-  const col3Width = 55; // Wife column
-  const rowHeight = 10;
-  const headerHeight = 12;
+    yPos += 10;
 
-  const col1X = margin;
-  const col2X = col1X + col1Width;
-  const col3X = col2X + col2Width;
+    // Define table properties with proper column widths
+    const col1Width = 75; // Specification column
+    const col2Width = 55; // Husband column
+    const col3Width = 55; // Wife column
+    const rowHeight = 10;
+    const headerHeight = 12;
 
-  // Draw table header with borders
-  doc.setDrawColor(0, 0, 0);
-  doc.setLineWidth(0.3);
+    const col1X = margin;
+    const col2X = col1X + col1Width;
+    const col3X = col2X + col2Width;
 
-  // Draw header borders
-  doc.rect(margin, yPos, tableWidth, headerHeight);
-  doc.line(col2X, yPos, col2X, yPos + headerHeight); // Vertical line after column 1
-  doc.line(col3X, yPos, col3X, yPos + headerHeight); // Vertical line after column 2
-
-  // Header text - Arial font style
-  doc.setFont("Arial", "bold");
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(12);
-  doc.text("Specification", col1X + 5, yPos + headerHeight / 2 + 3);
-  doc.text("Husband", col2X + col2Width / 2, yPos + headerHeight / 2 + 3, { align: "center" });
-  doc.text("Wife", col3X + col3Width / 2, yPos + headerHeight / 2 + 3, { align: "center" });
-
-  yPos += headerHeight;
-  doc.setTextColor(0, 0, 0);
-
-  // Table data
-  const tableData = [
-    { label: "Height", husband: familyData.husbandHeight || "N/A", wife: familyData.wifeHeight || "N/A" },
-    { label: "Weight", husband: familyData.husbandWeight || "N/A", wife: familyData.wifeWeight || "N/A" },
-    { label: "Blood Group", husband: familyData.husbandBloodGroup || "N/A", wife: familyData.wifeBloodGroup || "N/A" },
-    { label: "Skin Colour", husband: familyData.husbandSkinColor || "N/A", wife: familyData.wifeSkinColor || "N/A" },
-    { label: "Eye Colour", husband: familyData.husbandEyeColor || "N/A", wife: familyData.wifeEyeColor || "N/A" },
-    { label: "Religion", husband: familyData.husbandReligion || "N/A", wife: familyData.wifeReligion || "N/A" },
-    { label: "Education", husband: familyData.husbandEducation || "N/A", wife: familyData.wifeEducation || "N/A" },
-    { label: "Native District", husband: familyData.husbandDistrict || "N/A", wife: familyData.wifeDistrict || "N/A" },
-    { label: "Country", husband: familyData.husbandCountry || "N/A", wife: familyData.wifeCountry || "N/A" },
-    {
-      label: "Family H/o Genetic Illness (Yes/No)",
-      husband: familyData.husbandGenticIllness || "No",
-      wife: familyData.wifeGenticIllness || "No"
-    }
-  ];
-
-  // Draw table rows with borders
-  doc.setFontSize(11);
-
-  tableData.forEach((row, index) => {
-    // Draw cell borders
-    doc.rect(margin, yPos, tableWidth, rowHeight);
-    doc.line(col2X, yPos, col2X, yPos + rowHeight);
-    doc.line(col3X, yPos, col3X, yPos + rowHeight);
+    // Draw table header with borders
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.3);
-    
-    // Draw cell content
-    const textY = yPos + rowHeight / 2 + 3;
 
-    // Specification column - Arial bold
-    let label = row.label;
+    // Draw header borders
+    doc.rect(margin, yPos, tableWidth, headerHeight);
+    doc.line(col2X, yPos, col2X, yPos + headerHeight);
+    doc.line(col3X, yPos, col3X, yPos + headerHeight);
+
+    // Header text
     doc.setFont("Arial", "bold");
-    if (row.label.length > 25) {
-      doc.setFontSize(10);
-    }
-    doc.text(label, col1X + 5, textY);
-    
-    // Husband column - Arial normal (not bold)
-    doc.setFont("Arial", "normal");
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.text("Specification", col1X + 5, yPos + headerHeight / 2 + 3);
+    doc.text("Husband", col2X + col2Width / 2, yPos + headerHeight / 2 + 3, { align: "center" });
+    doc.text("Wife", col3X + col3Width / 2, yPos + headerHeight / 2 + 3, { align: "center" });
+
+    yPos += headerHeight;
+    doc.setTextColor(0, 0, 0);
+
+    // Table data with line break for genetic illness
+    const tableData = [
+      { label: "Height", husband: familyData.husbandHeight || "N/A", wife: familyData.wifeHeight || "N/A" },
+      { label: "Weight", husband: familyData.husbandWeight || "N/A", wife: familyData.wifeWeight || "N/A" },
+      { label: "Blood Group", husband: familyData.husbandBloodGroup || "N/A", wife: familyData.wifeBloodGroup || "N/A" },
+      { label: "Skin Colour", husband: familyData.husbandSkinColor || "N/A", wife: familyData.wifeSkinColor || "N/A" },
+      { label: "Eye Colour", husband: familyData.husbandEyeColor || "N/A", wife: familyData.wifeEyeColor || "N/A" },
+      { label: "Religion", husband: familyData.husbandReligion || "N/A", wife: familyData.wifeReligion || "N/A" },
+      { label: "Education", husband: familyData.husbandEducation || "N/A", wife: familyData.wifeEducation || "N/A" },
+      { label: "Native District", husband: familyData.husbandDistrict || "N/A", wife: familyData.wifeDistrict || "N/A" },
+      { label: "Country", husband: familyData.husbandCountry || "N/A", wife: familyData.wifeCountry || "N/A" },
+      {
+        label: "Family H/o Genetic\nIllness (Yes/No)",
+        husband: familyData.husbandGenticIllness ? "Yes" : "No",
+        wife: familyData.wifeGenticIllness ? "Yes" : "No"
+      }
+    ];
+
+    // Draw table rows with borders
     doc.setFontSize(11);
-    doc.text(row.husband.toString(), col2X + col2Width / 2, textY, { align: "center" });
 
-    // Wife column - Arial normal (not bold)
-    doc.text(row.wife.toString(), col3X + col3Width / 2, textY, { align: "center" });
+    tableData.forEach((row, index) => {
+      // Draw cell borders
+      doc.rect(margin, yPos, tableWidth, rowHeight);
+      doc.line(col2X, yPos, col2X, yPos + rowHeight);
+      doc.line(col3X, yPos, col3X, yPos + rowHeight);
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.3);
 
-    yPos += rowHeight;
-  });
+      // Draw cell content
+      const textY = yPos + rowHeight / 2 + 3;
 
-  yPos += 15;
+      // Specification column
+      let label = row.label;
+      doc.setFont("Arial", "bold");
 
-  // Declaration text - Arial Narrow for paragraph text
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  const maxLineWidth = pageWidth - (2 * margin);
+      // For genetic illness row, we need to handle line break
+      if (row.label.includes("\n")) {
+        const lines = row.label.split("\n");
+        doc.setFontSize(10);
+        // First line
+        doc.text(lines[0], col1X + 5, yPos + rowHeight / 3);
+        // Second line
+        doc.text(lines[1], col1X + 5, yPos + (2 * rowHeight) / 3);
+        doc.setFontSize(11);
+      } else {
+        if (row.label.length > 25) {
+          doc.setFontSize(10);
+        }
+        doc.text(label, col1X + 5, textY);
+      }
 
-  // First paragraph
-  const declarationText1 = "All above mentioned information is correct & true to our knowledge.";
-  doc.text(declarationText1, margin, yPos);
-  yPos += 10;
+      // Husband column
+      doc.setFont("Arial", "normal");
+      doc.setFontSize(11);
+      doc.text(row.husband.toString(), col2X + col2Width / 2, textY, { align: "center" });
 
-  // Second paragraph with line breaks
-  const declarationText2 = "Aforementioned specifications help to screen the target D- sample. We understand that despite of the above specifications, phenotypic & genotypic differences might occur & which is inevitable. We both willfully agree & give consent to use donor semen sample for IUI.";
+      // Wife column
+      doc.text(row.wife.toString(), col3X + col3Width / 2, textY, { align: "center" });
 
-  // Split text into lines that fit within max width
-  const splitText = doc.splitTextToSize(declarationText2, maxLineWidth);
-  splitText.forEach((line, index) => {
-    doc.text(line, margin, yPos);
-    yPos += (index === splitText.length - 1) ? 15 : 7;
-  });
+      yPos += rowHeight;
+    });
 
-  yPos += 10;
+    yPos += 15;
 
-  // Doctor's section - Arial font style
-  doc.setFont("Arial", "normal");
-  doc.setFontSize(11);
+    // Declaration text
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    const maxLineWidth = pageWidth - (2 * margin);
 
-  // Doctor's Name
-  const doctorText = "Doctor's Name :";
-  doc.text(doctorText, margin, yPos);
+    // First paragraph
+    const declarationText1 = "All above mentioned information is correct & true to our knowledge.";
+    doc.text(declarationText1, margin, yPos);
+    yPos += 10;
 
-  // Signature
-  const signatureText = "Signature :";
-  doc.text(signatureText, margin, yPos + 15);
+    // Second paragraph with line breaks
+    const declarationText2 = "Aforementioned specifications help to screen the target D- sample. We understand that despite of the above specifications, phenotypic & genotypic differences might occur & which is inevitable. We both willfully agree & give consent to use donor semen sample for IUI.";
 
-  // Dated
-  const datedText = "Dated :";
-  doc.text(datedText, margin, yPos + 30);
+    const splitText = doc.splitTextToSize(declarationText2, maxLineWidth);
+    splitText.forEach((line, index) => {
+      doc.text(line, margin, yPos);
+      yPos += (index === splitText.length - 1) ? 15 : 7;
+    });
 
-  // Footer
-  const footerY = pageHeight - 15;
-  doc.setFontSize(10);
-  doc.setFont("Arial", "italic");
+    yPos += 0;
 
-  if (download) {
-    const fileName = `Donor_IUI_Consent_${familyData.uin || familyData.familyInfoId}.pdf`;
-    doc.save(fileName);
-    toast.success(`PDF "${fileName}" downloaded successfully!`);
-  } else {
-    const pdfBlob = doc.output("blob");
-    const pdfUrl = URL.createObjectURL(pdfBlob);
-    const newWindow = window.open(pdfUrl, "_blank");
-    if (!newWindow) {
-      toast.error("Please allow pop-ups to view the PDF");
+    // ==================== DOCTOR'S SECTION ====================
+
+    // Add UIN and couple names at the top of Doctor's section
+    doc.setFont("Arial", "bold");
+    doc.setFontSize(11);
+
+    // UIN
+    doc.text(`UIN: ${familyData.uin || "Not assigned"}`, margin, yPos);
+    yPos += 8;
+
+    // Husband name (on separate line)
+    doc.text(`Husband: ${familyData.husbandName || "N/A"}`, margin, yPos);
+    yPos += 8;
+
+    // Wife name (on separate line)
+    doc.text(`Wife: ${familyData.wifeName || "N/A"}`, margin, yPos);
+    yPos += 15;
+
+    // Doctor's details
+    doc.setFont("Arial", "normal");
+
+    // Doctor's Name
+    const doctorText = "Doctor's Name :";
+    doc.text(doctorText, margin, yPos);
+
+ 
+
+    yPos += 10;
+
+    // Signature
+    const signatureText = "Signature :";
+    doc.text(signatureText, margin, yPos);
+
+  
+
+    yPos += 10;
+
+    // Dated
+    const datedText = "Dated :";
+    doc.text(datedText, margin, yPos);
+
+
+
+    // Footer
+    // const footerY = pageHeight - 15;
+    // doc.setFontSize(10);
+    // doc.setFont("Arial", "italic");
+    // const generatedDate = new Date().toLocaleDateString();
+    // doc.text(`Generated on: ${generatedDate}`, pageWidth - margin - doc.getTextWidth(`Generated on: ${generatedDate}`), footerY);
+
+    if (download) {
+      const fileName = `Donor_IUI_Consent_${familyData.uin || familyData.familyInfoId}.pdf`;
+      doc.save(fileName);
+      toast.success(`PDF "${fileName}" downloaded successfully!`);
+    } else {
+      const pdfBlob = doc.output("blob");
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      const newWindow = window.open(pdfUrl, "_blank");
+      if (!newWindow) {
+        toast.error("Please allow pop-ups to view the PDF");
+      }
     }
-  }
-};
-
+  };
   const handleDownload = () => {
     generatePDF(true);
   };
@@ -249,20 +289,8 @@ doc.setFont("helvetica", "bold");
             ) : familyData ? (
               <div className="space-y-6">
                 {/* Couple info */}
-                <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div>
-                      <span className="font-medium text-blue-800">Couple:</span>
-                      <span className="ml-2 text-blue-900 font-semibold">
-                        {familyData.husbandName} & {familyData.wifeName}
-                      </span>
-                    </div>
-                    <div className="text-sm text-blue-700">
-                      <span className="font-medium">Referral:</span>
-                      <span className="ml-2">{familyData.referHospital || "Not specified"}</span>
-                    </div>
-                  </div>
-                </div>
+                {/* Couple info */}
+
 
                 {/* PDF Preview */}
                 <div className="border-2 border-gray-300 rounded-lg p-4 bg-gray-50">
@@ -299,13 +327,13 @@ doc.setFont("helvetica", "bold");
                             { label: "Country", husband: familyData.husbandCountry || "N/A", wife: familyData.wifeCountry || "N/A" },
                             {
                               label: "Family H/o Genetic Illness (Yes/No)",
-                              husband: familyData.husbandGenticIllness || "No",
-                              wife: familyData.wifeGenticIllness || "No"
+                              husband: familyData.husbandGenticIllness ? "Yes" : "No",
+                              wife: familyData.wifeGenticIllness ? "Yes" : "No"
                             }
                           ].map((row, index) => (
                             <tr key={index} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
                               <td className="border border-gray-800 px-4 py-3 font-medium">
-                                {row.label}
+                                <div className="whitespace-pre-line">{row.label}</div>
                               </td>
                               <td className="border border-gray-800 px-4 py-3 text-center">{row.husband}</td>
                               <td className="border border-gray-800 px-4 py-3 text-center">{row.wife}</td>
@@ -326,21 +354,46 @@ doc.setFont("helvetica", "bold");
                     </div>
 
                     {/* Doctor's Section */}
-                    <div className=" pt-6 mt-8">
-                      <div className="space-y-6">
-                        <div className="flex items-center">
-                          <span className="font-medium w-32">Doctor's Name :</span>
-
+                    <div className="pt-6 mt-8 border-t border-gray-300">
+                
+                      <div className="">
+                        <div className="mb-4 p-3 bg-gray-50 rounded border border-gray-200">
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center">
+                              <span className="font-bold text-gray-700 w-24">UIN:</span>
+                              <span className="font-medium text-gray-900">{familyData.uin || "Not assigned"}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="font-bold text-gray-700 w-24">Husband:</span>
+                              <span className="font-medium text-gray-900">
+                                {familyData.husbandName || "N/A"}
+                              </span>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="font-bold text-gray-700 w-24">Wife:</span>
+                              <span className="font-medium text-gray-900">
+                                {familyData.wifeName || "N/A"}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center">
-                          <span className="font-medium w-32">Signature :</span>
 
-                        </div>
-                        <div className="flex items-center">
-                          <span className="font-medium w-32">Dated :</span>
+                        <div className="space-y-6">
+                          <div className="flex items-center">
+                            <span className="font-bold w-40 text-gray-800">Doctor's Name :</span>
+                          
+                          </div>
+                          <div className="flex items-center">
+                            <span className="font-bold w-40 text-gray-800">Signature :</span>
+         
+                          </div>
+                          <div className="flex items-center">
+                            <span className="font-bold w-40 text-gray-800">Dated :</span>
 
+                          </div>
                         </div>
                       </div>
+
 
                     </div>
                   </div>

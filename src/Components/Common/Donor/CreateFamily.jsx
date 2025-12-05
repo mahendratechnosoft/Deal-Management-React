@@ -99,7 +99,15 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
       }
       return;
     }
-    setFormData({ ...formData, [name]: value });
+
+    // Add character limit for genetic illness fields
+    if (name === "husbandGenticIllness" || name === "wifeGenticIllness") {
+      if (value.length <= 500) {
+        setFormData({ ...formData, [name]: value });
+      }
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
 
     if (errors[name]) {
       setErrors({ ...errors, [name]: "" });
@@ -117,6 +125,17 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
         isValid = false;
       }
     };
+
+    // Add validation for genetic illness character limit
+    if (formData.husbandGenticIllness && formData.husbandGenticIllness.length > 500) {
+      tempErrors.husbandGenticIllness = "Genetic illness cannot exceed 500 characters";
+      isValid = false;
+    }
+
+    if (formData.wifeGenticIllness && formData.wifeGenticIllness.length > 500) {
+      tempErrors.wifeGenticIllness = "Genetic illness cannot exceed 500 characters";
+      isValid = false;
+    }
 
     validateMobile("referDoctorContactNumber", "Doctor Contact");
     validateMobile("husbandMobile", "Husband Mobile");
@@ -430,7 +449,13 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
                     placeholder="Enter any genetic illness details"
                     rows={3}
                     disabled={isSubmitting}
+                    error={errors.husbandGenticIllness}
                   />
+                  <div className="text-right mt-1">
+                    <span className={`text-xs ${formData.husbandGenticIllness.length > 500 ? 'text-red-500' : 'text-gray-500'}`}>
+                      {formData.husbandGenticIllness.length}/500 characters
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -461,7 +486,7 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
                   error={errors.wifeMobile}
                 />
                 <FormInput
-                  label="Height"
+                  label="Height(cm)"
                   name="wifeHeight"
                   value={formData.wifeHeight}
                   onChange={handleChange}
@@ -471,7 +496,7 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
                 />
 
                 <FormInput
-                  label="Weight"
+                  label="Weight(kg)"
                   name="wifeWeight"
                   value={formData.wifeWeight}
                   onChange={handleChange}
@@ -564,6 +589,11 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
                     rows={3}
                     disabled={isSubmitting}
                   />
+                  <div className="text-right mt-1">
+                    <span className={`text-xs ${formData.wifeGenticIllness.length > 500 ? 'text-red-500' : 'text-gray-500'}`}>
+                      {formData.wifeGenticIllness.length}/500 characters
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
