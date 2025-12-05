@@ -218,8 +218,28 @@ function Sidebar({ isOpen, toggleSidebar }) {
       color: "from-fuchsia-500 to-purple-600",
     },
     {
-      name: "Under Screening",
+      name: "Prospects",
       path: "/Admin/donorList",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+          />
+        </svg>
+      ),
+      color: "from-rose-500 to-pink-500",
+    },
+    {
+      name: "Under Screening",
+      path: "/Admin/DonorList/UnderScreeningDonorList",
       icon: (
         <svg
           className="w-5 h-5"
@@ -358,7 +378,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
       color: "from-orange-500 to-amber-500",
     },
     {
-      name: "Matching Donor",
+      name: "Search Donor",
       path: "/Admin/PreviewMatchingDonors/:familyId",
       icon: (
         <svg
@@ -442,9 +462,10 @@ function Sidebar({ isOpen, toggleSidebar }) {
         "Qualified",
         "Donor",
         "FamilyList",
-        "Matching Donor",
+        "Search Donor",
         "Selected",
         "Quarantined",
+        "Prospects",
       ].includes(moduleName)
     ) {
       const donorHasAccess = hasPermission("donor", "Access");

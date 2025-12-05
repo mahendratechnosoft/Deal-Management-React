@@ -319,7 +319,7 @@ function DonorList() {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 mb-2">
           {/* <div className="flex-1 bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-2">
                             <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-gray-100">
@@ -365,10 +365,94 @@ function DonorList() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-gray-500 text-[12px] font-medium truncate">
-                  New Donor
+                  Under Screening
                 </p>
                 <p className="text-gray-900 text-sm font-bold truncate">
                   {donorStatusAndCount?.["New Donor"] ?? 0}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-blue-100">
+                <svg
+                  className="w-3 h-3 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-500 text-[12px] font-medium truncate">
+                  Selected
+                </p>
+                <p className="text-gray-900 text-sm font-bold truncate">
+                  {donorStatusAndCount?.["Selected"] ?? 0}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-blue-100">
+                <svg
+                  className="w-3 h-3 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-500 text-[12px] font-medium truncate">
+                  Shortlisted
+                </p>
+                <p className="text-gray-900 text-sm font-bold truncate">
+                  {donorStatusAndCount?.["Shortlisted"] ?? 0}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-blue-100">
+                <svg
+                  className="w-3 h-3 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-500 text-[12px] font-medium truncate">
+                  Qurantined
+                </p>
+                <p className="text-gray-900 text-sm font-bold truncate">
+                  {donorStatusAndCount?.["Qurantined"] ?? 0}
                 </p>
               </div>
             </div>
@@ -421,65 +505,10 @@ function DonorList() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-gray-500 text-[12px] font-medium truncate">
-                  Shortlisted
-                </p>
-                <p className="text-gray-900 text-sm font-bold truncate">
-                  {donorStatusAndCount?.["Shortlisted"] ?? 0}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="flex-1 bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-blue-100">
-                <svg
-                  className="w-3 h-3 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-gray-500 text-[12px] font-medium truncate">
                   Donor
                 </p>
                 <p className="text-gray-900 text-sm font-bold truncate">
                   {donorStatusAndCount?.["Donor"] ?? 0}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1 bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-blue-100">
-                <svg
-                  className="w-3 h-3 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-gray-500 text-[12px] font-medium truncate">
-                  Selected
-                </p>
-                <p className="text-gray-900 text-sm font-bold truncate">
-                  {donorStatusAndCount?.["Selected"] ?? 0}
                 </p>
               </div>
             </div>
@@ -590,7 +619,7 @@ function DonorList() {
                           <option value="New Donor">Under Screening</option>
                           <option value="Selected">Selected</option>
                           <option value="Shortlisted">Shortlisted</option>
-                          <option value="Qurantined">Qurantined</option>
+                          <option value="Quarantined">Quarantined</option>
                           <option value="Qualified">Qualified</option>
                           <option value="Donor">Donor</option>
                           <option value="Not Shortlisted">

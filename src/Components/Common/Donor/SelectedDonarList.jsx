@@ -5,6 +5,8 @@ import { useLayout } from "../../Layout/useLayout";
 import toast from "react-hot-toast";
 
 import Pagination from "../pagination";
+import { hasPermission } from "../../BaseComponet/permissions";
+import CreateDonar from "./CreateDonor";
 
 function SelectedDonarList() {
   const navigate = useNavigate();
@@ -60,6 +62,8 @@ function SelectedDonarList() {
         status = "Qualified";
       } else if (pageName === "ConfirmDonorList") {
         status = "Donor";
+      } else if (pageName === "UnderScreeningDonorList") {
+        status = "New Donor";
       }
 
       try {
@@ -214,6 +218,8 @@ function SelectedDonarList() {
     if (pageName === "QualifiedDonorList") return "Qualified Donor List";
     if (pageName === "ConfirmDonorList") return "Confirmed  Donors List";
     if (pageName === "QuarantinedDonorList") return "Quarantined Donor List";
+    if (pageName === "UnderScreeningDonorList")
+      return "Under Screening Donor List";
   };
 
   if (error) {
@@ -296,25 +302,29 @@ function SelectedDonarList() {
               </div>
 
               {/* Create Button */}
-              {/* <button hidden
-                                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
-                                onClick={() => setOpenModal(true)}
-                            >
-                                <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M12 4v16m8-8H4"
-                                    />
-                                </svg>
-                                Create Sample
-                            </button>  */}
+              {pageName === "UnderScreeningDonorList" &&
+                hasPermission("donor", "Create") && (
+                  <button
+                    hidden
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
+                    onClick={() => setOpenModal(true)}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    Create Donor
+                  </button>
+                )}
             </div>
           </div>
         </div>
@@ -440,6 +450,18 @@ function SelectedDonarList() {
                               handleStatusChange(Donor.donorId, e.target.value)
                             }
                           >
+                            {pageName === "UnderScreeningDonorList" && (
+                              <>
+                                <option value="New Donor">
+                                  Under Screening
+                                </option>
+                                <option value="Selected">Selected</option>
+                                <option value="Not Shortlisted">
+                                  Not Shortlisted
+                                </option>
+                              </>
+                            )}
+
                             {pageName === "SelectedDonorList" && (
                               <>
                                 <option value="Selected">Selected</option>
@@ -536,6 +558,13 @@ function SelectedDonarList() {
           sticky={true}
         />
       </div>
+      <CreateDonar
+        isOpen={openModal}
+        onClose={() => setOpenModal(false)}
+        onSuccess={() => {
+          fetchDonor(0, searchTerm);
+        }}
+      />
     </LayoutComponent>
   );
 }
