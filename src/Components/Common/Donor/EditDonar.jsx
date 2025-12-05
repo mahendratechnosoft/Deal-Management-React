@@ -79,14 +79,131 @@ const EditDonorPageSkeleton = () => {
   );
 };
 
+
+const validateName = (name) => {
+  if (!name?.trim()) return "Name is required";
+  if (name.length < 2) return "Name must be at least 2 characters";
+  if (name.length > 50) return "Name cannot exceed 50 characters";
+  return "";
+};
+
+const validateAge = (age) => {
+  if (!age) return "Age is required";
+  const ageNum = parseInt(age, 10);
+  if (isNaN(ageNum)) return "Age must be a valid number";
+  return "";
+};
+
+const validateDateOfBirth = (dob) => {
+  if (!dob) return "Date of birth is required";
+
+  const dobDate = new Date(dob);
+  const today = new Date();
+
+  if (dobDate > today) return "Date of birth cannot be in the future";
+
+  const minDate = new Date();
+  minDate.setFullYear(today.getFullYear() - 120);
+  if (dobDate < minDate) return "Please enter a valid date of birth";
+
+  return "";
+};
+
+const validateMobile = (mobile) => {
+  if (!mobile) return "Mobile number is required";
+  const mobileRegex = /^[6-9]\d{9}$/;
+  if (!mobileRegex.test(mobile)) {
+    return "Please enter a valid 10-digit Indian mobile number";
+  }
+  return "";
+};
+
+const validateEmail = (email) => {
+  if (!email) return "Email is required";
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return "Please enter a valid email address";
+  }
+  if (email.length > 100) return "Email cannot exceed 100 characters";
+  return "";
+};
+
+const validatePincode = (pincode) => {
+  if (!pincode) return "Pincode is required";
+  const pincodeRegex = /^\d{6}$/;
+  if (!pincodeRegex.test(pincode)) {
+    return "Please enter a valid 6-digit pincode";
+  }
+  if (pincode.startsWith('0')) {
+    return "Pincode cannot start with 0";
+  }
+  return "";
+};
+
+const validateHeight = (height) => {
+  if (!height) return "Height is required";
+  const heightNum = parseFloat(height);
+  if (isNaN(heightNum)) return "Height must be a valid number";
+  return "";
+};
+
+const validateWeight = (weight) => {
+  if (!weight) return "Weight is required";
+  const weightNum = parseFloat(weight);
+  if (isNaN(weightNum)) return "Weight must be a valid number";
+  return "";
+};
+
+const validateCity = (city) => {
+  if (!city?.trim()) return "City is required";
+  if (city.length < 2) return "City must be at least 2 characters";
+  if (city.length > 50) return "City cannot exceed 50 characters";
+  const cityRegex = /^[a-zA-Z\s.,'-]{2,}$/;
+  if (!cityRegex.test(city.trim())) {
+    return "Please enter a valid city name";
+  }
+  return "";
+};
+
+const validateProfession = (profession) => {
+  if (!profession?.trim()) return "Profession is required";
+  if (profession.length < 2) return "Profession must be at least 2 characters";
+  if (profession.length > 100) return "Profession cannot exceed 100 characters";
+  return "";
+};
+
+const validateAddress = (address) => {
+  if (!address?.trim()) return "Address is required";
+  if (address.length < 10) return "Address must be at least 10 characters";
+  if (address.length > 500) return "Address cannot exceed 500 characters";
+  return "";
+};
+
+const validateMaritalStatus = (status) => {
+  if (!status) return "Marital status is required";
+  return "";
+};
+
+const validateBloodGroup = (bloodGroup) => {
+  if (!bloodGroup) return "Blood group is required";
+  return "";
+};
+
+
+const validateGeneticIllness = (text) => {
+  if (!text) return ""; // Optional field
+  if (text.length > 500) return "Genetic illness cannot exceed 500 characters";
+  return "";
+};
 function EditDonar() {
   const navigate = useNavigate();
   const { donorId } = useParams();
   const { LayoutComponent, role } = useLayout();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
-
+  const [personalErrors, setPersonalErrors] = useState({});
   // --- State Management ---
+
 
   // 1. Personal Info State
   const [personalInfo, setPersonalInfo] = useState({
@@ -197,6 +314,74 @@ function EditDonar() {
     return true;
   });
 
+
+
+
+  // ADD THESE VALIDATION FUNCTIONS INSIDE THE COMPONENT
+  const validatePersonalField = (name, value) => {
+    switch (name) {
+      case 'name':
+        return validateName(value);
+      case 'age':
+        return validateAge(value);
+      case 'dateOfBirth':
+        return validateDateOfBirth(value);
+      case 'height':
+        return validateHeight(value);
+      case 'weight':
+        return validateWeight(value);
+      case 'phoneNumber':
+        return validateMobile(value);
+      case 'email':
+        return validateEmail(value);
+      case 'pincode':
+        return validatePincode(value);
+      case 'city':
+        return validateCity(value);
+      case 'profession':
+        return validateProfession(value);
+      case 'address':
+        return validateAddress(value);
+      case 'marriedStatus':
+        return validateMaritalStatus(value);
+      case 'bloodGroup':
+        return validateBloodGroup(value);
+      case 'geneticElements':
+        return validateGeneticIllness(value);
+      // Aadhar, Religion, Kids counts are NOT required (optional in edit form)
+      default:
+        return "";
+    }
+  };
+
+
+  const validatePersonalForm = () => {
+    const errors = {};
+
+    // Only validate fields that exist in Create form
+    const createFormFields = ['name', 'marriedStatus', 'age', 'dateOfBirth',
+      'address', 'city', 'pincode', 'phoneNumber', 'email',
+      'height', 'weight', 'bloodGroup', 'profession'];
+
+    createFormFields.forEach(field => {
+      const error = validatePersonalField(field, personalInfo[field]);
+      if (error) {
+        errors[field] = error;
+      }
+    });
+
+    // ADD THIS: Also validate geneticElements for character limit
+    const geneticError = validateGeneticIllness(personalInfo.geneticElements);
+    if (geneticError) {
+      errors.geneticElements = geneticError;
+    }
+
+    setPersonalErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+
+
   // --- Data Fetching ---
   useEffect(() => {
     const fetchData = async () => {
@@ -235,27 +420,27 @@ function EditDonar() {
             bList.length
               ? bList
               : [
-                  {
-                    age: "",
-                    profession: "",
-                    kidsCount: "",
-                    illness: "",
-                    donorFamailyId: "",
-                  },
-                ]
+                {
+                  age: "",
+                  profession: "",
+                  kidsCount: "",
+                  illness: "",
+                  donorFamailyId: "",
+                },
+              ]
           );
           setSisters(
             sList.length
               ? sList
               : [
-                  {
-                    age: "",
-                    profession: "",
-                    kidsCount: "",
-                    illness: "",
-                    donorFamailyId: "",
-                  },
-                ]
+                {
+                  age: "",
+                  profession: "",
+                  kidsCount: "",
+                  illness: "",
+                  donorFamailyId: "",
+                },
+              ]
           );
         } else if (activeTab === "blood") {
           const res = await axiosInstance.get(`getDonorBloodReport/${donorId}`);
@@ -294,14 +479,36 @@ function EditDonar() {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+
+    // Clear error when user types
+    if (personalErrors[name]) {
+      setPersonalErrors(prev => ({ ...prev, [name]: "" }));
+    }
+
+    // ADD REAL-TIME VALIDATION FOR GENETIC ELEMENTS
+    if (name === 'geneticElements') {
+      const error = validateGeneticIllness(value);
+      if (error) {
+        setPersonalErrors(prev => ({ ...prev, geneticElements: error }));
+      } else if (personalErrors.geneticElements) {
+        setPersonalErrors(prev => ({ ...prev, geneticElements: "" }));
+      }
+    }
   };
+
 
   const handleSelectChange = (option, name, stateSetter) => {
     stateSetter((prev) => ({
       ...prev,
       [name]: option ? option.value : "",
     }));
+
+    // Clear error when user selects
+    if (personalErrors[name]) {
+      setPersonalErrors(prev => ({ ...prev, [name]: "" }));
+    }
   };
+
 
   // --- Image Handling ---
   const convertToBase64 = (file) => {
@@ -456,6 +663,13 @@ function EditDonar() {
 
   const updatePersonal = async (e) => {
     e.preventDefault();
+
+    // Validate before submitting (only fields that exist in Create form)
+    if (!validatePersonalForm()) {
+      toast.error("Please fix the validation errors in the form");
+      return;
+    }
+
     setLoading(true);
     try {
       await axiosInstance.put("updateDonor", personalInfo);
@@ -465,6 +679,101 @@ function EditDonar() {
     } finally {
       setLoading(false);
     }
+  };
+
+
+
+  const renderFormInput = (fieldConfig, isRequired = true) => {
+    const { label, name, type = "text", ...props } = fieldConfig;
+    const error = personalErrors[name];
+
+    return (
+      <div>
+        <FormInput
+          label={
+            isRequired ? (
+              <>
+                {label} <span style={{ color: "red" }}>*</span>
+              </>
+            ) : (
+              label
+            )
+          }
+          name={name}
+          type={type}
+          value={personalInfo[name] || ''}
+          onChange={(e) => handleObjectChange(e, setPersonalInfo)}
+          disabled={loading}
+          placeholder={props.placeholder}
+          {...props}
+        />
+        {error && (
+          <p className="mt-1 text-sm text-red-600">{error}</p>
+        )}
+      </div>
+    );
+  };
+
+  const renderFormSelect = (fieldConfig, isRequired = true) => {
+    const { label, name, options, ...props } = fieldConfig;
+    const error = personalErrors[name];
+
+    return (
+      <div>
+        <FormSelect
+          label={
+            isRequired ? (
+              <>
+                {label} <span style={{ color: "red" }}>*</span>
+              </>
+            ) : (
+              label
+            )
+          }
+          name={name}
+          value={options.find(o => o.value === personalInfo[name])}
+          onChange={(o) => handleSelectChange(o, name, setPersonalInfo)}
+          options={options}
+          isDisabled={loading}
+          placeholder={props.placeholder || `Select ${label.toLowerCase()}`}
+          {...props}
+        />
+        {error && (
+          <p className="mt-1 text-sm text-red-600">{error}</p>
+        )}
+      </div>
+    );
+  };
+
+  const renderFormTextarea = (fieldConfig, isRequired = true) => {
+    const { label, name, rows = 3, ...props } = fieldConfig;
+    const error = personalErrors[name];
+
+    return (
+      <div>
+        <FormTextarea
+          label={
+            isRequired ? (
+              <>
+                {label} <span style={{ color: "red" }}>*</span>
+              </>
+            ) : (
+              label
+            )
+          }
+          name={name}
+          value={personalInfo[name] || ''}
+          onChange={(e) => handleObjectChange(e, setPersonalInfo)}
+          rows={rows}
+          disabled={loading}
+          placeholder={props.placeholder}
+          {...props}
+        />
+        {error && (
+          <p className="mt-1 text-sm text-red-600">{error}</p>
+        )}
+      </div>
+    );
   };
 
   const updateFamily = async (e) => {
@@ -629,155 +938,157 @@ function EditDonar() {
           Personal Details
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {renderFormInput({
+            label: "Name",
+            name: "name",
+            placeholder: "Enter full name",
+          })}
+
+          {renderFormSelect({
+            label: "Married",
+            name: "marriedStatus",
+            options: marriedOptions,
+          })}
+
+          {renderFormInput({
+            label: "Age",
+            name: "age",
+            type: "number",
+            placeholder: "e.g., 30",
+          })}
+
+          {renderFormInput({
+            label: "DOB",
+            name: "dateOfBirth",
+            type: "date",
+          })}
+
+          {renderFormInput({
+            label: "Height (cm)",
+            name: "height",
+            type: "number",
+            step: "0.1",
+            placeholder: "e.g., 175.5",
+          })}
+
+          {renderFormInput({
+            label: "Weight (kg)",
+            name: "weight",
+            type: "number",
+            step: "0.1",
+            placeholder: "e.g., 70.5",
+          })}
+
+          {renderFormSelect({
+            label: "Blood Group",
+            name: "bloodGroup",
+            options: bloodGroupOptions,
+          })}
+
+          {/* Optional fields (not in Create form - no validation) */}
           <FormInput
-            label="Name"
-            name="name"
-            value={personalInfo.name}
-            onChange={(e) => handleObjectChange(e, setPersonalInfo)}
-          />
-          <FormInput
-            label="Age"
-            name="age"
-            value={personalInfo.age}
-            onChange={(e) => handleObjectChange(e, setPersonalInfo)}
-            type="number"
-          />
-          <FormInput
-            label="DOB"
-            name="dateOfBirth"
-            type="date"
-            value={personalInfo.dateOfBirth}
-            onChange={(e) => handleObjectChange(e, setPersonalInfo)}
-          />
-          <FormInput
-            label="Adhar No"
+            label="Aadhar No"
             name="adharCardNo"
-            value={personalInfo.adharCardNo}
+            value={personalInfo.adharCardNo || ''}
             onChange={(e) => handleObjectChange(e, setPersonalInfo)}
+            disabled={loading}
+            placeholder="Enter 12-digit Aadhar number"
           />
-          <FormSelect
-            label="Married"
-            name="marriedStatus"
-            value={marriedOptions.find(
-              (o) => o.value === personalInfo.marriedStatus
-            )}
-            options={marriedOptions}
-            onChange={(o) =>
-              handleSelectChange(o, "marriedStatus", setPersonalInfo)
-            }
-          />
+
           <FormInput
             label="Male Kids"
             name="maleKidsCount"
-            value={personalInfo.maleKidsCount}
+            value={personalInfo.maleKidsCount || ''}
             onChange={(e) => handleObjectChange(e, setPersonalInfo)}
             type="number"
+            disabled={loading}
+            placeholder="e.g., 2"
           />
+
           <FormInput
             label="Female Kids"
             name="femaleKidsCount"
-            value={personalInfo.femaleKidsCount}
+            value={personalInfo.femaleKidsCount || ''}
             onChange={(e) => handleObjectChange(e, setPersonalInfo)}
             type="number"
+            disabled={loading}
+            placeholder="e.g., 1"
           />
-          <FormInput
-            label="Height"
-            name="height"
-            value={personalInfo.height}
-            onChange={(e) => handleObjectChange(e, setPersonalInfo)}
-            type="number"
-            step="0.1"
-          />
-          <FormInput
-            label="Weight"
-            name="weight"
-            value={personalInfo.weight}
-            onChange={(e) => handleObjectChange(e, setPersonalInfo)}
-            type="number"
-            step="0.1"
-          />
-          <FormSelect
-            label="Skin Color"
-            name="skinColor"
-            value={skinColorOptions.find(
-              (o) => o.value === personalInfo.skinColor
-            )}
-            options={skinColorOptions}
-            onChange={(o) =>
-              handleSelectChange(o, "skinColor", setPersonalInfo)
-            }
-          />
-          <FormSelect
-            label="Eye Color"
-            name="eyeColor"
-            value={eyeColorOptions.find(
-              (o) => o.value === personalInfo.eyeColor
-            )}
-            options={eyeColorOptions}
-            onChange={(o) => handleSelectChange(o, "eyeColor", setPersonalInfo)}
-          />
-          <FormSelect
-            label="Education"
-            name="education"
-            value={educationOptions.find(
-              (o) => o.value === personalInfo.education
-            )}
-            options={educationOptions}
-            onChange={(o) =>
-              handleSelectChange(o, "education", setPersonalInfo)
-            }
-          />
-          <FormInput
-            label="Profession"
-            name="profession"
-            value={personalInfo.profession}
-            onChange={(e) => handleObjectChange(e, setPersonalInfo)}
-          />
+
+          {renderFormSelect({
+            label: "Skin Color",
+            name: "skinColor",
+            options: skinColorOptions,
+          }, false)}
+
+          {renderFormSelect({
+            label: "Eye Color",
+            name: "eyeColor",
+            options: eyeColorOptions,
+          }, false)}
+
+          {renderFormSelect({
+            label: "Education",
+            name: "education",
+            options: educationOptions,
+          }, false)}
+
+          {renderFormInput({
+            label: "Profession",
+            name: "profession",
+            placeholder: "e.g., Software Engineer",
+          })}
+
           <FormInput
             label="Religion"
             name="religion"
-            value={personalInfo.religion}
+            value={personalInfo.religion || ''}
             onChange={(e) => handleObjectChange(e, setPersonalInfo)}
+            disabled={loading}
+            placeholder="e.g., Hindu"
           />
         </div>
       </div>
 
-      {/* Address */}
+      {/* Address & Contact - UPDATED */}
       <div>
         <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
           Address & Contact
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <FormInput
-            label="Address"
-            name="address"
-            value={personalInfo.address}
-            onChange={(e) => handleObjectChange(e, setPersonalInfo)}
-          />
-          <FormInput
-            label="City"
-            name="city"
-            value={personalInfo.city}
-            onChange={(e) => handleObjectChange(e, setPersonalInfo)}
-          />
-          <FormInput
-            label="Pincode"
-            name="pincode"
-            value={personalInfo.pincode}
-            onChange={(e) => handleObjectChange(e, setPersonalInfo)}
-          />
-          <FormInput
-            label="Mobile"
-            name="phoneNumber"
-            value={personalInfo.phoneNumber}
-            onChange={(e) => handleObjectChange(e, setPersonalInfo)}
-          />
-          <FormInput
-            label="Email"
-            name="email"
-            value={personalInfo.email}
-            onChange={(e) => handleObjectChange(e, setPersonalInfo)}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
+            {renderFormTextarea({
+              label: "Address",
+              name: "address",
+              rows: 3,
+              placeholder: "Enter full residential address",
+            })}
+          </div>
+
+          {renderFormInput({
+            label: "City",
+            name: "city",
+            placeholder: "Enter city name",
+          })}
+
+          {renderFormInput({
+            label: "Pincode",
+            name: "pincode",
+            placeholder: "e.g., 400001",
+          })}
+
+          {renderFormInput({
+            label: "Mobile",
+            name: "phoneNumber",
+            placeholder: "Enter 10-digit number",
+          })}
+
+          {renderFormInput({
+            label: "Email",
+            name: "email",
+            type: "email",
+            placeholder: "john@example.com",
+          })}
         </div>
       </div>
 
@@ -885,13 +1196,26 @@ function EditDonar() {
             Genetic Illness
           </h3>
           <div className="border p-3 rounded mt-4">
-            <FormTextarea
-              label="Genetic Illness"
-              name="geneticElements"
-              value={personalInfo.geneticElements}
-              onChange={(e) => handleObjectChange(e, setPersonalInfo)}
-              rows={2}
-            />
+            <div>
+
+              <FormTextarea
+                name="geneticElements"
+                value={personalInfo.geneticElements || ''}
+                onChange={(e) => handleObjectChange(e, setPersonalInfo)}
+                rows={2}
+                placeholder="Enter genetic illness details"
+              />
+              <div className="flex justify-between items-center mt-1">
+                <div>
+                  {personalErrors.geneticElements && (
+                    <p className="text-sm text-red-600">{personalErrors.geneticElements}</p>
+                  )}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {personalInfo.geneticElements?.length || 0}/500 characters
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1163,7 +1487,7 @@ function EditDonar() {
               <div className="flex items-center gap-3">
                 {/* Stage Badge - Display Only */}
                 {report.stage && (
-                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-50 text-gray-700 border border-gray-300">
+                 <span className="px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
                     Stage: {report.stage}
                   </span>
                 )}
@@ -1325,10 +1649,10 @@ function EditDonar() {
                   report.attachmentFileType
                 )
                   ? () =>
-                      previewFile(
-                        report.attachmentFile,
-                        report.attachmentFileType
-                      )
+                    previewFile(
+                      report.attachmentFile,
+                      report.attachmentFileType
+                    )
                   : undefined
               }
               background="white"
@@ -1428,7 +1752,7 @@ function EditDonar() {
               </span>
               <div className="flex items-center gap-3">
                 {report.stage && (
-                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-700 border border-gray-300">
+        <span className="px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
                     Stage: {report.stage}
                   </span>
                 )}
@@ -1710,7 +2034,8 @@ function EditDonar() {
                   </div>
                 </div>
 
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium border bg-gray-100 text-gray-800 border-gray-200 ml-auto">
+          <span className="px-2.5 py-0.5 rounded-full text-base font-medium border bg-indigo-50 text-indigo-700 border-indigo-200 ml-auto">
+
                   {personalInfo.status || "New Donor"}
                 </span>
               </div>
@@ -1721,11 +2046,10 @@ function EditDonar() {
                       <button
                         type="button"
                         onClick={() => setActiveTab(tab.id)}
-                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${
-                          activeTab === tab.id
-                            ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
-                            : "hover:text-gray-700 hover:bg-gray-50"
-                        }`}
+                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${activeTab === tab.id
+                          ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
+                          : "hover:text-gray-700 hover:bg-gray-50"
+                          }`}
                       >
                         {tab.label}
                       </button>
