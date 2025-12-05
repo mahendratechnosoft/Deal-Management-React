@@ -86,6 +86,10 @@ const DonorFilters = ({ onFilterChange, activeFilters, familyOptions }) => {
   const applyMemberFilters = (memberType, data) => {
     if (!data) return;
     let newFilters = { ...filters };
+    const setRange = (val) => {
+      const num = parseNum(val);
+      return num > 0 ? num : "";
+    };
 
     if (memberType === "husband") {
       newFilters.minHeight = setRange(data.husbandHeight);
@@ -196,7 +200,6 @@ const DonorFilters = ({ onFilterChange, activeFilters, familyOptions }) => {
     { key: "bloodGroup", label: "Blood Group", type: "select" },
     { key: "city", label: "City", type: "text" },
     { key: "religion", label: "Religion", type: "text" },
-
     { key: "minHeight", label: "Min Height (cm)", type: "number" },
     { key: "maxHeight", label: "Max Height (cm)", type: "number" },
     { key: "skinColor", label: "Skin Color", type: "select" },
