@@ -365,7 +365,7 @@ const DonorFilters = ({ onFilterChange, activeFilters, familyOptions }) => {
 // ==============================
 // 2. Donor List Component
 // ==============================
-const DonorList = ({ donors, onEdit }) => {
+const DonorList = ({ donors, onEdit, selectedFamilyId, onAssignClick }) => {
   if (!donors || donors.length === 0) {
     return (
       <div className="flex-grow flex items-center justify-center bg-white rounded-xl border border-gray-200 p-12">
@@ -474,17 +474,214 @@ const DonorList = ({ donors, onEdit }) => {
                   {donor.balancedVials || "N/A"}
                 </td>
                 <td className="px-4 py-3 text-sm font-medium">
-                  <button
-                    onClick={() => onEdit(donor.donorId)}
-                    className="text-blue-600 hover:text-blue-900 text-xs border border-blue-200 px-3 py-1 rounded hover:bg-blue-50 transition-colors"
-                  >
-                    View
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => onEdit(donor.donorId)}
+                      className="text-blue-600 hover:text-blue-900 text-xs border border-blue-200 px-3 py-1 rounded hover:bg-blue-50 transition-colors"
+                    >
+                      View
+                    </button>
+                    <button
+                      onClick={() => onAssignClick(donor)}
+                      disabled={!selectedFamilyId} // Disable if no family selected
+                      className={`text-xs px-3 py-1 rounded border w-full transition-colors ${
+                        selectedFamilyId
+                          ? "text-green-600 border-green-200 hover:bg-green-50 cursor-pointer"
+                          : "text-gray-300 border-gray-100 cursor-not-allowed bg-gray-50"
+                      }`}
+                      title={
+                        !selectedFamilyId
+                          ? "Select a Family UIN first"
+                          : "Assign Vials"
+                      }
+                    >
+                      Assign
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+};
+
+const AssignVialsModal = ({ isOpen, onClose, donor, familyId, onSuccess }) => {
+  const [vials, setVials] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const maxVials = donor ? parseInt(donor.balancedVials, 10) || 0 : 0;
+
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setVials("");
+      setError("");
+    }
+  }, [isOpen]);
+
+  if (!isOpen || !donor) return null;
+
+  // --- Validation Logic ---
+  const validateInput = (value) => {
+    if (!value || value.trim() === "") {
+      return "Number of vials is required.";
+    }
+    const num = parseInt(value, 10);
+
+    if (isNaN(num)) {
+      return "Please enter a valid number.";
+    }
+    if (num <= 0) {
+      return "Vials must be greater than 0.";
+    }
+    if (num > maxVials) {
+      return `Cannot assign more than available balance (${maxVials}).`;
+    }
+    return ""; // No error
+  };
+
+  // --- Handlers ---
+  const handleInputChange = (e) => {
+    const val = e.target.value;
+    setVials(val);
+    // Real-time validation on change
+    const validationMsg = validateInput(val);
+    setError(validationMsg);
+  };
+
+  const handleSubmit = async () => {
+    // 1. Final Validation check before submit
+    const validationMsg = validateInput(vials);
+
+    if (validationMsg) {
+      setError(validationMsg);
+      return; // STOP: Do not proceed to API
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        familyInfoId: familyId,
+        donorId: donor.donorId,
+        vialsAssignedCount: String(vials),
+        donarName: donor.name,
+        donarUin: donor.uin || "",
+      };
+
+      // 2. API Call (Only happens if validation passes)
+      await axiosInstance.post("assignVialsToFamily", payload);
+
+      toast.success("Vials assigned successfully");
+      onSuccess(); // Refresh parent list
+      onClose(); // Close modal
+    } catch (err) {
+      console.error("Assign error:", err);
+      toast.error("Failed to assign vials. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden animate-fadeIn">
+        {/* Modal Header */}
+        <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+          <h3 className="text-lg font-bold text-gray-800">Assign Vials</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className="p-6 space-y-5">
+          {/* Info Card */}
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-blue-900 space-y-1">
+            <div className="flex justify-between">
+              <span className="font-semibold text-blue-700">Donor UIN:</span>
+              <span>{donor.uin || "N/A"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold text-blue-700">Donor Name:</span>
+              <span>{donor.name}</span>
+            </div>
+            <div className="flex justify-between border-t border-blue-200 mt-2 pt-2">
+              <span className="font-bold text-blue-800">
+                Available Balance:
+              </span>
+              <span className="font-bold text-blue-800">{maxVials} Vials</span>
+            </div>
+          </div>
+
+          {/* Form Input with Error Prop */}
+          <FormInput
+            label="Number of Vials to Assign"
+            name="vialsAssignedCount"
+            type="number"
+            value={vials}
+            onChange={handleInputChange}
+            error={error} // Pass the error state here
+            placeholder="e.g. 2"
+            min="1"
+            max={maxVials}
+            required={true}
+          />
+        </div>
+
+        {/* Modal Footer */}
+        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-100">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={loading || !!error || !vials} // Optional: Visually disable if error exists
+            className={`px-4 py-2 text-sm font-medium text-white rounded-md flex items-center gap-2 transition-all
+              ${
+                loading || !!error || !vials
+                  ? "bg-blue-400 cursor-not-allowed opacity-70"
+                  : "bg-blue-600 hover:bg-blue-700 shadow-sm"
+              }`}
+          >
+            {loading ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Assigning...
+              </>
+            ) : (
+              "Assign Vials"
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -508,6 +705,24 @@ function DonorMatchingFilter() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [selectedDonorForAssign, setSelectedDonorForAssign] = useState(null);
+
+  const handleOpenAssignModal = (donor) => {
+    setSelectedDonorForAssign(donor);
+    setIsAssignModalOpen(true);
+  };
+
+  const handleCloseAssignModal = () => {
+    setIsAssignModalOpen(false);
+    setSelectedDonorForAssign(null);
+  };
+
+  const handleAssignSuccess = () => {
+    // Refresh the list with current filters and page
+    fetchDonors(currentPage, activeFilters);
+  };
 
   // --- 1. Fetch Family List for Dropdown ---
   useEffect(() => {
@@ -632,7 +847,12 @@ function DonorMatchingFilter() {
         {loading ? (
           <TableSkeleton />
         ) : (
-          <DonorList donors={donors} onEdit={handleEdit} />
+          <DonorList
+            donors={donors}
+            onEdit={handleEdit}
+            selectedFamilyId={activeFilters.familyInfoId}
+            onAssignClick={handleOpenAssignModal}
+          />
         )}
 
         {!loading && donors.length > 0 && (
@@ -649,6 +869,14 @@ function DonorMatchingFilter() {
             />
           </div>
         )}
+
+        <AssignVialsModal
+          isOpen={isAssignModalOpen}
+          onClose={handleCloseAssignModal}
+          donor={selectedDonorForAssign}
+          familyId={activeFilters.familyInfoId}
+          onSuccess={handleAssignSuccess}
+        />
       </div>
     </LayoutComponent>
   );
