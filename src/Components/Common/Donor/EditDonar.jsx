@@ -2105,29 +2105,31 @@ function EditDonar() {
       <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
         <div className="">
           <div className="flex items-center gap-2 mb-2">
-            <button
-              onClick={() => {
-                if (role === "ROLE_ADMIN") navigate("/Admin/donorList");
-                else if (role === "ROLE_EMPLOYEE")
-                  navigate("/Employee/donorList");
-              }}
-              className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            {role === "ROLE_ADMIN" && (
+              <button
+                onClick={() => {
+                  if (role === "ROLE_ADMIN") navigate("/Admin/donorList");
+                  else if (role === "ROLE_EMPLOYEE")
+                    navigate("/Employee/donorList");
+                }}
+                className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Back to Donor List
-            </button>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                Back to Donor List
+              </button>
+            )}
           </div>
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
