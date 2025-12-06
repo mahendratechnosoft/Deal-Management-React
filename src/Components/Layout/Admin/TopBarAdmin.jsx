@@ -37,51 +37,61 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
   const fetchTodayAttendance = async () => {
     setLoadingAttendance(true);
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const response = await axiosInstance.get(`getAttendanceBetween?fromDate=${today}&toDate=${today}`);
-      
+      const today = new Date().toISOString().split("T")[0];
+      const response = await axiosInstance.get(
+        `getAttendanceBetween?fromDate=${today}&toDate=${today}`
+      );
+
       let processedData = [];
-      
-      if (typeof response.data === 'object' && response.data !== null) {
-        Object.keys(response.data).forEach(employeeName => {
+
+      if (typeof response.data === "object" && response.data !== null) {
+        Object.keys(response.data).forEach((employeeName) => {
           const employeeData = response.data[employeeName];
-          const todayKey = Object.keys(employeeData).find(key => key.includes(today));
-          
+          const todayKey = Object.keys(employeeData).find((key) =>
+            key.includes(today)
+          );
+
           if (todayKey && employeeData[todayKey]) {
             const records = employeeData[todayKey];
-            const sortedRecords = [...records].sort((a, b) => a.timeStamp - b.timeStamp);
-            
+            const sortedRecords = [...records].sort(
+              (a, b) => a.timeStamp - b.timeStamp
+            );
+
             // Get latest record
             let status = "not-checked-in";
             let lastTime = null;
-            
+
             if (sortedRecords.length > 0) {
               const lastRecord = sortedRecords[sortedRecords.length - 1];
               status = lastRecord.status ? "checked-in" : "checked-out";
               lastTime = new Date(lastRecord.timeStamp);
             }
-            
+
             processedData.push({
               employeeName,
               status,
-              lastTime
+              lastTime,
             });
           } else {
             processedData.push({
               employeeName,
               status: "not-checked-in",
-              lastTime: null
+              lastTime: null,
             });
           }
         });
       }
-      
+
       // Sort: checked-in first, then checked-out, then not-checked-in
       processedData.sort((a, b) => {
-        const statusOrder = { 'checked-in': 1, 'checked-out': 2, 'not-checked-in': 3 };
+        const statusOrder = {
+          "checked-in": 1,
+          "checked-out": 2,
+          "not-checked-in": 3,
+        };
         return statusOrder[a.status] - statusOrder[b.status];
       });
-      
+
       setAttendanceData(processedData);
     } catch (error) {
       console.error("Error fetching attendance data:", error);
@@ -97,7 +107,7 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
       fetchTodayAttendance();
     }
     setShowAttendanceList(!showAttendanceList);
-    
+
     if (showUserMenu) setShowUserMenu(false);
     if (showNotifications) setShowNotifications(false);
   };
@@ -148,11 +158,13 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
   // Function to format time (e.g., "9:32 am")
   const formatTime = (date) => {
     if (!date) return "";
-    return date.toLocaleTimeString("en-IN", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true
-    }).toLowerCase();
+    return date
+      .toLocaleTimeString("en-IN", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+      .toLowerCase();
   };
 
   // Function to get status color
@@ -272,136 +284,156 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
         {/* Right Section */}
         <div className="flex items-center space-x-3">
           {/* Attendance Status Button */}
-          <div className="relative">
-            <button
-              ref={attendanceButtonRef}
-              onClick={toggleAttendanceList}
-              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative"
-              title="Today's Attendance Status"
-            >
-              <svg
-                className="w-5 h-5 text-white group-hover:scale-110 transition-transform duration-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          {!hasPermission("donor", "Access") && (
+            <div className="relative">
+              <button
+                ref={attendanceButtonRef}
+                onClick={toggleAttendanceList}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative"
+                title="Today's Attendance Status"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </button>
+                <svg
+                  className="w-5 h-5 text-white group-hover:scale-110 transition-transform duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </button>
 
-            {/* Attendance List Dropdown - SIMPLIFIED */}
-          {showAttendanceList && (
-  <div
-    ref={attendanceRef}
-    className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 py-0 z-50 overflow-hidden"
-  >
-    {/* Header - Simplified */}
-    <div className="px-4 py-3 border-b border-gray-100">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 className="font-semibold text-gray-800 text-sm">Today's Status</h3>
-        </div>
-        <span className="text-xs text-gray-500">
-          {new Date().toLocaleDateString('en-IN', { 
-            day: 'numeric',
-            month: 'short'
-          })}
-        </span>
-      </div>
-    </div>
-    
-    {/* Employee List - Compact */}
-    <div className="max-h-80 overflow-y-auto">
-      {loadingAttendance ? (
-        <div className="flex justify-center items-center py-6">
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-        </div>
-      ) : attendanceData.length === 0 ? (
-        <div className="px-4 py-6 text-center">
-          <p className="text-gray-500 text-sm">No attendance data</p>
-        </div>
-      ) : (
-        <div className="px-3 py-2">
-          {attendanceData.map((employee, index) => (
-            <div 
-              key={index} 
-              className="py-2 px-1"
-            >
-              {/* Visual separator line between different status groups */}
-              {index > 0 && 
-                attendanceData[index].status !== attendanceData[index - 1].status && (
-                <div className="my-2 border-t border-gray-200 border-dashed"></div>
-              )}
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {/* Small profile circle */}
-                  <div className="relative">
-                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                      <span className="text-blue-600 font-medium text-xs">
-                        {employee.employeeName?.charAt(0)?.toUpperCase() || "E"}
-                      </span>
-                    </div>
-                    {/* Tiny status dot */}
-                    <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${
-                      employee.status === "checked-in" ? "bg-green-500" :
-                      employee.status === "checked-out" ? "bg-blue-500" :
-                      "bg-gray-400"
-                    }`}></div>
-                  </div>
-                  
-                  {/* Name */}
-                  <span className="text-sm text-gray-800 font-medium truncate max-w-[100px]">
-                    {employee.employeeName}
-                  </span>
-                </div>
-                
-                {/* Status & Time - Compact */}
-                <div className="text-right">
-                  {employee.status === "checked-in" && employee.lastTime && (
-                    <div className="flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                      <span className="text-xs text-gray-600">
-                        at {formatTime(employee.lastTime)}
-                      </span>
-                    </div>
-                  )}
-                  {employee.status === "checked-out" && employee.lastTime && (
-                    <div className="flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                      <span className="text-xs text-gray-600">
-                        at {formatTime(employee.lastTime)}
-                      </span>
-                    </div>
-                  )}
-                  {employee.status === "not-checked-in" && (
-                    <div className="flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+              {/* Attendance List Dropdown - SIMPLIFIED */}
+              {showAttendanceList && (
+                <div
+                  ref={attendanceRef}
+                  className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 py-0 z-50 overflow-hidden"
+                >
+                  {/* Header - Simplified */}
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <svg
+                          className="w-4 h-4 text-blue-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        <h3 className="font-semibold text-gray-800 text-sm">
+                          Today's Status
+                        </h3>
+                      </div>
                       <span className="text-xs text-gray-500">
-                        Not in
+                        {new Date().toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                        })}
                       </span>
                     </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+                  </div>
 
-  </div>
-)}
-            
-          </div>
+                  {/* Employee List - Compact */}
+                  <div className="max-h-80 overflow-y-auto">
+                    {loadingAttendance ? (
+                      <div className="flex justify-center items-center py-6">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                      </div>
+                    ) : attendanceData.length === 0 ? (
+                      <div className="px-4 py-6 text-center">
+                        <p className="text-gray-500 text-sm">
+                          No attendance data
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="px-3 py-2">
+                        {attendanceData.map((employee, index) => (
+                          <div key={index} className="py-2 px-1">
+                            {/* Visual separator line between different status groups */}
+                            {index > 0 &&
+                              attendanceData[index].status !==
+                                attendanceData[index - 1].status && (
+                                <div className="my-2 border-t border-gray-200 border-dashed"></div>
+                              )}
+
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                {/* Small profile circle */}
+                                <div className="relative">
+                                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <span className="text-blue-600 font-medium text-xs">
+                                      {employee.employeeName
+                                        ?.charAt(0)
+                                        ?.toUpperCase() || "E"}
+                                    </span>
+                                  </div>
+                                  {/* Tiny status dot */}
+                                  <div
+                                    className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${
+                                      employee.status === "checked-in"
+                                        ? "bg-green-500"
+                                        : employee.status === "checked-out"
+                                        ? "bg-blue-500"
+                                        : "bg-gray-400"
+                                    }`}
+                                  ></div>
+                                </div>
+
+                                {/* Name */}
+                                <span className="text-sm text-gray-800 font-medium truncate max-w-[100px]">
+                                  {employee.employeeName}
+                                </span>
+                              </div>
+
+                              {/* Status & Time - Compact */}
+                              <div className="text-right">
+                                {employee.status === "checked-in" &&
+                                  employee.lastTime && (
+                                    <div className="flex items-center gap-1">
+                                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                                      <span className="text-xs text-gray-600">
+                                        at {formatTime(employee.lastTime)}
+                                      </span>
+                                    </div>
+                                  )}
+                                {employee.status === "checked-out" &&
+                                  employee.lastTime && (
+                                    <div className="flex items-center gap-1">
+                                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                                      <span className="text-xs text-gray-600">
+                                        at {formatTime(employee.lastTime)}
+                                      </span>
+                                    </div>
+                                  )}
+                                {employee.status === "not-checked-in" && (
+                                  <div className="flex items-center gap-1">
+                                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                                    <span className="text-xs text-gray-500">
+                                      Not in
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Quick Actions */}
           {!hasPermission("donor", "Access") && (

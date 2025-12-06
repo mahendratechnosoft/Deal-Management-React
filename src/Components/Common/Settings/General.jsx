@@ -3,6 +3,7 @@ import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import CustomeImageUploader from "../../BaseComponet/CustomeImageUploader";
 import { FormPhoneInputFloating } from "../../BaseComponet/CustomeFormComponents";
+import { hasPermission } from "../../BaseComponet/permissions";
 
 // --- Reusable FormInput ---
 const FormInput = ({
@@ -430,121 +431,125 @@ function General() {
               <hr className="border-gray-100" />
 
               {/* --- Section 3: Financial Details --- */}
-              <section>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                      />
-                    </svg>
+              {!hasPermission("donor", "Access") && (
+                <section>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                      <svg
+                        className="w-4 h-4 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900">
+                        Financial Details
+                      </h2>
+                      <p className="text-gray-600 text-sm">
+                        Banking and tax information.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900">
-                      Financial Details
-                    </h2>
-                    <p className="text-gray-600 text-sm">
-                      Banking and tax information.
-                    </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormInput
+                      name="gstNumber"
+                      label="GST Number"
+                      value={formData.gstNumber}
+                      onChange={handleChange}
+                      error={errors.gstNumber}
+                    />
+                    <FormInput
+                      name="panNumber"
+                      label="PAN Number"
+                      value={formData.panNumber}
+                      onChange={handleChange}
+                      error={errors.panNumber}
+                    />
+                    <FormInput
+                      name="bankName"
+                      label="Bank Name"
+                      value={formData.bankName}
+                      onChange={handleChange}
+                      error={errors.bankName}
+                    />
+                    <FormInput
+                      name="accountHolderName"
+                      label="Account Holder Name"
+                      value={formData.accountHolderName}
+                      onChange={handleChange}
+                      error={errors.accountHolderName}
+                    />
+                    <FormInput
+                      name="accountNumber"
+                      label="Account Number"
+                      value={formData.accountNumber}
+                      onChange={handleChange}
+                      error={errors.accountNumber}
+                    />
+                    <FormInput
+                      name="ifscCode"
+                      label="IFSC Code"
+                      value={formData.ifscCode}
+                      onChange={handleChange}
+                      error={errors.ifscCode}
+                    />
                   </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormInput
-                    name="gstNumber"
-                    label="GST Number"
-                    value={formData.gstNumber}
-                    onChange={handleChange}
-                    error={errors.gstNumber}
-                  />
-                  <FormInput
-                    name="panNumber"
-                    label="PAN Number"
-                    value={formData.panNumber}
-                    onChange={handleChange}
-                    error={errors.panNumber}
-                  />
-                  <FormInput
-                    name="bankName"
-                    label="Bank Name"
-                    value={formData.bankName}
-                    onChange={handleChange}
-                    error={errors.bankName}
-                  />
-                  <FormInput
-                    name="accountHolderName"
-                    label="Account Holder Name"
-                    value={formData.accountHolderName}
-                    onChange={handleChange}
-                    error={errors.accountHolderName}
-                  />
-                  <FormInput
-                    name="accountNumber"
-                    label="Account Number"
-                    value={formData.accountNumber}
-                    onChange={handleChange}
-                    error={errors.accountNumber}
-                  />
-                  <FormInput
-                    name="ifscCode"
-                    label="IFSC Code"
-                    value={formData.ifscCode}
-                    onChange={handleChange}
-                    error={errors.ifscCode}
-                  />
-                </div>
-              </section>
+                </section>
+              )}
 
               <hr className="border-gray-100" />
 
               {/* --- Section 4: Signature & Stamp --- */}
-              <section>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                      />
-                    </svg>
+              {!hasPermission("donor", "Access") && (
+                <section>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <svg
+                        className="w-4 h-4 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900">
+                        Authorised Signature & Company Stamp
+                      </h2>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900">
-                      Authorised Signature & Company Stamp
-                    </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <CustomeImageUploader
+                      title="Authorised Signature"
+                      onFileChange={(file) =>
+                        handleImageUpload(file, "signatureBase64")
+                      }
+                      initialBase64={formData.signatureBase64}
+                    />
+                    <CustomeImageUploader
+                      title="Company Stamp"
+                      onFileChange={(file) =>
+                        handleImageUpload(file, "stampBase64")
+                      }
+                      initialBase64={formData.stampBase64}
+                    />
                   </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  <CustomeImageUploader
-                    title="Authorised Signature"
-                    onFileChange={(file) =>
-                      handleImageUpload(file, "signatureBase64")
-                    }
-                    initialBase64={formData.signatureBase64}
-                  />
-                  <CustomeImageUploader
-                    title="Company Stamp"
-                    onFileChange={(file) =>
-                      handleImageUpload(file, "stampBase64")
-                    }
-                    initialBase64={formData.stampBase64}
-                  />
-                </div>
-              </section>
+                </section>
+              )}
             </div>
           </form>
         )}
