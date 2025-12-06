@@ -200,6 +200,7 @@ function EditDonar() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
   const [personalErrors, setPersonalErrors] = useState({});
+  const [allocations, setAllocations] = useState([]);
   // --- State Management ---
 
   // 1. Personal Info State
@@ -257,6 +258,7 @@ function EditDonar() {
     { id: "blood", label: "Blood Reports" },
     { id: "semen", label: "Semen Report" },
     { id: "sample", label: "Sample Storage" },
+    { id: "linkedFamily", label: "Linked Family" },
   ];
 
   // Options
@@ -297,16 +299,23 @@ function EditDonar() {
         tab.id !== "semen" &&
         tab.id !== "sample" &&
         tab.id !== "blood" &&
-        tab.id !== "family"
+        tab.id !== "family" &&
+        tab.id !== "linkedFamily"
       );
     }
 
     if (status === "Selected") {
-      return tab.id !== "semen" && tab.id !== "sample";
+      return (
+        tab.id !== "semen" && tab.id !== "sample" && tab.id !== "linkedFamily"
+      );
     }
 
     if (status === "Shortlisted" || status === "Quarantined") {
-      return tab.id !== "sample";
+      return tab.id !== "sample" && tab.id !== "linkedFamily";
+    }
+
+    if (status === "Qualified") {
+      return tab.id !== "linkedFamily";
     }
     return true;
   });
@@ -458,6 +467,9 @@ function EditDonar() {
             `getSampleReportByDonorId/${donorId}`
           );
           setSampleReport(res.data || { donorId: donorId });
+        } else if (activeTab === "linkedFamily") {
+          const res = await axiosInstance.get(`getAllDonation/${donorId}`);
+          setAllocations(res.data || []);
         }
       } catch (err) {
         console.error(`Failed to fetch ${activeTab} data`, err);
@@ -855,6 +867,16 @@ function EditDonar() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
   };
 
   // --- RENDER FUNCTIONS ---
@@ -1659,7 +1681,14 @@ function EditDonar() {
                   : undefined
               }
               background="white"
-              className="md:col-span-1"
+              className={`
+                md:col-span-1 
+                [&>div]:border-blue-400 
+                [&>div]:border
+                [&>div]:border-2
+                [&>div]:hover:bg-blue-100
+                [&>label]:font-bold
+              `}
             />
           </div>
         ))}
@@ -1833,13 +1862,29 @@ function EditDonar() {
                 onChange={(e) => handleAttachmentUpload(e, index, "semen")}
                 onRemove={() => handleRemoveAttachment(index, "semen")}
                 background="white"
-                className="md:col-span-1"
+                className="md:col-span-1
+                [&>div]:border-blue-400 
+                [&>div]:border
+                [&>div]:border-2
+                [&>div]:hover:bg-blue-100
+                [&>label]:font-bold"
                 onDownload={() =>
                   downloadFile(
                     report.attachmentFile,
                     report.attachmentFileName,
                     report.attachmentFileType
                   )
+                }
+                onPreview={
+                  ["application/pdf", "image/jpeg", "image/png"].includes(
+                    report.attachmentFileType
+                  )
+                    ? () =>
+                        previewFile(
+                          report.attachmentFile,
+                          report.attachmentFileType
+                        )
+                    : undefined
                 }
               />
 
@@ -1957,6 +2002,74 @@ function EditDonar() {
     </form>
   );
 
+  const renderLinkedFamilyList = () => (
+    <div className="bg-white rounded-lg">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">
+          Vial Allocation History
+        </h3>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-8">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p className="mt-2 text-gray-500">Loading history...</p>
+        </div>
+      ) : allocations.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          No donations have been made to any families yet.
+        </div>
+      ) : (
+        <div className="overflow-x-auto border border-gray-200 rounded-lg">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Family UIN
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Husbund Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Wife Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Vials Assigned
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Allocation Date
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {allocations.map((allocation) => (
+                <tr key={allocation.allocationId} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {allocation.familyUin || "N/A"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {allocation.husbandName || "N/A"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {allocation.wifeName || "N/A"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {allocation.vialsAssignedCount}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatDate(allocation.allocationDate)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+
   const renderTabContent = () => {
     if (loading && Object.keys(personalInfo).length === 0)
       return <div className="p-4 text-center">Loading...</div>;
@@ -1972,6 +2085,8 @@ function EditDonar() {
         return renderSemenReport();
       case "sample":
         return renderSampleReport();
+      case "linkedFamily":
+        return renderLinkedFamilyList();
       default:
         return renderPersonalInformation();
     }

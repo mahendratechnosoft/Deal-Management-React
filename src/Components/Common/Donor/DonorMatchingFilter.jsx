@@ -12,7 +12,12 @@ import { toast } from "react-hot-toast";
 // ==============================
 // 1. Filter Component (Compact & Merged Header)
 // ==============================
-const DonorFilters = ({ onFilterChange, activeFilters, familyOptions }) => {
+const DonorFilters = ({
+  onFilterChange,
+  activeFilters,
+  familyOptions,
+  onFamilyDetailsLoaded,
+}) => {
   const [filters, setFilters] = useState({
     familyInfoId: "",
     bloodGroup: "",
@@ -158,11 +163,18 @@ const DonorFilters = ({ onFilterChange, activeFilters, familyOptions }) => {
     setSelectedMember("");
     setFamilyDetails(null);
 
+    if (!id && onFamilyDetailsLoaded) {
+      onFamilyDetailsLoaded(null);
+    }
+
     if (id) {
       try {
         const response = await axiosInstance.get(`getFamilyById/${id}`);
         if (response.data) {
           setFamilyDetails(response.data);
+          if (onFamilyDetailsLoaded) {
+            onFamilyDetailsLoaded(response.data);
+          }
           toast.success("Family loaded.");
         }
       } catch (error) {
@@ -508,7 +520,13 @@ const DonorList = ({ donors, onEdit, selectedFamilyId, onAssignClick }) => {
   );
 };
 
-const AssignVialsModal = ({ isOpen, onClose, donor, familyId, onSuccess }) => {
+const AssignVialsModal = ({
+  isOpen,
+  onClose,
+  donor,
+  familyDetails,
+  onSuccess,
+}) => {
   const [vials, setVials] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -565,11 +583,14 @@ const AssignVialsModal = ({ isOpen, onClose, donor, familyId, onSuccess }) => {
     setLoading(true);
     try {
       const payload = {
-        familyInfoId: familyId,
+        familyInfoId: familyDetails?.familyInfoId,
         donorId: donor.donorId,
         vialsAssignedCount: String(vials),
         donarName: donor.name,
         donarUin: donor.uin || "",
+        familyUin: familyDetails?.uin || "",
+        husbandName: familyDetails?.husbandName || "",
+        wifeName: familyDetails?.wifeName || "",
       };
 
       // 2. API Call (Only happens if validation passes)
@@ -602,6 +623,25 @@ const AssignVialsModal = ({ isOpen, onClose, donor, familyId, onSuccess }) => {
 
         {/* Modal Body */}
         <div className="p-6 space-y-5">
+          {familyDetails && (
+            <div className="bg-purple-50 p-3 rounded-lg border border-purple-100 text-sm text-purple-900 space-y-1 mb-2">
+              <h4 className="font-bold text-purple-800 border-b border-purple-200 pb-1 mb-1">
+                Target Family
+              </h4>
+              <div className="flex justify-between">
+                <span className="font-semibold">Family UIN:</span>
+                <span>{familyDetails.uin}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-semibold">Husband:</span>
+                <span>{familyDetails.husbandName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-semibold">Wife:</span>
+                <span>{familyDetails.wifeName}</span>
+              </div>
+            </div>
+          )}
           {/* Info Card */}
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-blue-900 space-y-1">
             <div className="flex justify-between">
@@ -708,6 +748,7 @@ function DonorMatchingFilter() {
 
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedDonorForAssign, setSelectedDonorForAssign] = useState(null);
+  const [selectedFamilyDetails, setSelectedFamilyDetails] = useState(null);
 
   const handleOpenAssignModal = (donor) => {
     setSelectedDonorForAssign(donor);
@@ -732,10 +773,21 @@ function DonorMatchingFilter() {
         if (response.data) {
           const options = response.data
             .filter((item) => item.uin !== null && item.uin !== "")
-            .map((item) => ({
-              value: item.familyInfoId,
-              label: item.uin,
-            }));
+            .map((item) => {
+              // Extract only the first word (First Name)
+              const hFirstName = item.husbandName
+                ? item.husbandName.split(" ")[0]
+                : "";
+              const wFirstName = item.wifeName
+                ? item.wifeName.split(" ")[0]
+                : "";
+
+              return {
+                value: item.familyInfoId,
+                // Label format: UIN - HusbandFirst & WifeFirst
+                label: `${item.uin} - ${hFirstName} & ${wFirstName}`,
+              };
+            });
           setFamilyOptions(options);
         }
       } catch (error) {
@@ -842,6 +894,7 @@ function DonorMatchingFilter() {
           onFilterChange={handleFilterChange}
           activeFilters={activeFilters}
           familyOptions={familyOptions}
+          onFamilyDetailsLoaded={setSelectedFamilyDetails}
         />
 
         {loading ? (
@@ -874,7 +927,7 @@ function DonorMatchingFilter() {
           isOpen={isAssignModalOpen}
           onClose={handleCloseAssignModal}
           donor={selectedDonorForAssign}
-          familyId={activeFilters.familyInfoId}
+          familyDetails={selectedFamilyDetails}
           onSuccess={handleAssignSuccess}
         />
       </div>

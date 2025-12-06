@@ -308,7 +308,8 @@ function FamilyList() {
                   familyList.map((family) => (
                     <tr
                       key={family.familyInfoId}
-                      className="hover:bg-gray-50 transition-colors"
+                      onClick={() => handleEditFamily(family.familyInfoId)}
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
                     >
                       <td className="px-4 py-4 truncate text-sm text-gray-900 font-medium">
                         {family.uin || "-"}
@@ -328,7 +329,7 @@ function FamilyList() {
 
                       <td className="px-4 py-1 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center gap-3">
-                          <button
+                          {/* <button
                             title="Edit"
                             onClick={() =>
                               handleEditFamily(family.familyInfoId)
@@ -336,7 +337,7 @@ function FamilyList() {
                             className="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50"
                           >
                             <EditIcon />
-                          </button>
+                          </button> */}
 
                           {/* <button
                             title="Preview"
@@ -348,7 +349,10 @@ function FamilyList() {
 
                           <button
                             title="Generate PDF"
-                            onClick={() => handleViewPDF(family.familyInfoId)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewPDF(family.familyInfoId);
+                            }}
                             className="text-red-600 hover:text-red-900 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
                           >
                             <PdfIcon />

@@ -442,68 +442,98 @@ function SelectedDonarList() {
                       </td>
                       {pageName !== "ConfirmDonorList" && (
                         <td className="px-4 py-3 whitespace-nowrap text-sm">
-                          <select
-                            className="border rounded px-2 py-1 text-sm"
-                            value={Donor.status || "New Donor"}
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) =>
-                              handleStatusChange(Donor.donorId, e.target.value)
-                            }
-                          >
-                            {pageName === "UnderScreeningDonorList" && (
-                              <>
-                                <option value="New Donor">
-                                  Under Screening
-                                </option>
-                                <option value="Selected">Selected</option>
-                                <option value="Not Shortlisted">
-                                  Not Shortlisted
-                                </option>
-                              </>
-                            )}
+                          <div className="relative inline-block">
+                            <select
+                              className={`
+                              appearance-none 
+                              cursor-pointer 
+                              px-3 py-1 pr-8 
+                              rounded-full 
+                              text-xs font-semibold 
+                              border 
+                              focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500
+                              bg-indigo-50 text-indigo-700 border-indigo-200
+                            `}
+                              value={Donor.status || "New Donor"}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) =>
+                                handleStatusChange(
+                                  Donor.donorId,
+                                  e.target.value
+                                )
+                              }
+                            >
+                              {pageName === "UnderScreeningDonorList" && (
+                                <>
+                                  <option value="New Donor">
+                                    Under Screening
+                                  </option>
+                                  <option value="Selected">Selected</option>
+                                  <option value="Not Shortlisted">
+                                    Not Shortlisted
+                                  </option>
+                                </>
+                              )}
 
-                            {pageName === "SelectedDonorList" && (
-                              <>
-                                <option value="Selected">Selected</option>
-                                <option value="Shortlisted">Shortlisted</option>
-                                <option value="Not Shortlisted">
-                                  Not Shortlisted
-                                </option>
-                              </>
-                            )}
+                              {pageName === "SelectedDonorList" && (
+                                <>
+                                  <option value="Selected">Selected</option>
+                                  <option value="Shortlisted">
+                                    Shortlisted
+                                  </option>
+                                  <option value="Not Shortlisted">
+                                    Not Shortlisted
+                                  </option>
+                                </>
+                              )}
 
-                            {/* Options for Shortlisted Page */}
-                            {pageName === "ShortlistedDonorList" && (
-                              <>
-                                <option value="Shortlisted">Shortlisted</option>
-                                <option value="Quarantined">Quarantined</option>
-                                <option value="Not Shortlisted">
-                                  Not Shortlisted
-                                </option>
-                              </>
-                            )}
+                              {/* Options for Shortlisted Page */}
+                              {pageName === "ShortlistedDonorList" && (
+                                <>
+                                  <option value="Shortlisted">
+                                    Shortlisted
+                                  </option>
+                                  <option value="Quarantined">
+                                    Quarantined
+                                  </option>
+                                  <option value="Not Shortlisted">
+                                    Not Shortlisted
+                                  </option>
+                                </>
+                              )}
 
-                            {/* Options for Confirm Page */}
-                            {pageName === "QuarantinedDonorList" && (
-                              <>
-                                <option value="Quarantined">Quarantined</option>
-                                <option value="Qualified">Qualified</option>
-                                <option value="Not Shortlisted">
-                                  Not Shortlisted
-                                </option>
-                              </>
-                            )}
+                              {/* Options for Confirm Page */}
+                              {pageName === "QuarantinedDonorList" && (
+                                <>
+                                  <option value="Quarantined">
+                                    Quarantined
+                                  </option>
+                                  <option value="Qualified">Qualified</option>
+                                  <option value="Not Shortlisted">
+                                    Not Shortlisted
+                                  </option>
+                                </>
+                              )}
 
-                            {/* Options for Qualified Page */}
-                            {pageName === "QualifiedDonorList" && (
-                              <>
-                                <option value="Qualified">Qualified</option>
-                                <option value="Not Shortlisted">
-                                  Not Shortlisted
-                                </option>
-                              </>
-                            )}
-                          </select>
+                              {/* Options for Qualified Page */}
+                              {pageName === "QualifiedDonorList" && (
+                                <>
+                                  <option value="Qualified">Qualified</option>
+                                  <option value="Not Shortlisted">
+                                    Not Shortlisted
+                                  </option>
+                                </>
+                              )}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                              <svg
+                                className="h-3 w-3 fill-current"
+                                viewBox="0 0 20 20"
+                              >
+                                <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                              </svg>
+                            </div>
+                          </div>
                         </td>
                       )}
                     </tr>
