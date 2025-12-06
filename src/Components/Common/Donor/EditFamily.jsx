@@ -284,7 +284,7 @@ function EditFamily() {
       // =====================================================
       y = makeTable(y, "Donor Information", [
         // ✅ Sample ID = Donor UIN ONLY (as per your rule)
-        ["Sample ID", reportData.donorUin || "-", "Height", "-"],
+        ["Donor UIN", reportData.donorUin || "-", "Height", "-"],
 
         // ✅ Donor ID REMOVED COMPLETELY
         [
