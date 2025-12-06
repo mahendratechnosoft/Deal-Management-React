@@ -124,7 +124,7 @@ function EditFamily() {
       const pageHeight = doc.internal.pageSize.getHeight();
 
       // ************** ONE-PAGE SAFE MARGINS **************** //
-      const margin = 8;
+      const margin = 6;
       let y = margin;
 
       // Reduce font sizes globally
@@ -133,30 +133,32 @@ function EditFamily() {
       const SECTION_TITLE = 10;
       const NORMAL = 8;
 
-      const compactTableStyles = {
-        theme: "grid",
-        headStyles: {
-          fillColor: [245, 245, 245],
-          textColor: 0,
-          fontSize: 8,
-          fontStyle: "bold",
-          cellPadding: 1,
-          lineWidth: 0.1,
-        },
-        bodyStyles: {
-          textColor: 0,
-          fontSize: 8,
-          cellPadding: 1,
-          lineWidth: 0.1,
-        },
-        // 🔥 EQUAL COLUMN WIDTHS FOR ALL TABLES
-        columnStyles: {
-          0: { cellWidth: 45 },
-          1: { cellWidth: 45 },
-          2: { cellWidth: 45 },
-          3: { cellWidth: 45 },
-        }
-      };
+     const compactTableStyles = {
+  theme: "grid",
+  headStyles: {
+    fillColor: [245, 245, 245],
+    textColor: 0,
+    fontSize: 8,
+    fontStyle: "bold",
+    cellPadding: 1,
+    lineWidth: 0.1,
+  },
+  bodyStyles: {
+    textColor: 0,
+    fontSize: 8,
+    cellPadding: 1,
+    lineWidth: 0.1,
+  },
+  columnStyles: {
+  0: { cellWidth: 49 },
+  1: { cellWidth: 49 },
+  2: { cellWidth: 49 },
+  3: { cellWidth: 49 },
+},
+
+  // ✅ Let AutoTable auto-stretch full width
+  tableWidth: "auto",
+};
 
 
       // Prevent ANY page break from autoTable
@@ -269,17 +271,17 @@ const makeTable = (startY, title, rows) => {
       // =====================================================
       // DONOR INFORMATION
       // =====================================================
-      y = makeTable(y, "Donor Information", [
-        // Sample ID = donorUIN
-        ["Sample ID", reportData.donorUin || "-", "Height", "-"],
+y = makeTable(y, "Donor Information", [
+  // ✅ Sample ID = Donor UIN ONLY (as per your rule)
+  ["Sample ID", reportData.donorUin || "-", "Height", "-"],
 
-        // REMOVE Donor ID row COMPLETELY
+  // ✅ Donor ID REMOVED COMPLETELY
+  ["Blood Group", reportData.bloodGroup || "-", "Skin Tone", reportData.skinColor || "-"],
+  ["Eyes", reportData.eyeColor || "-", "Education", reportData.education || "-"],
+  ["Profession", reportData.profession || "-", "Religion", reportData.religion || "-"],
+  ["Vials Assigned", reportData.vialsAssignedCount || "0", "", ""],
+]);
 
-        ["Donor ID", reportData.donorId || "-", "Blood Group", reportData.bloodGroup || "-"],
-        ["Skin Tone", reportData.skinColor || "-", "Eyes", reportData.eyeColor || "-"],
-        ["Education", reportData.education || "-", "Profession", reportData.profession || "-"],
-        ["Religion", reportData.religion || "-", "Vials Assigned", reportData.vialsAssignedCount || "0"],
-      ]);
 
       // =====================================================
       // BLOOD REPORT
@@ -326,28 +328,53 @@ const makeTable = (startY, title, rows) => {
         ["Abnormality", reportData.abnormality || "-", "", ""],
       ]);
 
-      // =====================================================
-      // DECLARATION
-      // =====================================================
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(SECTION_TITLE);
-      doc.text("Declaration:", margin, y);
-      y += 3;
+   // =====================================================
+// DECLARATION (UPDATED AS PER YOUR TEXT)
+// =====================================================
+doc.setFont("helvetica", "bold");
+doc.setFontSize(SECTION_TITLE);
+doc.text("Declaration:", margin, y);
+y += 4;
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(NORMAL);
-      doc.text(
-        "The semen donor has been tested for HIV 1&2, HCV, HBsAg, VDRL & Thalassemia and found medically fit.",
-        margin,
-        y,
-        { maxWidth: pageWidth - margin * 2 }
-      );
-      y += 10;
+doc.setFont("helvetica", "normal");
+doc.setFontSize(NORMAL);
 
-      doc.setLineWidth(0.2);
-      doc.line(pageWidth - 60, y, pageWidth - margin, y);
-      doc.text("Signature & Stamp", pageWidth - 45, y + 4);
+const declarationText = `
+All above mentioned information is correct & true to our knowledge. 
+Aforementioned specifications help to screen the target D- sample. We understand that despite of the 
+above specifications, phenotypic & genotypic differences might occur & which is inevitable. We both 
+willfully agree & give consent to use donor semen sample for IUI.
+`;
 
+// Declaration Paragraph
+doc.text(declarationText.trim(), margin, y, {
+  maxWidth: pageWidth - margin * 2,
+});
+y += 18;
+
+// -------------------
+// Doctor Name, Signature, Date Layout
+// -------------------
+
+doc.setFont("helvetica", "bold");
+doc.text("Doctor's Name :", margin, y);
+// doc.line(margin + 30, y, margin + 90, y);
+
+y += 8;
+
+doc.text("Signature :", margin, y);
+// doc.line(margin + 30, y, margin + 90, y);
+
+y += 8;
+
+doc.text("Dated :", margin, y);
+// doc.line(margin + 30, y, margin + 90, y);
+
+
+
+
+
+      
       // =====================================================
       // SAVE PDF
       // =====================================================
