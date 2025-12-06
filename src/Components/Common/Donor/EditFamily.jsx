@@ -17,7 +17,7 @@ function EditFamily() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("family");
   const [errors, setErrors] = useState({});
-  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfLoadingId, setPdfLoadingId] = useState(null);
 
   // State for allocation data
   const [allocations, setAllocations] = useState([]);
@@ -105,10 +105,12 @@ function EditFamily() {
 
   // Fetch final report data and generate PDF
   const handleGenerateDonorReport = async (allocationId) => {
-    setPdfLoading(true);
+    setPdfLoadingId(allocationId);
 
     try {
-      const response = await axiosInstance.get(`getFinalReport/${allocationId}`);
+      const response = await axiosInstance.get(
+        `getFinalReport/${allocationId}`
+      );
       const reportData = response.data;
 
       const { jsPDF } = await import("jspdf");
@@ -133,33 +135,32 @@ function EditFamily() {
       const SECTION_TITLE = 10;
       const NORMAL = 8;
 
-     const compactTableStyles = {
-  theme: "grid",
-  headStyles: {
-    fillColor: [245, 245, 245],
-    textColor: 0,
-    fontSize: 8,
-    fontStyle: "bold",
-    cellPadding: 1,
-    lineWidth: 0.1,
-  },
-  bodyStyles: {
-    textColor: 0,
-    fontSize: 8,
-    cellPadding: 1,
-    lineWidth: 0.1,
-  },
-  columnStyles: {
-  0: { cellWidth: 49 },
-  1: { cellWidth: 49 },
-  2: { cellWidth: 49 },
-  3: { cellWidth: 49 },
-},
+      const compactTableStyles = {
+        theme: "grid",
+        headStyles: {
+          fillColor: [245, 245, 245],
+          textColor: 0,
+          fontSize: 8,
+          fontStyle: "bold",
+          cellPadding: 1,
+          lineWidth: 0.1,
+        },
+        bodyStyles: {
+          textColor: 0,
+          fontSize: 8,
+          cellPadding: 1,
+          lineWidth: 0.1,
+        },
+        columnStyles: {
+          0: { cellWidth: 49 },
+          1: { cellWidth: 49 },
+          2: { cellWidth: 49 },
+          3: { cellWidth: 49 },
+        },
 
-  // ✅ Let AutoTable auto-stretch full width
-  tableWidth: "auto",
-};
-
+        // ✅ Let AutoTable auto-stretch full width
+        tableWidth: "auto",
+      };
 
       // Prevent ANY page break from autoTable
       const noBreak = {
@@ -192,9 +193,14 @@ function EditFamily() {
       );
       y += 3;
 
-      doc.text("Phone: 9975035364 | Web: www.punespermbank.com", pageWidth / 2, y, {
-        align: "center",
-      });
+      doc.text(
+        "Phone: 9975035364 | Web: www.punespermbank.com",
+        pageWidth / 2,
+        y,
+        {
+          align: "center",
+        }
+      );
       y += 4;
 
       doc.setDrawColor(0);
@@ -215,33 +221,29 @@ function EditFamily() {
       // =====================================================
       // UNIVERSAL FUNC – Four Column Tables (Improved Spacing)
       // =====================================================
-const makeTable = (startY, title, rows) => {
+      const makeTable = (startY, title, rows) => {
+        // Add top space ALWAYS
+        startY += 4;
 
-  // Add top space ALWAYS
-  startY += 4;
+        // Title
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(SECTION_TITLE);
+        doc.text(title, margin, startY);
 
-  // Title
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(SECTION_TITLE);
-  doc.text(title, margin, startY);
+        // Add clean spacing below title
+        startY += 6;
 
-  // Add clean spacing below title
-  startY += 6;
+        autoTable(doc, {
+          startY,
+          head: [["Parameter", "Value", "Parameter", "Value"]],
+          body: rows,
+          margin: { left: margin, right: margin },
+          ...compactTableStyles,
+          ...noBreak,
+        });
 
-  autoTable(doc, {
-    startY,
-    head: [["Parameter", "Value", "Parameter", "Value"]],
-    body: rows,
-    margin: { left: margin, right: margin },
-    ...compactTableStyles,
-    ...noBreak,
-  });
-
-  return doc.lastAutoTable.finalY + 4;
-};
-
-
-
+        return doc.lastAutoTable.finalY + 4;
+      };
 
       // =====================================================
       // SECTION — HOSPITAL & FAMILY INFO
@@ -256,8 +258,18 @@ const makeTable = (startY, title, rows) => {
         startY: y,
         head: [],
         body: [
-          ["Refer Hospital", reportData.referHospitalAddress || "-", "Refer Doctor", reportData.referDoctor || "-"],
-          ["Husband Name", reportData.husbandName || "-", "Wife Name", reportData.wifeName || "-"],
+          [
+            "Refer Hospital",
+            reportData.referHospitalAddress || "-",
+            "Refer Doctor",
+            reportData.referDoctor || "-",
+          ],
+          [
+            "Husband Name",
+            reportData.husbandName || "-",
+            "Wife Name",
+            reportData.wifeName || "-",
+          ],
           ["Family UIN", reportData.familyUin || "-", "", ""], // Remove Donor UIN
         ],
         margin: { left: margin, right: margin },
@@ -267,30 +279,58 @@ const makeTable = (startY, title, rows) => {
 
       y = doc.lastAutoTable.finalY + 3;
 
-
       // =====================================================
       // DONOR INFORMATION
       // =====================================================
-y = makeTable(y, "Donor Information", [
-  // ✅ Sample ID = Donor UIN ONLY (as per your rule)
-  ["Sample ID", reportData.donorUin || "-", "Height", "-"],
+      y = makeTable(y, "Donor Information", [
+        // ✅ Sample ID = Donor UIN ONLY (as per your rule)
+        ["Sample ID", reportData.donorUin || "-", "Height", "-"],
 
-  // ✅ Donor ID REMOVED COMPLETELY
-  ["Blood Group", reportData.bloodGroup || "-", "Skin Tone", reportData.skinColor || "-"],
-  ["Eyes", reportData.eyeColor || "-", "Education", reportData.education || "-"],
-  ["Profession", reportData.profession || "-", "Religion", reportData.religion || "-"],
-  ["Vials Assigned", reportData.vialsAssignedCount || "0", "", ""],
-]);
-
+        // ✅ Donor ID REMOVED COMPLETELY
+        [
+          "Blood Group",
+          reportData.bloodGroup || "-",
+          "Skin Tone",
+          reportData.skinColor || "-",
+        ],
+        [
+          "Eyes",
+          reportData.eyeColor || "-",
+          "Education",
+          reportData.education || "-",
+        ],
+        [
+          "Profession",
+          reportData.profession || "-",
+          "Religion",
+          reportData.religion || "-",
+        ],
+        ["Vials Assigned", reportData.vialsAssignedCount || "0", "", ""],
+      ]);
 
       // =====================================================
       // BLOOD REPORT
       // =====================================================
       y = makeTable(y, "Blood Report", [
-        ["Blood Group", reportData.bloodGroup || "-", "HIV I & II", reportData.hiv || "-"],
+        [
+          "Blood Group",
+          reportData.bloodGroup || "-",
+          "HIV I & II",
+          reportData.hiv || "-",
+        ],
         ["HBsAg", reportData.hbsag || "-", "VDRL", reportData.vdrl || "-"],
-        ["HCV", reportData.hcv || "-", "HB Electrophoresis", reportData.hbelectrophoresis || "-"],
-        ["BSL", reportData.bsl || "-", "Serum Creatinine", reportData.srcreatinine || "-"],
+        [
+          "HCV",
+          reportData.hcv || "-",
+          "HB Electrophoresis",
+          reportData.hbelectrophoresis || "-",
+        ],
+        [
+          "BSL",
+          reportData.bsl || "-",
+          "Serum Creatinine",
+          reportData.srcreatinine || "-",
+        ],
         ["CMV", reportData.cmv || "-", "", ""],
       ]);
 
@@ -301,80 +341,91 @@ y = makeTable(y, "Donor Information", [
         [
           "Date",
           reportData.semenReportDateAndTime
-            ? new Date(reportData.semenReportDateAndTime).toLocaleDateString("en-GB")
+            ? new Date(reportData.semenReportDateAndTime).toLocaleDateString(
+                "en-GB"
+              )
             : "-",
           "Time",
           reportData.semenReportDateAndTime
-            ? new Date(reportData.semenReportDateAndTime).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
+            ? new Date(reportData.semenReportDateAndTime).toLocaleTimeString(
+                [],
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }
+              )
             : "-",
         ],
-        ["Media", reportData.media || "-", "Volume", reportData.volumne ? `${reportData.volumne} ml` : "-"],
+        [
+          "Media",
+          reportData.media || "-",
+          "Volume",
+          reportData.volumne ? `${reportData.volumne} ml` : "-",
+        ],
         ["Report", "-", "Concentration", reportData.spermConcentration || "-"],
         [
           "Motility A",
-          reportData.progressiveMotilityA ? `${reportData.progressiveMotilityA}%` : "-",
+          reportData.progressiveMotilityA
+            ? `${reportData.progressiveMotilityA}%`
+            : "-",
           "Motility B",
-          reportData.progressiveMotilityB ? `${reportData.progressiveMotilityB}%` : "-",
+          reportData.progressiveMotilityB
+            ? `${reportData.progressiveMotilityB}%`
+            : "-",
         ],
         [
           "Motility C",
-          reportData.progressiveMotilityC ? `${reportData.progressiveMotilityC}%` : "-",
+          reportData.progressiveMotilityC
+            ? `${reportData.progressiveMotilityC}%`
+            : "-",
           "Morphology",
           reportData.morphology || "-",
         ],
         ["Abnormality", reportData.abnormality || "-", "", ""],
       ]);
 
-   // =====================================================
-// DECLARATION (UPDATED AS PER YOUR TEXT)
-// =====================================================
-doc.setFont("helvetica", "bold");
-doc.setFontSize(SECTION_TITLE);
-doc.text("Declaration:", margin, y);
-y += 4;
+      // =====================================================
+      // DECLARATION (UPDATED AS PER YOUR TEXT)
+      // =====================================================
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(SECTION_TITLE);
+      doc.text("Declaration:", margin, y);
+      y += 4;
 
-doc.setFont("helvetica", "normal");
-doc.setFontSize(NORMAL);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(NORMAL);
 
-const declarationText = `
+      const declarationText = `
 All above mentioned information is correct & true to our knowledge. 
 Aforementioned specifications help to screen the target D- sample. We understand that despite of the 
 above specifications, phenotypic & genotypic differences might occur & which is inevitable. We both 
 willfully agree & give consent to use donor semen sample for IUI.
 `;
 
-// Declaration Paragraph
-doc.text(declarationText.trim(), margin, y, {
-  maxWidth: pageWidth - margin * 2,
-});
-y += 18;
+      // Declaration Paragraph
+      doc.text(declarationText.trim(), margin, y, {
+        maxWidth: pageWidth - margin * 2,
+      });
+      y += 18;
 
-// -------------------
-// Doctor Name, Signature, Date Layout
-// -------------------
+      // -------------------
+      // Doctor Name, Signature, Date Layout
+      // -------------------
 
-doc.setFont("helvetica", "bold");
-doc.text("Doctor's Name :", margin, y);
-// doc.line(margin + 30, y, margin + 90, y);
+      doc.setFont("helvetica", "bold");
+      doc.text("Doctor's Name :", margin, y);
+      // doc.line(margin + 30, y, margin + 90, y);
 
-y += 8;
+      y += 8;
 
-doc.text("Signature :", margin, y);
-// doc.line(margin + 30, y, margin + 90, y);
+      doc.text("Signature :", margin, y);
+      // doc.line(margin + 30, y, margin + 90, y);
 
-y += 8;
+      y += 8;
 
-doc.text("Dated :", margin, y);
-// doc.line(margin + 30, y, margin + 90, y);
+      doc.text("Dated :", margin, y);
+      // doc.line(margin + 30, y, margin + 90, y);
 
-
-
-
-
-      
       // =====================================================
       // SAVE PDF
       // =====================================================
@@ -387,11 +438,9 @@ doc.text("Dated :", margin, y);
       console.error("PDF generation failed:", err);
       toast.error("Failed to generate PDF report");
     } finally {
-      setPdfLoading(false);
+      setPdfLoadingId(null);
     }
   };
-
-
 
   // Handlers (same as before)
   const handleChange = (e) => {
@@ -439,13 +488,21 @@ doc.text("Dated :", margin, y);
       }
     };
 
-    if (familyInfo.husbandGenticIllness && familyInfo.husbandGenticIllness.length > 500) {
-      tempErrors.husbandGenticIllness = "Genetic illness cannot exceed 500 characters";
+    if (
+      familyInfo.husbandGenticIllness &&
+      familyInfo.husbandGenticIllness.length > 500
+    ) {
+      tempErrors.husbandGenticIllness =
+        "Genetic illness cannot exceed 500 characters";
       isValid = false;
     }
 
-    if (familyInfo.wifeGenticIllness && familyInfo.wifeGenticIllness.length > 500) {
-      tempErrors.wifeGenticIllness = "Genetic illness cannot exceed 500 characters";
+    if (
+      familyInfo.wifeGenticIllness &&
+      familyInfo.wifeGenticIllness.length > 500
+    ) {
+      tempErrors.wifeGenticIllness =
+        "Genetic illness cannot exceed 500 characters";
       isValid = false;
     }
 
@@ -516,10 +573,10 @@ doc.text("Dated :", margin, y);
   const formatDate = (dateString) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
   };
 
@@ -670,7 +727,13 @@ doc.text("Dated :", margin, y);
               error={errors.husbandGenticIllness}
             />
             <div className="text-right mt-1">
-              <span className={`text-xs ${familyInfo.husbandGenticIllness.length > 500 ? 'text-red-500' : 'text-gray-500'}`}>
+              <span
+                className={`text-xs ${
+                  familyInfo.husbandGenticIllness.length > 500
+                    ? "text-red-500"
+                    : "text-gray-500"
+                }`}
+              >
                 {familyInfo.husbandGenticIllness.length}/500 characters
               </span>
             </div>
@@ -775,7 +838,13 @@ doc.text("Dated :", margin, y);
               error={errors.wifeGenticIllness}
             />
             <div className="text-right mt-1">
-              <span className={`text-xs ${familyInfo.wifeGenticIllness.length > 500 ? 'text-red-500' : 'text-gray-500'}`}>
+              <span
+                className={`text-xs ${
+                  familyInfo.wifeGenticIllness.length > 500
+                    ? "text-red-500"
+                    : "text-gray-500"
+                }`}
+              >
                 {familyInfo.wifeGenticIllness.length}/500 characters
               </span>
             </div>
@@ -788,7 +857,9 @@ doc.text("Dated :", margin, y);
   const renderDonorList = () => (
     <div className="bg-white rounded-lg">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Allocated Donors</h3>
+        <h3 className="text-lg font-semibold text-gray-900">
+          Allocated Donors
+        </h3>
         <button
           type="button"
           className="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-medium"
@@ -831,52 +902,69 @@ doc.text("Dated :", margin, y);
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {allocations.map((allocation) => (
-                <tr key={allocation.allocationId} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => handleGenerateDonorReport(allocation.allocationId)}
-                      disabled={pdfLoading}
-                      className="px-3 py-1 text-xs bg-green-100 text-green-700 hover:bg-green-200 rounded font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {pdfLoading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-700"></div>
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          Generate PDF
-                        </>
-                      )}
-                    </button>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {allocation.donarUin || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {allocation.donarName || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                      {allocation.vialsAssignedCount}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(allocation.allocationDate)}
-                  </td>
-                </tr>
-              ))}
+              {allocations.map((allocation) => {
+                const isGenerating = pdfLoadingId === allocation.allocationId;
+                return (
+                  <tr
+                    key={allocation.allocationId}
+                    className="hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() =>
+                          handleGenerateDonorReport(allocation.allocationId)
+                        }
+                        disabled={isGenerating}
+                        className="px-3 py-1 text-xs bg-green-100 text-green-700 hover:bg-green-200 rounded font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isGenerating ? (
+                          <>
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-700"></div>
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              />
+                            </svg>
+                            Generate PDF
+                          </>
+                        )}
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {allocation.donarUin || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {allocation.donarName || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        {allocation.vialsAssignedCount}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(allocation.allocationDate)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
     </div>
   );
-
 
   const renderTabContent = () => {
     if (loading && !familyInfo.familyInfoId)
@@ -958,10 +1046,11 @@ doc.text("Dated :", margin, y);
                       <button
                         type="button"
                         onClick={() => setActiveTab(tab.id)}
-                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${activeTab === tab.id
-                          ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
-                          : "hover:text-gray-700 hover:bg-gray-50"
-                          }`}
+                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${
+                          activeTab === tab.id
+                            ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
+                            : "hover:text-gray-700 hover:bg-gray-50"
+                        }`}
                       >
                         {tab.label}
                       </button>
@@ -976,9 +1065,6 @@ doc.text("Dated :", margin, y);
           </div>
         </div>
       </div>
-
-
-
     </LayoutComponent>
   );
 }
