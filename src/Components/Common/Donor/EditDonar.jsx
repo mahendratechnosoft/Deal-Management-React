@@ -1661,7 +1661,7 @@ function EditDonar() {
               name="attachment"
               fileName={report.attachmentFileName || ""}
               onChange={(e) => handleAttachmentUpload(e, index, "blood")}
-              onRemove={() => handleRemoveAttachment(index)}
+              onRemove={() => handleRemoveAttachment(index, "blood")}
               onDownload={() =>
                 downloadFile(
                   report.attachmentFile,
