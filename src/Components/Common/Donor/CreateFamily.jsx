@@ -345,7 +345,7 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
                   error={errors.husbandMobile}
                 />
                 <FormInput
-                  label="Height"
+                  label="Height(cm)"
                   name="husbandHeight"
                   value={formData.husbandHeight}
                   onChange={handleChange}
@@ -355,7 +355,7 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
                 />
 
                 <FormInput
-                  label="Weight"
+                  label="Weight(kg)"
                   name="husbandWeight"
                   value={formData.husbandWeight}
                   onChange={handleChange}

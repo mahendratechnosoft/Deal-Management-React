@@ -125,64 +125,104 @@ function EditFamily() {
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
 
-      // ************** ONE-PAGE SAFE MARGINS **************** //
-      const margin = 6;
-      let y = margin;
+      // ************** PROFESSIONAL MARGINS **************** //
+      const margin = {
+        left: 15,
+        right: 15,
+        top: 12,
+        bottom: 12
+      };
 
-      // Reduce font sizes globally
-      const HEADER_SIZE = 14;
-      const SUBHEADER_SIZE = 10;
+      let y = margin.top;
+
+      // Font sizes for professional look
+      const HEADER_SIZE = 12;
+      const SUBHEADER_SIZE = 9;
       const SECTION_TITLE = 10;
-      const NORMAL = 8;
+      const NORMAL = 8.5;
+      const TABLE_FONT = 8;
 
-      const compactTableStyles = {
+      // =====================================================
+      // PROFESSIONAL TABLE STYLES FOR 4-COLUMN LAYOUT WITH HEADERS
+      // =====================================================
+      const fourColumnTableStyles = {
         theme: "grid",
         headStyles: {
-          fillColor: [245, 245, 245],
-          textColor: 0,
-          fontSize: 8,
+          fillColor: [230, 230, 230], // ✅ Faint light grey background
+          textColor: [0, 0, 0],    // ✅ Dark grey text (not pure black)
+          fontSize: TABLE_FONT,
           fontStyle: "bold",
-          cellPadding: 1,
+          cellPadding: { top: 2.5, right: 3, bottom: 2.5, left: 3 },
           lineWidth: 0.1,
+          lineColor: [0, 0, 0],
+          minCellHeight: 7,
+          halign: "center",
+          valign: "middle",
         },
+
         bodyStyles: {
           textColor: 0,
-          fontSize: 8,
-          cellPadding: 1,
+          fontSize: TABLE_FONT,
+          fontStyle: "normal",
+          cellPadding: { top: 2, right: 3, bottom: 2, left: 3 },
           lineWidth: 0.1,
+          lineColor: [0, 0, 0],
+          minCellHeight: 6,
+          halign: 'left',
+          valign: 'middle',
+        },
+   
+        styles: {
+          lineWidth: 0.1,
+          lineColor: [0, 0, 0],
+          cellPadding: { top: 2, right: 3, bottom: 2, left: 3 },
+          fontSize: TABLE_FONT,
+          font: 'helvetica', // Explicit font set
         },
         columnStyles: {
-          0: { cellWidth: 49 },
-          1: { cellWidth: 49 },
-          2: { cellWidth: 49 },
-          3: { cellWidth: 49 },
+          0: {
+            cellWidth: (pageWidth - margin.left - margin.right) / 4,
+            fontStyle: "bold"
+          },
+          1: {
+            cellWidth: (pageWidth - margin.left - margin.right) / 4,
+            fontStyle: "normal"
+          },
+          2: {
+            cellWidth: (pageWidth - margin.left - margin.right) / 4,
+            fontStyle: "bold"
+          },
+          3: {
+            cellWidth: (pageWidth - margin.left - margin.right) / 4,
+            fontStyle: "normal"
+          },
         },
-
-        // ✅ Let AutoTable auto-stretch full width
-        tableWidth: "auto",
-      };
-
-      // Prevent ANY page break from autoTable
-      const noBreak = {
-        pageBreak: "avoid",
-        rowPageBreak: "avoid",
-        avoidHeight: 2000,
+        margin: {
+          left: margin.left,
+          right: margin.right,
+          top: 2,
+          bottom: 2
+        },
+        tableWidth: pageWidth - margin.left - margin.right,
       };
 
       // =====================================================
-      // HEADER (COMPACT)
+      // HEADER SECTION
       // =====================================================
+      // Main Title - PUNE SPERM BANK
       doc.setFont("helvetica", "bold");
       doc.setFontSize(HEADER_SIZE);
       doc.text("PUNE SPERM BANK", pageWidth / 2, y, { align: "center" });
       y += 5;
 
+      // Subtitle - ASHWINI HOSPITAL - ART BANK
       doc.setFontSize(SUBHEADER_SIZE);
       doc.text("ASHWINI HOSPITAL - ART BANK", pageWidth / 2, y, {
         align: "center",
       });
       y += 4;
 
+      // Address
       doc.setFontSize(NORMAL);
       doc.setFont("helvetica", "normal");
       doc.text(
@@ -193,6 +233,7 @@ function EditFamily() {
       );
       y += 3;
 
+      // Contact Info
       doc.text(
         "Phone: 9975035364 | Web: www.punespermbank.com",
         pageWidth / 2,
@@ -201,63 +242,67 @@ function EditFamily() {
           align: "center",
         }
       );
-      y += 4;
+      y += 5;
 
-      doc.setDrawColor(0);
-      doc.setLineWidth(0.3);
-      doc.line(margin, y, pageWidth - margin, y);
-      y += 4;
+      // Horizontal line
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.2);
+      doc.line(margin.left, y, pageWidth - margin.right, y);
+      y += 6;
 
       // =====================================================
-      // MAIN TITLE
+      // MAIN REPORT TITLE
       // =====================================================
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(SECTION_TITLE + 1);
+      doc.setFontSize(SECTION_TITLE);
       doc.text("FROZEN DONOR SEMEN REPORT", pageWidth / 2, y, {
         align: "center",
       });
-      y += 5;
+      y += 8;
 
       // =====================================================
-      // UNIVERSAL FUNC – Four Column Tables (Improved Spacing)
+      // HELPER FUNCTION FOR SECTION TABLES WITH HEADERS
       // =====================================================
-      const makeTable = (startY, title, rows) => {
-        // Add top space ALWAYS
-        startY += 4;
+      const createFourColumnTableWithHeader = (startY, title, headerRows, bodyRows) => {
+        let currentY = startY;
 
-        // Title
+        // Section title
         doc.setFont("helvetica", "bold");
         doc.setFontSize(SECTION_TITLE);
-        doc.text(title, margin, startY);
+        doc.text(title, margin.left, currentY);
+        currentY += 2;
 
-        // Add clean spacing below title
-        startY += 6;
-
+        // Create table with headers
         autoTable(doc, {
-          startY,
-          head: [["Parameter", "Value", "Parameter", "Value"]],
-          body: rows,
-          margin: { left: margin, right: margin },
-          ...compactTableStyles,
-          ...noBreak,
+          startY: currentY,
+          head: headerRows,
+          body: bodyRows,
+          ...fourColumnTableStyles,
+          pageBreak: 'avoid',
+          rowPageBreak: 'avoid',
+          didDrawCell: (data) => {
+            // Optional: Add subtle styling for header cells
+            if (data.section === 'head') {
+              // Add subtle text shadow effect for better readability
+              doc.setTextColor(255, 255, 255);
+              doc.setFont("helvetica", "bold");
+            }
+          },
         });
 
-        return doc.lastAutoTable.finalY + 4;
+        return doc.lastAutoTable.finalY + 6;
       };
 
       // =====================================================
-      // SECTION — HOSPITAL & FAMILY INFO
+      // HOSPITAL & FAMILY INFORMATION
       // =====================================================
-      // SECTION — HOSPITAL & FAMILY INFO
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(SECTION_TITLE);
-      doc.text("Hospital & Family Information", margin, y);
-      y += 6;
-
-      autoTable(doc, {
-        startY: y,
-        head: [],
-        body: [
+      y = createFourColumnTableWithHeader(
+        y,
+        "Hospital & Family Information",
+        [
+          ["Parameter", "Value", "Parameter", "Value"]
+        ],
+        [
           [
             "Refer Hospital",
             reportData.referHospitalAddress || "-",
@@ -270,161 +315,169 @@ function EditFamily() {
             "Wife Name",
             reportData.wifeName || "-",
           ],
-          ["Family UIN", reportData.familyUin || "-", "", ""], // Remove Donor UIN
-        ],
-        margin: { left: margin, right: margin },
-        ...compactTableStyles,
-        ...noBreak,
-      });
-
-      y = doc.lastAutoTable.finalY + 3;
+          ["Family UIN", reportData.familyUin || "-", "", ""],
+        ]
+      );
 
       // =====================================================
       // DONOR INFORMATION
       // =====================================================
-      y = makeTable(y, "Donor Information", [
-        // ✅ Sample ID = Donor UIN ONLY (as per your rule)
-        ["Donor UIN", reportData.donorUin || "-", "Height", "-"],
-
-        // ✅ Donor ID REMOVED COMPLETELY
+      y = createFourColumnTableWithHeader(
+        y,
+        "Donor Information",
         [
-          "Blood Group",
-          reportData.bloodGroup || "-",
-          "Skin Tone",
-          reportData.skinColor || "-",
+          ["Parameter", "Value", "Parameter", "Value"]
         ],
         [
-          "Eyes",
-          reportData.eyeColor || "-",
-          "Education",
-          reportData.education || "-",
-        ],
-        [
-          "Profession",
-          reportData.profession || "-",
-          "Religion",
-          reportData.religion || "-",
-        ],
-        ["Vials Assigned", reportData.vialsAssignedCount || "0", "", ""],
-      ]);
+          ["Donor UIN", reportData.donorUin || "-", "Height", "-"],
+          [
+            "Blood Group",
+            reportData.bloodGroup || "-",
+            "Skin Tone",
+            reportData.skinColor || "-",
+          ],
+          [
+            "Eyes",
+            reportData.eyeColor || "-",
+            "Education",
+            reportData.education || "-",
+          ],
+          [
+            "Profession",
+            reportData.profession || "-",
+            "Religion",
+            reportData.religion || "-",
+          ],
+          ["Vials Assigned", reportData.vialsAssignedCount || "0", "", ""],
+        ]
+      );
 
       // =====================================================
       // BLOOD REPORT
       // =====================================================
-      y = makeTable(y, "Blood Report", [
+      y = createFourColumnTableWithHeader(
+        y,
+        "Blood Report",
         [
-          "Blood Group",
-          reportData.bloodGroup || "-",
-          "HIV I & II",
-          reportData.hiv || "-",
-        ],
-        ["HBsAg", reportData.hbsag || "-", "VDRL", reportData.vdrl || "-"],
-        [
-          "HCV",
-          reportData.hcv || "-",
-          "HB Electrophoresis",
-          reportData.hbelectrophoresis || "-",
+          ["Parameter", "Value", "Parameter", "Value"]
         ],
         [
-          "BSL",
-          reportData.bsl || "-",
-          "Serum Creatinine",
-          reportData.srcreatinine || "-",
-        ],
-        ["CMV", reportData.cmv || "-", "", ""],
-      ]);
+          [
+            "Blood Group",
+            reportData.bloodGroup || "-",
+            "HIV I & II",
+            reportData.hiv || "-",
+          ],
+          ["HBsAg", reportData.hbsag || "-", "VDRL", reportData.vdrl || "-"],
+          [
+            "HCV",
+            reportData.hcv || "-",
+            "HB Electrophoresis",
+            reportData.hbelectrophoresis || "-",
+          ],
+          [
+            "BSL",
+            reportData.bsl || "-",
+            "Serum Creatinine",
+            reportData.srcreatinine || "-",
+          ],
+          ["CMV", reportData.cmv || "-", "", ""],
+        ]
+      );
 
       // =====================================================
       // SEMEN REPORT
       // =====================================================
-      y = makeTable(y, "Semen Report", [
+      y = createFourColumnTableWithHeader(
+        y,
+        "Semen Report",
         [
-          "Date",
-          reportData.semenReportDateAndTime
-            ? new Date(reportData.semenReportDateAndTime).toLocaleDateString(
-                "en-GB"
-              )
-            : "-",
-          "Time",
-          reportData.semenReportDateAndTime
-            ? new Date(reportData.semenReportDateAndTime).toLocaleTimeString(
-                [],
-                {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }
-              )
-            : "-",
+          ["Parameter", "Value", "Parameter", "Value"]
         ],
         [
-          "Media",
-          reportData.media || "-",
-          "Volume",
-          reportData.volumne ? `${reportData.volumne} ml` : "-",
-        ],
-        ["Report", "-", "Concentration", reportData.spermConcentration || "-"],
-        [
-          "Motility A",
-          reportData.progressiveMotilityA
-            ? `${reportData.progressiveMotilityA}%`
-            : "-",
-          "Motility B",
-          reportData.progressiveMotilityB
-            ? `${reportData.progressiveMotilityB}%`
-            : "-",
-        ],
-        [
-          "Motility C",
-          reportData.progressiveMotilityC
-            ? `${reportData.progressiveMotilityC}%`
-            : "-",
-          "Morphology",
-          reportData.morphology || "-",
-        ],
-        ["Abnormality", reportData.abnormality || "-", "", ""],
-      ]);
+          [
+            "Date",
+            reportData.semenReportDateAndTime
+              ? new Date(reportData.semenReportDateAndTime).toLocaleDateString("en-GB")
+              : "-",
+            "Time",
+            reportData.semenReportDateAndTime
+              ? new Date(reportData.semenReportDateAndTime).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+              : "-",
+          ],
+          [
+            "Media",
+            reportData.media || "-",
+            "Volume",
+            reportData.volumne ? `${reportData.volumne} ml` : "-",
+          ],
+          ["Report", "-", "Concentration", reportData.spermConcentration || "-"],
+          [
+            "Motility A",
+            reportData.progressiveMotilityA
+              ? `${reportData.progressiveMotilityA}%`
+              : "-",
+            "Motility B",
+            reportData.progressiveMotilityB
+              ? `${reportData.progressiveMotilityB}%`
+              : "-",
+          ],
+          [
+            "Motility C",
+            reportData.progressiveMotilityC
+              ? `${reportData.progressiveMotilityC}%`
+              : "-",
+            "Morphology",
+            reportData.morphology || "-",
+          ],
+          ["Abnormality", reportData.abnormality || "-", "", ""],
+        ]
+      );
 
       // =====================================================
-      // DECLARATION (UPDATED AS PER YOUR TEXT)
+      // DECLARATION SECTION
       // =====================================================
+      y += 4;
+
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(SECTION_TITLE);
-      doc.text("Declaration:", margin, y);
+      doc.setFontSize(SECTION_TITLE - 1);
+      doc.text("Declaration:", margin.left, y);
       y += 4;
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(NORMAL);
 
-      const declarationText = `
-All above mentioned information is correct & true to our knowledge. 
-Aforementioned specifications help to screen the target D- sample. We understand that despite of the 
-above specifications, phenotypic & genotypic differences might occur & which is inevitable. We both 
-willfully agree & give consent to use donor semen sample for IUI.
-`;
+      const declarationLines = [
+        "All above mentioned information is correct & true to our knowledge.",
+        "Aforementioned specifications help to screen the target D- sample. We understand that despite of the",
+        "above specifications, phenotypic & genotypic differences might occur & which is inevitable. We both",
+        "willfully agree & give consent to use donor semen sample for IUI."
+      ];
 
-      // Declaration Paragraph
-      doc.text(declarationText.trim(), margin, y, {
-        maxWidth: pageWidth - margin * 2,
+      declarationLines.forEach((line, index) => {
+        doc.text(line, margin.left, y);
+        y += 3.5;
       });
-      y += 18;
 
-      // -------------------
-      // Doctor Name, Signature, Date Layout
-      // -------------------
+      y += 6;
 
+      // =====================================================
+      // SIGNATURE SECTION
+      // =====================================================
+      const signatureY = y;
+
+      // Doctor's Name
       doc.setFont("helvetica", "bold");
-      doc.text("Doctor's Name :", margin, y);
-      // doc.line(margin + 30, y, margin + 90, y);
+      doc.text("Doctor's Name :", margin.left, signatureY);
 
-      y += 8;
+      // Signature
+      doc.text("Signature :", margin.left, signatureY + 8);
 
-      doc.text("Signature :", margin, y);
-      // doc.line(margin + 30, y, margin + 90, y);
-
-      y += 8;
-
-      doc.text("Dated :", margin, y);
-      // doc.line(margin + 30, y, margin + 90, y);
+      // Date
+      doc.text("Dated :", margin.left, signatureY + 16);
 
       // =====================================================
       // SAVE PDF
@@ -441,6 +494,7 @@ willfully agree & give consent to use donor semen sample for IUI.
       setPdfLoadingId(null);
     }
   };
+
 
   // Handlers (same as before)
   const handleChange = (e) => {
@@ -728,11 +782,10 @@ willfully agree & give consent to use donor semen sample for IUI.
             />
             <div className="text-right mt-1">
               <span
-                className={`text-xs ${
-                  familyInfo.husbandGenticIllness.length > 500
-                    ? "text-red-500"
-                    : "text-gray-500"
-                }`}
+                className={`text-xs ${familyInfo.husbandGenticIllness.length > 500
+                  ? "text-red-500"
+                  : "text-gray-500"
+                  }`}
               >
                 {familyInfo.husbandGenticIllness.length}/500 characters
               </span>
@@ -761,13 +814,13 @@ willfully agree & give consent to use donor semen sample for IUI.
             error={errors.wifeMobile}
           />
           <FormInput
-            label="Height"
+            label="Height(cm)"
             name="wifeHeight"
             value={familyInfo.wifeHeight}
             onChange={handleChange}
           />
           <FormInput
-            label="Weight"
+            label="Weight(kg)"
             name="wifeWeight"
             value={familyInfo.wifeWeight}
             onChange={handleChange}
@@ -839,11 +892,10 @@ willfully agree & give consent to use donor semen sample for IUI.
             />
             <div className="text-right mt-1">
               <span
-                className={`text-xs ${
-                  familyInfo.wifeGenticIllness.length > 500
-                    ? "text-red-500"
-                    : "text-gray-500"
-                }`}
+                className={`text-xs ${familyInfo.wifeGenticIllness.length > 500
+                  ? "text-red-500"
+                  : "text-gray-500"
+                  }`}
               >
                 {familyInfo.wifeGenticIllness.length}/500 characters
               </span>
@@ -1046,11 +1098,10 @@ willfully agree & give consent to use donor semen sample for IUI.
                       <button
                         type="button"
                         onClick={() => setActiveTab(tab.id)}
-                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${
-                          activeTab === tab.id
-                            ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
-                            : "hover:text-gray-700 hover:bg-gray-50"
-                        }`}
+                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${activeTab === tab.id
+                          ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
+                          : "hover:text-gray-700 hover:bg-gray-50"
+                          }`}
                       >
                         {tab.label}
                       </button>
