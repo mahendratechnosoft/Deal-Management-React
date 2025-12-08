@@ -504,6 +504,189 @@ function TimeSheetList() {
     }
 
 
+    // Add this near your other format functions
+    function formatDateForExport(dateStr) {
+        if (!dateStr) return '';
+        const [year, month, day] = dateStr.split('-');
+        return `${day}-${month}-${year}`;
+    }
+
+
+    const handleExport = async () => {
+        try {
+            // Show loading
+            toast.loading("Generating Excel file...");
+
+            // Get the current date range based on view type
+            let fromDate, toDate;
+            const monthNames = [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ];
+            const currentMonth = currentDate.getMonth();
+            const monthName = monthNames[currentMonth];
+
+            // Set date range based on view type
+            switch (viewType) {
+                case "daily":
+                    // For daily view, use the current day
+                    fromDate = currentDate;
+                    toDate = currentDate;
+                    break;
+
+                case "weekly":
+                    // For weekly view, get Monday to Sunday of current week
+                    const day = currentDate.getDay();
+                    const monday = addDays(currentDate, day === 0 ? -6 : 1 - day);
+                    const sunday = addDays(monday, 6);
+                    fromDate = monday;
+                    toDate = sunday;
+                    break;
+
+                case "monthly":
+                default:
+                    // For monthly view, get first to last day of current month
+                    const currentYear = currentDate.getFullYear();
+                    fromDate = new Date(currentYear, currentMonth, 1);
+                    toDate = new Date(currentYear, currentMonth + 1, 0);
+                    break;
+            }
+
+            // Format dates for API (DD-MM-YYYY)
+            const formatDateForAPI = (date) => {
+                const day = String(date.getDate()).padStart(2, "0");
+                const month = String(date.getMonth() + 1).padStart(2, "0");
+                const year = date.getFullYear();
+                return `${day}-${month}-${year}`;
+            };
+
+            // Build query parameters
+            const params = new URLSearchParams({
+                attendanceType: viewType === "daily" ? "daily" : viewType === "weekly" ? "weekly" : "daily",
+                fromDate: formatDateForAPI(fromDate),
+                toDate: formatDateForAPI(toDate),
+                monthName: monthName
+            });
+
+            // Add employee filter if selected
+            if (selectedEmployee.value !== "all") {
+                params.append('employeeId', selectedEmployee.value);
+            }
+
+            // Make the API call
+            const response = await axiosInstance.get(`getAttendanceExcelExport?${params.toString()}`, {
+                responseType: 'blob'
+            });
+
+            // Hide loading toast
+            toast.dismiss();
+
+            // Create a blob from the response data
+            const blob = new Blob([response.data], {
+                type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+
+            // Create a download link
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+
+            // Generate filename based on view type
+            let filename = '';
+            const dateRangeStr = formatDateForAPI(fromDate);
+
+            switch (viewType) {
+                case "daily":
+                    const dayName = fromDate.toLocaleDateString('en-US', { weekday: 'short' });
+                    filename = `attendance_${dayName}_${dateRangeStr}`;
+                    break;
+
+                case "weekly":
+                    const weekStart = formatDateForAPI(fromDate);
+                    const weekEnd = formatDateForAPI(toDate);
+                    filename = `attendance_week_${weekStart}_to_${weekEnd}`;
+                    break;
+
+                case "monthly":
+                default:
+                    filename = `attendance_${monthName}_${fromDate.getFullYear()}`;
+                    break;
+            }
+
+            // Add employee name if filtered
+            // if (selectedEmployee.value !== "all") {
+            //     const selectedEmp = employeeOptions.find(emp => emp.value === selectedEmployee.value);
+            //     if (selectedEmp) {
+            //         filename = `${selectedEmp.label}_${filename}`;
+            //     }
+            // }
+
+            // Set download attributes
+            link.href = url;
+            link.download = `${filename}.xlsx`;
+
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+
+            // Cleanup
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            // Show success message with view type
+            let successMessage = "";
+            switch (viewType) {
+                case "daily":
+                    const dayStr = fromDate.toLocaleDateString('en-IN', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                    successMessage = `Exported ${dayStr} data successfully!`;
+                    break;
+
+                case "weekly":
+                    const weekStartStr = fromDate.toLocaleDateString('en-IN', {
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                    const weekEndStr = toDate.toLocaleDateString('en-IN', {
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                    successMessage = `Exported week ${weekStartStr} - ${weekEndStr} data successfully!`;
+                    break;
+
+                case "monthly":
+                default:
+                    successMessage = `Exported ${monthName} ${fromDate.getFullYear()} data successfully!`;
+                    break;
+            }
+
+            toast.success(successMessage);
+
+        } catch (error) {
+            // Hide loading toast
+            toast.dismiss();
+
+            console.error("Export failed:", error);
+
+            if (error.response) {
+                if (error.response.status === 404) {
+                    toast.error("Export service not available");
+                } else if (error.response.status === 500) {
+                    toast.error("Server error while generating export");
+                } else {
+                    toast.error(`Export failed: ${error.response.status}`);
+                }
+            } else if (error.request) {
+                toast.error("Network error. Please check your connection.");
+            } else {
+                toast.error("Failed to generate export file");
+            }
+        }
+    };
+
+
     return (
         <LayoutComponent>
             <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
@@ -582,8 +765,25 @@ function TimeSheetList() {
 
                                 </div>
                             )}
+
+                            {/* Simplified Export Button */}
+                            <button
+                                onClick={handleExport}
+                                className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl text-sm font-medium transition-colors duration-200 flex items-center gap-2 w-40"
+                                title={`Export ${periodLabel} data`}
+                                
+                            >
+                             
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Export {viewType === "monthly" ? "Month" : viewType === "weekly" ? "Week" : "Day"}
+                            </button>
                         </div>
                     </div>
+
+
+
 
                     {/* For screens 768px and below (mobile) */}
                     <div className="md:hidden flex flex-col gap-4">
@@ -655,6 +855,17 @@ function TimeSheetList() {
                                     />
                                 </div>
                             )}
+                            {/* Mobile Export Button */}
+                            <button
+                                onClick={handleExport}
+                                className="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs font-medium transition-colors duration-200 flex items-center gap-1"
+                                title={`Export ${periodLabel} data`}
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Export {viewType === "monthly" ? "Mth" : viewType === "weekly" ? "Wk" : "Dy"}
+                            </button>
                         </div>
                     </div>
                 </div>
