@@ -1175,6 +1175,7 @@ function RoleListCompo() {
                       onSelectAll={handleUpdateSelectAllAccess}
                       onClearAll={handleUpdateClearAllAccess}
                       getAccess={getUpdateAccess}
+                      
                     />
 
 
@@ -1194,8 +1195,8 @@ function RoleListCompo() {
                               { label: "Edit", field: "leadEdit" },
                               { label: "Delete", field: "leadDelete" },
                             ]}
-                            getAccess={getAccess}
-                            handleAccessChange={handleAccessChange}
+                            getAccess={getUpdateAccess}
+                            handleAccessChange={handleUpdateAccessChange}
                           />
                         )}
 
@@ -1209,8 +1210,8 @@ function RoleListCompo() {
                               { label: "Edit", field: "customerEdit" },
                               { label: "Delete", field: "customerDelete" },
                             ]}
-                            getAccess={getAccess}
-                            handleAccessChange={handleAccessChange}
+                            getAccess={getUpdateAccess}
+                            handleAccessChange={handleUpdateAccessChange}
                           />
                         )}
 
@@ -1224,8 +1225,8 @@ function RoleListCompo() {
                               { label: "Edit", field: "proposalEdit" },
                               { label: "Delete", field: "proposalDelete" },
                             ]}
-                            getAccess={getAccess}
-                            handleAccessChange={handleAccessChange}
+                            getAccess={getUpdateAccess}
+                            handleAccessChange={handleUpdateAccessChange}
                           />
                         )}
                         {hasModulePermission("proforma") && (
@@ -1239,8 +1240,8 @@ function RoleListCompo() {
                               { label: "Edit", field: "proformaInvoiceEdit" },
                               { label: "Delete", field: "proformaInvoiceDelete" },
                             ]}
-                            getAccess={getAccess}
-                            handleAccessChange={handleAccessChange}
+                            getAccess={getUpdateAccess}
+                            handleAccessChange={handleUpdateAccessChange}
                           />
 
                         )}
@@ -1255,8 +1256,8 @@ function RoleListCompo() {
                               { label: "Edit", field: "invoiceEdit" },
                               { label: "Delete", field: "invoiceDelete" },
                             ]}
-                            getAccess={getAccess}
-                            handleAccessChange={handleAccessChange}
+                            getAccess={getUpdateAccess}
+                            handleAccessChange={handleUpdateAccessChange}
                           />
 
                         )}
@@ -1270,8 +1271,8 @@ function RoleListCompo() {
                               { label: "Edit", field: "paymentEdit" },
                               { label: "Delete", field: "paymentDelete" },
                             ]}
-                            getAccess={getAccess}
-                            handleAccessChange={handleAccessChange}
+                            getAccess={getUpdateAccess}
+                            handleAccessChange={handleUpdateAccessChange}
                           />
 
                         )}
@@ -1285,8 +1286,8 @@ function RoleListCompo() {
                               { label: "Edit", field: "timeSheetEdit" },
                               { label: "Delete", field: "timeSheetDelete" },
                             ]}
-                            getAccess={getAccess}
-                            handleAccessChange={handleAccessChange}
+                            getAccess={getUpdateAccess}
+                            handleAccessChange={handleUpdateAccessChange}
                           />
                         )}
                         {hasModulePermission("item") && (
@@ -1299,8 +1300,8 @@ function RoleListCompo() {
                               { label: "Edit", field: "itemEdit" },
                               { label: "Delete", field: "itemDelete" },
                             ]}
-                            getAccess={getAccess}
-                            handleAccessChange={handleAccessChange}
+                            getAccess={getUpdateAccess}
+                            handleAccessChange={handleUpdateAccessChange}
                           />
 
                         )}
@@ -1318,7 +1319,7 @@ function RoleListCompo() {
                           { label: "Delete", field: "donorDelete" },
                         ]}
                         getAccess={getAccess}
-                        handleAccessChange={handleAccessChange}
+                        handleAccessChange={handleUpdateAccessChange}
                       />
                     )}
 
