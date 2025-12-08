@@ -34,17 +34,51 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
   }, []);
 
   // Function to fetch today's attendance data
+
   const fetchTodayAttendance = async () => {
     setLoadingAttendance(true);
     try {
-      const today = new Date().toISOString().split("T")[0];
+      // Get current date in dd-mm-yyyy format
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+      const year = now.getFullYear();
+      const today = `${day}-${month}-${year}`;
+
       const response = await axiosInstance.get(
-        `getAttendanceBetween?fromDate=${today}&toDate=${today}`
+        `getLoginStatusAllEmployee/${today}`  // Will send "08-12-2025" format
       );
 
       let processedData = [];
 
-      if (typeof response.data === "object" && response.data !== null) {
+      // Handle array response format
+      if (Array.isArray(response.data)) {
+        processedData = response.data.map((employee) => {
+          let status = "not-checked-in";
+          let lastTime = null;
+
+          // Check if employee has logged in (status is true)
+          if (employee.status === true) {
+            status = "checked-in";
+            // If there's a timestamp, use it
+            if (employee.timeStamp) {
+              lastTime = new Date(employee.timeStamp);
+            }
+          } else if (employee.timeStamp) {
+            // If status is false but has timestamp, they checked out
+            status = "checked-out";
+            lastTime = new Date(employee.timeStamp);
+          }
+
+          return {
+            employeeName: employee.employeeName || employee.employeeId || "Unknown",
+            status,
+            lastTime,
+            employeeId: employee.employeeId
+          };
+        });
+      } else if (typeof response.data === "object" && response.data !== null) {
+        // Keep existing logic for backward compatibility
         Object.keys(response.data).forEach((employeeName) => {
           const employeeData = response.data[employeeName];
           const todayKey = Object.keys(employeeData).find((key) =>
@@ -264,9 +298,8 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
             title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
           >
             <svg
-              className={`w-4 h-4 text-white transform transition-transform duration-300 ${
-                sidebarOpen ? "rotate-0" : "rotate-180"
-              } group-hover:scale-110`}
+              className={`w-4 h-4 text-white transform transition-transform duration-300 ${sidebarOpen ? "rotate-0" : "rotate-180"
+                } group-hover:scale-110`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -362,7 +395,7 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
                             {/* Visual separator line between different status groups */}
                             {index > 0 &&
                               attendanceData[index].status !==
-                                attendanceData[index - 1].status && (
+                              attendanceData[index - 1].status && (
                                 <div className="my-2 border-t border-gray-200 border-dashed"></div>
                               )}
 
@@ -379,13 +412,12 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
                                   </div>
                                   {/* Tiny status dot */}
                                   <div
-                                    className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${
-                                      employee.status === "checked-in"
+                                    className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${employee.status === "checked-in"
                                         ? "bg-green-500"
                                         : employee.status === "checked-out"
-                                        ? "bg-blue-500"
-                                        : "bg-gray-400"
-                                    }`}
+                                          ? "bg-blue-500"
+                                          : "bg-gray-400"
+                                      }`}
                                   ></div>
                                 </div>
 
@@ -570,9 +602,8 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
                 </p>
               </div>
               <svg
-                className={`w-3 h-3 text-blue-200 transform transition-transform duration-300 ${
-                  showUserMenu ? "rotate-180" : "rotate-0"
-                }`}
+                className={`w-3 h-3 text-blue-200 transform transition-transform duration-300 ${showUserMenu ? "rotate-180" : "rotate-0"
+                  }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
