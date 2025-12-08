@@ -68,13 +68,26 @@ const DonorFilters = ({
       "Hazel",
       "Amber",
     ]),
-    education: createOptions([
-      "Under Graduation",
-      "Post Graduation",
-      "Masters",
-      "Graduated",
-      "Diploma",
-    ]),
+    education: [
+      { value: "below_10th", label: "Below 10th" },
+      { value: "ssc_10th", label: "10th Pass (SSC)" },
+      { value: "hsc_12th", label: "12th Pass (HSC)" },
+      { value: "diploma", label: "Diploma" },
+      { value: "iti_vocational", label: "ITI / Vocational Training" },
+      { value: "ug_pursuing", label: "Undergraduate (UG) - Pursuing" },
+      {
+        value: "bachelor_completed",
+        label: "Undergraduate (Bachelor’s Degree)",
+      },
+      { value: "pg_pursuing", label: "Postgraduate (PG) - Pursuing" },
+      { value: "masters_completed", label: "Postgraduate (Master’s Degree)" },
+      { value: "doctorate", label: "Doctorate (PhD)" },
+      {
+        value: "professional_course",
+        label: "Professional Course (CA / CS / CMA)",
+      },
+      { value: "other", label: "Other" },
+    ],
   };
 
   useEffect(() => {
