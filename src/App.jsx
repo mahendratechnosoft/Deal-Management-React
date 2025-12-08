@@ -596,6 +596,15 @@ function App() {
               </RoleBasedRoute>
             }
           />
+
+          <Route
+            path="/Employee/TaskList"
+            element={
+              <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                <TaskList />
+              </RoleBasedRoute>
+            }
+          />
           {/* Settings Routes */}
           <Route
             path="/Admin/Settings"

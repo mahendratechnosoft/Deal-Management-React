@@ -193,9 +193,74 @@ function CreateTaskModal({ onClose, onSuccess }) {
   };
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // Apply character limits before setting state
+    let processedValue = value;
+
+    switch (name) {
+      case 'subject':
+        // Limit subject to 150 characters (including spaces)
+        if (value.length <= 150) {
+          processedValue = value;
+        } else {
+          return; // Don't update if over limit
+        }
+        break;
+
+      case 'description':
+        // Limit description to 500 characters
+        if (value.length <= 500) {
+          processedValue = value;
+        } else {
+          return; // Don't update if over limit
+        }
+        break;
+
+      case 'hourlyRate':
+        // Limit hourly rate to 4 digits before decimal
+        if (value === '') {
+          processedValue = value;
+        } else {
+          const numValue = parseFloat(value);
+          if (isNaN(numValue)) {
+            processedValue = value;
+          } else {
+            // Check if integer part has more than 4 digits
+            const intPart = Math.floor(numValue).toString();
+            if (intPart.length > 4) {
+              return; // Don't update if over 4 digits
+            }
+            processedValue = value;
+          }
+        }
+        break;
+
+      case 'estimateHours':
+        // Limit estimate hours to 4 digits before decimal
+        if (value === '') {
+          processedValue = value;
+        } else {
+          const numValue = parseFloat(value);
+          if (isNaN(numValue)) {
+            processedValue = value;
+          } else {
+            // Check if integer part has more than 4 digits
+            const intPart = Math.floor(numValue).toString();
+            if (intPart.length > 4) {
+              return; // Don't update if over 4 digits
+            }
+            processedValue = value;
+          }
+        }
+        break;
+
+      default:
+        processedValue = value;
+    }
+
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: processedValue
     }));
 
     if (name === 'relatedTo') {
@@ -243,15 +308,19 @@ function CreateTaskModal({ onClose, onSuccess }) {
   const validateForm = () => {
     const newErrors = {};
 
+    // Subject validation
     if (!formData.subject?.trim()) {
       newErrors.subject = "Subject is required";
+    } else if (formData.subject.length > 150) {
+      newErrors.subject = "Subject cannot exceed 150 characters";
     }
 
+    // Start date validation
     if (!formData.startDate) {
       newErrors.startDate = "Start date is required";
     }
 
-    // Check due date only if it's provided
+    // Due date validation
     if (formData.dueDate && formData.startDate) {
       const startDate = new Date(formData.startDate);
       const dueDate = new Date(formData.dueDate);
@@ -261,15 +330,32 @@ function CreateTaskModal({ onClose, onSuccess }) {
       }
     }
 
-    if (formData.hourlyRate && parseFloat(formData.hourlyRate) < 0) {
-      newErrors.hourlyRate = "Hourly rate cannot be negative";
+    // Hourly rate validation
+    if (formData.hourlyRate) {
+      const hourlyRateNum = parseFloat(formData.hourlyRate);
+      if (hourlyRateNum < 0) {
+        newErrors.hourlyRate = "Hourly rate cannot be negative";
+      } else if (hourlyRateNum.toString().split('.')[0].length > 4) {
+        newErrors.hourlyRate = "Hourly rate cannot exceed 4 digits";
+      }
     }
 
-    if (formData.estimateHours && parseFloat(formData.estimateHours) < 0) {
-      newErrors.estimateHours = "Estimate hours cannot be negative";
+    // Estimate hours validation
+    if (formData.estimateHours) {
+      const estimateHoursNum = parseFloat(formData.estimateHours);
+      if (estimateHoursNum < 0) {
+        newErrors.estimateHours = "Estimate hours cannot be negative";
+      } else if (estimateHoursNum.toString().split('.')[0].length > 4) {
+        newErrors.estimateHours = "Estimate hours cannot exceed 4 digits";
+      }
     }
 
-    // Validate relatedId if relatedTo is selected
+    // Description validation
+    if (formData.description.length > 500) {
+      newErrors.description = "Description cannot exceed 500 characters";
+    }
+
+    // Related ID validation
     if (formData.relatedTo && !formData.relatedId) {
       newErrors.relatedId = `Please select a ${formData.relatedTo}`;
     }
@@ -292,25 +378,28 @@ function CreateTaskModal({ onClose, onSuccess }) {
         subject: formData.subject.trim(),
         description: formData.description.trim(),
         hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : 0,
-        startDate: new Date(formData.startDate).toISOString(),
-        dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+        startDate: formData.startDate, // Don't convert to ISO, send as-is
+        endDate: formData.dueDate || null, // Change 'dueDate' to 'endDate'
         priority: formData.priority,
         relatedTo: formData.relatedTo || null,
-        relatedId: formData.relatedId || null,
+        relatedToId: formData.relatedId || null, // Change 'relatedId' to 'relatedToId'
+        relatedToName: formData.relatedName || '',
         assignedEmployees: formData.assignees.map(employeeId => ({
           employeeId: employeeId
         })),
-
         followersEmployees: formData.followers.map(employeeId => ({
           employeeId: employeeId
         })),
-        estimateHours: formData.estimateHours ? parseFloat(formData.estimateHours) : null,
+        estimatedHours: formData.estimateHours ? parseFloat(formData.estimateHours) : 0, // Change 'estimateHours' to 'estimatedHours'
         status: 'pending'
       };
+
+      console.log('Sending payload:', payload); // Add this for debugging
 
       const response = await axiosInstance.post('createTask', payload);
 
       if (response.data) {
+        console.log('Response:', response.data); // Add this for debugging
         toast.success('Task created successfully!');
         onSuccess();
       } else {
@@ -318,6 +407,7 @@ function CreateTaskModal({ onClose, onSuccess }) {
       }
     } catch (error) {
       console.error('Error creating task:', error);
+      console.error('Error details:', error.response?.data); // Add this for detailed error
       toast.error('Failed to create task. Please try again.');
     } finally {
       setLoading(false);
@@ -373,16 +463,21 @@ function CreateTaskModal({ onClose, onSuccess }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Subject - Full width */}
               <div className="md:col-span-2">
-                <GlobalInputField
-                  label="Subject"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  required={true}
-                  error={errors.subject}
-                  placeholder="Enter task subject"
-                  className="text-sm"
-                />
+                <div className="relative">
+                  <GlobalInputField
+                    label="Subject"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    required={true}
+                    error={errors.subject}
+                    placeholder="Enter task subject"
+                    className="text-sm"
+                  />
+                  <div className="absolute right-2 top-0 text-xs text-gray-500">
+                    {formData.subject.length}/150
+                  </div>
+                </div>
               </div>
 
               {/* Hourly Rate */}
@@ -395,10 +490,10 @@ function CreateTaskModal({ onClose, onSuccess }) {
                 error={errors.hourlyRate}
                 placeholder="0"
                 min="0"
+                max="9999" // 4 digit limit
                 step="0.01"
                 className="text-sm"
               />
-
               {/* Date Fields */}
               <div className="grid grid-cols-2 gap-2">
                 <GlobalInputField
@@ -504,6 +599,7 @@ function CreateTaskModal({ onClose, onSuccess }) {
                 error={errors.estimateHours}
                 placeholder="0"
                 min="0"
+                max="9999"
                 step="0.5"
                 className="text-sm"
               />
@@ -511,15 +607,21 @@ function CreateTaskModal({ onClose, onSuccess }) {
 
             {/* Task Description - Full width */}
             <div className="mt-3">
-              <GlobalTextAreaField
-                label="Task Description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Add Description"
-                rows={3}
-                className="text-sm"
-              />
+              <div className="relative">
+                <GlobalTextAreaField
+                  label="Task Description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="Add Description"
+                  rows={3}
+                  error={errors.description}
+                  className="text-sm"
+                />
+                <div className="absolute right-2 bottom-2 text-xs text-gray-500">
+                  {formData.description.length}/500
+                </div>
+              </div>
             </div>
           </form>
         </div>
