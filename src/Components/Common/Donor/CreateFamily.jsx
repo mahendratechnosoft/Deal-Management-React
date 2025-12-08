@@ -127,13 +127,18 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
     };
 
     // Add validation for genetic illness character limit
-    if (formData.husbandGenticIllness && formData.husbandGenticIllness.length > 500) {
-      tempErrors.husbandGenticIllness = "Genetic illness cannot exceed 500 characters";
+    if (
+      formData.husbandGenticIllness &&
+      formData.husbandGenticIllness.length > 500
+    ) {
+      tempErrors.husbandGenticIllness =
+        "Genetic illness cannot exceed 500 characters";
       isValid = false;
     }
 
     if (formData.wifeGenticIllness && formData.wifeGenticIllness.length > 500) {
-      tempErrors.wifeGenticIllness = "Genetic illness cannot exceed 500 characters";
+      tempErrors.wifeGenticIllness =
+        "Genetic illness cannot exceed 500 characters";
       isValid = false;
     }
 
@@ -200,10 +205,21 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
     { value: "Amber", label: "Amber" },
   ];
   const educationOptions = [
-    { value: "UnderGraduation", label: "Under Graduation" },
-    { value: "PostGraduation", label: "Post Graduation" },
-    { value: "Masters", label: "Masters" },
-    { value: "Graduated", label: "Graduated" },
+    { value: "below_10th", label: "Below 10th" },
+    { value: "ssc_10th", label: "10th Pass (SSC)" },
+    { value: "hsc_12th", label: "12th Pass (HSC)" },
+    { value: "diploma", label: "Diploma" },
+    { value: "iti_vocational", label: "ITI / Vocational Training" },
+    { value: "ug_pursuing", label: "Undergraduate (UG) - Pursuing" },
+    { value: "bachelor_completed", label: "Undergraduate (Bachelor’s Degree)" },
+    { value: "pg_pursuing", label: "Postgraduate (PG) - Pursuing" },
+    { value: "masters_completed", label: "Postgraduate (Master’s Degree)" },
+    { value: "doctorate", label: "Doctorate (PhD)" },
+    {
+      value: "professional_course",
+      label: "Professional Course (CA / CS / CMA)",
+    },
+    { value: "other", label: "Other" },
   ];
   const bloodGroupOptions = [
     { value: "O+", label: "O+" },
@@ -452,7 +468,13 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
                     error={errors.husbandGenticIllness}
                   />
                   <div className="text-right mt-1">
-                    <span className={`text-xs ${formData.husbandGenticIllness.length > 500 ? 'text-red-500' : 'text-gray-500'}`}>
+                    <span
+                      className={`text-xs ${
+                        formData.husbandGenticIllness.length > 500
+                          ? "text-red-500"
+                          : "text-gray-500"
+                      }`}
+                    >
                       {formData.husbandGenticIllness.length}/500 characters
                     </span>
                   </div>
@@ -590,7 +612,13 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
                     disabled={isSubmitting}
                   />
                   <div className="text-right mt-1">
-                    <span className={`text-xs ${formData.wifeGenticIllness.length > 500 ? 'text-red-500' : 'text-gray-500'}`}>
+                    <span
+                      className={`text-xs ${
+                        formData.wifeGenticIllness.length > 500
+                          ? "text-red-500"
+                          : "text-gray-500"
+                      }`}
+                    >
                       {formData.wifeGenticIllness.length}/500 characters
                     </span>
                   </div>

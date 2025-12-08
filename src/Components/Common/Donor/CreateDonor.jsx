@@ -33,22 +33,22 @@ const validateAge = (age) => {
   if (!age) return "Age is required";
   const ageNum = parseInt(age, 10);
   if (isNaN(ageNum)) return "Age must be a valid number";
- 
+
   return "";
 };
 
 const validateDateOfBirth = (dob) => {
   if (!dob) return "Date of birth is required";
-  
+
   const dobDate = new Date(dob);
   const today = new Date();
-  
+
   if (dobDate > today) return "Date of birth cannot be in the future";
-  
+
   const minDate = new Date();
   minDate.setFullYear(today.getFullYear() - 120);
   if (dobDate < minDate) return "Please enter a valid date of birth";
-  
+
   return "";
 };
 
@@ -64,7 +64,6 @@ const validateMobile = (mobile) => {
 
   return "";
 };
-
 
 const validateEmail = (email) => {
   if (!email) return "Email is required";
@@ -83,7 +82,7 @@ const validatePincode = (pincode) => {
     return "Please enter a valid 6-digit pincode";
   }
   // Additional validation: First digit cannot be 0
-  if (pincode.startsWith('0')) {
+  if (pincode.startsWith("0")) {
     return "Pincode cannot start with 0";
   }
   return "";
@@ -93,7 +92,7 @@ const validateHeight = (height) => {
   if (!height) return "Height is required";
   const heightNum = parseFloat(height);
   if (isNaN(heightNum)) return "Height must be a valid number";
- 
+
   return "";
 };
 
@@ -119,7 +118,6 @@ const validateCity = (city) => {
 
   return "";
 };
-
 
 const validateProfession = (profession) => {
   if (!profession.trim()) return "Profession is required";
@@ -148,18 +146,18 @@ const validateBloodGroup = (bloodGroup) => {
 // File validation
 const validateFile = (file, maxSizeMB = 5) => {
   if (!file) return "";
-  
-  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+
+  const validTypes = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
   const maxSize = maxSizeMB * 1024 * 1024; // Convert to bytes
-  
+
   if (!validTypes.includes(file.type)) {
     return `File must be an image (JPEG, PNG, JPG, WebP)`;
   }
-  
+
   if (file.size > maxSize) {
     return `File size must be less than ${maxSizeMB}MB`;
   }
-  
+
   return "";
 };
 
@@ -210,10 +208,21 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
   ];
 
   const educationOptions = [
-    { value: "UnderGraduation", label: "Under Graduation" },
-    { value: "PostGraduation", label: "Post Graduation" },
-    { value: "Masters", label: "Masters" },
-    { value: "Graduated", label: "Graduated" },
+    { value: "below_10th", label: "Below 10th" },
+    { value: "ssc_10th", label: "10th Pass (SSC)" },
+    { value: "hsc_12th", label: "12th Pass (HSC)" },
+    { value: "diploma", label: "Diploma" },
+    { value: "iti_vocational", label: "ITI / Vocational Training" },
+    { value: "ug_pursuing", label: "Undergraduate (UG) - Pursuing" },
+    { value: "bachelor_completed", label: "Undergraduate (Bachelor’s Degree)" },
+    { value: "pg_pursuing", label: "Postgraduate (PG) - Pursuing" },
+    { value: "masters_completed", label: "Postgraduate (Master’s Degree)" },
+    { value: "doctorate", label: "Doctorate (PhD)" },
+    {
+      value: "professional_course",
+      label: "Professional Course (CA / CS / CMA)",
+    },
+    { value: "other", label: "Other" },
   ];
 
   // Required fields configuration
@@ -232,8 +241,8 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
     bloodGroup: true,
     profession: true,
     education: false, // Optional
-    selfPic: false,   // Optional
-    fullPic: false,   // Optional
+    selfPic: false, // Optional
+    fullPic: false, // Optional
   };
 
   // Reset form when modal closes via props
@@ -249,35 +258,35 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
   // --- Validation Functions ---
   const validateField = (name, value) => {
     switch (name) {
-      case 'name':
+      case "name":
         return validateName(value);
-      case 'age':
+      case "age":
         return validateAge(value);
-      case 'dateOfBirth':
+      case "dateOfBirth":
         return validateDateOfBirth(value);
-      case 'mobile':
+      case "mobile":
         return validateMobile(value);
-      case 'email':
+      case "email":
         return validateEmail(value);
-      case 'pincode':
+      case "pincode":
         return validatePincode(value);
-      case 'height':
+      case "height":
         return validateHeight(value);
-      case 'weight':
+      case "weight":
         return validateWeight(value);
-      case 'city':
+      case "city":
         return validateCity(value);
-      case 'profession':
+      case "profession":
         return validateProfession(value);
-      case 'address':
+      case "address":
         return validateAddress(value);
-      case 'maritalStatus':
+      case "maritalStatus":
         return validateMaritalStatus(value);
-      case 'bloodGroup':
+      case "bloodGroup":
         return validateBloodGroup(value);
-      case 'selfPic':
+      case "selfPic":
         return validateFile(value, 5); // 5MB max
-      case 'fullPic':
+      case "fullPic":
         return validateFile(value, 5); // 5MB max
       default:
         return "";
@@ -286,7 +295,7 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     Object.keys(formData).forEach((fieldName) => {
       if (requiredFields[fieldName] || formData[fieldName]) {
         const error = validateField(fieldName, formData[fieldName]);
@@ -295,7 +304,7 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
         }
       }
     });
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -304,47 +313,47 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const handleSelectChange = (selectedOption, { name }) => {
     const value = selectedOption ? selectedOption.value : "";
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-    
+
     // Clear error when user selects
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const handleFileChange = (e) => {
     const { name, files } = e.target;
     const file = files && files[0];
-    
+
     if (file) {
       // Validate file immediately
       const error = validateFile(file, 5);
       if (error) {
-        setErrors(prev => ({ ...prev, [name]: error }));
+        setErrors((prev) => ({ ...prev, [name]: error }));
         // Clear the file input
-        e.target.value = '';
-        setFormData(prev => ({ ...prev, [name]: null }));
+        e.target.value = "";
+        setFormData((prev) => ({ ...prev, [name]: null }));
       } else {
-        setFormData(prev => ({ ...prev, [name]: file }));
+        setFormData((prev) => ({ ...prev, [name]: file }));
         // Clear error if validation passes
         if (errors[name]) {
-          setErrors(prev => ({ ...prev, [name]: "" }));
+          setErrors((prev) => ({ ...prev, [name]: "" }));
         }
       }
     } else {
-      setFormData(prev => ({ ...prev, [name]: null }));
+      setFormData((prev) => ({ ...prev, [name]: null }));
     }
   };
 
@@ -356,13 +365,13 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate form before submission
     if (!validateForm()) {
       toast.error("Please fix the errors in the form");
       return;
     }
-    
+
     setIsSubmitting(true);
 
     try {
@@ -420,104 +429,101 @@ const CreateDonar = ({ isOpen, onClose, onSuccess }) => {
       setIsSubmitting(false);
     }
   };
-const renderFormInput = (fieldConfig) => {
-  const { label, name, type = "text", ...props } = fieldConfig;
-  const isRequired = requiredFields[name];
+  const renderFormInput = (fieldConfig) => {
+    const { label, name, type = "text", ...props } = fieldConfig;
+    const isRequired = requiredFields[name];
 
-  return (
-    <div>
-      <FormInput
-        label={
-          isRequired ? (
-            <>
-              {label} <span style={{ color: "red" }}>*</span>
-            </>
-          ) : (
-            label
-          )
-        }
-        name={name}
-        type={type}
-        value={formData[name]}
-        onChange={handleChange}
-        disabled={isSubmitting}
-        placeholder={props.placeholder}
-        {...props}
-      />
+    return (
+      <div>
+        <FormInput
+          label={
+            isRequired ? (
+              <>
+                {label} <span style={{ color: "red" }}>*</span>
+              </>
+            ) : (
+              label
+            )
+          }
+          name={name}
+          type={type}
+          value={formData[name]}
+          onChange={handleChange}
+          disabled={isSubmitting}
+          placeholder={props.placeholder}
+          {...props}
+        />
 
-      {errors[name] && (
-        <p className="mt-1 text-sm text-red-600">{errors[name]}</p>
-      )}
-    </div>
-  );
-};
+        {errors[name] && (
+          <p className="mt-1 text-sm text-red-600">{errors[name]}</p>
+        )}
+      </div>
+    );
+  };
 
+  const renderFormSelect = (fieldConfig) => {
+    const { label, name, options, ...props } = fieldConfig;
+    const isRequired = requiredFields[name];
 
-const renderFormSelect = (fieldConfig) => {
-  const { label, name, options, ...props } = fieldConfig;
-  const isRequired = requiredFields[name];
+    return (
+      <div>
+        <FormSelect
+          label={
+            isRequired ? (
+              <>
+                {label} <span style={{ color: "red" }}>*</span>
+              </>
+            ) : (
+              label
+            )
+          }
+          name={name}
+          value={options.find((o) => o.value === formData[name])}
+          onChange={(option) => handleSelectChange(option, { name })}
+          options={options}
+          isDisabled={isSubmitting}
+          placeholder={props.placeholder || `Select ${label.toLowerCase()}`}
+          {...props}
+        />
 
-  return (
-    <div>
-      <FormSelect
-        label={
-          isRequired ? (
-            <>
-              {label} <span style={{ color: "red" }}>*</span>
-            </>
-          ) : (
-            label
-          )
-        }
-        name={name}
-        value={options.find(o => o.value === formData[name])}
-        onChange={(option) => handleSelectChange(option, { name })}
-        options={options}
-        isDisabled={isSubmitting}
-        placeholder={props.placeholder || `Select ${label.toLowerCase()}`}
-        {...props}
-      />
+        {errors[name] && (
+          <p className="mt-1 text-sm text-red-600">{errors[name]}</p>
+        )}
+      </div>
+    );
+  };
 
-      {errors[name] && (
-        <p className="mt-1 text-sm text-red-600">{errors[name]}</p>
-      )}
-    </div>
-  );
-};
+  const renderFormTextarea = (fieldConfig) => {
+    const { label, name, rows = 3, ...props } = fieldConfig;
+    const isRequired = requiredFields[name];
 
+    return (
+      <div>
+        <FormTextarea
+          label={
+            isRequired ? (
+              <>
+                {label} <span style={{ color: "red" }}>*</span>
+              </>
+            ) : (
+              label
+            )
+          }
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          rows={rows}
+          disabled={isSubmitting}
+          placeholder={props.placeholder}
+          {...props}
+        />
 
-const renderFormTextarea = (fieldConfig) => {
-  const { label, name, rows = 3, ...props } = fieldConfig;
-  const isRequired = requiredFields[name];
-
-  return (
-    <div>
-      <FormTextarea
-        label={
-          isRequired ? (
-            <>
-              {label} <span style={{ color: "red" }}>*</span>
-            </>
-          ) : (
-            label
-          )
-        }
-        name={name}
-        value={formData[name]}
-        onChange={handleChange}
-        rows={rows}
-        disabled={isSubmitting}
-        placeholder={props.placeholder}
-        {...props}
-      />
-
-      {errors[name] && (
-        <p className="mt-1 text-sm text-red-600">{errors[name]}</p>
-      )}
-    </div>
-  );
-};
-
+        {errors[name] && (
+          <p className="mt-1 text-sm text-red-600">{errors[name]}</p>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
@@ -667,7 +673,9 @@ const renderFormTextarea = (fieldConfig) => {
                       className="text-sm font-medium text-gray-700"
                     >
                       Self Pic (Close-up){" "}
-                      <span className="text-gray-400 text-xs">(Optional, Max 5MB)</span>
+                      <span className="text-gray-400 text-xs">
+                        (Optional, Max 5MB)
+                      </span>
                     </label>
                     <input
                       id="selfPic"
@@ -680,7 +688,9 @@ const renderFormTextarea = (fieldConfig) => {
                     />
                   </div>
                   {errors.selfPic && (
-                    <p className="mt-1 text-sm text-red-600">{errors.selfPic}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.selfPic}
+                    </p>
                   )}
                 </div>
 
@@ -691,7 +701,9 @@ const renderFormTextarea = (fieldConfig) => {
                       className="text-sm font-medium text-gray-700"
                     >
                       Full Length Pic{" "}
-                      <span className="text-gray-400 text-xs">(Optional, Max 5MB)</span>
+                      <span className="text-gray-400 text-xs">
+                        (Optional, Max 5MB)
+                      </span>
                     </label>
                     <input
                       id="fullPic"
@@ -704,7 +716,9 @@ const renderFormTextarea = (fieldConfig) => {
                     />
                   </div>
                   {errors.fullPic && (
-                    <p className="mt-1 text-sm text-red-600">{errors.fullPic}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.fullPic}
+                    </p>
                   )}
                 </div>
               </div>
@@ -743,7 +757,8 @@ const renderFormTextarea = (fieldConfig) => {
                     label: "Address",
                     name: "address",
                     rows: 3,
-                    placeholder: "Enter full residential address including street, landmark, etc.",
+                    placeholder:
+                      "Enter full residential address including street, landmark, etc.",
                   })}
                 </div>
 

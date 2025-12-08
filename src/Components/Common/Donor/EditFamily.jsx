@@ -130,7 +130,7 @@ function EditFamily() {
         left: 15,
         right: 15,
         top: 12,
-        bottom: 12
+        bottom: 12,
       };
 
       let y = margin.top;
@@ -149,7 +149,7 @@ function EditFamily() {
         theme: "grid",
         headStyles: {
           fillColor: [230, 230, 230], // ✅ Faint light grey background
-          textColor: [0, 0, 0],    // ✅ Dark grey text (not pure black)
+          textColor: [0, 0, 0], // ✅ Dark grey text (not pure black)
           fontSize: TABLE_FONT,
           fontStyle: "bold",
           cellPadding: { top: 2.5, right: 3, bottom: 2.5, left: 3 },
@@ -168,40 +168,40 @@ function EditFamily() {
           lineWidth: 0.1,
           lineColor: [0, 0, 0],
           minCellHeight: 6,
-          halign: 'left',
-          valign: 'middle',
+          halign: "left",
+          valign: "middle",
         },
-   
+
         styles: {
           lineWidth: 0.1,
           lineColor: [0, 0, 0],
           cellPadding: { top: 2, right: 3, bottom: 2, left: 3 },
           fontSize: TABLE_FONT,
-          font: 'helvetica', // Explicit font set
+          font: "helvetica", // Explicit font set
         },
         columnStyles: {
           0: {
             cellWidth: (pageWidth - margin.left - margin.right) / 4,
-            fontStyle: "bold"
+            fontStyle: "bold",
           },
           1: {
             cellWidth: (pageWidth - margin.left - margin.right) / 4,
-            fontStyle: "normal"
+            fontStyle: "normal",
           },
           2: {
             cellWidth: (pageWidth - margin.left - margin.right) / 4,
-            fontStyle: "bold"
+            fontStyle: "bold",
           },
           3: {
             cellWidth: (pageWidth - margin.left - margin.right) / 4,
-            fontStyle: "normal"
+            fontStyle: "normal",
           },
         },
         margin: {
           left: margin.left,
           right: margin.right,
           top: 2,
-          bottom: 2
+          bottom: 2,
         },
         tableWidth: pageWidth - margin.left - margin.right,
       };
@@ -263,7 +263,12 @@ function EditFamily() {
       // =====================================================
       // HELPER FUNCTION FOR SECTION TABLES WITH HEADERS
       // =====================================================
-      const createFourColumnTableWithHeader = (startY, title, headerRows, bodyRows) => {
+      const createFourColumnTableWithHeader = (
+        startY,
+        title,
+        headerRows,
+        bodyRows
+      ) => {
         let currentY = startY;
 
         // Section title
@@ -278,11 +283,11 @@ function EditFamily() {
           head: headerRows,
           body: bodyRows,
           ...fourColumnTableStyles,
-          pageBreak: 'avoid',
-          rowPageBreak: 'avoid',
+          pageBreak: "avoid",
+          rowPageBreak: "avoid",
           didDrawCell: (data) => {
             // Optional: Add subtle styling for header cells
-            if (data.section === 'head') {
+            if (data.section === "head") {
               // Add subtle text shadow effect for better readability
               doc.setTextColor(255, 255, 255);
               doc.setFont("helvetica", "bold");
@@ -299,9 +304,7 @@ function EditFamily() {
       y = createFourColumnTableWithHeader(
         y,
         "Hospital & Family Information",
-        [
-          ["Parameter", "Value", "Parameter", "Value"]
-        ],
+        [["Parameter", "Value", "Parameter", "Value"]],
         [
           [
             "Refer Hospital",
@@ -325,9 +328,7 @@ function EditFamily() {
       y = createFourColumnTableWithHeader(
         y,
         "Donor Information",
-        [
-          ["Parameter", "Value", "Parameter", "Value"]
-        ],
+        [["Parameter", "Value", "Parameter", "Value"]],
         [
           ["Donor UIN", reportData.donorUin || "-", "Height", "-"],
           [
@@ -358,9 +359,7 @@ function EditFamily() {
       y = createFourColumnTableWithHeader(
         y,
         "Blood Report",
-        [
-          ["Parameter", "Value", "Parameter", "Value"]
-        ],
+        [["Parameter", "Value", "Parameter", "Value"]],
         [
           [
             "Blood Group",
@@ -391,21 +390,24 @@ function EditFamily() {
       y = createFourColumnTableWithHeader(
         y,
         "Semen Report",
-        [
-          ["Parameter", "Value", "Parameter", "Value"]
-        ],
+        [["Parameter", "Value", "Parameter", "Value"]],
         [
           [
             "Date",
             reportData.semenReportDateAndTime
-              ? new Date(reportData.semenReportDateAndTime).toLocaleDateString("en-GB")
+              ? new Date(reportData.semenReportDateAndTime).toLocaleDateString(
+                  "en-GB"
+                )
               : "-",
             "Time",
             reportData.semenReportDateAndTime
-              ? new Date(reportData.semenReportDateAndTime).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })
+              ? new Date(reportData.semenReportDateAndTime).toLocaleTimeString(
+                  [],
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }
+                )
               : "-",
           ],
           [
@@ -414,7 +416,12 @@ function EditFamily() {
             "Volume",
             reportData.volumne ? `${reportData.volumne} ml` : "-",
           ],
-          ["Report", "-", "Concentration", reportData.spermConcentration || "-"],
+          [
+            "Report",
+            "-",
+            "Concentration",
+            reportData.spermConcentration || "-",
+          ],
           [
             "Motility A",
             reportData.progressiveMotilityA
@@ -454,7 +461,7 @@ function EditFamily() {
         "All above mentioned information is correct & true to our knowledge.",
         "Aforementioned specifications help to screen the target D- sample. We understand that despite of the",
         "above specifications, phenotypic & genotypic differences might occur & which is inevitable. We both",
-        "willfully agree & give consent to use donor semen sample for IUI."
+        "willfully agree & give consent to use donor semen sample for IUI.",
       ];
 
       declarationLines.forEach((line, index) => {
@@ -494,7 +501,6 @@ function EditFamily() {
       setPdfLoadingId(null);
     }
   };
-
 
   // Handlers (same as before)
   const handleChange = (e) => {
@@ -601,10 +607,21 @@ function EditFamily() {
     { value: "Amber", label: "Amber" },
   ];
   const educationOptions = [
-    { value: "UnderGraduation", label: "Under Graduation" },
-    { value: "PostGraduation", label: "Post Graduation" },
-    { value: "Masters", label: "Masters" },
-    { value: "Graduated", label: "Graduated" },
+    { value: "below_10th", label: "Below 10th" },
+    { value: "ssc_10th", label: "10th Pass (SSC)" },
+    { value: "hsc_12th", label: "12th Pass (HSC)" },
+    { value: "diploma", label: "Diploma" },
+    { value: "iti_vocational", label: "ITI / Vocational Training" },
+    { value: "ug_pursuing", label: "Undergraduate (UG) - Pursuing" },
+    { value: "bachelor_completed", label: "Undergraduate (Bachelor’s Degree)" },
+    { value: "pg_pursuing", label: "Postgraduate (PG) - Pursuing" },
+    { value: "masters_completed", label: "Postgraduate (Master’s Degree)" },
+    { value: "doctorate", label: "Doctorate (PhD)" },
+    {
+      value: "professional_course",
+      label: "Professional Course (CA / CS / CMA)",
+    },
+    { value: "other", label: "Other" },
   ];
   const bloodGroupOptions = [
     { value: "O+", label: "O+" },
@@ -782,10 +799,11 @@ function EditFamily() {
             />
             <div className="text-right mt-1">
               <span
-                className={`text-xs ${familyInfo.husbandGenticIllness.length > 500
-                  ? "text-red-500"
-                  : "text-gray-500"
-                  }`}
+                className={`text-xs ${
+                  familyInfo.husbandGenticIllness.length > 500
+                    ? "text-red-500"
+                    : "text-gray-500"
+                }`}
               >
                 {familyInfo.husbandGenticIllness.length}/500 characters
               </span>
@@ -892,10 +910,11 @@ function EditFamily() {
             />
             <div className="text-right mt-1">
               <span
-                className={`text-xs ${familyInfo.wifeGenticIllness.length > 500
-                  ? "text-red-500"
-                  : "text-gray-500"
-                  }`}
+                className={`text-xs ${
+                  familyInfo.wifeGenticIllness.length > 500
+                    ? "text-red-500"
+                    : "text-gray-500"
+                }`}
               >
                 {familyInfo.wifeGenticIllness.length}/500 characters
               </span>
@@ -1098,10 +1117,11 @@ function EditFamily() {
                       <button
                         type="button"
                         onClick={() => setActiveTab(tab.id)}
-                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${activeTab === tab.id
-                          ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
-                          : "hover:text-gray-700 hover:bg-gray-50"
-                          }`}
+                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${
+                          activeTab === tab.id
+                            ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
+                            : "hover:text-gray-700 hover:bg-gray-50"
+                        }`}
                       >
                         {tab.label}
                       </button>
