@@ -78,6 +78,11 @@ function EditAdmin() {
         timeSheetDelete: false,
         timeSheetEdit: false,
 
+        taskViewAll: false,
+        taskAccess: false,
+        taskCreate: false,
+        taskDelete: false,
+        taskEdit: false,
         //   DONAR ACCESS
 
         donorViewAll: false,
@@ -89,6 +94,8 @@ function EditAdmin() {
         itemCreate: false,
         itemDelete: false,
         itemEdit: false,
+
+
 
     });
 
@@ -133,12 +140,14 @@ function EditAdmin() {
                         invoiceAccess: accessData.invoiceAccess || false,
                         paymentAccess: accessData.paymentAccess || false,
                         timeSheetAccess: accessData.timeSheetAccess || false,
+                        taskAccess: accessData.taskAccess || false,
 
 
                         donorAccess: accessData.donorAccess || false,
                         employeeAccess: accessData.employeeAccess || false,
                         settingAccess: accessData.settingAccess || false,
                         itemAccess: accessData.itemAccess || false,
+
 
 
                     });
@@ -187,6 +196,7 @@ function EditAdmin() {
             invoiceAccess: false,
             paymentAccess: false,
             timeSheetAccess: false,
+            taskAccess: false,
 
             donorAccess: false,
             employeeAccess: false,
@@ -207,7 +217,7 @@ function EditAdmin() {
             invoiceAccess: true,
             paymentAccess: true,
             timeSheetAccess: true,
-
+            taskAccess: true,
             donorAccess: true,
             employeeAccess: true,
             settingAccess: true,
@@ -298,6 +308,12 @@ function EditAdmin() {
                     itemCreate: true,
                     itemDelete: true,
                     itemEdit: true,
+
+                    taskViewAll: true,
+
+                    taskCreate: true,
+                    taskDelete: true,
+                    taskEdit: true,
 
                 },
             };
@@ -665,9 +681,15 @@ function EditAdmin() {
                                             }
                                         />
                                     </div>
-
-                                    {/* Sixth row - 1 button (Setting) */}
                                     <div className="grid grid-cols-2 gap-2">
+                                        <ModuleAccessToggle
+                                            title="Task"
+                                            field="taskAccess"
+                                            isChecked={getAccess("taskAccess")}
+                                            onChange={(isChecked) =>
+                                                handleAccessChange("taskAccess", isChecked)
+                                            }
+                                        />
                                         <ModuleAccessToggle
                                             title="Setting"
                                             field="settingAccess"
@@ -676,9 +698,9 @@ function EditAdmin() {
                                                 handleAccessChange("settingAccess", isChecked)
                                             }
                                         />
-                                        {/* Empty div to maintain grid structure */}
-                                        <div></div>
                                     </div>
+
+                                 
                                 </div>
                             </div>
                         </div>

@@ -1190,7 +1190,7 @@ function EditEmployee() {
                       )}
 
                    
-                      {hasModulePermission("lead") && (
+                      {hasModulePermission("task") && (
                         <ModuleAccessGroup
                           title="Task Permissions"
                           permissions={[
