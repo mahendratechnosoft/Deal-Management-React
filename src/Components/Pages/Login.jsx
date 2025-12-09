@@ -113,6 +113,28 @@ function Login({ onSwitchToRegister, onLogin }) {
           localStorage.setItem("rememberMe", "true");
         }
 
+
+        //  CRITICAL: Create new session key and clear old ones
+        const sessionId = `session_${data.userId}_${Date.now()}`;
+
+
+        // Clear ALL old session-related keys
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key.includes('session_') || key.includes('_modal_shown')) {
+            keysToRemove.push(key);
+          }
+        }
+
+        keysToRemove.forEach(key => {
+
+          localStorage.removeItem(key);
+        });
+
+        // Store new session
+        localStorage.setItem('currentSessionKey', sessionId);
+
         // Fetch moduleAccess if employee
         // if (data.role === "ROLE_EMPLOYEE") {
         //   try {
@@ -356,11 +378,10 @@ function Login({ onSwitchToRegister, onLogin }) {
                     type="email"
                     value={formData.username}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 ${
-                      errors.username
-                        ? "border-red-300 bg-red-50"
-                        : "border-gray-300 hover:border-blue-300"
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 ${errors.username
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-300 hover:border-blue-300"
+                      }`}
                     placeholder="Enter your email"
                   />
                   {errors.username && (
@@ -395,11 +416,10 @@ function Login({ onSwitchToRegister, onLogin }) {
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 pr-10 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 ${
-                        errors.password
-                          ? "border-red-300 bg-red-50"
-                          : "border-gray-300 hover:border-blue-300"
-                      }`}
+                      className={`w-full px-4 py-3 pr-10 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 ${errors.password
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300 hover:border-blue-300"
+                        }`}
                       placeholder="Enter your password"
                     />
                     <button
