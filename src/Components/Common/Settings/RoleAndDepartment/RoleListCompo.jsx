@@ -208,6 +208,12 @@ function RoleListCompo() {
     itemCreate: false,
     itemDelete: false,
     itemEdit: false,
+
+    taskViewAll: false,
+    taskAccess: false,
+    taskCreate: false,
+    taskDelete: false,
+    taskEdit: false,
   });
 
   // Module Access State for Update Modal
@@ -265,6 +271,12 @@ function RoleListCompo() {
     itemCreate: false,
     itemDelete: false,
     itemEdit: false,
+
+    taskViewAll: false,
+    taskAccess: false,
+    taskCreate: false,
+    taskDelete: false,
+    taskEdit: false,
   });
 
   useEffect(() => {
@@ -365,6 +377,12 @@ function RoleListCompo() {
       itemCreate: false,
       itemDelete: false,
       itemEdit: false,
+
+      taskViewAll: false,
+      taskAccess: false,
+      taskCreate: false,
+      taskDelete: false,
+      taskEdit: false,
     });
   };
 
@@ -464,6 +482,12 @@ function RoleListCompo() {
         itemCreate: role.itemCreate || false,
         itemDelete: role.itemDelete || false,
         itemEdit: role.itemEdit || false,
+
+        taskAccess: role.taskAccess || false,
+        taskViewAll: role.taskViewAll || false,
+        taskCreate: role.taskCreate || false,
+        taskDelete: role.taskDelete || false,
+        taskEdit: role.taskEdit || false,
       });
     }
 
@@ -1021,6 +1045,21 @@ function RoleListCompo() {
 
                         )}
 
+                        {hasModulePermission("task") && (
+                          <ModuleAccessGroup
+                            title="Task Permissions"
+                            permissions={[
+                              { label: "Access", field: "taskAccess" },
+                              { label: "View All", field: "taskViewAll" },
+                              { label: "Create", field: "taskCreate" },
+                              { label: "Edit", field: "taskEdit" },
+                              { label: "Delete", field: "taskDelete" },
+                            ]}
+                            getAccess={getAccess}
+                            handleAccessChange={handleAccessChange}
+                          />
+                        )}
+
                       </>
                     )}
                     {hasPermission("donor", "Access") && (
@@ -1175,7 +1214,7 @@ function RoleListCompo() {
                       onSelectAll={handleUpdateSelectAllAccess}
                       onClearAll={handleUpdateClearAllAccess}
                       getAccess={getUpdateAccess}
-                      
+
                     />
 
 
@@ -1183,145 +1222,160 @@ function RoleListCompo() {
                     <div className="space-y-4">
                       {/* Rest of the ModuleAccessGroup components remain the same */}
 
-    {!hasPermission("donor", "Access") && (
-                      <>
-                        {hasModulePermission("lead") && (
-                          <ModuleAccessGroup
-                            title="Leads Permissions"
-                            permissions={[
-                              { label: "Access", field: "leadAccess" },
-                              { label: "View All", field: "leadViewAll" },
-                              { label: "Create", field: "leadCreate" },
-                              { label: "Edit", field: "leadEdit" },
-                              { label: "Delete", field: "leadDelete" },
-                            ]}
-                            getAccess={getUpdateAccess}
-                            handleAccessChange={handleUpdateAccessChange}
-                          />
-                        )}
+                      {!hasPermission("donor", "Access") && (
+                        <>
+                          {hasModulePermission("lead") && (
+                            <ModuleAccessGroup
+                              title="Leads Permissions"
+                              permissions={[
+                                { label: "Access", field: "leadAccess" },
+                                { label: "View All", field: "leadViewAll" },
+                                { label: "Create", field: "leadCreate" },
+                                { label: "Edit", field: "leadEdit" },
+                                { label: "Delete", field: "leadDelete" },
+                              ]}
+                              getAccess={getUpdateAccess}
+                              handleAccessChange={handleUpdateAccessChange}
+                            />
+                          )}
 
-                        {hasModulePermission("customer") && (
-                          <ModuleAccessGroup
-                            title="Customer Permissions"
-                            permissions={[
-                              { label: "Access", field: "customerAccess" },
-                              { label: "View All", field: "customerViewAll" },
-                              { label: "Create", field: "customerCreate" },
-                              { label: "Edit", field: "customerEdit" },
-                              { label: "Delete", field: "customerDelete" },
-                            ]}
-                            getAccess={getUpdateAccess}
-                            handleAccessChange={handleUpdateAccessChange}
-                          />
-                        )}
+                          {hasModulePermission("customer") && (
+                            <ModuleAccessGroup
+                              title="Customer Permissions"
+                              permissions={[
+                                { label: "Access", field: "customerAccess" },
+                                { label: "View All", field: "customerViewAll" },
+                                { label: "Create", field: "customerCreate" },
+                                { label: "Edit", field: "customerEdit" },
+                                { label: "Delete", field: "customerDelete" },
+                              ]}
+                              getAccess={getUpdateAccess}
+                              handleAccessChange={handleUpdateAccessChange}
+                            />
+                          )}
 
-                        {hasModulePermission("proposal") && (
-                          <ModuleAccessGroup
-                            title="Proposal Permissions"
-                            permissions={[
-                              { label: "Access", field: "proposalAccess" },
-                              { label: "View All", field: "proposalViewAll" },
-                              { label: "Create", field: "proposalCreate" },
-                              { label: "Edit", field: "proposalEdit" },
-                              { label: "Delete", field: "proposalDelete" },
-                            ]}
-                            getAccess={getUpdateAccess}
-                            handleAccessChange={handleUpdateAccessChange}
-                          />
-                        )}
-                        {hasModulePermission("proforma") && (
+                          {hasModulePermission("proposal") && (
+                            <ModuleAccessGroup
+                              title="Proposal Permissions"
+                              permissions={[
+                                { label: "Access", field: "proposalAccess" },
+                                { label: "View All", field: "proposalViewAll" },
+                                { label: "Create", field: "proposalCreate" },
+                                { label: "Edit", field: "proposalEdit" },
+                                { label: "Delete", field: "proposalDelete" },
+                              ]}
+                              getAccess={getUpdateAccess}
+                              handleAccessChange={handleUpdateAccessChange}
+                            />
+                          )}
+                          {hasModulePermission("proforma") && (
 
-                          <ModuleAccessGroup
-                            title="Proforma Invoice Permissions"
-                            permissions={[
-                              { label: "Access", field: "proformaInvoiceAccess" },
-                              { label: "View All", field: "proformaInvoiceViewAll" },
-                              { label: "Create", field: "proformaInvoiceCreate" },
-                              { label: "Edit", field: "proformaInvoiceEdit" },
-                              { label: "Delete", field: "proformaInvoiceDelete" },
-                            ]}
-                            getAccess={getUpdateAccess}
-                            handleAccessChange={handleUpdateAccessChange}
-                          />
+                            <ModuleAccessGroup
+                              title="Proforma Invoice Permissions"
+                              permissions={[
+                                { label: "Access", field: "proformaInvoiceAccess" },
+                                { label: "View All", field: "proformaInvoiceViewAll" },
+                                { label: "Create", field: "proformaInvoiceCreate" },
+                                { label: "Edit", field: "proformaInvoiceEdit" },
+                                { label: "Delete", field: "proformaInvoiceDelete" },
+                              ]}
+                              getAccess={getUpdateAccess}
+                              handleAccessChange={handleUpdateAccessChange}
+                            />
 
-                        )}
+                          )}
 
-                        {hasModulePermission("invoice") && (
-                          <ModuleAccessGroup
-                            title="Invoice Permissions"
-                            permissions={[
-                              { label: "Access", field: "invoiceAccess" },
-                              { label: "View All", field: "invoiceViewAll" },
-                              { label: "Create", field: "invoiceCreate" },
-                              { label: "Edit", field: "invoiceEdit" },
-                              { label: "Delete", field: "invoiceDelete" },
-                            ]}
-                            getAccess={getUpdateAccess}
-                            handleAccessChange={handleUpdateAccessChange}
-                          />
+                          {hasModulePermission("invoice") && (
+                            <ModuleAccessGroup
+                              title="Invoice Permissions"
+                              permissions={[
+                                { label: "Access", field: "invoiceAccess" },
+                                { label: "View All", field: "invoiceViewAll" },
+                                { label: "Create", field: "invoiceCreate" },
+                                { label: "Edit", field: "invoiceEdit" },
+                                { label: "Delete", field: "invoiceDelete" },
+                              ]}
+                              getAccess={getUpdateAccess}
+                              handleAccessChange={handleUpdateAccessChange}
+                            />
 
-                        )}
-                        {hasModulePermission("payment") && (
-                          <ModuleAccessGroup
-                            title="Payment Permissions"
-                            permissions={[
-                              { label: "Access", field: "paymentAccess" },
-                              { label: "View All", field: "paymentViewAll" },
-                              { label: "Create", field: "paymentCreate" },
-                              { label: "Edit", field: "paymentEdit" },
-                              { label: "Delete", field: "paymentDelete" },
-                            ]}
-                            getAccess={getUpdateAccess}
-                            handleAccessChange={handleUpdateAccessChange}
-                          />
+                          )}
+                          {hasModulePermission("payment") && (
+                            <ModuleAccessGroup
+                              title="Payment Permissions"
+                              permissions={[
+                                { label: "Access", field: "paymentAccess" },
+                                { label: "View All", field: "paymentViewAll" },
+                                { label: "Create", field: "paymentCreate" },
+                                { label: "Edit", field: "paymentEdit" },
+                                { label: "Delete", field: "paymentDelete" },
+                              ]}
+                              getAccess={getUpdateAccess}
+                              handleAccessChange={handleUpdateAccessChange}
+                            />
 
-                        )}
-                        {hasModulePermission("timeSheet") && (
-                          <ModuleAccessGroup
-                            title="Timesheet Permissions"
-                            permissions={[
-                              { label: "Access", field: "timeSheetAccess" },
-                              { label: "View All", field: "timeSheetViewAll" },
-                              { label: "Create", field: "timeSheetCreate" },
-                              { label: "Edit", field: "timeSheetEdit" },
-                              { label: "Delete", field: "timeSheetDelete" },
-                            ]}
-                            getAccess={getUpdateAccess}
-                            handleAccessChange={handleUpdateAccessChange}
-                          />
-                        )}
-                        {hasModulePermission("item") && (
-                          <ModuleAccessGroup
-                            title="Item Permissions"
-                            permissions={[
-                              { label: "Access", field: "itemAccess" },
-                              { label: "View All", field: "itemViewAll" },
-                              { label: "Create", field: "itemCreate" },
-                              { label: "Edit", field: "itemEdit" },
-                              { label: "Delete", field: "itemDelete" },
-                            ]}
-                            getAccess={getUpdateAccess}
-                            handleAccessChange={handleUpdateAccessChange}
-                          />
+                          )}
+                          {hasModulePermission("timeSheet") && (
+                            <ModuleAccessGroup
+                              title="Timesheet Permissions"
+                              permissions={[
+                                { label: "Access", field: "timeSheetAccess" },
+                                { label: "View All", field: "timeSheetViewAll" },
+                                { label: "Create", field: "timeSheetCreate" },
+                                { label: "Edit", field: "timeSheetEdit" },
+                                { label: "Delete", field: "timeSheetDelete" },
+                              ]}
+                              getAccess={getUpdateAccess}
+                              handleAccessChange={handleUpdateAccessChange}
+                            />
+                          )}
+                          {hasModulePermission("item") && (
+                            <ModuleAccessGroup
+                              title="Item Permissions"
+                              permissions={[
+                                { label: "Access", field: "itemAccess" },
+                                { label: "View All", field: "itemViewAll" },
+                                { label: "Create", field: "itemCreate" },
+                                { label: "Edit", field: "itemEdit" },
+                                { label: "Delete", field: "itemDelete" },
+                              ]}
+                              getAccess={getUpdateAccess}
+                              handleAccessChange={handleUpdateAccessChange}
+                            />
 
-                        )}
+                          )}
 
-                      </>
-                    )}
-                    {hasPermission("donor", "Access") && (
-                      <ModuleAccessGroup
-                        title="Donor Permissions"
-                        permissions={[
-                          { label: "Access", field: "donorAccess" },
-                          { label: "View All", field: "donorViewAll" },
-                          { label: "Create", field: "donorCreate" },
-                          { label: "Edit", field: "donorEdit" },
-                          { label: "Delete", field: "donorDelete" },
-                        ]}
-                        getAccess={getAccess}
-                        handleAccessChange={handleUpdateAccessChange}
-                      />
-                    )}
+                          {hasModulePermission("task") && (
+                            <ModuleAccessGroup
+                              title="Task Permissions"
+                              permissions={[
+                                { label: "Access", field: "taskAccess" },
+                                { label: "View All", field: "taskViewAll" },
+                                { label: "Create", field: "taskCreate" },
+                                { label: "Edit", field: "taskEdit" },
+                                { label: "Delete", field: "taskDelete" },
+                              ]}
+                              getAccess={getUpdateAccess}
+                              handleAccessChange={handleUpdateAccessChange}
+                            />
+                          )}
+
+                        </>
+                      )}
+                      {hasPermission("donor", "Access") && (
+                        <ModuleAccessGroup
+                          title="Donor Permissions"
+                          permissions={[
+                            { label: "Access", field: "donorAccess" },
+                            { label: "View All", field: "donorViewAll" },
+                            { label: "Create", field: "donorCreate" },
+                            { label: "Edit", field: "donorEdit" },
+                            { label: "Delete", field: "donorDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleUpdateAccessChange}
+                        />
+                      )}
 
                     </div>
                   </div>

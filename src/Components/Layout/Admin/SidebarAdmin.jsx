@@ -26,7 +26,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
     Donor: "Donor",
     FamilyList: "FamilyList",
     Matchingdonor: "Matchingdonor",
-    TaskList: "TaskList",
+    TaskList: "task",
   };
 
   const navigationItems = [

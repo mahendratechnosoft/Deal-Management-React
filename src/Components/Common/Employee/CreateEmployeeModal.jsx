@@ -152,6 +152,12 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
     itemCreate: false,
     itemDelete: false,
     itemEdit: false,
+
+    taskViewAll: false,
+    taskAccess: false,
+    taskCreate: false,
+    taskDelete: false,
+    taskEdit: false,
   });
 
   // =======================================COUNTrY STATE CITY DROPDOWN START__>===================================
@@ -466,6 +472,12 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
         itemCreate: role.itemCreate,
         itemDelete: role.itemDelete,
         itemEdit: role.itemEdit,
+
+        taskAccess: role.taskAccess,
+        taskViewAll: role.taskViewAll,
+        taskCreate: role.taskCreate,
+        taskDelete: role.taskDelete,
+        taskEdit: role.taskEdit,
       }));
       setRoleOptions(options);
     } catch (error) {
@@ -536,6 +548,12 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
       itemCreate: false,
       itemDelete: false,
       itemEdit: false,
+
+      taskViewAll: false,
+      taskAccess: false,
+      taskCreate: false,
+      taskDelete: false,
+      taskEdit: false,
     });
 
     if (errors.departmentId) {
@@ -618,7 +636,11 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
           itemDelete: selectedRole.itemDelete || false,
           itemEdit: selectedRole.itemEdit || false,
 
-
+          taskAccess: selectedRole.taskAccess || false,
+          taskViewAll: selectedRole.taskViewAll || false,
+          taskCreate: selectedRole.taskCreate || false,
+          taskDelete: selectedRole.taskDelete || false,
+          taskEdit: selectedRole.taskEdit || false,
         });
 
         // Show success message
@@ -684,6 +706,12 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
         itemCreate: false,
         itemDelete: false,
         itemEdit: false,
+
+        taskViewAll: false,
+        taskAccess: false,
+        taskCreate: false,
+        taskDelete: false,
+        taskEdit: false,
       });
 
       toast.success("Permissions reset");
@@ -906,10 +934,10 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
 
 
 
-  
-    const hasModulePermission = (moduleName) => {
-      return hasPermission(moduleName, "Access");
-    };
+
+  const hasModulePermission = (moduleName) => {
+    return hasPermission(moduleName, "Access");
+  };
 
   // Replace the entire return statement with this updated version:
   return (
@@ -1570,6 +1598,21 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                             { label: "Create", field: "itemCreate" },
                             { label: "Edit", field: "itemEdit" },
                             { label: "Delete", field: "itemDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
+
+                      {hasModulePermission("task") && (
+                        <ModuleAccessGroup
+                          title="Task Permissions"
+                          permissions={[
+                            { label: "Access", field: "taskAccess" },
+                            { label: "View All", field: "taskViewAll" },
+                            { label: "Create", field: "taskCreate" },
+                            { label: "Edit", field: "taskEdit" },
+                            { label: "Delete", field: "taskDelete" },
                           ]}
                           getAccess={getAccess}
                           handleAccessChange={handleAccessChange}
