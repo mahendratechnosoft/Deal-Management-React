@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axiosInstance from '../../BaseComponet/axiosInstance';
 import toast from "react-hot-toast";
 import {
@@ -7,14 +7,12 @@ import {
   GlobalSelectField,
   GlobalMultiSelectField
 } from '../../BaseComponet/CustomerFormInputs';
-
-// Add this import at the top with other imports
 import {
   formatInvoiceNumber,
   formatProposalNumber,
   formatDate,
   formatCurrency
-} from '../../BaseComponet/UtilFunctions'; // Adjust path as needed
+} from '../../BaseComponet/UtilFunctions';
 
 function CreateTaskModal({ onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -22,7 +20,11 @@ function CreateTaskModal({ onClose, onSuccess }) {
   const [loadingTeam, setLoadingTeam] = useState(false);
   const [relatedData, setRelatedData] = useState([]);
   const [loadingRelatedData, setLoadingRelatedData] = useState(false);
-  const [showRelatedDropdown, setShowRelatedDropdown] = useState(false);
+  
+  // Attachment state
+  const [attachments, setAttachments] = useState([]);
+  const [attachmentError, setAttachmentError] = useState('');
+  const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     subject: '',
@@ -35,8 +37,8 @@ function CreateTaskModal({ onClose, onSuccess }) {
     relatedTo: '',
     relatedId: '',
     relatedName: '',
-    assignees: [],  // This should store array of IDs for GlobalMultiSelectField
-    followers: [],  // This should store array of IDs for GlobalMultiSelectField
+    assignees: [],
+    followers: [],
     tags: [],
     estimateHours: '',
   });
@@ -69,7 +71,6 @@ function CreateTaskModal({ onClose, onSuccess }) {
     try {
       const response = await axiosInstance.get('getEmployeeNameAndId');
       if (response.data && Array.isArray(response.data)) {
-        // Format for react-select
         const formattedTeamMembers = response.data.map(member => ({
           value: member.employeeId,
           label: member.name
@@ -89,8 +90,7 @@ function CreateTaskModal({ onClose, onSuccess }) {
       fetchRelatedData();
     }
   }, [formData.relatedTo]);
-  // Fetch related data
-  // Fetch related data
+
   const fetchRelatedData = async () => {
     if (!formData.relatedTo) {
       toast.error('Please select a Related To option first');
@@ -101,7 +101,6 @@ function CreateTaskModal({ onClose, onSuccess }) {
     try {
       let endpoint = '';
 
-      // Updated API endpoints as per requirements
       switch (formData.relatedTo) {
         case 'lead':
           endpoint = 'getLeadNameAndIdWithConverted';
@@ -126,7 +125,6 @@ function CreateTaskModal({ onClose, onSuccess }) {
       const responseData = response.data || [];
 
       if (Array.isArray(responseData)) {
-        // Format data using utility functions
         const formattedData = responseData.map(item => {
           switch (formData.relatedTo) {
             case 'lead':
@@ -164,7 +162,6 @@ function CreateTaskModal({ onClose, onSuccess }) {
                 id: item.invoiceId || item.id,
                 name: formatInvoiceNumber(item.invoiceNumber) ||
                   `Invoice #${item.invoiceId || item.id}`,
-                // You can add formatted amount if available
                 amount: item.totalAmount ? formatCurrency(item.totalAmount, item.currency) : '',
                 originalData: item
               };
@@ -179,7 +176,6 @@ function CreateTaskModal({ onClose, onSuccess }) {
         });
 
         setRelatedData(formattedData);
-        setShowRelatedDropdown(true);
       } else {
         toast.error(`No ${formData.relatedTo} data found`);
       }
@@ -191,52 +187,148 @@ function CreateTaskModal({ onClose, onSuccess }) {
       setLoadingRelatedData(false);
     }
   };
+
+  // Handle file attachment selection
+  const handleAttachmentChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    // Check total number of files (max 4)
+    const totalFiles = attachments.length + files.length;
+    if (totalFiles > 4) {
+      setAttachmentError('Maximum 4 files allowed');
+      toast.error('You can only upload up to 4 files');
+      return;
+    }
+
+    // Validate each file
+    const validFiles = [];
+    const errors = [];
+
+    files.forEach((file, index) => {
+      // Validate file size (5MB max)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        errors.push(`"${file.name}" exceeds 5MB limit`);
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = [
+        'application/pdf',
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/plain',
+        'application/zip',
+        'application/x-rar-compressed'
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        errors.push(`"${file.name}" has invalid file type`);
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    // Show errors if any
+    if (errors.length > 0) {
+      errors.forEach(error => toast.error(error));
+    }
+
+    // Add valid files to attachments
+    if (validFiles.length > 0) {
+      const newAttachments = validFiles.map(file => ({
+        id: Date.now() + Math.random(),
+        file,
+        fileName: file.name,
+        size: file.size,
+        type: file.type
+      }));
+
+      setAttachments(prev => [...prev, ...newAttachments]);
+      setAttachmentError('');
+      
+      if (validFiles.length > 0) {
+        toast.success(`Added ${validFiles.length} file(s)`);
+      }
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Remove single attachment
+  const handleRemoveAttachment = (id) => {
+    setAttachments(prev => prev.filter(att => att.id !== id));
+    setAttachmentError('');
+  };
+
+  // Remove all attachments
+  const handleRemoveAllAttachments = () => {
+    setAttachments([]);
+    setAttachmentError('');
+    toast.info('All attachments removed');
+  };
+
+  // Get file icon based on type
+  const getFileIcon = (fileType) => {
+    if (fileType.includes('pdf')) return '📄';
+    if (fileType.includes('image')) return '🖼️';
+    if (fileType.includes('word') || fileType.includes('document')) return '📝';
+    if (fileType.includes('excel') || fileType.includes('spreadsheet')) return '📊';
+    if (fileType.includes('zip') || fileType.includes('rar')) return '🗜️';
+    if (fileType.includes('text')) return '📃';
+    return '📎';
+  };
+
+  // Convert file to base64
+// Convert file to base64 (returns just the base64 string)
+const convertFileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      // Remove the data URL prefix (e.g., "data:image/png;base64,")
+      const base64String = reader.result.split(',')[1];
+      resolve(base64String);
+    };
+    reader.onerror = error => reject(error);
+  });
+};
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Apply character limits before setting state
     let processedValue = value;
 
     switch (name) {
       case 'subject':
-        // Limit subject to 150 characters (including spaces)
         if (value.length <= 150) {
           processedValue = value;
         } else {
-          return; // Don't update if over limit
+          return;
         }
         break;
 
       case 'description':
-        // Limit description to 500 characters
         if (value.length <= 500) {
           processedValue = value;
         } else {
-          return; // Don't update if over limit
+          return;
         }
         break;
 
       case 'hourlyRate':
-        // Limit hourly rate to 4 digits before decimal
-        if (value === '') {
-          processedValue = value;
-        } else {
-          const numValue = parseFloat(value);
-          if (isNaN(numValue)) {
-            processedValue = value;
-          } else {
-            // Check if integer part has more than 4 digits
-            const intPart = Math.floor(numValue).toString();
-            if (intPart.length > 4) {
-              return; // Don't update if over 4 digits
-            }
-            processedValue = value;
-          }
-        }
-        break;
-
       case 'estimateHours':
-        // Limit estimate hours to 4 digits before decimal
         if (value === '') {
           processedValue = value;
         } else {
@@ -244,10 +336,9 @@ function CreateTaskModal({ onClose, onSuccess }) {
           if (isNaN(numValue)) {
             processedValue = value;
           } else {
-            // Check if integer part has more than 4 digits
             const intPart = Math.floor(numValue).toString();
             if (intPart.length > 4) {
-              return; // Don't update if over 4 digits
+              return;
             }
             processedValue = value;
           }
@@ -270,7 +361,6 @@ function CreateTaskModal({ onClose, onSuccess }) {
         relatedName: ''
       }));
       setRelatedData([]);
-      setShowRelatedDropdown(false);
     }
 
     if (errors[name]) {
@@ -293,16 +383,6 @@ function CreateTaskModal({ onClose, onSuccess }) {
       ...prev,
       followers: selectedIds
     }));
-  };
-
-
-  const handleSelectRelatedItem = (item) => {
-    setFormData(prev => ({
-      ...prev,
-      relatedId: item.id,
-      relatedName: item.name
-    }));
-    setShowRelatedDropdown(false);
   };
 
   const validateForm = () => {
@@ -364,56 +444,108 @@ function CreateTaskModal({ onClose, onSuccess }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!validateForm()) {
-      toast.error("Please fix the form errors before submitting.");
-      return;
+  if (!validateForm()) {
+    toast.error("Please fix the form errors before submitting.");
+    return;
+  }
+
+  setLoading(true);
+  try {
+    // Convert attachments to base64
+    const taskAttachments = [];
+    
+    for (const attachment of attachments) {
+      try {
+        // Read file as data URL
+        const base64Data = await convertFileToBase64(attachment.file);
+        
+        // Push the attachment object with fileName, contentType, and data
+        taskAttachments.push({
+          fileName: attachment.fileName,
+          contentType: attachment.type, // This should be the actual MIME type
+          data: base64Data // The base64 string without data URL prefix
+        });
+      } catch (error) {
+        console.error('Error converting file to base64:', error);
+        toast.error(`Failed to process file: ${attachment.fileName}`);
+      }
     }
 
-    setLoading(true);
-    try {
-      const payload = {
+    // Create the nested payload structure as per API requirement
+    const payload = {
+      task: {
         subject: formData.subject.trim(),
         description: formData.description.trim(),
         hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : 0,
-        startDate: formData.startDate, // Don't convert to ISO, send as-is
-        endDate: formData.dueDate || null, // Change 'dueDate' to 'endDate'
+        startDate: formData.startDate,
+        endDate: formData.dueDate || null,
         priority: formData.priority,
         relatedTo: formData.relatedTo || null,
-        relatedToId: formData.relatedId || null, // Change 'relatedId' to 'relatedToId'
+        relatedToId: formData.relatedId || null,
         relatedToName: formData.relatedName || '',
-        assignedEmployees: formData.assignees.map(employeeId => ({
-          employeeId: employeeId
-        })),
-        followersEmployees: formData.followers.map(employeeId => ({
-          employeeId: employeeId
-        })),
-        estimatedHours: formData.estimateHours ? parseFloat(formData.estimateHours) : 0, // Change 'estimateHours' to 'estimatedHours'
+        assignedEmployees: formData.assignees.map(employeeId => {
+          // Find the employee object to get name
+          const employee = teamMembers.find(member => member.value === employeeId);
+          return {
+            employeeId: employeeId,
+            name: employee ? employee.label : `Employee ${employeeId}`
+          };
+        }),
+        followersEmployees: formData.followers.map(employeeId => {
+          // Find the employee object to get name
+          const employee = teamMembers.find(member => member.value === employeeId);
+          return {
+            employeeId: employeeId,
+            name: employee ? employee.label : `Employee ${employeeId}`
+          };
+        }),
+        estimatedHours: formData.estimateHours ? parseFloat(formData.estimateHours) : 0,
         status: 'pending'
-      };
-
-      console.log('Sending payload:', payload); // Add this for debugging
-
-      const response = await axiosInstance.post('createTask', payload);
-
-      if (response.data) {
-        console.log('Response:', response.data); // Add this for debugging
-        toast.success('Task created successfully!');
-        onSuccess();
-      } else {
-        throw new Error('No response data received');
       }
-    } catch (error) {
-      console.error('Error creating task:', error);
-      console.error('Error details:', error.response?.data); // Add this for detailed error
-      toast.error('Failed to create task. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
+    // Add taskAttachments array only if there are attachments
+    if (taskAttachments.length > 0) {
+      payload.taskAttachments = taskAttachments;
+    }
+
+    console.log('Sending payload:', JSON.stringify(payload, null, 2));
+
+    const response = await axiosInstance.post('createTask', payload);
+
+    if (response.data) {
+      console.log('Response:', response.data);
+      toast.success('Task created successfully!');
+      onSuccess();
+    } else {
+      throw new Error('No response data received');
+    }
+  } catch (error) {
+    console.error('Error creating task:', error);
+    
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+      
+      if (error.response.status === 500) {
+        toast.error('Server error: ' + (error.response.data?.message || 'Check console for details'));
+      } else {
+        toast.error('Failed to create task: ' + (error.response.data?.message || 'Unknown error'));
+      }
+    } else if (error.request) {
+      console.error('Request error:', error.request);
+      toast.error('Network error. Please check your connection.');
+    } else {
+      console.error('Error:', error.message);
+      toast.error('Failed to create task. Please try again.');
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   const getTodayDate = () => {
     return new Date().toISOString().split('T')[0];
@@ -423,11 +555,8 @@ function CreateTaskModal({ onClose, onSuccess }) {
     return formData.startDate;
   };
 
-  // FIXED: Use teamMembers directly as options
   const assigneesOptions = teamMembers || [];
   const followersOptions = teamMembers || [];
-
-  // FIXED: formData.assignees and formData.followers are already arrays of IDs
   const selectedAssignees = formData.assignees || [];
   const selectedFollowers = formData.followers || [];
 
@@ -490,10 +619,11 @@ function CreateTaskModal({ onClose, onSuccess }) {
                 error={errors.hourlyRate}
                 placeholder="0"
                 min="0"
-                max="9999" // 4 digit limit
+                max="9999"
                 step="0.01"
                 className="text-sm"
               />
+              
               {/* Date Fields */}
               <div className="grid grid-cols-2 gap-2">
                 <GlobalInputField
@@ -539,8 +669,7 @@ function CreateTaskModal({ onClose, onSuccess }) {
                 className="text-sm"
               />
 
-
-
+              {/* Assignees */}
               <GlobalMultiSelectField
                 label="Assignees"
                 name="assignees"
@@ -551,9 +680,10 @@ function CreateTaskModal({ onClose, onSuccess }) {
                 loading={loadingTeam}
                 className="text-sm"
                 isSearchable={true}
-                closeMenuOnSelect={false} // This is optional - remove if you want menu to close after selection
+                closeMenuOnSelect={false}
               />
 
+              {/* Followers */}
               <GlobalMultiSelectField
                 label="Followers"
                 name="followers"
@@ -564,8 +694,10 @@ function CreateTaskModal({ onClose, onSuccess }) {
                 loading={loadingTeam}
                 className="text-sm"
                 isSearchable={true}
-                closeMenuOnSelect={false} // This is optional - remove if you want menu to close after selection
+                closeMenuOnSelect={false}
               />
+              
+              {/* Related Item Selection */}
               {formData.relatedTo && (
                 <GlobalSelectField
                   label={`Select ${formData.relatedTo.charAt(0).toUpperCase() + formData.relatedTo.slice(1)}`}
@@ -605,7 +737,7 @@ function CreateTaskModal({ onClose, onSuccess }) {
               />
             </div>
 
-            {/* Task Description - Full width */}
+            {/* Task Description */}
             <div className="mt-3">
               <div className="relative">
                 <GlobalTextAreaField
@@ -623,6 +755,110 @@ function CreateTaskModal({ onClose, onSuccess }) {
                 </div>
               </div>
             </div>
+
+            {/* Attachments Section */}
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Attachments (Max 4 files, 5MB each)
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">
+                    {attachments.length}/4 files
+                  </span>
+                  {attachments.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveAllAttachments}
+                      className="text-xs text-red-600 hover:text-red-800 hover:underline"
+                    >
+                      Remove All
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              {/* Single File Input */}
+              <div className="mb-3">
+                <div className="relative">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    multiple
+                    onChange={handleAttachmentChange}
+                    className="hidden"
+                    id="file-upload"
+                    disabled={attachments.length >= 4}
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    className={`flex items-center justify-center p-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${attachments.length >= 4 ? 'bg-gray-100 border-gray-300 cursor-not-allowed' : 'border-blue-300 hover:border-blue-500 hover:bg-blue-50'}`}
+                  >
+                    <div className="text-center">
+                      <svg className="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <p className="text-sm text-gray-600">
+                        {attachments.length >= 4 
+                          ? 'Maximum 4 files reached'
+                          : 'Click to select files or drag and drop'
+                        }
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        PDF, Images, Documents, Text files (Max 5MB each)
+                      </p>
+                    </div>
+                  </label>
+                </div>
+                
+                {attachmentError && (
+                  <p className="mt-2 text-xs text-red-600">{attachmentError}</p>
+                )}
+              </div>
+
+              {/* Selected Files Row */}
+              {attachments.length > 0 && (
+                <div className="mt-3">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Files:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {attachments.map((attachment) => (
+                      <div
+                        key={attachment.id}
+                        className="group relative flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 hover:bg-blue-100 transition-colors"
+                      >
+                        <span className="text-lg">{getFileIcon(attachment.type)}</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-800 truncate max-w-[150px]">
+                            {attachment.fileName}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {(attachment.size / (1024 * 1024)).toFixed(2)} MB
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAttachment(attachment.id)}
+                          className="ml-2 p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                          title="Remove file"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* File Summary */}
+                  <div className="mt-2 text-xs text-gray-500">
+                    <p>
+                      Total: {attachments.length} file(s) • 
+                      Total size: {(attachments.reduce((sum, att) => sum + att.size, 0) / (1024 * 1024)).toFixed(2)} MB
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </form>
         </div>
 
@@ -638,7 +874,7 @@ function CreateTaskModal({ onClose, onSuccess }) {
             </button>
 
             <button
-              type="button" a
+              type="button"
               onClick={handleSubmit}
               disabled={loading}
               className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"

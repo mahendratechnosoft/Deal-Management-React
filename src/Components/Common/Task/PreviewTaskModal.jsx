@@ -3,6 +3,8 @@ import axiosInstance from '../../BaseComponet/axiosInstance';
 import toast from "react-hot-toast";
 import Chart from 'chart.js/auto';
 import { GlobalMultiSelectField } from '../../BaseComponet/CustomerFormInputs';
+import TaskComments from './TaskComments';
+import CircularAssigneesSelector from './CircularAssigneesSelector';
 
 function PreviewTaskModal({ taskId, onClose }) {
   const [loading, setLoading] = useState(true);
@@ -10,8 +12,7 @@ function PreviewTaskModal({ taskId, onClose }) {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [activeTab, setActiveTab] = useState('timelogs');
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState('');
+
   const [attachments, setAttachments] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [loadingTeam, setLoadingTeam] = useState(false);
@@ -19,12 +20,41 @@ function PreviewTaskModal({ taskId, onClose }) {
   const timerRef = useRef(null);
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
-
+  const [currentUser, setCurrentUser] = useState(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [deletingAttachment, setDeletingAttachment] = useState(null);
   // Fetch team members on component mount
   useEffect(() => {
     fetchTeamMembers();
   }, []);
 
+
+  useEffect(() => {
+    // Get current user info from localStorage or your auth system
+    const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setCurrentUser({
+          employeeId: parsedUser.employeeId || parsedUser.id,
+          name: parsedUser.name || parsedUser.username || 'You'
+        });
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+        // Fallback to a default user
+        setCurrentUser({
+          employeeId: 'current-user',
+          name: 'You'
+        });
+      }
+    } else {
+      // Fallback if no user data found
+      setCurrentUser({
+        employeeId: 'current-user',
+        name: 'You'
+      });
+    }
+  }, []);
   // Fetch task details when taskId changes
   useEffect(() => {
     if (taskId) {
@@ -51,6 +81,203 @@ function PreviewTaskModal({ taskId, onClose }) {
       if (chartInstance.current) chartInstance.current.destroy();
     };
   }, [activeTab]);
+
+  // Add this useEffect after the existing useEffect that fetches task details
+  useEffect(() => {
+    if (taskId) {
+      fetchAttachments();
+    }
+  }, [taskId]);
+
+  const fetchAttachments = async () => {
+    try {
+      console.log('Fetching attachments for taskId:', taskId);
+      const response = await axiosInstance.get(`getTaskAttachmentByTaskId/${taskId}`);
+      console.log('Attachments API response:', response);
+
+      if (response.data && Array.isArray(response.data)) {
+        console.log('Attachments received:', response.data.length);
+        setAttachments(response.data);
+      } else {
+        console.log('No attachments array in response');
+        setAttachments([]);
+      }
+    } catch (error) {
+      console.error('Error fetching attachments:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      toast.error('Failed to load attachments');
+      setAttachments([]);
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    setUploadingFile(true);
+
+    try {
+      // Read files as base64
+      const filePromises = files.map(file => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64String = reader.result.split(',')[1];
+            resolve({
+              taskId: taskId,
+              fileName: file.name,
+              contentType: file.type,
+              data: base64String
+            });
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      });
+
+      const attachmentData = await Promise.all(filePromises);
+
+      // Upload files to API
+      const response = await axiosInstance.post('addTaskAttachement', attachmentData);
+
+      if (response.status === 200) {
+        toast.success(`${files.length} file(s) uploaded successfully`);
+        // Refresh attachments list
+        fetchAttachments();
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast.error('Failed to upload file(s)');
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId) => {
+    if (!window.confirm('Are you sure you want to delete this attachment?')) return;
+
+    setDeletingAttachment(attachmentId);
+
+    try {
+      const response = await axiosInstance.delete(`deleteTaskAttachement/${attachmentId}`);
+
+      if (response.status === 200) {
+        toast.success('Attachment deleted successfully');
+        // Remove from local state
+        setAttachments(attachments.filter(att => att.taskAttachmentId !== attachmentId));
+      }
+    } catch (error) {
+      console.error('Error deleting attachment:', error);
+      toast.error('Failed to delete attachment');
+    } finally {
+      setDeletingAttachment(null);
+    }
+  };
+
+  const handleDownloadAttachment = async (attachment) => {
+    try {
+      // Create a blob from base64 data
+      const byteCharacters = atob(attachment.data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: attachment.contentType });
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = attachment.fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Download started');
+    } catch (error) {
+      console.error('Error downloading attachment:', error);
+      toast.error('Failed to download file');
+    }
+  };
+
+  const getFileIconComponent = (fileName, contentType) => {
+    const extension = fileName.split('.').pop().toLowerCase();
+
+    // Check by content type first
+    if (contentType.includes('image')) {
+      return (
+        <div className="text-blue-500">
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+          </svg>
+        </div>
+      );
+    }
+
+    if (contentType.includes('pdf')) {
+      return (
+        <div className="text-red-500">
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+          </svg>
+        </div>
+      );
+    }
+
+    if (contentType.includes('word') || contentType.includes('document') || extension === 'doc' || extension === 'docx') {
+      return (
+        <div className="text-blue-600">
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+          </svg>
+        </div>
+      );
+    }
+
+    if (contentType.includes('excel') || contentType.includes('spreadsheet') || extension === 'xls' || extension === 'xlsx') {
+      return (
+        <div className="text-green-600">
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+          </svg>
+        </div>
+      );
+    }
+
+    if (contentType.includes('zip') || contentType.includes('compressed') || extension === 'zip' || extension === 'rar' || extension === '7z') {
+      return (
+        <div className="text-yellow-600">
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+          </svg>
+        </div>
+      );
+    }
+
+    // Default file icon
+    return (
+      <div className="text-gray-600">
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+        </svg>
+      </div>
+    );
+  };
+
+  const formatFileSize = (base64String) => {
+    if (!base64String) return '0 KB';
+
+    // Calculate size from base64 string
+    const sizeInBytes = (base64String.length * 3) / 4;
+
+    if (sizeInBytes < 1024) return `${sizeInBytes} B`;
+    if (sizeInBytes < 1024 * 1024) return `${(sizeInBytes / 1024).toFixed(1)} KB`;
+    return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  // ====================================================================
 
   const fetchTeamMembers = async () => {
     setLoadingTeam(true);
@@ -182,7 +409,7 @@ function PreviewTaskModal({ taskId, onClose }) {
 
         setTimerSeconds(totalLoggedTime);
         setTimeLogs(formattedTimeLogs);
-        setComments(formattedComments);
+
         setAttachments(formattedAttachments);
       }
     } catch (error) {
@@ -220,16 +447,6 @@ function PreviewTaskModal({ taskId, onClose }) {
         { id: 3, member: "Dnyanesh Patil", startTime: "27-11-2024 9:16 AM", endTime: "27-11-2024 6:38 PM", timeSpent: "09:21", decimalTime: "9.36" }
       ]);
 
-      setComments([
-        { id: 1, user: "Punamdeep Kaur", avatar: "PK", comment: "Please review the homepage layout", timestamp: "Today 10:30 AM", isEdited: false },
-        { id: 2, user: "Aditya Lohar", avatar: "AL", comment: "Working on the contact form integration", timestamp: "Yesterday 3:45 PM", isEdited: false }
-      ]);
-
-      setAttachments([
-        { id: 1, name: "design-mockup.png", size: "2.4 MB", type: "image" },
-        { id: 2, name: "requirements.pdf", size: "1.8 MB", type: "pdf" },
-        { id: 3, name: "wireframes.fig", size: "3.2 MB", type: "design" }
-      ]);
     } finally {
       setLoading(false);
     }
@@ -254,24 +471,7 @@ function PreviewTaskModal({ taskId, onClose }) {
     }
   };
 
-  const handleAddComment = (e) => {
-    e.preventDefault();
-    if (!newComment.trim()) {
-      toast.error("Please enter a comment");
-      return;
-    }
-    const newCommentObj = {
-      id: comments.length + 1,
-      user: "You",
-      avatar: "ME",
-      comment: newComment,
-      timestamp: "Just now",
-      isEdited: false
-    };
-    setComments([newCommentObj, ...comments]);
-    setNewComment('');
-    toast.success("Comment added");
-  };
+
 
   const handleAssigneesChange = (selectedIds) => {
     if (task) {
@@ -291,17 +491,7 @@ function PreviewTaskModal({ taskId, onClose }) {
     }
   };
 
-  const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files);
-    const newAttachments = files.map((file, index) => ({
-      id: attachments.length + index + 1,
-      name: file.name,
-      size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-      type: file.type.split('/')[0] || 'file'
-    }));
-    setAttachments([...attachments, ...newAttachments]);
-    toast.success(`${files.length} file(s) uploaded`);
-  };
+
 
   const handleRemoveAttachment = (attachmentId) => {
     setAttachments(attachments.filter(att => att.id !== attachmentId));
@@ -319,14 +509,6 @@ function PreviewTaskModal({ taskId, onClose }) {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
   };
 
-  const getFileIcon = (type) => {
-    switch (type) {
-      case 'image': return '🖼️';
-      case 'pdf': return '📄';
-      case 'design': return '🎨';
-      default: return '📎';
-    }
-  };
 
   const getPriorityColor = (priority) => {
     switch (priority?.toLowerCase()) {
@@ -595,68 +777,93 @@ function PreviewTaskModal({ taskId, onClose }) {
               </div>
 
               {/* Comments */}
-              <div className="bg-white rounded border border-gray-200 p-3">
-                <h3 className="font-semibold text-gray-900 mb-2">Comments</h3>
-                <div className="space-y-2 mb-2 max-h-40 overflow-y-auto">
-                  {comments.map((comment) => (
-                    <div key={comment.id} className="border-b border-gray-100 pb-2 last:border-0">
-                      <div className="flex items-start gap-2">
-                        <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                          {comment.avatar || getInitials(comment.user)}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-gray-900 text-sm">{comment.user}</span>
-                            <span className="text-xs text-gray-500">{comment.timestamp}</span>
-                          </div>
-                          <p className="text-gray-700 text-sm mt-0.5">{comment.comment}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <form onSubmit={handleAddComment} className="flex gap-1.5">
-                  <input type="text" value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Add comment..." className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" />
-                  <button type="submit" className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
-                    Add
-                  </button>
-                </form>
-              </div>
-
+              <TaskComments taskId={taskId} />
               {/* Attachments */}
               <div className="bg-white rounded border border-gray-200 p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900">Attachments</h3>
-                  <div>
-                    <input type="file" id="fileUpload" multiple onChange={handleFileUpload} className="hidden" />
-                    <label htmlFor="fileUpload" className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer">
-                      + Add Files
+                  <h3 className="font-semibold text-gray-900 text-sm">Attachments</h3>
+                  <div className="flex items-center gap-2">
+                    {uploadingFile && (
+                      <span className="text-xs text-gray-500">Uploading...</span>
+                    )}
+                    <input
+                      type="file"
+                      id="fileUpload"
+                      multiple
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      disabled={uploadingFile}
+                    />
+                    <label
+                      htmlFor="fileUpload"
+                      className={`text-xs px-2 py-1 rounded ${uploadingFile ? 'text-gray-400 cursor-not-allowed bg-gray-100' : 'text-blue-600 hover:text-blue-800 cursor-pointer bg-blue-50 hover:bg-blue-100'}`}
+                    >
+                      + Add
                     </label>
                   </div>
                 </div>
 
                 {attachments.length > 0 ? (
-                  <div className="space-y-1.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {attachments.map((attachment) => (
-                      <div key={attachment.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <span className="text-base">{getFileIcon(attachment.type)}</span>
-                          <div>
-                            <div className="font-medium text-gray-900 text-xs">{attachment.name}</div>
-                            <div className="text-xs text-gray-500">{attachment.size}</div>
+                      <div
+                        key={attachment.taskAttachmentId || attachment.id}
+                        className="border border-gray-200 rounded p-2 hover:border-blue-300 hover:shadow-sm transition-all group"
+                      >
+                        <div className="flex flex-col h-full">
+                          {/* File icon and name */}
+                          <div className="flex items-start gap-2 mb-1">
+                            <div className="flex-shrink-0 w-8 h-8 bg-blue-50 rounded flex items-center justify-center">
+                              {getFileIconComponent(attachment.fileName, attachment.contentType)}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div
+                                className="font-medium text-gray-900 text-xs truncate cursor-pointer hover:text-blue-600"
+                                onClick={() => handleDownloadAttachment(attachment)}
+                                title={attachment.fileName}
+                              >
+                                {attachment.fileName}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {formatFileSize(attachment.data)}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Meta info and actions */}
+                          <div className="flex items-center justify-between mt-auto pt-1 border-t border-gray-100">
+                            <div className="text-xs text-gray-500 truncate max-w-[70%]" title={attachment.uploadedBy || 'Unknown'}>
+                              {attachment.uploadedBy || 'Unknown'}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {attachment.uploadedAt && (
+                                <span className="text-xs text-gray-400">
+                                  {new Date(attachment.uploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </span>
+                              )}
+                              <button
+                                onClick={() => handleDeleteAttachment(attachment.taskAttachmentId || attachment.id)}
+                                disabled={deletingAttachment === (attachment.taskAttachmentId || attachment.id)}
+                                className="text-gray-400 hover:text-red-500 ml-1"
+                                title="Delete"
+                              >
+                                {deletingAttachment === (attachment.taskAttachmentId || attachment.id) ? (
+                                  <div className="w-3 h-3 border border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                                ) : (
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                )}
+                              </button>
+                            </div>
                           </div>
                         </div>
-                        <button onClick={() => handleRemoveAttachment(attachment.id)} className="text-gray-400 hover:text-red-500">
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center text-gray-500 italic p-2 bg-gray-50 rounded border border-gray-200 text-sm">
-                    No attachments yet
+                  <div className="text-center text-gray-400 italic text-xs p-4 bg-gray-50 rounded border border-dashed border-gray-300">
+                    No attachments uploaded yet
                   </div>
                 )}
               </div>
@@ -731,19 +938,20 @@ function PreviewTaskModal({ taskId, onClose }) {
               {/* Assignees - Using GlobalMultiSelectField */}
               <div className="bg-white rounded border border-gray-200 p-3">
                 <h3 className="font-semibold text-gray-900 mb-2">Assignees</h3>
-                <GlobalMultiSelectField
-                  name="assignees"
+
+
+                <CircularAssigneesSelector
                   value={task.assignees || []}
-                  onChange={handleAssigneesChange}
                   options={teamMembers}
-                  placeholder="Select assignees..."
                   loading={loadingTeam}
-                  className="text-sm"
-                  isSearchable={true}
+                  onChange={handleAssigneesChange}
+                  getInitials={getInitials}
                 />
 
+
+
                 {/* Display selected assignees */}
-                {getSelectedAssigneeNames().length > 0 && (
+                {/* {getSelectedAssigneeNames().length > 0 && (
                   <div className="mt-2 space-y-1.5">
                     {getSelectedAssigneeNames().map((assignee, index) => (
                       <div key={index} className="flex items-center gap-2 p-1.5 bg-gray-50 rounded border border-gray-200">
@@ -754,37 +962,20 @@ function PreviewTaskModal({ taskId, onClose }) {
                       </div>
                     ))}
                   </div>
-                )}
+                )} */}
               </div>
 
               {/* Followers - Using GlobalMultiSelectField */}
               <div className="bg-white rounded border border-gray-200 p-3">
                 <h3 className="font-semibold text-gray-900 mb-2">Followers</h3>
-                <GlobalMultiSelectField
-                  name="followers"
-                  value={task.followers || []}
-                  onChange={handleFollowersChange}
-                  options={teamMembers}
-                  placeholder="Select followers..."
-                  loading={loadingTeam}
-                  className="text-sm"
-                  isSearchable={true}
-                  menuPlacement="top"
-                />
 
-                {/* Display selected followers */}
-                {getSelectedFollowerNames().length > 0 && (
-                  <div className="mt-2 space-y-1.5">
-                    {getSelectedFollowerNames().map((follower, index) => (
-                      <div key={index} className="flex items-center gap-2 p-1.5 bg-gray-50 rounded border border-gray-200">
-                        <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                          {getInitials(follower)}
-                        </div>
-                        <span className="font-medium text-gray-900 text-sm">{follower}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <CircularAssigneesSelector
+                  value={task.followers || []}
+                  options={teamMembers}
+                  loading={loadingTeam}
+                  onChange={handleFollowersChange}
+                  getInitials={getInitials}
+                />
               </div>
             </div>
           </div>
