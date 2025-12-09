@@ -14,6 +14,7 @@ import { showDeleteConfirmation } from "../../BaseComponet/alertUtils";
 import CustomFilterWindow from "../../BaseComponet/CustomFilterWindow";
 import { FormInput } from "../../BaseComponet/CustomeFormComponents";
 import axios from "axios";
+import FollowUpModal from "./FollowUpModal";
 
 // Table Body Skeleton Component (for search operations)
 const TableBodySkeleton = ({ rows = 5, columns = 7 }) => {
@@ -53,6 +54,32 @@ const PaginationSkeleton = () => {
     </div>
   );
 };
+
+// Add this function in LeadList.js (outside component or inside)
+const cleanupExpiredSessions = () => {
+  try {
+    const currentTime = Date.now();
+    const oneDayAgo = currentTime - (24 * 60 * 60 * 1000);
+
+    Object.keys(localStorage).forEach(key => {
+      if (key.includes('modal_session_') || key.includes('_modal_shown')) {
+        // Extract timestamp from key
+        const match = key.match(/_(\d+)_/);
+        if (match) {
+          const timestamp = parseInt(match[1]);
+          if (timestamp < oneDayAgo) {
+            localStorage.removeItem(key);
+            console.log('Cleaned up expired session key:', key);
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error cleaning up sessions:', error);
+  }
+};
+
+
 
 // Full Page Skeleton Component (for initial load)
 const LeadListSkeleton = () => {
@@ -165,6 +192,16 @@ function LeadList() {
   const [endDate, setEndDate] = useState("");
   const [isExcelDownloading, setIsExcelDownloading] = useState(false);
 
+
+  const [hasShownFollowUp, setHasShownFollowUp] = useState(false);
+  // Add to your existing state variables
+  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
+  const [followUpLeads, setFollowUpLeads] = useState([]);
+  const [followUpCount, setFollowUpCount] = useState(0);
+  const [followUpDate, setFollowUpDate] = useState(new Date().toISOString().split('T')[0]); // Default today
+  const [isFetchingFollowUps, setIsFetchingFollowUps] = useState(false);
+  const [isFollowUpFilterActive, setIsFollowUpFilterActive] = useState(false);
+
   // Default columns
   const [columns, setColumns] = useState([
     { id: "clientName", name: "CLIENT NAME", visible: true, order: 0 },
@@ -200,6 +237,54 @@ function LeadList() {
     // For non-converted leads, show all options except "Converted"
     return statusOptions;
   };
+
+  // Call this in your useEffect
+  useEffect(() => {
+    cleanupExpiredSessions();
+    // ... rest of your useEffect ...
+  }, []);
+  // Fetch follow-up leads count function (for the card only)
+  // Update the fetchFollowUpLeads function
+  const fetchFollowUpLeads = async (date = followUpDate, forceShow = false) => {
+    try {
+      setIsFetchingFollowUps(true);
+
+      const response = await axiosInstance.get(`getLeadFollowUp?followUpdate=${date}`);
+
+      let count = 0;
+      let leads = [];
+
+      if (response.data) {
+        count = response.data.count || 0;
+
+        if (response.data.todayLeadFolloUp && Array.isArray(response.data.todayLeadFolloUp)) {
+          leads = response.data.todayLeadFolloUp;
+        }
+      }
+
+      setFollowUpCount(count);
+      setFollowUpLeads(leads);
+
+      // Show modal only if forced by user
+      if (count > 0 && leads.length > 0 && forceShow) {
+        console.log('Showing modal - forced by user');
+        setShowFollowUpModal(true);
+      }
+
+    } catch (err) {
+      console.error("Error fetching follow-up leads:", err);
+      toast.error("Failed to load follow-ups");
+      setFollowUpLeads([]);
+    } finally {
+      setIsFetchingFollowUps(false);
+    }
+  };
+
+
+
+
+
+
   // Updated custom styles for React Select v5
   const customStyles = {
     control: (base, state) => ({
@@ -265,8 +350,8 @@ function LeadList() {
       backgroundColor: state.isSelected
         ? "#d4e3f6" // bright blue for selected
         : state.isFocused
-        ? "#f3f4f6" // light gray hover
-        : "#fff", // normal
+          ? "#f3f4f6" // light gray hover
+          : "#fff", // normal
       color: state.isSelected ? "#2563eb" : "#111827",
       cursor: "pointer",
       transition: "background-color 0.2s ease",
@@ -287,6 +372,8 @@ function LeadList() {
       <span className="truncate">{label}</span>
     </div>
   );
+
+
 
   const kanbanColumns = [
     {
@@ -394,6 +481,10 @@ function LeadList() {
     startDate = null,
     endDate = null
   ) => {
+    // Reset follow-up active state if other filters are being used
+    if (search || status !== "all" || startDate || endDate) {
+      setIsFollowUpFilterActive(false);
+    }
     // Cancel previous request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -473,10 +564,67 @@ function LeadList() {
       });
     }
   };
+  // In LeadList.js
+  // In LeadList.js - update the useEffect
+  useEffect(() => {
+    const fetchAndShowFollowUpsOnLogin = async () => {
+      try {
+        setIsFetchingFollowUps(true);
+        const response = await axiosInstance.get(
+          `getLeadFollowUp?followUpdate=${followUpDate}`
+        );
 
+        let count = 0;
+        let leads = [];
+
+        if (response.data) {
+          count = response.data.count || 0;
+          if (response.data.todayLeadFolloUp && Array.isArray(response.data.todayLeadFolloUp)) {
+            leads = response.data.todayLeadFolloUp;
+          }
+        }
+
+        setFollowUpCount(count);
+        setFollowUpLeads(leads);
+
+        // ✅ FIXED: Check for current session
+        const currentSessionKey = localStorage.getItem('currentSessionKey');
+
+        if (count > 0 && leads.length > 0 && currentSessionKey) {
+          // Check if modal has been shown for this session
+          const modalShownKey = `${currentSessionKey}_modal_shown`;
+          const modalAlreadyShown = localStorage.getItem(modalShownKey);
+
+          if (!modalAlreadyShown) {
+            console.log("✅ Showing follow-up modal - first time this session");
+            setShowFollowUpModal(true);
+
+            // Mark modal as shown for this session
+            localStorage.setItem(modalShownKey, 'true');
+          } else {
+            console.log("Modal already shown this session");
+          }
+        } else {
+          console.log("Not showing modal - conditions:", {
+            count,
+            leadsLength: leads.length,
+            currentSessionKey
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching initial follow-ups:", error);
+        setFollowUpLeads([]);
+        setFollowUpCount(0);
+      } finally {
+        setIsFetchingFollowUps(false);
+      }
+    };
+
+    fetchAndShowFollowUpsOnLogin();
+  }, []); // Runs once when component mounts
   // Optimized useEffect for search and initial load
   useEffect(() => {
-    if (viewMode === "table") {
+    if (viewMode === "table" && !isFollowUpFilterActive) {
       const timeoutId = setTimeout(() => {
         const isSearch =
           searchTerm !== "" ||
@@ -484,12 +632,14 @@ function LeadList() {
           currentPage !== 0 ||
           startDate ||
           endDate;
+
         fetchLeads(0, searchTerm, statusFilter, isSearch, startDate, endDate);
       }, 500);
 
       return () => clearTimeout(timeoutId);
     }
-  }, [searchTerm, statusFilter, viewMode, pageSize]);
+  }, [searchTerm, statusFilter, viewMode, pageSize, isFollowUpFilterActive]);
+
 
   // Separate useEffect for initial data loading
   useEffect(() => {
@@ -534,9 +684,14 @@ function LeadList() {
     // toast.success("Lead converted to customer successfully!");
   };
 
-  const handleCardFilter = (status) => {
-    setStatusFilter(status);
-  };
+const handleCardFilter = (status) => {
+  setIsFollowUpFilterActive(false);   // ✅ Exit follow-up mode
+  setFollowUpDate(new Date().toISOString().split("T")[0]);
+
+  setStatusFilter(status);           // ✅ ONLY set state
+  setCurrentPage(0);                 // ✅ Reset page
+};
+
 
   const handlePageChange = (newPage) => {
     if (newPage >= 0 && newPage < totalPages) {
@@ -684,9 +839,9 @@ function LeadList() {
         isSearchable={false}
         menuPlacement="auto"
         classNamePrefix="react-select"
-        onMenuOpen={() => {}}
-        onMenuClose={() => {}}
-        onInputChange={() => {}}
+        onMenuOpen={() => { }}
+        onMenuClose={() => { }}
+        onInputChange={() => { }}
         menuPortalTarget={document.body} // This renders dropdown in body
         menuPosition="fixed" // Use fixed positioning
         components={{
@@ -699,6 +854,113 @@ function LeadList() {
   const toggleStatusDropdown = (leadId) => {
     setActiveStatusDropdown(activeStatusDropdown === leadId ? null : leadId);
   };
+
+
+  // Function to fetch leads with follow-up date filter
+  // Function to fetch leads with follow-up date filter (for table view)
+  const fetchLeadsWithFollowUpDate = async (date = followUpDate) => {
+    try {
+      setSearchLoading(true);
+      setIsFollowUpFilterActive(true); // Set active state
+
+      const url = `getAllLeads/0/${pageSize}?followUpDate=${date}`;
+
+      const response = await axiosInstance.get(url);
+      const data = response.data;
+
+      setLeads(data.leadList || []);
+      setTotalPages(data.totalPages || 1);
+      setCurrentPage(0);
+      setTotalLeads(data.totalLeads || 0);
+      setStatusAndCount(data.statusAndCount || []);
+
+      // Reset other filters
+      setStatusFilter("all");
+      setSearchTerm("");
+
+    } catch (err) {
+      console.error("Error fetching leads with follow-up date:", err);
+      toast.error("Failed to load follow-up leads");
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const resetFollowUpFilter = () => {
+    setIsFollowUpFilterActive(false);
+    fetchLeads(0, "", "all", true);
+  };
+
+
+
+  // Keep only ONE useEffect for follow-up modal (lines 511-545, but simplified)
+  useEffect(() => {
+    const checkAndShowFollowUpModal = async () => {
+      try {
+        setIsFetchingFollowUps(true);
+
+        // Clean up old sessions first
+        cleanupExpiredSessions();
+
+        // Check if we should show modal for this session
+        const currentSessionKey = localStorage.getItem('currentSessionKey');
+
+        if (!currentSessionKey) {
+          console.log("No session key found - user might not be logged in via Login component");
+          setIsFetchingFollowUps(false);
+          return;
+        }
+
+        // Check if modal already shown for this session
+        const modalShownKey = `${currentSessionKey}_modal_shown`;
+        const modalAlreadyShown = localStorage.getItem(modalShownKey);
+
+        if (modalAlreadyShown) {
+          console.log("Modal already shown for this session");
+          setIsFetchingFollowUps(false);
+          return;
+        }
+
+        // Fetch follow-up data
+        const response = await axiosInstance.get(
+          `getLeadFollowUp?followUpdate=${followUpDate}`
+        );
+
+        let count = 0;
+        let leads = [];
+
+        if (response.data) {
+          count = response.data.count || 0;
+          if (response.data.todayLeadFolloUp && Array.isArray(response.data.todayLeadFolloUp)) {
+            leads = response.data.todayLeadFolloUp;
+          }
+        }
+
+        setFollowUpCount(count);
+        setFollowUpLeads(leads);
+
+        // Show modal if there are follow-ups
+        if (count > 0 && leads.length > 0) {
+          console.log("✅ Showing follow-up modal - first time this session");
+          setShowFollowUpModal(true);
+
+          // Mark modal as shown for this session
+          localStorage.setItem(modalShownKey, 'true');
+        } else {
+          console.log("No follow-ups to show");
+        }
+      } catch (error) {
+        console.error("Error in checkAndShowFollowUpModal:", error);
+        setFollowUpLeads([]);
+        setFollowUpCount(0);
+      } finally {
+        setIsFetchingFollowUps(false);
+      }
+    };
+
+    // Call the function
+    checkAndShowFollowUpModal();
+  }, []); // Empty dependency array - runs once on mount
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -1207,8 +1469,7 @@ function LeadList() {
 
     try {
       const response = await axiosInstance.get(
-        `leadExcelExport?leadStatus=${
-          statusFilter === "all" ? "" : statusFilter
+        `leadExcelExport?leadStatus=${statusFilter === "all" ? "" : statusFilter
         }&startDate=${startDate}&endDate=${endDate}`,
         {
           responseType: "blob",
@@ -1311,11 +1572,10 @@ function LeadList() {
               <div className="flex bg-gray-100 rounded-lg p-0.5">
                 <button
                   onClick={() => setViewMode("table")}
-                  className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-200 ${
-                    viewMode === "table"
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-200 ${viewMode === "table"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   <div className="flex items-center gap-1.5">
                     <svg
@@ -1336,11 +1596,10 @@ function LeadList() {
                 </button>
                 <button
                   onClick={() => setViewMode("kanban")}
-                  className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-200 ${
-                    viewMode === "kanban"
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-200 ${viewMode === "kanban"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   <div className="flex items-center gap-1.5">
                     <svg
@@ -1541,16 +1800,18 @@ function LeadList() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8 gap-2 mb-4">
             {/* Total Leads Card */}
             <div
-              className={`bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer ${
-                statusFilter === "all" ? "ring-2 ring-blue-500" : ""
-              }`}
-              onClick={() => handleCardFilter("all")}
+              className={`bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer ${statusFilter === "all" && !isFollowUpFilterActive ? "ring-2 ring-blue-500" : ""}
+`}
+              onClick={() => {
+                setIsFollowUpFilterActive(false);
+                handleCardFilter("all");
+              }}
+
             >
               <div className="flex items-center gap-2">
                 <div
-                  className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
-                    statusFilter === "all" ? "bg-gray-200" : "bg-gray-100"
-                  }`}
+                  className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${statusFilter === "all" ? "bg-gray-200" : "bg-gray-100"
+                    }`}
                 >
                   <svg
                     className="w-3 h-3 text-gray-600"
@@ -1662,18 +1923,16 @@ function LeadList() {
               return (
                 <div
                   key={statusCount.status}
-                  className={`bg-white rounded-lg p-2 shadow-sm border hover:shadow-md transition-all duration-200 cursor-pointer ${
-                    isActive ? config.activeBorderColor : config.borderColor
-                  } ${isActive ? `ring-2 ${config.ringColor}` : ""}`}
+                  className={`bg-white rounded-lg p-2 shadow-sm border hover:shadow-md transition-all duration-200 cursor-pointer ${isActive ? config.activeBorderColor : config.borderColor
+                    } ${isActive ? `ring-2 ${config.ringColor}` : ""}`}
                   onClick={() =>
                     handleCardFilter(statusCount.status.toLowerCase())
                   }
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
-                        isActive ? config.activeBgColor : config.bgColor
-                      }`}
+                      className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${isActive ? config.activeBgColor : config.bgColor
+                        }`}
                     >
                       <svg
                         className={`w-3 h-3 ${config.iconColor}`}
@@ -1701,6 +1960,114 @@ function LeadList() {
                 </div>
               );
             })}
+
+            {/* Follow-up Card - Placed OUTSIDE the map, at the end */}
+
+            <div className={`bg-white rounded-lg p-2 shadow-sm border hover:shadow-md transition-all duration-200 ${isFollowUpFilterActive ? 'ring-2 ring-purple-500 border-purple-300' : 'border-purple-200 hover:border-purple-300'}`}>
+              {/* Single line layout */}
+              <div className="flex items-center justify-between">
+                {/* Left: Icon and count */}
+                <div
+                  className="flex items-center gap-2 cursor-pointer flex-1"
+                  onClick={() => {
+                    setIsFollowUpFilterActive(true);   // ✅ LOCK follow-up mode
+                    fetchLeadsWithFollowUpDate();      // ✅ ONLY this API
+                  }}
+                >
+                  <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 transition-colors ${isFollowUpFilterActive ? 'bg-purple-200' : 'bg-purple-100 hover:bg-purple-200'}`}>
+                    <svg
+                      className={`w-3 h-3 ${isFollowUpFilterActive ? 'text-purple-700' : 'text-purple-600'}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className={`text-[10px] font-medium leading-tight ${isFollowUpFilterActive ? 'text-purple-700' : 'text-gray-500'}`}>Follow-ups</p>
+                    <p className={`text-sm font-bold leading-tight ${isFollowUpFilterActive ? 'text-purple-800' : 'text-gray-900'}`}>
+                      {isFetchingFollowUps ? '...' : followUpCount}
+                    </p>
+                  </div>
+
+                  {/* Clear filter button - shows when active */}
+                  {/* {isFollowUpFilterActive && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        resetFollowUpFilter();
+                      }}
+                      className="ml-2 text-purple-600 hover:text-purple-800"
+                      title="Clear follow-up filter"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )} */}
+                </div>
+
+                {/* Right: Date controls */}
+                <div className="flex flex-col items-end gap-0.5">
+                  {/* Calendar icon with hidden date input */}
+                  <div className="relative">
+                    <input
+                      type="date"
+                      id="followup-date"
+                      value={followUpDate}
+                      onChange={(e) => {
+                        const newDate = e.target.value;
+
+                        setFollowUpDate(newDate);
+                        setIsFollowUpFilterActive(true);   // ✅ KEEP follow-up mode ACTIVE
+
+                        fetchFollowUpLeads(newDate);       // ✅ Updates only the COUNT
+                        fetchLeadsWithFollowUpDate(newDate); // ✅ Updates only the TABLE
+                      }}
+
+                      className="absolute top-0 right-0 opacity-0 w-6 h-6 cursor-pointer"
+                      style={{ zIndex: 10 }}
+                    />
+
+                    <div className="relative">
+                      <svg
+                        className={`w-3.5 h-3.5 cursor-pointer ${isFollowUpFilterActive ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        onClick={(e) => {
+                          const input = e.currentTarget.closest('.relative')?.querySelector('input[type="date"]');
+                          input?.click();
+                        }}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Selected date display */}
+                  <div
+                    className={`text-[9px] leading-none cursor-pointer ${isFollowUpFilterActive ? 'text-purple-600' : 'text-gray-500 hover:text-purple-600'}`}
+                    onClick={(e) => {
+                      const input = e.currentTarget.closest('.relative')?.querySelector('input[type="date"]');
+                      input?.click();
+                    }}
+                  >
+                    {new Date(followUpDate).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric'
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
         {/* Content Area */}
@@ -1890,7 +2257,7 @@ function LeadList() {
                                       )} px-2 py-0.5`}
                                     >
                                       {lead.status?.toLowerCase() ===
-                                      "converted" ? (
+                                        "converted" ? (
                                         // Display static text for converted leads - NO DROPDOWN
                                         <span className="text-xs font-semibold px-2 py-1">
                                           Converted
@@ -2051,11 +2418,10 @@ function LeadList() {
                         <button
                           key={page}
                           onClick={() => handlePageChange(page)}
-                          className={`px-2 py-1 rounded text-xs font-medium min-w-8 ${
-                            currentPage === page
-                              ? "bg-blue-600 text-white"
-                              : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                          }`}
+                          className={`px-2 py-1 rounded text-xs font-medium min-w-8 ${currentPage === page
+                            ? "bg-blue-600 text-white"
+                            : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            }`}
                         >
                           {page + 1}
                         </button>
@@ -2102,11 +2468,10 @@ function LeadList() {
                   return (
                     <div key={column.id} className="w-80 flex-shrink-0">
                       <div
-                        className={`bg-white rounded-xl shadow-sm border border-gray-200 h-full transition-all duration-200 ${
-                          dragOverColumn === column.id && column.allowDragDrop
-                            ? "ring-2 ring-blue-400 bg-blue-50"
-                            : ""
-                        } ${!column.allowDragDrop ? "opacity-90" : ""}`}
+                        className={`bg-white rounded-xl shadow-sm border border-gray-200 h-full transition-all duration-200 ${dragOverColumn === column.id && column.allowDragDrop
+                          ? "ring-2 ring-blue-400 bg-blue-50"
+                          : ""
+                          } ${!column.allowDragDrop ? "opacity-90" : ""}`}
                         onDragOver={(e) =>
                           column.allowDragDrop &&
                           handleKanbanDragOver(e, column.id)
@@ -2157,11 +2522,10 @@ function LeadList() {
                           {columnLeads.map((lead) => (
                             <div
                               key={lead.id}
-                              className={`bg-gray-50 rounded-lg p-3 border border-gray-200 transition-colors duration-200 ${
-                                column.allowDragDrop
-                                  ? "hover:border-blue-300 cursor-grab"
-                                  : "cursor-not-allowed opacity-75"
-                              }`}
+                              className={`bg-gray-50 rounded-lg p-3 border border-gray-200 transition-colors duration-200 ${column.allowDragDrop
+                                ? "hover:border-blue-300 cursor-grab"
+                                : "cursor-not-allowed opacity-75"
+                                }`}
                               draggable={column.allowDragDrop}
                               onDragStart={(e) =>
                                 column.allowDragDrop &&
@@ -2385,6 +2749,21 @@ function LeadList() {
         open={isImportOpen}
         onClose={() => setIsImportOpen(false)}
       />
+
+
+
+
+      <FollowUpModal
+        isOpen={showFollowUpModal}
+        onClose={() => setShowFollowUpModal(false)}
+        followUpLeads={followUpLeads}
+        getInitials={getInitials}
+        getStatusColor={getStatusColor}
+        isFetchingFollowUps={isFetchingFollowUps}
+        title={`Follow-up Leads (${followUpCount})`}
+      />
+
+
     </LayoutComponent>
   );
 }
