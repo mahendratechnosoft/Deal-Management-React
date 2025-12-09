@@ -379,6 +379,13 @@ function EditEmployee() {
         itemCreate: selectedRole.itemCreate || false,
         itemDelete: selectedRole.itemDelete || false,
         itemEdit: selectedRole.itemEdit || false,
+        taskAccess: selectedRole.taskAccess || false,
+        taskViewAll: selectedRole.taskViewAll || false,
+        taskCreate: selectedRole.taskCreate || false,
+        taskDelete: selectedRole.taskDelete || false,
+        taskEdit: selectedRole.taskEdit || false,
+
+
 
       });
     }
@@ -440,6 +447,12 @@ function EditEmployee() {
           itemCreate: false,
           itemDelete: false,
           itemEdit: false,
+
+          taskAccess: false,
+          taskCreate: false,
+          taskDelete: false,
+          taskEdit: false,
+          taskViewAll: false,
           [field]: value,
         };
       }
@@ -501,6 +514,11 @@ function EditEmployee() {
       itemCreate: false,
       itemDelete: false,
       itemEdit: false,
+      taskAccess: false,
+      taskCreate: false,
+      taskDelete: false,
+      taskEdit: false,
+      taskViewAll: false,
     });
     toast.success("All permissions cleared");
   };
@@ -555,6 +573,12 @@ function EditEmployee() {
       itemCreate: true,
       itemDelete: true,
       itemEdit: true,
+
+      taskAccess: true,
+      taskCreate: true,
+      taskDelete: true,
+      taskEdit: true,
+      taskViewAll: true,
     });
     toast.success("All permissions granted");
   };
@@ -1149,20 +1173,36 @@ function EditEmployee() {
                         />
                       )}
 
-                      
+
                       {hasModulePermission("lead") && (
-                      <ModuleAccessGroup
-                        title="Item Permissions"
-                        permissions={[
-                          { label: "Access", field: "itemAccess" },
-                          { label: "View All", field: "itemViewAll" },
-                          { label: "Create", field: "itemCreate" },
-                          { label: "Edit", field: "itemEdit" },
-                          { label: "Delete", field: "itemDelete" },
-                        ]}
-                        getAccess={getAccess}
-                        handleAccessChange={handleAccessChange}
-                      />
+                        <ModuleAccessGroup
+                          title="Item Permissions"
+                          permissions={[
+                            { label: "Access", field: "itemAccess" },
+                            { label: "View All", field: "itemViewAll" },
+                            { label: "Create", field: "itemCreate" },
+                            { label: "Edit", field: "itemEdit" },
+                            { label: "Delete", field: "itemDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
+
+                   
+                      {hasModulePermission("lead") && (
+                        <ModuleAccessGroup
+                          title="Task Permissions"
+                          permissions={[
+                            { label: "Access", field: "taskAccess" },
+                            { label: "View All", field: "taskViewAll" },
+                            { label: "Create", field: "taskCreate" },
+                            { label: "Edit", field: "taskEdit" },
+                            { label: "Delete", field: "taskDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
                       )}
                     </>
                   )}
@@ -1182,6 +1222,10 @@ function EditEmployee() {
                       handleAccessChange={handleAccessChange}
                     />
                   )}
+
+
+
+
 
                 </div>
               </div>
