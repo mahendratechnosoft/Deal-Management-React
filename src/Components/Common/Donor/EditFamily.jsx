@@ -104,6 +104,7 @@ function EditFamily() {
   };
 
   // Fetch final report data and generate PDF
+  // Fetch final report data and generate PDF
   const handleGenerateDonorReport = async (allocationId) => {
     setPdfLoadingId(allocationId);
 
@@ -143,13 +144,13 @@ function EditFamily() {
       const TABLE_FONT = 8;
 
       // =====================================================
-      // PROFESSIONAL TABLE STYLES FOR 4-COLUMN LAYOUT WITH HEADERS
+      // PROFESSIONAL TABLE STYLES FOR 4-COLUMN LAYOUT
       // =====================================================
       const fourColumnTableStyles = {
         theme: "grid",
         headStyles: {
-          fillColor: [230, 230, 230], // ✅ Faint light grey background
-          textColor: [0, 0, 0], // ✅ Dark grey text (not pure black)
+          fillColor: [230, 230, 230],
+          textColor: [0, 0, 0],
           fontSize: TABLE_FONT,
           fontStyle: "bold",
           cellPadding: { top: 2.5, right: 3, bottom: 2.5, left: 3 },
@@ -177,7 +178,7 @@ function EditFamily() {
           lineColor: [0, 0, 0],
           cellPadding: { top: 2, right: 3, bottom: 2, left: 3 },
           fontSize: TABLE_FONT,
-          font: "helvetica", // Explicit font set
+          font: "helvetica",
         },
         columnStyles: {
           0: {
@@ -209,20 +210,17 @@ function EditFamily() {
       // =====================================================
       // HEADER SECTION
       // =====================================================
-      // Main Title - PUNE SPERM BANK
       doc.setFont("helvetica", "bold");
       doc.setFontSize(HEADER_SIZE);
       doc.text("PUNE SPERM BANK", pageWidth / 2, y, { align: "center" });
       y += 5;
 
-      // Subtitle - ASHWINI HOSPITAL - ART BANK
       doc.setFontSize(SUBHEADER_SIZE);
       doc.text("ASHWINI HOSPITAL - ART BANK", pageWidth / 2, y, {
         align: "center",
       });
       y += 4;
 
-      // Address
       doc.setFontSize(NORMAL);
       doc.setFont("helvetica", "normal");
       doc.text(
@@ -233,7 +231,6 @@ function EditFamily() {
       );
       y += 3;
 
-      // Contact Info
       doc.text(
         "Phone: 9975035364 | Web: www.punespermbank.com",
         pageWidth / 2,
@@ -244,7 +241,6 @@ function EditFamily() {
       );
       y += 5;
 
-      // Horizontal line
       doc.setDrawColor(0, 0, 0);
       doc.setLineWidth(0.2);
       doc.line(margin.left, y, pageWidth - margin.right, y);
@@ -261,38 +257,26 @@ function EditFamily() {
       y += 8;
 
       // =====================================================
-      // HELPER FUNCTION FOR SECTION TABLES WITH HEADERS
+      // HELPER FUNCTION FOR SECTION TABLES WITHOUT HEADERS
       // =====================================================
-      const createFourColumnTableWithHeader = (
+      const createFourColumnTableWithoutHeader = (
         startY,
         title,
-        headerRows,
         bodyRows
       ) => {
         let currentY = startY;
 
-        // Section title
         doc.setFont("helvetica", "bold");
         doc.setFontSize(SECTION_TITLE);
         doc.text(title, margin.left, currentY);
         currentY += 2;
 
-        // Create table with headers
         autoTable(doc, {
           startY: currentY,
-          head: headerRows,
           body: bodyRows,
           ...fourColumnTableStyles,
           pageBreak: "avoid",
           rowPageBreak: "avoid",
-          didDrawCell: (data) => {
-            // Optional: Add subtle styling for header cells
-            if (data.section === "head") {
-              // Add subtle text shadow effect for better readability
-              doc.setTextColor(255, 255, 255);
-              doc.setFont("helvetica", "bold");
-            }
-          },
         });
 
         return doc.lastAutoTable.finalY + 6;
@@ -301,15 +285,14 @@ function EditFamily() {
       // =====================================================
       // HOSPITAL & FAMILY INFORMATION
       // =====================================================
-      y = createFourColumnTableWithHeader(
+      y = createFourColumnTableWithoutHeader(
         y,
         "Hospital & Family Information",
-        [["Parameter", "Value", "Parameter", "Value"]],
         [
           [
-            "Refer Hospital",
+            "Refering Hospital",
             reportData.referHospitalAddress || "-",
-            "Refer Doctor",
+            "Refering Doctor",
             reportData.referDoctor || "-",
           ],
           [
@@ -325,10 +308,9 @@ function EditFamily() {
       // =====================================================
       // DONOR INFORMATION
       // =====================================================
-      y = createFourColumnTableWithHeader(
+      y = createFourColumnTableWithoutHeader(
         y,
         "Donor Information",
-        [["Parameter", "Value", "Parameter", "Value"]],
         [
           ["Donor UIN", reportData.donorUin || "-", "Height", "-"],
           [
@@ -356,10 +338,9 @@ function EditFamily() {
       // =====================================================
       // BLOOD REPORT
       // =====================================================
-      y = createFourColumnTableWithHeader(
+      y = createFourColumnTableWithoutHeader(
         y,
         "Blood Report",
-        [["Parameter", "Value", "Parameter", "Value"]],
         [
           [
             "Blood Group",
@@ -385,62 +366,38 @@ function EditFamily() {
       );
 
       // =====================================================
-      // SEMEN REPORT
+      // SEMEN REPORT (REMOVED DATE, MEDIA, TIME, VOLUME, REPORT)
       // =====================================================
-      y = createFourColumnTableWithHeader(
+      y = createFourColumnTableWithoutHeader(
         y,
         "Semen Report",
-        [["Parameter", "Value", "Parameter", "Value"]],
         [
           [
-            "Date",
-            reportData.semenReportDateAndTime
-              ? new Date(reportData.semenReportDateAndTime).toLocaleDateString(
-                  "en-GB"
-                )
-              : "-",
-            "Time",
-            reportData.semenReportDateAndTime
-              ? new Date(reportData.semenReportDateAndTime).toLocaleTimeString(
-                  [],
-                  {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }
-                )
-              : "-",
-          ],
-          [
-            "Media",
-            reportData.media || "-",
-            "Volume",
-            reportData.volumne ? `${reportData.volumne} ml` : "-",
-          ],
-          [
-            "Report",
-            "-",
             "Concentration",
-            reportData.spermConcentration || "-",
-          ],
-          [
+            reportData.million
+              ? `${reportData.million} Million/ML`
+              : "-",
             "Motility A",
             reportData.progressiveMotilityA
               ? `${reportData.progressiveMotilityA}%`
               : "-",
+          ],
+          [
             "Motility B",
             reportData.progressiveMotilityB
               ? `${reportData.progressiveMotilityB}%`
               : "-",
-          ],
-          [
             "Motility C",
             reportData.progressiveMotilityC
               ? `${reportData.progressiveMotilityC}%`
               : "-",
+          ],
+          [
             "Morphology",
             reportData.morphology || "-",
+            "Abnormality",
+            reportData.abnormality || "-",
           ],
-          ["Abnormality", reportData.abnormality || "-", "", ""],
         ]
       );
 
@@ -459,9 +416,7 @@ function EditFamily() {
 
       const declarationLines = [
         "All above mentioned information is correct & true to our knowledge.",
-        "Aforementioned specifications help to screen the target D- sample. We understand that despite of the",
-        "above specifications, phenotypic & genotypic differences might occur & which is inevitable. We both",
-        "willfully agree & give consent to use donor semen sample for IUI.",
+        "Aforementioned specifications help to screen the target Donar sample.",
       ];
 
       declarationLines.forEach((line, index) => {
@@ -472,19 +427,45 @@ function EditFamily() {
       y += 6;
 
       // =====================================================
-      // SIGNATURE SECTION
+      // SINGLE DATE FIELD (for handwritten date)
+      // =====================================================
+      doc.setFont("helvetica", "bold");
+      doc.text("Date:", margin.left, y);
+      // Leave value blank for handwritten date
+      doc.setFont("helvetica", "normal");
+      doc.text("", margin.left + 15, y);
+      y += 10;
+
+      // =====================================================
+      // SIGNATURE SECTION (HUSBAND & WIFE WITHOUT DATE)
       // =====================================================
       const signatureY = y;
 
-      // Doctor's Name
+      // Column width for signatures
+      const colWidth = (pageWidth - margin.left - margin.right) / 2;
+
+      // HUSBAND SECTION (Left side)
       doc.setFont("helvetica", "bold");
-      doc.text("Doctor's Name :", margin.left, signatureY);
+      doc.text("Husband Name :", margin.left, signatureY);
+      doc.setFont("helvetica", "normal");
+      // Display husband's name from reportData
+      doc.text(reportData.husbandName, margin.left + 25, signatureY);
 
-      // Signature
-      doc.text("Signature :", margin.left, signatureY + 8);
+      doc.setFont("helvetica", "bold");
+      doc.text("Signature :", margin.left, signatureY + 9);
 
-      // Date
-      doc.text("Dated :", margin.left, signatureY + 16);
+
+      // WIFE SECTION (Right side) - Positioned below husband section
+      const wifeSignatureY = signatureY + 18;
+
+      doc.setFont("helvetica", "bold");
+      doc.text("Wife Name :", margin.left, wifeSignatureY);
+      doc.setFont("helvetica", "normal");
+      // Display wife's name from reportData
+      doc.text(reportData.wifeName, margin.left + 25, wifeSignatureY);
+
+      doc.setFont("helvetica", "bold");
+      doc.text("Signature :", margin.left, wifeSignatureY + 9);
 
       // =====================================================
       // SAVE PDF
@@ -501,7 +482,6 @@ function EditFamily() {
       setPdfLoadingId(null);
     }
   };
-
   // Handlers (same as before)
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -799,11 +779,10 @@ function EditFamily() {
             />
             <div className="text-right mt-1">
               <span
-                className={`text-xs ${
-                  familyInfo.husbandGenticIllness.length > 500
-                    ? "text-red-500"
-                    : "text-gray-500"
-                }`}
+                className={`text-xs ${familyInfo.husbandGenticIllness.length > 500
+                  ? "text-red-500"
+                  : "text-gray-500"
+                  }`}
               >
                 {familyInfo.husbandGenticIllness.length}/500 characters
               </span>
@@ -910,11 +889,10 @@ function EditFamily() {
             />
             <div className="text-right mt-1">
               <span
-                className={`text-xs ${
-                  familyInfo.wifeGenticIllness.length > 500
-                    ? "text-red-500"
-                    : "text-gray-500"
-                }`}
+                className={`text-xs ${familyInfo.wifeGenticIllness.length > 500
+                  ? "text-red-500"
+                  : "text-gray-500"
+                  }`}
               >
                 {familyInfo.wifeGenticIllness.length}/500 characters
               </span>
@@ -1117,11 +1095,10 @@ function EditFamily() {
                       <button
                         type="button"
                         onClick={() => setActiveTab(tab.id)}
-                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${
-                          activeTab === tab.id
-                            ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
-                            : "hover:text-gray-700 hover:bg-gray-50"
-                        }`}
+                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${activeTab === tab.id
+                          ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
+                          : "hover:text-gray-700 hover:bg-gray-50"
+                          }`}
                       >
                         {tab.label}
                       </button>
