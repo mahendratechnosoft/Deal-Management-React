@@ -217,6 +217,10 @@ const DonorFilters = ({
     }, {});
     setFilters(allEmpty);
     setSelectedMember("");
+    setFamilyDetails(null);
+    if (onFamilyDetailsLoaded) {
+      onFamilyDetailsLoaded(null);
+    }
     onFilterChange(allEmpty);
     setIsExpanded(false);
   };
@@ -298,7 +302,12 @@ const DonorFilters = ({
           <FormSelect
             label="Select Family UIN"
             name="familyInfoId"
-            value={familyOptions.find((o) => o.value === filters.familyInfoId)}
+            value={
+              familyOptions.find((o) => o.value === filters.familyInfoId) || {
+                value: "",
+                label: "Select",
+              }
+            }
             options={[{ value: "", label: "Select" }, ...familyOptions]}
             onChange={handleUINChange}
             placeholder="Search UIN..."
