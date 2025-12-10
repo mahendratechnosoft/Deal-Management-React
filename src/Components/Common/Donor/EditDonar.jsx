@@ -894,16 +894,6 @@ function EditDonar() {
 
   const renderPersonalInformation = () => (
     <form onSubmit={updatePersonal} className="space-y-6">
-      <div className="flex justify-end mb-4">
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-        >
-          {loading ? "Updating..." : "Update Personal Info"}
-        </button>
-      </div>
-
       {/* Images */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="border p-4 rounded bg-gray-50 flex flex-col items-center">
@@ -1255,6 +1245,15 @@ function EditDonar() {
           </div>
         </div>
       </div>
+      <div className="flex justify-end mb-4">
+        <button
+          type="submit"
+          disabled={loading}
+          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+        >
+          {loading ? "Updating..." : "Update Personal Info"}
+        </button>
+      </div>
     </form>
   );
 
@@ -1307,16 +1306,6 @@ function EditDonar() {
 
     return (
       <form onSubmit={updateFamily} className="space-y-6">
-        <div className="flex justify-end mb-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="text-sm bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            Update Family Info
-          </button>
-        </div>
-
         {/* BROTHERS SECTION */}
         <div className="bg-gray-50 p-4 rounded border">
           <div className="flex justify-between items-center mb-4 border-b pb-2">
@@ -1440,6 +1429,15 @@ function EditDonar() {
             <p className="text-sm text-gray-500">No sisters added.</p>
           )}
         </div>
+        <div className="flex justify-end mb-4">
+          <button
+            type="submit"
+            disabled={loading}
+            className="text-sm bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Update Family Info
+          </button>
+        </div>
       </form>
     );
   };
@@ -1496,22 +1494,6 @@ function EditDonar() {
       <form onSubmit={updateBlood} className="space-y-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Blood Reports</h3>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={addReport}
-              className="text-sm bg-green-500 text-white px-3 py-2 rounded"
-            >
-              + Add Report
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="text-sm bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              Update Blood Reports
-            </button>
-          </div>
         </div>
         {bloodReports.map((report, index) => (
           <div
@@ -1643,18 +1625,13 @@ function EditDonar() {
                 setBloodReports(list);
               }}
             />
-            <FormSelect
+
+            <FormInput
               label="SR. Creatinine"
               name="srcreatinine"
-              value={reportOptions.find((o) => o.value === report.srcreatinine)}
-              options={reportOptions}
-              onChange={(selectedOption) => {
-                const list = [...bloodReports];
-                list[index]["srcreatinine"] = selectedOption
-                  ? selectedOption.value
-                  : "";
-                setBloodReports(list);
-              }}
+              type="number"
+              value={report.srcreatinine}
+              onChange={(e) => handleBloodChange(index, e)}
             />
             <FormSelect
               label="CMV"
@@ -1703,6 +1680,22 @@ function EditDonar() {
             />
           </div>
         ))}
+        <div className="flex justify-end mb-4 gap-2">
+          <button
+            type="button"
+            onClick={addReport}
+            className="text-sm bg-green-500 text-white px-3 py-2 rounded"
+          >
+            + Add Report
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="text-sm bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Update Blood Reports
+          </button>
+        </div>
       </form>
     );
   };
@@ -1765,22 +1758,6 @@ function EditDonar() {
           <h3 className="text-lg font-semibold text-gray-800">
             Semen Analysis Reports
           </h3>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={addSemenReport}
-              className="text-sm bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600"
-            >
-              + Add Report
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-            >
-              Update Semen Reports
-            </button>
-          </div>
         </div>
 
         {semenReport.map((report, index) => (
@@ -1940,6 +1917,22 @@ function EditDonar() {
             </div>
           </div>
         ))}
+        <div className="flex justify-end mb-4 gap-2">
+          <button
+            type="button"
+            onClick={addSemenReport}
+            className="text-sm bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600"
+          >
+            + Add Report
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+          >
+            Update Semen Reports
+          </button>
+        </div>
       </form>
     );
   };
@@ -1950,13 +1943,6 @@ function EditDonar() {
         <h3 className="text-lg font-semibold text-gray-800">
           Sample Storage Details
         </h3>
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Update Sample Report
-        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -2009,6 +1995,15 @@ function EditDonar() {
             rows={3}
           />
         </div>
+      </div>
+      <div className="flex justify-end mb-4">
+        <button
+          type="submit"
+          disabled={loading}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Update Sample Report
+        </button>
       </div>
     </form>
   );

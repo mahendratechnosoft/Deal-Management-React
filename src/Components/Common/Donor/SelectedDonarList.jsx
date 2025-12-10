@@ -470,7 +470,7 @@ function SelectedDonarList() {
                                   </option>
                                   <option value="Selected">Selected</option>
                                   <option value="Not Shortlisted">
-                                    Not Shortlisted
+                                    Delete
                                   </option>
                                 </>
                               )}
@@ -482,7 +482,7 @@ function SelectedDonarList() {
                                     Shortlisted
                                   </option>
                                   <option value="Not Shortlisted">
-                                    Not Shortlisted
+                                    Delete
                                   </option>
                                 </>
                               )}
@@ -497,7 +497,7 @@ function SelectedDonarList() {
                                     Quarantined
                                   </option>
                                   <option value="Not Shortlisted">
-                                    Not Shortlisted
+                                    Delete
                                   </option>
                                 </>
                               )}
@@ -510,7 +510,7 @@ function SelectedDonarList() {
                                   </option>
                                   <option value="Qualified">Qualified</option>
                                   <option value="Not Shortlisted">
-                                    Not Shortlisted
+                                    Delete
                                   </option>
                                 </>
                               )}
@@ -520,7 +520,7 @@ function SelectedDonarList() {
                                 <>
                                   <option value="Qualified">Qualified</option>
                                   <option value="Not Shortlisted">
-                                    Not Shortlisted
+                                    Delete
                                   </option>
                                 </>
                               )}

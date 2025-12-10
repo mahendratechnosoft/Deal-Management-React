@@ -49,8 +49,6 @@ import EditFamily from "./Components/Common/Donor/EditFamily.jsx";
 import Itemlist from "./Components/Common/Item/Itemlists.jsx";
 import AdminList from "./Components/Common/SuperAdmin/AdminList.jsx";
 import EditAdmin from "./Components/Common/SuperAdmin/EditAdmin.jsx";
-import QualifiedDonorList from "./Components/Common/Donor/QualifiedDonorList.jsx";
-import ConfirmDonorList from "./Components/Common/Donor/ConfirmDonorList.jsx";
 import EmployeeList from "./Components/Common/Employee/EmployeeList.jsx";
 import TaskList from "./Components/Common/Task/TaskList.jsx";
 function App() {
@@ -382,7 +380,6 @@ function App() {
               </RoleBasedRoute>
             }
           />
-
 
           {/* Employee Routes - Individual routes with layout */}
           <Route

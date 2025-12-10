@@ -255,31 +255,6 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
               </span>
             )}
           </div>
-
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all text-sm font-medium disabled:opacity-50"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition-all text-sm font-medium disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  <span>Saving...</span>
-                </>
-              ) : (
-                "Save Family"
-              )}
-            </button>
-          </div>
         </div>
 
         {/* Scrollable Form Content */}
@@ -626,6 +601,31 @@ const CreateFamily = ({ isOpen, onClose, onSuccess, donorId }) => {
               </div>
             </div>
           </form>
+        </div>
+        <div className="p-4 border-t border-gray-200 bg-white flex justify-end gap-3 shrink-0 me-4">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all text-sm font-medium disabled:opacity-50"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            form="createFamilyForm" // Connects this button to the form above
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition-all text-sm font-medium disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                <span>Saving...</span>
+              </>
+            ) : (
+              "Save Family"
+            )}
+          </button>
         </div>
       </div>
     </div>

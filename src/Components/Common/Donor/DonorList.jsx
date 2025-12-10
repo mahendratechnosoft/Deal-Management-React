@@ -632,9 +632,9 @@ function DonorList() {
                             <option value="Quarantined">Quarantined</option>
                             <option value="Qualified">Qualified</option>
                             <option value="Donor">Donor</option>
-                            <option value="Not Shortlisted">
-                              Not Shortlisted
-                            </option>
+                            {donor.status !== "Donor" && (
+                              <option value="Not Shortlisted">Delete</option>
+                            )}
                           </select>
 
                           {/* Custom Dropdown Arrow (Since we used appearance-none) */}
