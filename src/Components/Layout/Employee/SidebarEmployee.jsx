@@ -14,7 +14,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
     Invoice: "invoice",
     Payment: "payment",
     Timesheet: "timeSheet",
-    Item: "Item",
+    Item: "item",
     Prospects: "Prospects",
     Shortlisted: "Shortlisted",
     Qualified: "Qualified",

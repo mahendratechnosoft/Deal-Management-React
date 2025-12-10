@@ -2,8 +2,16 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import axiosInstance from '../../BaseComponet/axiosInstance';
-import toast from 'react-hot-toast';
 import { useLayout } from '../../Layout/useLayout';
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showDeleteConfirmation,
+  showAutoCloseSuccess,
+  showInfoAlert,
+  showWarningAlert,
+  showConfirmDialog
+} from '../../BaseComponet/alertUtils'; // Adjust path as needed
 
 const TaskComments = ({ taskId, currentUser }) => {
     const { LayoutComponent, role } = useLayout();
@@ -26,7 +34,7 @@ const TaskComments = ({ taskId, currentUser }) => {
         toolbar: [
             ['bold', 'italic', 'underline', 'strike'],
             [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-             [{ color: [] }, { background: [] }], 
+            [{ color: [] }, { background: [] }],
             ['link'],
             ['clean']
         ],
@@ -35,7 +43,7 @@ const TaskComments = ({ taskId, currentUser }) => {
     const formats = [
         'bold', 'italic', 'underline', 'strike',
         'list', 'bullet',
-          'color', 'background',  
+        'color', 'background',
         'link'
     ];
 
@@ -91,7 +99,7 @@ const TaskComments = ({ taskId, currentUser }) => {
             }
         } catch (error) {
             console.error('Error fetching comments:', error);
-            toast.error('Failed to load comments');
+            showErrorAlert('Failed to load comments');
         } finally {
             setLoading(false);
         }
@@ -108,35 +116,31 @@ const TaskComments = ({ taskId, currentUser }) => {
 
         // Check if comment is empty or contains only whitespace/formatting tags
         const cleanContent = commentContent.trim();
-
         const isEmpty = commentContent.replace(/<(.|\n)*?>/g, '').trim().length === 0;
 
         if (isEmpty && commentAttachments.length === 0) {
-            toast.error('Please enter a comment or add attachments');
+            showErrorAlert('Please enter a comment or add attachments');
             return;
         }
 
-
         if (!taskId) {
-            toast.error('Task ID is missing');
+            showErrorAlert('Task ID is missing');
             return;
         }
 
         setPostingComment(true);
 
         try {
-       const commentData = {
-    taskId: taskId,
-    content: commentContent, // ✅ SEND FULL HTML
-    attachments: await prepareAttachments(commentAttachments)
-};
-
+            const commentData = {
+                taskId: taskId,
+                content: commentContent,
+                attachments: await prepareAttachments(commentAttachments)
+            };
 
             // If no content but has attachments, add a placeholder message
-         if (isEmpty && commentAttachments.length > 0) {
-    commentData.content = '<p>Attached files</p>';
-}
-
+            if (isEmpty && commentAttachments.length > 0) {
+                commentData.content = '<p>Attached files</p>';
+            }
 
             const response = await axiosInstance.post('addCommentOnTask', commentData);
 
@@ -153,11 +157,11 @@ const TaskComments = ({ taskId, currentUser }) => {
                 setComments(prev => [newComment, ...prev]);
                 setCommentContent('');
                 setCommentAttachments([]);
-                toast.success('Comment added successfully');
+                showAutoCloseSuccess('Comment added successfully');
             }
         } catch (error) {
             console.error('Error posting comment:', error);
-            toast.error('Failed to post comment');
+            showErrorAlert('Failed to post comment');
         } finally {
             setPostingComment(false);
         }
@@ -205,7 +209,7 @@ const TaskComments = ({ taskId, currentUser }) => {
         // Limit total attachments to 5
         const totalAttachments = commentAttachments.length + files.length;
         if (totalAttachments > 5) {
-            toast.error('Maximum 5 attachments allowed');
+            showErrorAlert('Maximum 5 attachments allowed');
             setUploadingAttachments(false);
             return;
         }
@@ -214,7 +218,7 @@ const TaskComments = ({ taskId, currentUser }) => {
         const maxSize = 5 * 1024 * 1024; // 5MB
         const validFiles = files.filter(file => {
             if (file.size > maxSize) {
-                toast.error(`${file.name} exceeds 5MB limit`);
+                showErrorAlert(`${file.name} exceeds 5MB limit`);
                 return false;
             }
             return true;
@@ -225,77 +229,73 @@ const TaskComments = ({ taskId, currentUser }) => {
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
-        toast.success(`${validFiles.length} file(s) added`);
+        showAutoCloseSuccess(`${validFiles.length} file(s) added`);
     };
 
     const handleRemoveAttachment = (index) => {
         setCommentAttachments(prev => prev.filter((_, i) => i !== index));
     };
 
-    const handleDeleteComment = async (commentId, comment) => {
-        if (!commentId) return;
+ const handleDeleteComment = async (commentId, comment) => {
+    if (!commentId) return;
 
-        const isAdmin = role === 'ROLE_ADMIN'; // Assuming 'role' from useLayout is ADMIN for admin
-        const isDeleted = comment?.deleted === true;
+    const isAdmin = role === 'ROLE_ADMIN';
+    const isDeleted = comment?.deleted === true;
 
-        // Show appropriate confirmation message
-        const message = isAdmin
-            ? 'Are you sure you want to permanently delete this comment? This action cannot be undone.'
-            : 'Are you sure you want to delete this comment?';
-
-        if (!window.confirm(message)) {
+    // Use appropriate confirmation dialog based on user role and comment status
+    let result;
+    if (isAdmin) {
+        // Admin can permanently delete any comment (even already soft deleted ones)
+        const commentText = comment?.content 
+            ? `comment: "${comment.content.replace(/<[^>]*>/g, '').substring(0, 50)}${comment.content.length > 50 ? '...' : ''}"`
+            : 'this comment';
+        result = await showDeleteConfirmation(commentText);
+    } else {
+        // Employee can only delete non-deleted comments
+        if (isDeleted) {
+            showErrorAlert('This comment is already deleted');
             return;
         }
+        result = await showConfirmDialog('Are you sure you want to delete this comment?', 'Delete Comment');
+    }
 
-        setDeletingCommentId(commentId);
+    if (!result.isConfirmed) {
+        return;
+    }
 
-        try {
-            // For admin, always use hard delete API
-            // For employee, check if already soft deleted
+    setDeletingCommentId(commentId);
+
+    try {
+        // Use the same API endpoint for both admin and employee
+        // The backend should handle the logic based on user role
+        const response = await axiosInstance.delete(`deleteTaskComment/${commentId}`);
+
+        if (response.status === 200) {
             if (isAdmin) {
-                const response = await axiosInstance.delete(`deleteTaskComment/${commentId}`);
-
-                if (response.status === 200) {
-                    // Remove comment from local state (hard delete)
-                    setComments(prev => prev.filter(comment => comment.commentId !== commentId));
-                    toast.success('Comment permanently deleted');
-                }
+                // Admin: Hard delete (permanent) - remove from local state
+                setComments(prev => prev.filter(c => c.commentId !== commentId));
+                showAutoCloseSuccess('Comment permanently deleted');
             } else {
-                // For employee, check if comment is already deleted
-                if (isDeleted) {
-                    toast.error('This comment is already deleted');
-                    return;
-                }
-
-                // Employee can only soft delete if not already deleted
-                const response = await axiosInstance.put(`updateComment/${commentId}`, {
-                    deleted: true
-                });
-
-                if (response.status === 200) {
-                    // Update local state to mark as deleted
-                    setComments(prev => prev.map(comment =>
-                        comment.commentId === commentId
-                            ? { ...comment, deleted: true }
-
-                            : comment
-                    ));
-                    toast.success('Comment deleted');
-                }
+                // Employee: Soft delete - update local state to mark as deleted
+                setComments(prev => prev.map(c =>
+                    c.commentId === commentId
+                        ? { ...c, deleted: true }
+                        : c
+                ));
+                showAutoCloseSuccess('Comment deleted');
             }
-        } catch (error) {
-            console.error('Error deleting comment:', error);
-            toast.error('Failed to delete comment');
-        } finally {
-            setDeletingCommentId(null);
         }
-    };
-
-
+    } catch (error) {
+        console.error('Error deleting comment:', error);
+        showErrorAlert('Failed to delete comment');
+    } finally {
+        setDeletingCommentId(null);
+    }
+};
     // Function to open attachment preview
     const openAttachmentPreview = (attachment) => {
         if (!attachment.data) {
-            toast.error('Attachment data is not available');
+            showErrorAlert('Attachment data is not available');
             return;
         }
 
@@ -347,7 +347,8 @@ const TaskComments = ({ taskId, currentUser }) => {
                         setTimeout(() => window.URL.revokeObjectURL(url), 1000);
                     };
                 } else {
-                    // If popup blocked, fallback to download
+                    // If popup blocked, fallback to download with warning
+                    showWarningAlert('Popup blocked. The file will be downloaded instead. To preview files, please allow popups for this site.', 'Popup Blocked');
                     downloadFile(attachment);
                 }
             } else {
@@ -356,7 +357,7 @@ const TaskComments = ({ taskId, currentUser }) => {
             }
         } catch (error) {
             console.error('Error opening attachment:', error);
-            toast.error('Failed to open attachment');
+            showErrorAlert('Failed to open attachment');
         }
     };
 
@@ -381,9 +382,11 @@ const TaskComments = ({ taskId, currentUser }) => {
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
+            
+            showAutoCloseSuccess(`Downloading ${attachment.fileName}`);
         } catch (error) {
             console.error('Error downloading file:', error);
-            toast.error('Failed to download file');
+            showErrorAlert('Failed to download file');
         }
     };
 
@@ -426,29 +429,37 @@ const TaskComments = ({ taskId, currentUser }) => {
         return <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: content }} />;
     };
 
-    // Check if comment can be deleted (current user's comment)
-    const canDeleteComment = (comment) => {
-        const isAdmin = role === 'ROLE_ADMIN'; // Assuming 'role' from useLayout
-
-        // If comment is already deleted and user is not admin, can't delete
-        if (comment.deleted && !isAdmin) {
-            return false;
-        }
-
-        // Admin can delete any comment
+    // Check if delete button should be shown
+    const shouldShowDeleteButton = (comment) => {
+        const isAdmin = role === 'ROLE_ADMIN';
+        const isDeleted = comment?.deleted === true;
+        
+        // Admin always sees delete button (for permanent deletion)
         if (isAdmin) {
             return true;
         }
+        
+        // Employee sees delete button only for non-deleted comments
+        if (!isDeleted) {
+            return true;
+        }
+        
+        return false;
+    };
 
-        // Employee can only delete their own non-deleted comments
-        if (!currentUser || !currentUser.employeeId) return false;
-
-        const isCurrentUserComment =
-            comment.createdBy === currentUser.employeeId ||
-            comment.user === currentUser.name ||
-            comment.user === 'You';
-
-        return isCurrentUserComment && !comment.deleted;
+    // Get delete button title based on user role and comment status
+    const getDeleteButtonTitle = (comment) => {
+        const isAdmin = role === 'ROLE_ADMIN';
+        const isDeleted = comment?.deleted === true;
+        
+        if (isAdmin) {
+            if (isDeleted) {
+                return 'Permanently delete this comment';
+            }
+            return 'Permanently delete comment';
+        }
+        
+        return 'Delete comment';
     };
 
     // Get file icon based on file type
@@ -492,28 +503,26 @@ const TaskComments = ({ taskId, currentUser }) => {
 
             {/* Add Comment Form */}
             <div className="mb-4">
-       <div className="mb-2 bg-white border border-gray-300 rounded-md overflow-hidden relative">
-
-                  <ReactQuill
-  ref={quillRef}
-  theme="snow"
-  value={commentContent}
-  onChange={setCommentContent}
-  modules={modules}
-  formats={formats}
-  placeholder="Write a comment..."
-  className="
-    [&_.ql-toolbar]:sticky 
-    [&_.ql-toolbar]:top-0 
-    [&_.ql-toolbar]:z-10 
-    [&_.ql-toolbar]:bg-gray-50
-    [&_.ql-container]:border-0 
-    [&_.ql-editor]:min-h-[120px] 
-    [&_.ql-editor]:max-h-[220px]
-    [&_.ql-editor]:overflow-y-auto
-  "
-/>
-
+                <div className="mb-2 bg-white border border-gray-300 rounded-md overflow-hidden relative">
+                    <ReactQuill
+                        ref={quillRef}
+                        theme="snow"
+                        value={commentContent}
+                        onChange={setCommentContent}
+                        modules={modules}
+                        formats={formats}
+                        placeholder="Write a comment..."
+                        className="
+                            [&_.ql-toolbar]:sticky 
+                            [&_.ql-toolbar]:top-0 
+                            [&_.ql-toolbar]:z-10 
+                            [&_.ql-toolbar]:bg-gray-50
+                            [&_.ql-container]:border-0 
+                            [&_.ql-editor]:min-h-[120px] 
+                            [&_.ql-editor]:max-h-[220px]
+                            [&_.ql-editor]:overflow-y-auto
+                        "
+                    />
                 </div>
 
                 {/* File Attachments */}
@@ -595,7 +604,7 @@ const TaskComments = ({ taskId, currentUser }) => {
                                     <div className="flex-shrink-0">
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ${comment.deleted ? 'bg-gray-300' : 'bg-gradient-to-br from-blue-500 to-purple-600'
                                             }`}>
-                                            {getInitials(comment.user || comment.createdBy)}
+                                            {getInitials(comment.commentedBy || comment.user || comment.createdBy)}
                                         </div>
                                     </div>
 
@@ -603,7 +612,7 @@ const TaskComments = ({ taskId, currentUser }) => {
                                         <div className="flex items-start justify-between mb-1">
                                             <div className="flex items-center gap-1">
                                                 <span className="font-medium text-sm text-gray-900">
-                                                    {comment.user || comment.createdBy || 'Anonymous'}
+                                                    {comment.commentedBy || comment.user || comment.createdBy || 'Anonymous'}
                                                 </span>
                                                 {comment.isEdited && (
                                                     <span className="text-xs text-gray-500">(edited)</span>
@@ -623,13 +632,13 @@ const TaskComments = ({ taskId, currentUser }) => {
                                                     {formatDate(comment.commentedAt || comment.createdAt || comment.timestamp)}
                                                 </span>
 
-                                                {/* Delete button - Admin can always delete, employees can only delete their own non-deleted comments */}
-                                                {(role === 'ROLE_ADMIN' || (!comment.deleted && canDeleteComment(comment))) && (
+                                                {/* Delete button - Fixed: Show for admin always, for employee only if not deleted */}
+                                                {shouldShowDeleteButton(comment) && (
                                                     <button
                                                         onClick={() => handleDeleteComment(comment.commentId, comment)}
                                                         disabled={deletingCommentId === comment.commentId}
                                                         className="flex-shrink-0 text-gray-400 hover:text-red-500"
-                                                        title="Delete comment"
+                                                        title={getDeleteButtonTitle(comment)}
                                                     >
                                                         {deletingCommentId === comment.commentId ? (
                                                             <div className="w-3 h-3 border border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
@@ -640,7 +649,6 @@ const TaskComments = ({ taskId, currentUser }) => {
                                                         )}
                                                     </button>
                                                 )}
-
                                             </div>
                                         </div>
 
@@ -650,9 +658,8 @@ const TaskComments = ({ taskId, currentUser }) => {
                                             </div>
                                         )}
 
-
-                                        {/* Comment Attachments - Hide for deleted comments unless user is admin */}
-                                        {!comment.deleted && comment.attachments && comment.attachments.length > 0 && (
+                                        {/* Comment Attachments - Show for all users if comment has attachments */}
+                                        {comment.attachments && comment.attachments.length > 0 && (
                                             <div className="mt-2 space-y-1">
                                                 {comment.attachments.map((attachment, idx) => (
                                                     <div

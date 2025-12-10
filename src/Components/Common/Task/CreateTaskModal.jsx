@@ -503,7 +503,7 @@ const handleSubmit = async (e) => {
           };
         }),
         estimatedHours: formData.estimateHours ? parseFloat(formData.estimateHours) : 0,
-        status: 'pending'
+        // status: 'pending'
       }
     };
 
