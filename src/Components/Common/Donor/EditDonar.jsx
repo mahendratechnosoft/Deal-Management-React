@@ -1816,14 +1816,14 @@ function EditDonar() {
                 onChange={(e) => handleSemenChange(index, e)}
                 type="number"
               />
-              <FormInput
+              {/* <FormInput
                 label="Concentration"
                 name="spermConcentration"
                 value={report.spermConcentration}
                 onChange={(e) => handleSemenChange(index, e)}
-              />
+              /> */}
               <FormInput
-                label="Million/ML"
+                label="Concentration(Million/ML)"
                 name="million"
                 value={report.million}
                 onChange={(e) => handleSemenChange(index, e)}
