@@ -1,19 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import axiosInstance from '../../BaseComponet/axiosInstance';
+import React, { useState, useEffect } from "react";
+import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import {
   GlobalInputField,
   GlobalTextAreaField,
   GlobalSelectField,
-  GlobalMultiSelectField
-} from '../../BaseComponet/CustomerFormInputs';
+  GlobalMultiSelectField,
+} from "../../BaseComponet/CustomerFormInputs";
 
 import {
   formatInvoiceNumber,
   formatProposalNumber,
-  formatCurrency
-} from '../../BaseComponet/UtilFunctions'; // Adjust the path as needed
-
+  formatCurrency,
+} from "../../BaseComponet/UtilFunctions"; // Adjust the path as needed
 
 function EditTaskModal({ taskId, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -24,49 +23,49 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
   const [loadingRelatedData, setLoadingRelatedData] = useState(false);
 
   const [formData, setFormData] = useState({
-    taskId: '',
-    adminId: '',
+    taskId: "",
+    adminId: "",
     employeeId: null,
-    subject: '',
-    description: '',
-    hourlyRate: '',
-    startDate: '',
-    dueDate: '',
-    priority: 'Medium',
-    relatedTo: '',
-    relatedId: '',
-    relatedName: '',
+    subject: "",
+    description: "",
+    hourlyRate: "",
+    startDate: "",
+    dueDate: "",
+    priority: "Medium",
+    relatedTo: "",
+    relatedId: "",
+    relatedName: "",
     assignees: [],
     followers: [],
-    estimateHours: '',
-    status: 'pending',
-    createdAt: '',
-    createdBy: ''
+    estimateHours: "",
+    status: "pending",
+    createdAt: "",
+    createdBy: "",
   });
 
   const [errors, setErrors] = useState({});
 
   const priorityOptions = [
-    { value: 'Low', label: 'Low' },
-    { value: 'Medium', label: 'Medium' },
-    { value: 'High', label: 'High' },
-    { value: 'Urgent', label: 'Urgent' }
+    { value: "Low", label: "Low" },
+    { value: "Medium", label: "Medium" },
+    { value: "High", label: "High" },
+    { value: "Urgent", label: "Urgent" },
   ];
 
   const statusOptions = [
-    { value: 'pending', label: 'Pending' },
-    { value: 'in-progress', label: 'In Progress' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'on-hold', label: 'On Hold' }
+    { value: "pending", label: "Pending" },
+    { value: "in-progress", label: "In Progress" },
+    { value: "completed", label: "Completed" },
+    { value: "on-hold", label: "On Hold" },
   ];
 
   const relatedToOptions = [
-    { value: '', label: 'Non selected' },
-    { value: 'lead', label: 'Lead' },
-    { value: 'customer', label: 'Customer' },
-    { value: 'proposal', label: 'Proposal' },
-    { value: 'proforma', label: 'Proforma' },
-    { value: 'invoice', label: 'Invoice' }
+    { value: "", label: "Non selected" },
+    { value: "lead", label: "Lead" },
+    { value: "customer", label: "Customer" },
+    { value: "proposal", label: "Proposal" },
+    { value: "proforma", label: "Proforma" },
+    { value: "invoice", label: "Invoice" },
   ];
 
   // Fetch team members on component mount
@@ -87,10 +86,10 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
       fetchRelatedData();
     } else {
       setRelatedData([]);
-      setFormData(prev => ({ 
-        ...prev, 
-        relatedId: '',
-        relatedName: ''
+      setFormData((prev) => ({
+        ...prev,
+        relatedId: "",
+        relatedName: "",
       }));
     }
   }, [formData.relatedTo]);
@@ -98,186 +97,189 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
   const fetchTeamMembers = async () => {
     setLoadingTeam(true);
     try {
-      const response = await axiosInstance.get('getEmployeeNameAndId');
+      const response = await axiosInstance.get("getEmployeeNameAndId");
       if (response.data && Array.isArray(response.data)) {
         // Format for react-select
-        const formattedTeamMembers = response.data.map(member => ({
+        const formattedTeamMembers = response.data.map((member) => ({
           value: member.employeeId,
-          label: member.name
+          label: member.name,
         }));
         setTeamMembers(formattedTeamMembers);
       }
     } catch (error) {
-      console.error('Error fetching team members:', error);
-      toast.error('Failed to load team members');
+      console.error("Error fetching team members:", error);
+      toast.error("Failed to load team members");
     } finally {
       setLoadingTeam(false);
     }
   };
 
   const fetchRelatedData = async () => {
-  if (!formData.relatedTo) return;
+    if (!formData.relatedTo) return;
 
-  setLoadingRelatedData(true);
-  try {
-    let endpoint = '';
-    
-    // Updated API endpoints
-    switch (formData.relatedTo) {
-      case 'lead':
-        endpoint = 'getLeadNameAndIdWithConverted';
-        break;
-      case 'customer':
-        endpoint = 'getCustomerListWithNameAndId';
-        break;
-      case 'proforma':
-        endpoint = 'getProformaNumberAndId';
-        break;
-      case 'proposal':
-        endpoint = 'getProposalNumberAndId';
-        break;
-      case 'invoice':
-        endpoint = 'getInvoiceNumberAndId';
-        break;
-      default:
-        return;
-    }
+    setLoadingRelatedData(true);
+    try {
+      let endpoint = "";
 
-    const response = await axiosInstance.get(endpoint);
-    const responseData = response.data || [];
+      // Updated API endpoints
+      switch (formData.relatedTo) {
+        case "lead":
+          endpoint = "getLeadNameAndIdWithConverted";
+          break;
+        case "customer":
+          endpoint = "getCustomerListWithNameAndId";
+          break;
+        case "proforma":
+          endpoint = "getProformaNumberAndId";
+          break;
+        case "proposal":
+          endpoint = "getProposalNumberAndId";
+          break;
+        case "invoice":
+          endpoint = "getInvoiceNumberAndId";
+          break;
+        default:
+          return;
+      }
 
-    if (Array.isArray(responseData)) {
-      // Format data using utility functions
-      const formattedData = responseData.map(item => {
-        switch (formData.relatedTo) {
-          case 'lead':
-            return {
-              id: item.leadId || item.id,
-              name: item.clientName || `Lead #${item.leadId || item.id}`,
-              email: item.email || '',
-              phone: item.phone || '',
-              originalData: item
-            };
-          
-          case 'customer':
-            return {
-              id: item.id,
-              name: `${item.companyName || 'Customer'} (${item.email || 'No email'})`,
-              email: item.email || '',
-              phone: item.phone || '',
-              originalData: item
-            };
-          
-          case 'proforma':
-            return {
-              id: item.proformaInvoiceId || item.id,
-              name: item.proformaInvoiceNumber ? 
-                    formatInvoiceNumber(item.proformaInvoiceNumber) : 
-                    `Proforma #${item.proformaInvoiceId || item.id}`,
-              number: item.proformaInvoiceNumber || '',
-              amount: item.totalAmount || 0,
-              currency: item.currency || 'INR',
-              originalData: item
-            };
-          
-          case 'proposal':
-            return {
-              id: item.proposalId || item.id,
-              name: item.proposalNumber ? 
-                    formatProposalNumber(item.proposalNumber) : 
-                    `Proposal #${item.proposalId || item.id}`,
-              number: item.proposalNumber || '',
-              amount: item.totalAmount || 0,
-              currency: item.currency || 'INR',
-              originalData: item
-            };
-          
-          case 'invoice':
-            return {
-              id: item.invoiceId || item.id,
-              name: item.invoiceNumber ? 
-                    formatInvoiceNumber(item.invoiceNumber) : 
-                    `Invoice #${item.invoiceId || item.id}`,
-              number: item.invoiceNumber || '',
-              amount: item.totalAmount || 0,
-              currency: item.currency || 'INR',
-              date: item.invoiceDate || '',
-              originalData: item
-            };
-          
-          default:
-            return {
-              id: item.id,
-              name: String(item.name || item.title || `Item #${item.id}`),
-              originalData: item
-            };
-        }
-      });
+      const response = await axiosInstance.get(endpoint);
+      const responseData = response.data || [];
 
-      setRelatedData(formattedData);
-    } else {
-      toast.error(`No ${formData.relatedTo} data found`);
+      if (Array.isArray(responseData)) {
+        // Format data using utility functions
+        const formattedData = responseData.map((item) => {
+          switch (formData.relatedTo) {
+            case "lead":
+              return {
+                id: item.leadId || item.id,
+                name: item.clientName || `Lead #${item.leadId || item.id}`,
+                email: item.email || "",
+                phone: item.phone || "",
+                originalData: item,
+              };
+
+            case "customer":
+              return {
+                id: item.id,
+                name: `${item.companyName || "Customer"} (${
+                  item.email || "No email"
+                })`,
+                email: item.email || "",
+                phone: item.phone || "",
+                originalData: item,
+              };
+
+            case "proforma":
+              return {
+                id: item.proformaInvoiceId || item.id,
+                name: item.proformaInvoiceNumber
+                  ? formatInvoiceNumber(item.proformaInvoiceNumber)
+                  : `Proforma #${item.proformaInvoiceId || item.id}`,
+                number: item.proformaInvoiceNumber || "",
+                amount: item.totalAmount || 0,
+                currency: item.currency || "INR",
+                originalData: item,
+              };
+
+            case "proposal":
+              return {
+                id: item.proposalId || item.id,
+                name: item.proposalNumber
+                  ? formatProposalNumber(item.proposalNumber)
+                  : `Proposal #${item.proposalId || item.id}`,
+                number: item.proposalNumber || "",
+                amount: item.totalAmount || 0,
+                currency: item.currency || "INR",
+                originalData: item,
+              };
+
+            case "invoice":
+              return {
+                id: item.invoiceId || item.id,
+                name: item.invoiceNumber
+                  ? formatInvoiceNumber(item.invoiceNumber)
+                  : `Invoice #${item.invoiceId || item.id}`,
+                number: item.invoiceNumber || "",
+                amount: item.totalAmount || 0,
+                currency: item.currency || "INR",
+                date: item.invoiceDate || "",
+                originalData: item,
+              };
+
+            default:
+              return {
+                id: item.id,
+                name: String(item.name || item.title || `Item #${item.id}`),
+                originalData: item,
+              };
+          }
+        });
+
+        setRelatedData(formattedData);
+      } else {
+        toast.error(`No ${formData.relatedTo} data found`);
+        setRelatedData([]);
+      }
+    } catch (error) {
+      console.error(`Error fetching ${formData.relatedTo} data:`, error);
+      toast.error(`Failed to load ${formData.relatedTo} data`);
       setRelatedData([]);
+    } finally {
+      setLoadingRelatedData(false);
     }
-  } catch (error) {
-    console.error(`Error fetching ${formData.relatedTo} data:`, error);
-    toast.error(`Failed to load ${formData.relatedTo} data`);
-    setRelatedData([]);
-  } finally {
-    setLoadingRelatedData(false);
-  }
-};
+  };
 
   const fetchTaskData = async () => {
     try {
       setLoadingTask(true);
       const response = await axiosInstance.get(`getTaskByItemId/${taskId}`);
-      
+
       if (response.data) {
-        const taskData = response.data;
-        
+        const taskData = response.data.task;
+        const canStartTimer = response.data.canStartTimer;
+
         // Format dates to YYYY-MM-DD for input fields
         const formatDate = (dateString) => {
-          if (!dateString) return '';
+          if (!dateString) return "";
           try {
             const date = new Date(dateString);
-            return date.toISOString().split('T')[0];
+            return date.toISOString().split("T")[0];
           } catch (e) {
-            console.error('Error parsing date:', dateString, e);
-            return '';
+            console.error("Error parsing date:", dateString, e);
+            return "";
           }
         };
 
         // Extract assignee and follower IDs from the response
-        const assigneeIds = taskData.assignedEmployees 
-          ? taskData.assignedEmployees.map(emp => emp.employeeId)
+        const assigneeIds = taskData.assignedEmployees
+          ? taskData.assignedEmployees.map((emp) => emp.employeeId)
           : [];
-        
-        const followerIds = taskData.followersEmployees 
-          ? taskData.followersEmployees.map(emp => emp.employeeId)
+
+        const followerIds = taskData.followersEmployees
+          ? taskData.followersEmployees.map((emp) => emp.employeeId)
           : [];
 
         // Set form data with the fetched task data
         setFormData({
           taskId: taskData.taskId,
-          adminId: taskData.adminId || '',
+          adminId: taskData.adminId || "",
           employeeId: taskData.employeeId || null,
-          subject: taskData.subject || '',
-          description: taskData.description || '',
-          hourlyRate: taskData.hourlyRate?.toString() || '',
+          subject: taskData.subject || "",
+          description: taskData.description || "",
+          hourlyRate: taskData.hourlyRate?.toString() || "",
           startDate: formatDate(taskData.startDate),
           dueDate: formatDate(taskData.endDate), // Note: API returns 'endDate' not 'dueDate'
-          priority: taskData.priority || 'Medium',
-          relatedTo: taskData.relatedTo || '',
-          relatedId: taskData.relatedToId || '',
-          relatedName: taskData.relatedToName || '',
+          priority: taskData.priority || "Medium",
+          relatedTo: taskData.relatedTo || "",
+          relatedId: taskData.relatedToId || "",
+          relatedName: taskData.relatedToName || "",
           assignees: assigneeIds,
           followers: followerIds,
-          estimateHours: taskData.estimatedHours?.toString() || '',
-          status: taskData.status || 'pending',
+          estimateHours: taskData.estimatedHours?.toString() || "",
+          status: taskData.status || "pending",
           // Include createdAt and createdBy from API
-          createdAt: taskData.createdAt || '',
-          createdBy: taskData.createdBy || ''
+          createdAt: taskData.createdAt || "",
+          createdBy: taskData.createdBy || "",
         });
 
         // If task has relatedTo, fetch the related data
@@ -298,16 +300,16 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     const updatedFormData = {
       ...formData,
-      [name]: value
+      [name]: value,
     };
 
     // Reset related fields when relatedTo changes
-    if (name === 'relatedTo') {
-      updatedFormData.relatedId = '';
-      updatedFormData.relatedName = '';
+    if (name === "relatedTo") {
+      updatedFormData.relatedId = "";
+      updatedFormData.relatedName = "";
       setRelatedData([]);
     }
 
@@ -315,24 +317,24 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
 
     // Clear error for this field if exists
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ""
+        [name]: "",
       }));
     }
   };
 
   const handleAssigneesChange = (selectedIds) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      assignees: selectedIds
+      assignees: selectedIds,
     }));
   };
 
   const handleFollowersChange = (selectedIds) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      followers: selectedIds
+      followers: selectedIds,
     }));
   };
 
@@ -351,7 +353,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
     if (formData.dueDate && formData.startDate) {
       const startDate = new Date(formData.startDate);
       const dueDate = new Date(formData.dueDate);
-      
+
       if (dueDate < startDate) {
         newErrors.dueDate = "Due date cannot be before start date";
       }
@@ -392,42 +394,46 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
         description: formData.description.trim(),
         hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : 0,
         startDate: new Date(formData.startDate).toISOString(),
-        endDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+        endDate: formData.dueDate
+          ? new Date(formData.dueDate).toISOString()
+          : null,
         priority: formData.priority,
         relatedTo: formData.relatedTo || null,
         relatedToId: formData.relatedId || null,
         relatedToName: formData.relatedName || null,
-        assignedEmployees: formData.assignees.map(employeeId => ({
-          employeeId: employeeId
+        assignedEmployees: formData.assignees.map((employeeId) => ({
+          employeeId: employeeId,
         })),
-        followersEmployees: formData.followers.map(employeeId => ({
-          employeeId: employeeId
+        followersEmployees: formData.followers.map((employeeId) => ({
+          employeeId: employeeId,
         })),
-        estimatedHours: formData.estimateHours ? parseFloat(formData.estimateHours) : null,
+        estimatedHours: formData.estimateHours
+          ? parseFloat(formData.estimateHours)
+          : null,
         status: formData.status,
         // Include createdAt and createdBy from fetched data
         createdAt: formData.createdAt,
-        createdBy: formData.createdBy
+        createdBy: formData.createdBy,
       };
 
-      const response = await axiosInstance.put('updateTask', payload);
-      
+      const response = await axiosInstance.put("updateTask", payload);
+
       if (response.data) {
-        toast.success('Task updated successfully!');
+        toast.success("Task updated successfully!");
         onSuccess();
       } else {
-        throw new Error('No response data received');
+        throw new Error("No response data received");
       }
     } catch (error) {
-      console.error('Error updating task:', error);
-      toast.error('Failed to update task. Please try again.');
+      console.error("Error updating task:", error);
+      toast.error("Failed to update task. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const getTodayDate = () => {
-    return new Date().toISOString().split('T')[0];
+    return new Date().toISOString().split("T")[0];
   };
 
   const getMinDueDate = () => {
@@ -435,33 +441,36 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
   };
 
   // Format related data for GlobalSelectField
-  const relatedOptions = relatedData.map(item => ({
+  const relatedOptions = relatedData.map((item) => ({
     value: item.id,
-    label: item.name
+    label: item.name,
   }));
 
   // Add current related item if not in the list
-  if (formData.relatedId && formData.relatedName && 
-      !relatedOptions.some(opt => opt.value === formData.relatedId)) {
+  if (
+    formData.relatedId &&
+    formData.relatedName &&
+    !relatedOptions.some((opt) => opt.value === formData.relatedId)
+  ) {
     relatedOptions.unshift({
       value: formData.relatedId,
-      label: formData.relatedName
+      label: formData.relatedName,
     });
   }
 
   // Read-only info display for createdAt and createdBy
   const displayCreatedInfo = () => {
     if (!formData.createdAt && !formData.createdBy) return null;
-    
+
     const formatDate = (dateString) => {
       try {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
+        return date.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
         });
       } catch (e) {
         return dateString;
@@ -471,15 +480,19 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pt-3 border-t border-gray-200">
         <div className="space-y-1">
-          <label className="text-xs font-medium text-gray-500">Created By</label>
+          <label className="text-xs font-medium text-gray-500">
+            Created By
+          </label>
           <div className="text-sm text-gray-800 bg-gray-50 px-3 py-2 rounded border border-gray-200">
-            {formData.createdBy || 'N/A'}
+            {formData.createdBy || "N/A"}
           </div>
         </div>
         <div className="space-y-1">
-          <label className="text-xs font-medium text-gray-500">Created At</label>
+          <label className="text-xs font-medium text-gray-500">
+            Created At
+          </label>
           <div className="text-sm text-gray-800 bg-gray-50 px-3 py-2 rounded border border-gray-200">
-            {formData.createdAt ? formatDate(formData.createdAt) : 'N/A'}
+            {formData.createdAt ? formatDate(formData.createdAt) : "N/A"}
           </div>
         </div>
       </div>
@@ -506,8 +519,18 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-white bg-opacity-20 rounded flex items-center justify-center">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
                 </svg>
               </div>
               <div>
@@ -515,9 +538,22 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
                 <p className="text-blue-100 text-xs">Update task information</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded transition">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <button
+              onClick={onClose}
+              className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded transition"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -642,15 +678,20 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
               {/* Related Item Selection */}
               {formData.relatedTo && (
                 <GlobalSelectField
-                  label={`Select ${formData.relatedTo.charAt(0).toUpperCase() + formData.relatedTo.slice(1)}`}
+                  label={`Select ${
+                    formData.relatedTo.charAt(0).toUpperCase() +
+                    formData.relatedTo.slice(1)
+                  }`}
                   name="relatedId"
                   value={formData.relatedId}
                   onChange={(e) => {
-                    const selected = relatedData.find(item => item.id === e.target.value);
-                    setFormData(prev => ({
+                    const selected = relatedData.find(
+                      (item) => item.id === e.target.value
+                    );
+                    setFormData((prev) => ({
                       ...prev,
                       relatedId: e.target.value,
-                      relatedName: selected?.name || ''
+                      relatedName: selected?.name || "",
                     }));
                   }}
                   options={relatedOptions}
@@ -716,7 +757,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
                   Updating...
                 </>
               ) : (
-                'Update Task'
+                "Update Task"
               )}
             </button>
           </div>
