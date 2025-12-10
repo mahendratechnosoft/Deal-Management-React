@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axiosInstance from '../../BaseComponet/axiosInstance';
-import toast from "react-hot-toast";
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showAutoCloseSuccess,
+  showCustomAlert
+} from '../../BaseComponet/alertUtils'; // Adjust path as needed
 import Chart from 'chart.js/auto';
-import { GlobalMultiSelectField } from '../../BaseComponet/CustomerFormInputs';
 import TaskComments from './TaskComments';
 import CircularAssigneesSelector from './CircularAssigneesSelector';
+import TaskAttachments from './TaskAttachments';
 
 function PreviewTaskModal({ taskId, onClose }) {
   const [loading, setLoading] = useState(true);
@@ -12,7 +17,7 @@ function PreviewTaskModal({ taskId, onClose }) {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [activeTab, setActiveTab] = useState('timelogs');
-
+  const [activeTimerLog, setActiveTimerLog] = useState(null);
   const [attachments, setAttachments] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [loadingTeam, setLoadingTeam] = useState(false);
@@ -20,45 +25,18 @@ function PreviewTaskModal({ taskId, onClose }) {
   const timerRef = useRef(null);
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [uploadingFile, setUploadingFile] = useState(false);
-  const [deletingAttachment, setDeletingAttachment] = useState(null);
+  const [openNoteId, setOpenNoteId] = useState(null);
   // Fetch team members on component mount
   useEffect(() => {
     fetchTeamMembers();
   }, []);
 
-
-  useEffect(() => {
-    // Get current user info from localStorage or your auth system
-    const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
-    if (userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        setCurrentUser({
-          employeeId: parsedUser.employeeId || parsedUser.id,
-          name: parsedUser.name || parsedUser.username || 'You'
-        });
-      } catch (e) {
-        console.error('Error parsing user data:', e);
-        // Fallback to a default user
-        setCurrentUser({
-          employeeId: 'current-user',
-          name: 'You'
-        });
-      }
-    } else {
-      // Fallback if no user data found
-      setCurrentUser({
-        employeeId: 'current-user',
-        name: 'You'
-      });
-    }
-  }, []);
   // Fetch task details when taskId changes
   useEffect(() => {
     if (taskId) {
       fetchTaskDetails();
+      fetchTimeLogs();
+      checkActiveTimer();
     }
   }, [taskId]);
 
@@ -76,215 +54,51 @@ function PreviewTaskModal({ taskId, onClose }) {
   }, [isTimerRunning]);
 
   useEffect(() => {
-    if (activeTab === 'statistics' && chartRef.current) initChart();
+    if (activeTab === 'statistics' && chartRef.current && timeLogs.length > 0) {
+      initChart();
+    }
     return () => {
       if (chartInstance.current) chartInstance.current.destroy();
     };
-  }, [activeTab]);
+  }, [activeTab, timeLogs]);
 
-  // Add this useEffect after the existing useEffect that fetches task details
   useEffect(() => {
-    if (taskId) {
-      fetchAttachments();
-    }
-  }, [taskId]);
+  const handleClickOutside = () => {
+    setOpenNoteId(null); // ✅ Close note when clicking anywhere
+  };
 
-  const fetchAttachments = async () => {
+  document.addEventListener("click", handleClickOutside);
+  return () => document.removeEventListener("click", handleClickOutside);
+}, []);
+
+  // Check if there's an active timer for this task
+  const checkActiveTimer = async () => {
+    if (!taskId) return;
+
     try {
-      console.log('Fetching attachments for taskId:', taskId);
-      const response = await axiosInstance.get(`getTaskAttachmentByTaskId/${taskId}`);
-      console.log('Attachments API response:', response);
-
+      const response = await axiosInstance.get(`getAllTimerLogs/${taskId}`);
       if (response.data && Array.isArray(response.data)) {
-        console.log('Attachments received:', response.data.length);
-        setAttachments(response.data);
-      } else {
-        console.log('No attachments array in response');
-        setAttachments([]);
+        const activeLog = response.data.find(log => !log.endTime);
+        if (activeLog) {
+          setActiveTimerLog(activeLog);
+          setIsTimerRunning(true);
+          // Calculate elapsed time
+          const startTime = new Date(activeLog.startTime);
+          const now = new Date();
+          const elapsedSeconds = Math.floor((now - startTime) / 1000);
+          setTimerSeconds(elapsedSeconds);
+        }
       }
     } catch (error) {
-      console.error('Error fetching attachments:', error);
-      console.error('Error details:', error.response?.data || error.message);
-      toast.error('Failed to load attachments');
-      setAttachments([]);
+      console.error('Error checking active timer:', error);
     }
   };
-
-  const handleFileUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
-
-    setUploadingFile(true);
-
-    try {
-      // Read files as base64
-      const filePromises = files.map(file => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const base64String = reader.result.split(',')[1];
-            resolve({
-              taskId: taskId,
-              fileName: file.name,
-              contentType: file.type,
-              data: base64String
-            });
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-      });
-
-      const attachmentData = await Promise.all(filePromises);
-
-      // Upload files to API
-      const response = await axiosInstance.post('addTaskAttachement', attachmentData);
-
-      if (response.status === 200) {
-        toast.success(`${files.length} file(s) uploaded successfully`);
-        // Refresh attachments list
-        fetchAttachments();
-      }
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      toast.error('Failed to upload file(s)');
-    } finally {
-      setUploadingFile(false);
-    }
-  };
-
-  const handleDeleteAttachment = async (attachmentId) => {
-    if (!window.confirm('Are you sure you want to delete this attachment?')) return;
-
-    setDeletingAttachment(attachmentId);
-
-    try {
-      const response = await axiosInstance.delete(`deleteTaskAttachement/${attachmentId}`);
-
-      if (response.status === 200) {
-        toast.success('Attachment deleted successfully');
-        // Remove from local state
-        setAttachments(attachments.filter(att => att.taskAttachmentId !== attachmentId));
-      }
-    } catch (error) {
-      console.error('Error deleting attachment:', error);
-      toast.error('Failed to delete attachment');
-    } finally {
-      setDeletingAttachment(null);
-    }
-  };
-
-  const handleDownloadAttachment = async (attachment) => {
-    try {
-      // Create a blob from base64 data
-      const byteCharacters = atob(attachment.data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: attachment.contentType });
-
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = attachment.fileName;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast.success('Download started');
-    } catch (error) {
-      console.error('Error downloading attachment:', error);
-      toast.error('Failed to download file');
-    }
-  };
-
-  const getFileIconComponent = (fileName, contentType) => {
-    const extension = fileName.split('.').pop().toLowerCase();
-
-    // Check by content type first
-    if (contentType.includes('image')) {
-      return (
-        <div className="text-blue-500">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-          </svg>
-        </div>
-      );
-    }
-
-    if (contentType.includes('pdf')) {
-      return (
-        <div className="text-red-500">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-          </svg>
-        </div>
-      );
-    }
-
-    if (contentType.includes('word') || contentType.includes('document') || extension === 'doc' || extension === 'docx') {
-      return (
-        <div className="text-blue-600">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-          </svg>
-        </div>
-      );
-    }
-
-    if (contentType.includes('excel') || contentType.includes('spreadsheet') || extension === 'xls' || extension === 'xlsx') {
-      return (
-        <div className="text-green-600">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-          </svg>
-        </div>
-      );
-    }
-
-    if (contentType.includes('zip') || contentType.includes('compressed') || extension === 'zip' || extension === 'rar' || extension === '7z') {
-      return (
-        <div className="text-yellow-600">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-          </svg>
-        </div>
-      );
-    }
-
-    // Default file icon
-    return (
-      <div className="text-gray-600">
-        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-        </svg>
-      </div>
-    );
-  };
-
-  const formatFileSize = (base64String) => {
-    if (!base64String) return '0 KB';
-
-    // Calculate size from base64 string
-    const sizeInBytes = (base64String.length * 3) / 4;
-
-    if (sizeInBytes < 1024) return `${sizeInBytes} B`;
-    if (sizeInBytes < 1024 * 1024) return `${(sizeInBytes / 1024).toFixed(1)} KB`;
-    return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  // ====================================================================
 
   const fetchTeamMembers = async () => {
     setLoadingTeam(true);
     try {
       const response = await axiosInstance.get('getEmployeeNameAndId');
       if (response.data && Array.isArray(response.data)) {
-        // Format for react-select
         const formattedTeamMembers = response.data.map(member => ({
           value: member.employeeId,
           label: member.name
@@ -293,21 +107,39 @@ function PreviewTaskModal({ taskId, onClose }) {
       }
     } catch (error) {
       console.error('Error fetching team members:', error);
-      toast.error('Failed to load team members');
+      showErrorAlert('Failed to load team members');
     } finally {
       setLoadingTeam(false);
+    }
+  };
+
+  const fetchTimeLogs = async () => {
+    if (!taskId) return;
+
+    try {
+      const response = await axiosInstance.get(`getAllTimerLogs/${taskId}`);
+      if (response.data && Array.isArray(response.data)) {
+        // Set all time logs including active ones
+        setTimeLogs(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching time logs:', error);
     }
   };
 
   const initChart = useCallback(() => {
     if (chartInstance.current) chartInstance.current.destroy();
 
+    // Filter only completed logs for chart
+    const completedLogs = timeLogs.filter(log => log.endTime);
+    const weeklyData = processWeeklyTimeData(completedLogs);
+
     const ctx = chartRef.current.getContext('2d');
     const data = {
       labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
       datasets: [{
-        label: 'Time Spent',
-        data: [9.14, 8.5, 9.28, 8.75, 9.36, 7.2, 8.9],
+        label: 'Time Spent (hours)',
+        data: weeklyData,
         backgroundColor: [
           'rgba(59, 130, 246, 0.8)', 'rgba(16, 185, 129, 0.8)', 'rgba(245, 158, 11, 0.8)',
           'rgba(239, 68, 68, 0.8)', 'rgba(139, 92, 246, 0.8)', 'rgba(14, 165, 233, 0.8)', 'rgba(236, 72, 153, 0.8)'
@@ -324,27 +156,73 @@ function PreviewTaskModal({ taskId, onClose }) {
     const options = {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              let label = context.dataset.label || '';
+              if (label) {
+                label += ': ';
+              }
+              label += context.parsed.y.toFixed(1) + ' hours';
+              return label;
+            }
+          }
+        }
+      },
       scales: {
-        y: { beginAtZero: true, max: 12, grid: { color: 'rgba(0, 0, 0, 0.03)' } },
-        x: { grid: { display: false } }
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Hours'
+          },
+          ticks: {
+            callback: function (value) {
+              return value.toFixed(1) + 'h';
+            }
+          },
+          grid: { color: 'rgba(0, 0, 0, 0.03)' }
+        },
+        x: {
+          grid: { display: false }
+        }
       }
     };
 
     chartInstance.current = new Chart(ctx, { type: 'bar', data, options });
-  }, []);
+  }, [timeLogs]);
+
+  const processWeeklyTimeData = (logs) => {
+    // Initialize array for 7 days (Monday to Sunday)
+    const weeklyData = [0, 0, 0, 0, 0, 0, 0];
+
+    logs.forEach(log => {
+      if (log.startTime && log.durationInMinutes) {
+        const startDate = new Date(log.startTime);
+        const dayOfWeek = startDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+        // Convert to Monday-based index (0 = Monday, 6 = Sunday)
+        const mondayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+        // Convert minutes to hours
+        const hours = log.durationInMinutes / 60;
+        weeklyData[mondayIndex] += hours;
+      }
+    });
+
+    return weeklyData;
+  };
 
   const fetchTaskDetails = async () => {
     try {
       setLoading(true);
-
-      // Fetch task data from API
       const response = await axiosInstance.get(`getTaskByItemId/${taskId}`);
 
       if (response.data) {
         const taskData = response.data;
 
-        // Format dates to readable format
         const formatDate = (dateString) => {
           if (!dateString) return '';
           try {
@@ -360,16 +238,8 @@ function PreviewTaskModal({ taskId, onClose }) {
           }
         };
 
-        // Format time logs from API response
-        const formattedTimeLogs = taskData.timeLogs || [];
-
-        // Format comments from API response
-        const formattedComments = taskData.comments || [];
-
-        // Format attachments from API response
         const formattedAttachments = taskData.attachments || [];
 
-        // Extract assignee and follower IDs from the response
         const assigneeIds = taskData.assignedEmployees
           ? taskData.assignedEmployees.map(emp => emp.employeeId)
           : [];
@@ -378,10 +248,6 @@ function PreviewTaskModal({ taskId, onClose }) {
           ? taskData.followersEmployees.map(emp => emp.employeeId)
           : [];
 
-        // Calculate total logged time
-        const totalLoggedTime = taskData.totalLoggedTime || 0;
-
-        // Set task data
         setTask({
           taskId: taskData.taskId,
           adminId: taskData.adminId || '',
@@ -400,26 +266,23 @@ function PreviewTaskModal({ taskId, onClose }) {
           estimateHours: taskData.estimatedHours || 0,
           isBillable: taskData.isBillable || false,
           isPublic: taskData.isPublic || false,
-          totalLoggedTime: totalLoggedTime,
+          totalLoggedTime: 0, // Will be calculated from time logs
           createdAt: taskData.createdAt || '',
           createdBy: taskData.createdBy || '',
           projectName: taskData.projectName || 'No Project',
           projectId: taskData.projectId || 'N/A'
         });
 
-        setTimerSeconds(totalLoggedTime);
-        setTimeLogs(formattedTimeLogs);
-
         setAttachments(formattedAttachments);
       }
     } catch (error) {
       console.error("Error fetching task details:", error);
-      toast.error("Failed to load task details");
+      showErrorAlert("Failed to load task details");
 
-      // Fallback to mock data if API fails
+      // Fallback mock data
       const mockTask = {
         id: taskId,
-        subject: "Website Development",
+        subject: "Sample Task",
         description: "No description for this task",
         status: "in-progress",
         priority: "medium",
@@ -431,47 +294,178 @@ function PreviewTaskModal({ taskId, onClose }) {
         isBillable: true,
         isPublic: false,
         totalLoggedTime: 166080,
-        projectName: "Muscleholic Nutrition",
+        projectName: "Sample Project",
         projectId: "#101",
-        createdBy: "Punamdeep Kaur",
+        createdBy: "Admin",
         createdAt: "2024-11-25"
       };
 
       setTask(mockTask);
-      setTimerSeconds(mockTask.totalLoggedTime);
-
-      // Mock time logs
-      setTimeLogs([
-        { id: 1, member: "Dnyanesh Patil", startTime: "10-12-2024 9:24 AM", endTime: "10-12-2024 6:32 PM", timeSpent: "09:08", decimalTime: "9.14" },
-        { id: 2, member: "Dnyanesh Patil", startTime: "02-12-2024 9:18 AM", endTime: "02-12-2024 6:35 PM", timeSpent: "09:16", decimalTime: "9.28" },
-        { id: 3, member: "Dnyanesh Patil", startTime: "27-11-2024 9:16 AM", endTime: "27-11-2024 6:38 PM", timeSpent: "09:21", decimalTime: "9.36" }
-      ]);
-
     } finally {
       setLoading(false);
     }
   };
 
+  const handleStartTimer = async () => {
+    if (!taskId) {
+      showErrorAlert('No task selected');
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.post('startTimerOfTask', {
+        taskId: taskId
+      });
+
+      if (response.data) {
+        setActiveTimerLog(response.data);
+        setIsTimerRunning(true);
+        setTimerSeconds(0);
+        showAutoCloseSuccess('Timer started');
+
+        // Refresh time logs
+        fetchTimeLogs();
+      }
+    } catch (error) {
+      console.error('Error starting timer:', error);
+      showErrorAlert('Failed to start timer');
+    }
+  };
+
+  const handleStopTimer = async () => {
+    if (!taskId || !activeTimerLog) {
+      showErrorAlert('No active timer to stop');
+      return;
+    }
+
+    try {
+      // Show attractive custom popup for note input
+      const result = await showCustomAlert(
+        `
+        <div class="p-4">
+          <div class="flex items-center justify-center mb-4">
+            <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+            </div>
+          </div>
+          
+          <h3 class="text-lg font-bold text-center text-gray-900 mb-1">Time Log Note</h3>
+          <p class="text-center text-gray-600 mb-4">Please add a note to complete your time entry</p>
+          
+          <div class="space-y-3">
+            <div>
+              <label for="timeLogNote" class="block text-sm font-medium text-gray-700 mb-2">
+                <span class="text-red-500">*</span> Note (required):
+              </label>
+            <textarea 
+  id="timeLogNote" 
+  maxlength="1000"
+  oninput="document.getElementById('charCount').innerText = this.value.length + ' / 1000'"
+  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition duration-200 resize-none" 
+  rows="4" 
+  placeholder="What did you work on? Describe your task completion..."
+  autofocus></textarea>
+
+<div id="charCount" class="text-right text-xs text-gray-500 mt-1">
+  0 / 1000
+</div>
+
+              <div class="mt-1 text-xs text-gray-500 flex items-center">
+                <svg class="w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                This note is required to complete your time entry
+              </div>
+            </div>
+            
+            <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">
+              <div class="flex items-center gap-2 mb-1">
+                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-sm font-medium text-blue-800">Session Duration</span>
+              </div>
+              <div class="text-2xl font-bold text-blue-900 font-mono text-center">${formatTime(timerSeconds)}</div>
+            </div>
+          </div>
+        </div>
+        `,
+        '',
+        {
+          showCancelButton: true,
+          confirmButtonText: 'Complete Time Entry',
+          cancelButtonText: 'Cancel',
+          confirmButtonColor: '#10b981',
+          cancelButtonColor: '#ef4444',
+          width: '500px',
+          customClass: {
+            popup: 'rounded-xl shadow-2xl',
+            title: 'hidden',
+            htmlContainer: 'p-0',
+            confirmButton: 'bg-green-500 hover:bg-green-600 text-white px-6 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2',
+            cancelButton: 'bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2'
+          },
+          preConfirm: () => {
+            const noteInput = document.getElementById('timeLogNote');
+            const value = noteInput?.value.trim();
+
+            if (!value) {
+              showErrorAlert('Please enter a note to complete your time entry');
+              return false;
+            }
+
+            if (value.length > 1000) {
+              showErrorAlert('Note cannot exceed 1000 characters');
+              return false;
+            }
+
+            return value;
+          },
+
+          didOpen: () => {
+            const noteInput = document.getElementById('timeLogNote');
+            if (noteInput) {
+              noteInput.focus();
+            }
+          }
+        }
+      );
+
+      if (!result.isConfirmed) {
+        return; // User cancelled
+      }
+
+      const endNote = result.value;
+
+      const response = await axiosInstance.post('stopTimerOfTask', {
+        taskId: taskId,
+        endNote: endNote
+      });
+
+      if (response.data) {
+        setIsTimerRunning(false);
+        setActiveTimerLog(null);
+        setTimerSeconds(0);
+        showAutoCloseSuccess('Time entry completed successfully');
+
+        // Refresh time logs
+        fetchTimeLogs();
+      }
+    } catch (error) {
+      console.error('Error stopping timer:', error);
+      showErrorAlert('Failed to stop timer');
+    }
+  };
+
   const handleToggleTimer = () => {
-    setIsTimerRunning(!isTimerRunning);
-    toast.success(isTimerRunning ? "Timer stopped" : "Timer started");
-  };
-
-  const handleTogglePublic = () => {
-    if (task) {
-      setTask({ ...task, isPublic: !task.isPublic });
-      toast.success(`Task is now ${!task.isPublic ? 'public' : 'private'}`);
+    if (isTimerRunning) {
+      handleStopTimer();
+    } else {
+      handleStartTimer();
     }
   };
-
-  const handleMarkComplete = () => {
-    if (task) {
-      setTask({ ...task, status: 'completed' });
-      toast.success("Task marked as complete");
-    }
-  };
-
-
 
   const handleAssigneesChange = (selectedIds) => {
     if (task) {
@@ -491,13 +485,6 @@ function PreviewTaskModal({ taskId, onClose }) {
     }
   };
 
-
-
-  const handleRemoveAttachment = (attachmentId) => {
-    setAttachments(attachments.filter(att => att.id !== attachmentId));
-    toast.success("Attachment removed");
-  };
-
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -505,54 +492,159 @@ function PreviewTaskModal({ taskId, onClose }) {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const formatDateTime = (dateTimeString) => {
+    if (!dateTimeString) return 'N/A';
+    try {
+      const date = new Date(dateTimeString);
+      return date.toLocaleString('en-US', {
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      console.error('Error formatting date:', dateTimeString, e);
+      return dateTimeString;
+    }
+  };
+
+  const formatDuration = (minutes) => {
+    if (!minutes && minutes !== 0) return 'N/A';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+
+    if (hours > 0) {
+      return `${hours}h ${mins}m`;
+    }
+    return `${mins}m`;
+  };
+
   const getInitials = (name) => {
+    if (!name) return '??';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
   };
 
-
   const getPriorityColor = (priority) => {
     switch (priority?.toLowerCase()) {
-      case 'urgent': return 'text-red-600';
-      case 'high': return 'text-orange-600';
-      case 'medium': return 'text-yellow-600';
-      case 'low': return 'text-green-600';
-      default: return 'text-gray-600';
+      case 'urgent': return 'bg-red-500 text-white';
+      case 'high': return 'bg-orange-500 text-white';
+      case 'medium': return 'bg-yellow-500 text-white';
+      case 'low': return 'bg-green-500 text-white';
+      default: return 'bg-gray-500 text-white';
     }
   };
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case 'completed': return 'text-green-600';
-      case 'in-progress': return 'text-blue-600';
-      case 'pending': return 'text-yellow-600';
-      case 'on-hold': return 'text-red-600';
-      default: return 'text-gray-600';
+      case 'completed': return 'bg-green-500 text-white';
+      case 'in-progress': return 'bg-blue-500 text-white';
+      case 'pending': return 'bg-yellow-500 text-white';
+      case 'on-hold': return 'bg-red-500 text-white';
+      default: return 'bg-gray-500 text-white';
     }
   };
 
-  // Find selected assignee names
-  const getSelectedAssigneeNames = () => {
-    if (!task || !task.assignees || !Array.isArray(teamMembers)) return [];
-    return task.assignees.map(id => {
-      const member = teamMembers.find(m => m.value === id);
-      return member ? member.label : `Employee ${id}`;
-    });
+  const getStatusDisplay = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'completed': return '✓ Completed';
+      case 'in-progress': return '▶ In Progress';
+      case 'pending': return '⏳ Pending';
+      case 'on-hold': return '⏸ On Hold';
+      default: return status?.charAt(0).toUpperCase() + status?.slice(1);
+    }
   };
 
-  // Find selected follower names
-  const getSelectedFollowerNames = () => {
-    if (!task || !task.followers || !Array.isArray(teamMembers)) return [];
-    return task.followers.map(id => {
-      const member = teamMembers.find(m => m.value === id);
-      return member ? member.label : `Employee ${id}`;
-    });
+  // Calculate total time including current session
+  const getTotalTime = () => {
+    // Only count completed logs for total
+    const completedLogs = timeLogs.filter(log => log.endTime);
+    const totalFromLogs = completedLogs.reduce((total, log) => {
+      return total + (log.durationInMinutes || 0);
+    }, 0);
+
+    // Convert minutes to seconds and add current timer
+    return (totalFromLogs * 60) + timerSeconds;
   };
+
+  // Get display logs - remove active timer from completed logs array
+  const getDisplayLogs = () => {
+    // If there's an active timer, show it first
+    if (activeTimerLog) {
+      const activeLogDisplay = {
+        ...activeTimerLog,
+        // Mark as active for display purposes
+        isActive: true
+      };
+
+      // Get completed logs
+      const completedLogs = timeLogs.filter(log => log.endTime);
+
+      return [activeLogDisplay, ...completedLogs];
+    }
+
+    // Otherwise show only completed logs
+    return timeLogs.filter(log => log.endTime);
+  };
+
+  // Component for note icon with right-side tooltip
+  const NoteTooltipIcon = ({ note, noteId, openNoteId, setOpenNoteId }) => {
+    const wrapperRef = useRef(null);
+    const isOpen = openNoteId === noteId;
+
+    if (!note) return null;
+
+    return (
+      <div
+        ref={wrapperRef}
+        className="relative inline-block ml-2"
+        onPointerDownCapture={(e) => {
+          if (isOpen && !wrapperRef.current.contains(e.target)) {
+            setOpenNoteId(null); // ✅ close only on outside click
+          }
+        }}
+      >
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpenNoteId(isOpen ? null : noteId); // ✅ toggle safely
+          }}
+          className="cursor-pointer text-gray-400 hover:text-blue-500 transition relative"
+        >
+          <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+          <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse pointer-events-none"></span>
+        </button>
+
+        {isOpen && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="absolute z-50 w-72 p-3 text-xs bg-gray-900 text-white rounded-lg shadow-xl left-full top-1/2 transform -translate-y-1/2 ml-3"
+          >
+            <div className="font-medium text-blue-300 mb-1">Time Log Note</div>
+
+            <div className="bg-gray-800 p-2 rounded border border-gray-700 whitespace-pre-wrap max-h-40 overflow-y-auto">
+              {note}
+            </div>
+
+            <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-t-transparent border-b-transparent border-r-gray-900"></div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+
+
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-3 z-50">
-        <div className="bg-white rounded-lg shadow-lg w-full max-w-7xl max-h-[90vh] overflow-hidden">
-          <div className="flex items-center justify-center h-40">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl h-[80vh] overflow-hidden">
+          <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         </div>
@@ -562,8 +654,8 @@ function PreviewTaskModal({ taskId, onClose }) {
 
   if (!task) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-3 z-50">
-        <div className="bg-white rounded-lg shadow-lg w-full max-w-7xl max-h-[90vh] overflow-hidden">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl h-[80vh] overflow-hidden">
           <div className="text-center p-4">
             <p className="text-red-500">Task not found</p>
           </div>
@@ -572,109 +664,91 @@ function PreviewTaskModal({ taskId, onClose }) {
     );
   }
 
+  const displayLogs = getDisplayLogs();
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-3 z-50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-7xl max-h-[90vh] overflow-hidden border border-gray-200 flex flex-col">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-7xl h-[80vh] overflow-hidden flex flex-col">
         {/* Modal Header */}
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-3">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-white bg-opacity-20 rounded flex items-center justify-center">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-8 h-8 bg-white/20 rounded flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
               <div>
-                <h2 className="text-lg font-bold">Task Preview</h2>
-                <p className="text-blue-100 text-xs">View and manage task details</p>
+                <h2 className="text-lg font-bold text-white">Task Details</h2>
+                <p className="text-blue-100 text-xs">View and manage task information</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded transition">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button
+              onClick={onClose}
+              className="p-1.5 hover:bg-white/20 rounded transition"
+            >
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
         </div>
 
-        {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-3">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            {/* Left Column */}
-            <div className="lg:col-span-2 space-y-3">
-              {/* Task Header */}
-              <div className="bg-white rounded border border-gray-200 p-3">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h1 className="text-xl font-bold text-gray-900">{task.subject}</h1>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={`text-sm font-medium ${getStatusColor(task.status)}`}>
-                        {task.status?.charAt(0).toUpperCase() + task.status?.slice(1)}
+        {/* Main Content */}
+        <div className="flex-1 overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-3 h-full">
+            {/* Left Column - Compact Task Info */}
+            <div className="lg:col-span-2 border-r border-gray-200 overflow-y-auto p-4">
+              {/* Task Header - WITHOUT Mark Complete button */}
+              <div className="mb-3">
+                <div className="flex items-start justify-between mb-1">
+                  <div className="flex items-center justify-between w-full">
+                    {/* Left Side: Title + Status in one row */}
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <h1 className="text-xl font-bold text-gray-900">
+                        {task.subject}
+                      </h1>
+                    </div>
+                    <div className="ml-auto flex items-center gap-3 flex-wrap">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}
+                      >
+                        {getStatusDisplay(task.status)}
                       </span>
-                      <button onClick={handleTogglePublic} className="text-sm text-blue-600 hover:text-blue-800">
-                        {task.isPublic ? 'Public Task' : 'Private Task'} - Make {task.isPublic ? 'Private' : 'Public'}
-                      </button>
+                      {/* Right Side: Priority */}
+                      <span
+                        className={`px-4 py-1 rounded text-xs font-medium ${getPriorityColor(task.priority)}`}
+                      >
+                        {task.priority || 'Medium'}
+                      </span>
                     </div>
                   </div>
-                  <button onClick={handleMarkComplete} className="px-3 py-1.5 bg-green-100 text-green-700 rounded font-medium hover:bg-green-200 text-sm">
-                    Mark complete
-                  </button>
                 </div>
 
-                {/* Description */}
-                <div className="mb-3 p-3 bg-gray-50 rounded border border-gray-200">
-                  <h4 className="font-medium text-gray-900 text-sm mb-1">Description</h4>
-                  <p className="text-gray-700 text-sm">
-                    {task.description || "No description for this task"}
-                  </p>
-                </div>
-
-                {/* Related Info */}
-                {task.relatedTo && task.relatedName && (
-                  <div className="mb-3 p-2 bg-blue-50 rounded border border-blue-100">
-                    <div className="flex items-center gap-1.5">
-                      <svg className="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                      </svg>
-                      <div className="text-sm">
-                        <span className="font-medium text-blue-800">Related: </span>
-                        <span className="text-blue-600">
-                          {task.relatedTo.charAt(0).toUpperCase() + task.relatedTo.slice(1)} - {task.relatedName}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Timeline Section */}
-                <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded p-3 border border-gray-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900 text-sm">Timeline</h3>
-                    <button onClick={handleToggleTimer} className={`px-3 py-1.5 rounded font-medium flex items-center gap-1.5 text-sm ${isTimerRunning ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                      }`}>
+                {/* Timer Section - REDUCED SIZE */}
+                <div className="mb-2 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-medium text-gray-900 text-xs">Time Tracking</h3>
+                    <button
+                      onClick={handleToggleTimer}
+                      className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 ${isTimerRunning
+                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        }`}
+                    >
                       {isTimerRunning ? (
                         <>
-                          {/* Animated clock with moving second hand */}
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="10" strokeWidth="1.5" />
-                            {/* Hour hand */}
-                            <line x1="12" y1="12" x2="12" y2="9" strokeWidth="2" strokeLinecap="round" />
-                            {/* Minute hand */}
-                            <line x1="12" y1="12" x2="15" y2="12" strokeWidth="1.5" strokeLinecap="round" />
-                            {/* Animated second hand */}
-                            <line x1="12" y1="12" x2="12" y2="6" strokeWidth="1" strokeLinecap="round" className="origin-center animate-spin" style={{ animationDuration: '1s' }} />
-                            {/* Stop square */}
-                            <rect x="9" y="9" width="6" height="6" strokeWidth="1.5" />
+                          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
                           </svg>
                           Stop
                         </>
                       ) : (
                         <>
-                          {/* Static clock with play symbol */}
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="10" strokeWidth="1.5" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 9l3 1.5-3 1.5V9z" />
+                          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           Start
                         </>
@@ -682,93 +756,243 @@ function PreviewTaskModal({ taskId, onClose }) {
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-gray-900 font-mono">{formatTime(timerSeconds)}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">Current session</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="text-center p-1.5 bg-white rounded border border-gray-200">
+                      <div className="text-base font-bold text-gray-900 font-mono mb-0.5">
+                        {formatTime(timerSeconds)}
+                      </div>
+                      <div className="text-[10px] text-gray-600">Current Session</div>
+                      {isTimerRunning && (
+                        <div className="text-[10px] text-green-600 mt-0.5 flex items-center justify-center gap-0.5">
+                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                          Active
+                        </div>
+                      )}
                     </div>
-                    <div className="text-right">
-                      <div className="text-xs text-gray-600">Total logged time</div>
-                      <div className="text-lg font-bold text-gray-900">{formatTime(task.totalLoggedTime + timerSeconds)}</div>
+                    <div className="text-center p-1.5 bg-white rounded border border-gray-200">
+                      <div className="text-base font-bold text-gray-900 font-mono mb-0.5">
+                        {formatTime(getTotalTime())}
+                      </div>
+                      <div className="text-[10px] text-gray-600">Total Time</div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Tabs */}
-              <div className="bg-white rounded border border-gray-200">
-                <div className="border-b border-gray-200">
-                  <nav className="flex px-3">
-                    <button onClick={() => setActiveTab('timelogs')} className={`px-3 py-2 text-sm font-medium ${activeTab === 'timelogs' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}>
-                      Time Logs
-                    </button>
-                    <button onClick={() => setActiveTab('statistics')} className={`px-3 py-2 text-sm font-medium ${activeTab === 'statistics' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}>
-                      Statistics
-                    </button>
-                  </nav>
-                </div>
+                {/* Main Tabs */}
+                <div className="mb-4">
+                  <div className="border-b border-gray-200">
+                    <nav className="flex">
+                      <button
+                        onClick={() => setActiveTab('timelogs')}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === 'timelogs'
+                          ? 'border-b-2 border-blue-600 text-blue-600'
+                          : 'text-gray-500 hover:text-gray-700'
+                          }`}
+                      >
+                        Time Logs
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('statistics')}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === 'statistics'
+                          ? 'border-b-2 border-blue-600 text-blue-600'
+                          : 'text-gray-500 hover:text-gray-700'
+                          }`}
+                      >
+                        Statistics
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('comments')}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === 'comments'
+                          ? 'border-b-2 border-blue-600 text-blue-600'
+                          : 'text-gray-500 hover:text-gray-700'
+                          }`}
+                      >
+                        Comments
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('attachments')}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === 'attachments'
+                          ? 'border-b-2 border-blue-600 text-blue-600'
+                          : 'text-gray-500 hover:text-gray-700'
+                          }`}
+                      >
+                        Attachments
+                      </button>
+                    </nav>
+                  </div>
 
-                <div className="p-3">
-                  {activeTab === 'timelogs' ? (
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full text-xs">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-3 py-2 text-left font-medium text-gray-500">Member</th>
-                            <th className="px-3 py-2 text-left font-medium text-gray-500">Start Time</th>
-                            <th className="px-3 py-2 text-left font-medium text-gray-500">End Time</th>
-                            <th className="px-3 py-2 text-left font-medium text-gray-500">Time Spent</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                          {timeLogs.map((log) => (
-                            <tr key={log.id} className="hover:bg-gray-50">
-                              <td className="px-3 py-2">
-                                <div className="flex items-center gap-1.5">
-                                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                                  <span className="font-medium">{log.member?.split(' ')[0] || 'Unknown'}</span>
-                                  <span className="text-gray-600">{log.member?.split(' ')[1] || ''}</span>
-                                </div>
-                              </td>
-                              <td className="px-3 py-2 text-gray-900">{log.startTime}</td>
-                              <td className="px-3 py-2 text-gray-900">{log.endTime}</td>
-                              <td className="px-3 py-2">
-                                <div className="font-medium">Time (h): {log.timeSpent}</div>
-                                <div className="text-gray-500 text-xs">Decimal: {log.decimalTime}</div>
-                              </td>
+                  <div className="bg-white border border-gray-200 border-t-0 rounded-b-lg p-3 min-h-[300px]">
+                    {activeTab === 'timelogs' && (
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200 text-xs">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-2 py-1.5 text-left font-medium text-gray-500">Employee</th>
+                              <th className="px-2 py-1.5 text-left font-medium text-gray-500">Start Time</th>
+                              <th className="px-2 py-1.5 text-left font-medium text-gray-500">End Time</th>
+                              <th className="px-2 py-1.5 text-left font-medium text-gray-500">Duration</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-gray-900 text-sm">Weekly Time Distribution</h4>
-                        <div className="flex items-center gap-1">
-                          <div className="w-2.5 h-2.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded"></div>
-                          <span className="text-xs text-gray-600">Time Spent (hours)</span>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {displayLogs.length > 0 ? (
+                              displayLogs.map((log) => (
+                                <tr key={log.taskLogId || log.startTime} className="hover:bg-gray-50">
+
+                                  <td className="px-2 py-1.5 whitespace-nowrap">
+                                    <div className="flex items-center group">
+                                      <div className="flex-shrink-0 w-5 h-5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-[10px] font-bold mr-1.5">
+                                        {getInitials(log.employeeName)}
+                                      </div>
+                                      <span className="font-medium text-gray-900 text-xs">{log.employeeName}</span>
+                                      <NoteTooltipIcon
+                                        note={log.endNote}
+                                        noteId={log.taskLogId}
+                                        openNoteId={openNoteId}
+                                        setOpenNoteId={setOpenNoteId}
+                                      />
+
+                                    </div>
+                                  </td>
+                                  <td className="px-2 py-1.5 whitespace-nowrap text-gray-900 text-xs">
+                                    {formatDateTime(log.startTime)}
+                                  </td>
+                                  <td className="px-2 py-1.5 whitespace-nowrap text-gray-900 text-xs">
+                                    {log.endTime ? formatDateTime(log.endTime) : 'In Progress'}
+                                  </td>
+                                  <td className="px-2 py-1.5 whitespace-nowrap">
+                                    <div className="font-medium text-gray-900 text-xs">
+                                      {log.isActive ? formatTime(timerSeconds) : formatDuration(log.durationInMinutes)}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan="4" className="px-2 py-3 text-center text-gray-500 text-xs">
+                                  No time logs available
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {activeTab === 'statistics' && (
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-gray-900 text-xs">Weekly Time Distribution</h4>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded"></div>
+                            <span className="text-[10px] text-gray-600">Time Spent (hours)</span>
+                          </div>
+                        </div>
+
+                        <div className="relative h-40 mb-2">
+                          <canvas ref={chartRef}></canvas>
+                        </div>
+
+                        <div className="pt-2 border-t border-gray-200">
+                          <div className="flex items-center justify-between text-xs">
+                            <div>
+                              <div className="text-gray-500 text-[10px]">Total Time Logged</div>
+                              <div className="font-bold text-gray-900 text-xs">
+                                {formatTime(getTotalTime())}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-gray-500 text-[10px]">Total Entries</div>
+                              <div className="font-bold text-gray-900 text-xs">
+                                {displayLogs.length} logs
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
+                    )}
 
-                      <div className="relative h-48 mb-2">
-                        <canvas ref={chartRef}></canvas>
+                    {activeTab === 'comments' && (
+                      <div className="h-full">
+                        <TaskComments taskId={taskId} />
                       </div>
+                    )}
 
-                      <div className="pt-2 border-t border-gray-200">
-                        <div className="flex flex-wrap items-center gap-3 text-xs">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-gray-500">Total Time:</span>
-                            <span className="font-medium text-gray-900">
-                              {formatTime(task.totalLoggedTime + timerSeconds)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-gray-500">Estimate:</span>
-                            <span className="font-medium text-gray-900">
-                              {task.estimateHours || 0} hours
-                            </span>
-                          </div>
+                    {activeTab === 'attachments' && (
+                      <TaskAttachments
+                        taskId={taskId}
+                        attachments={attachments}
+                        onAttachmentsUpdate={(updatedAttachments) => setAttachments(updatedAttachments)}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Compact Task Information */}
+            <div className="lg:col-span-1 bg-gray-50 overflow-y-auto p-3">
+              {/* Task Information Card */}
+              <div className="bg-white rounded-lg border border-gray-200 p-3 mb-3">
+                <h3 className="font-semibold text-gray-900 mb-2 text-xs border-b pb-1.5">Task Information</h3>
+
+                <div className="space-y-3">
+                  {/* Dates */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <div className="text-[10px] text-gray-500 font-medium mb-0.5">Start Date</div>
+                      <div className="text-xs font-medium text-gray-900">{task.startDate}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-gray-500 font-medium mb-0.5">Due Date</div>
+                      <div className="text-xs font-medium text-gray-900">{task.dueDate}</div>
+                    </div>
+                  </div>
+
+                  {/* Financial Info */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <div className="text-[10px] text-gray-500 font-medium mb-0.5">Hourly Rate</div>
+                      <div className="text-xs font-medium text-gray-900">₹{parseFloat(task.hourlyRate || 0).toFixed(2)}</div>
+                    </div>
+                    <div>
+                      <div>
+                        <div className="text-[10px] text-gray-500 font-medium mb-0.5">Estimate</div>
+                        <div className="text-xs font-medium text-gray-900">{task.estimateHours || 0} hours</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Estimate & Creator */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <div className="text-[10px] text-gray-500 font-medium mb-0.5">Created by</div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-5 h-5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                          {getInitials(task.createdBy)}
+                        </div>
+                        <span className="text-xs font-medium text-gray-900 truncate">{task.createdBy}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <div className="text-[10px] text-gray-500 font-medium mb-1">Description</div>
+                    <div className="text-xs text-gray-700 bg-gray-50 p-2 rounded border border-gray-200 max-h-20 overflow-y-auto">
+                      {task.description || "No description provided for this task"}
+                    </div>
+                  </div>
+
+                  {/* Related to */}
+                  {task.relatedTo && task.relatedName && (
+                    <div>
+                      <div className="text-[10px] text-gray-500 font-medium mb-1">Related to</div>
+                      <div className="flex items-start gap-1.5 p-2 bg-blue-50 rounded border border-blue-100">
+                        <svg className="w-3 h-3 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <div className="text-xs font-medium text-blue-800">
+                          {task.relatedTo.charAt(0).toUpperCase() + task.relatedTo.slice(1)} - {task.relatedName}
                         </div>
                       </div>
                     </div>
@@ -776,220 +1000,34 @@ function PreviewTaskModal({ taskId, onClose }) {
                 </div>
               </div>
 
-              {/* Comments */}
-              <TaskComments taskId={taskId} />
-              {/* Attachments */}
-              <div className="bg-white rounded border border-gray-200 p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900 text-sm">Attachments</h3>
-                  <div className="flex items-center gap-2">
-                    {uploadingFile && (
-                      <span className="text-xs text-gray-500">Uploading...</span>
-                    )}
-                    <input
-                      type="file"
-                      id="fileUpload"
-                      multiple
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      disabled={uploadingFile}
-                    />
-                    <label
-                      htmlFor="fileUpload"
-                      className={`text-xs px-2 py-1 rounded ${uploadingFile ? 'text-gray-400 cursor-not-allowed bg-gray-100' : 'text-blue-600 hover:text-blue-800 cursor-pointer bg-blue-50 hover:bg-blue-100'}`}
-                    >
-                      + Add
-                    </label>
-                  </div>
-                </div>
-
-                {attachments.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {attachments.map((attachment) => (
-                      <div
-                        key={attachment.taskAttachmentId || attachment.id}
-                        className="border border-gray-200 rounded p-2 hover:border-blue-300 hover:shadow-sm transition-all group"
-                      >
-                        <div className="flex flex-col h-full">
-                          {/* File icon and name */}
-                          <div className="flex items-start gap-2 mb-1">
-                            <div className="flex-shrink-0 w-8 h-8 bg-blue-50 rounded flex items-center justify-center">
-                              {getFileIconComponent(attachment.fileName, attachment.contentType)}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div
-                                className="font-medium text-gray-900 text-xs truncate cursor-pointer hover:text-blue-600"
-                                onClick={() => handleDownloadAttachment(attachment)}
-                                title={attachment.fileName}
-                              >
-                                {attachment.fileName}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {formatFileSize(attachment.data)}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Meta info and actions */}
-                          <div className="flex items-center justify-between mt-auto pt-1 border-t border-gray-100">
-                            <div className="text-xs text-gray-500 truncate max-w-[70%]" title={attachment.uploadedBy || 'Unknown'}>
-                              {attachment.uploadedBy || 'Unknown'}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              {attachment.uploadedAt && (
-                                <span className="text-xs text-gray-400">
-                                  {new Date(attachment.uploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                </span>
-                              )}
-                              <button
-                                onClick={() => handleDeleteAttachment(attachment.taskAttachmentId || attachment.id)}
-                                disabled={deletingAttachment === (attachment.taskAttachmentId || attachment.id)}
-                                className="text-gray-400 hover:text-red-500 ml-1"
-                                title="Delete"
-                              >
-                                {deletingAttachment === (attachment.taskAttachmentId || attachment.id) ? (
-                                  <div className="w-3 h-3 border border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
-                                ) : (
-                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center text-gray-400 italic text-xs p-4 bg-gray-50 rounded border border-dashed border-gray-300">
-                    No attachments uploaded yet
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Right Column */}
-            <div className="space-y-3">
-              {/* Task Info */}
-              <div className="bg-white rounded border border-gray-200 p-3">
-                <h3 className="font-semibold text-gray-900 mb-2">Task Info</h3>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                      {getInitials(task.createdBy)}
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500">Created by</div>
-                      <div className="font-medium text-gray-900 text-sm">{task.createdBy || 'Unknown'}</div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <div className="text-xs text-gray-500 mb-0.5">Status</div>
-                      <div className={`font-medium text-sm ${getStatusColor(task.status)}`}>
-                        {task.status?.charAt(0).toUpperCase() + task.status?.slice(1) || 'Unknown'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-0.5">Priority</div>
-                      <div className={`font-medium text-sm ${getPriorityColor(task.priority)}`}>
-                        {task.priority || 'Medium'}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-center">
-                      <div className="text-xs text-gray-500">Start Date</div>
-                      <div className="font-medium text-gray-900 text-sm">{task.startDate}</div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div className="text-xs text-gray-500">Due Date</div>
-                      <div className="font-medium text-gray-900 text-sm">{task.dueDate}</div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-center">
-                      <div className="text-xs text-gray-500">Hourly Rate</div>
-                      <div className="font-medium text-gray-900 text-sm">₹{parseFloat(task.hourlyRate || 0).toFixed(2)}</div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div className="text-xs text-gray-500">Billable</div>
-                      <div className="font-medium text-gray-900 text-sm">{task.isBillable ? 'Billable' : 'Non-billable'}</div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div className="text-xs text-gray-500">Estimate Hours</div>
-                      <div className="font-medium text-gray-900 text-sm">{task.estimateHours || 0} hours</div>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-gray-200">
-                    <div className="flex justify-between items-center">
-                      <div className="text-xs text-gray-500">Total logged time</div>
-                      <div className="font-bold text-gray-900 text-sm">{formatTime(task.totalLoggedTime + timerSeconds)}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Assignees - Using GlobalMultiSelectField */}
-              <div className="bg-white rounded border border-gray-200 p-3">
-                <h3 className="font-semibold text-gray-900 mb-2">Assignees</h3>
-
-
+              {/* Assignees Card */}
+              <div className="bg-white rounded-lg border border-gray-200 p-3 mb-3">
+                <h3 className="font-semibold text-gray-900 mb-2 text-xs">Assignees</h3>
                 <CircularAssigneesSelector
                   value={task.assignees || []}
                   options={teamMembers}
                   loading={loadingTeam}
                   onChange={handleAssigneesChange}
                   getInitials={getInitials}
+                  type="assignees"
+                  taskId={taskId}
                 />
-
-
-
-                {/* Display selected assignees */}
-                {/* {getSelectedAssigneeNames().length > 0 && (
-                  <div className="mt-2 space-y-1.5">
-                    {getSelectedAssigneeNames().map((assignee, index) => (
-                      <div key={index} className="flex items-center gap-2 p-1.5 bg-gray-50 rounded border border-gray-200">
-                        <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                          {getInitials(assignee)}
-                        </div>
-                        <span className="font-medium text-gray-900 text-sm">{assignee}</span>
-                      </div>
-                    ))}
-                  </div>
-                )} */}
               </div>
 
-              {/* Followers - Using GlobalMultiSelectField */}
-              <div className="bg-white rounded border border-gray-200 p-3">
-                <h3 className="font-semibold text-gray-900 mb-2">Followers</h3>
-
+              {/* Followers Card */}
+              <div className="bg-white rounded-lg border border-gray-200 p-3">
+                <h3 className="font-semibold text-gray-900 mb-2 text-xs">Followers</h3>
                 <CircularAssigneesSelector
                   value={task.followers || []}
                   options={teamMembers}
                   loading={loadingTeam}
                   onChange={handleFollowersChange}
                   getInitials={getInitials}
+                  type="followers"
+                  taskId={taskId}
                 />
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="border-t border-gray-200 bg-gray-50 p-3">
-          <div className="flex items-center justify-end gap-2">
-            <button onClick={onClose} className="px-3 py-1.5 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 text-sm font-medium">
-              Close
-            </button>
-            <button className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium">
-              Save Changes
-            </button>
           </div>
         </div>
       </div>
