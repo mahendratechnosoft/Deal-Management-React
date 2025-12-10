@@ -519,9 +519,6 @@ function SelectedDonarList() {
                               {pageName === "QualifiedDonorList" && (
                                 <>
                                   <option value="Qualified">Qualified</option>
-                                  <option value="Not Shortlisted">
-                                    Delete
-                                  </option>
                                 </>
                               )}
                             </select>
