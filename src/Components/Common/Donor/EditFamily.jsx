@@ -329,7 +329,7 @@ function EditFamily() {
         y,
         "Donor Information",
         [
-          ["Donor UIN", reportData.donorUin || "-", "Height", "-"],
+          ["Donor UIN", reportData.donorUin || "-", "Height", reportData.height || "-"],
           [
             "Blood Group",
             reportData.bloodGroup || "-",
@@ -648,6 +648,14 @@ function EditFamily() {
       year: "numeric",
     });
   };
+  const handleEdit = (donorId) => {
+    if (role === "ROLE_ADMIN") {
+      navigate(`/Admin/DonorEdit/${donorId}`);
+    } else if (role === "ROLE_EMPLOYEE") {
+      navigate(`/Employee/DonorEdit/${donorId}`);
+    }
+  };
+
 
   // --- Render Functions ---
 
@@ -1009,9 +1017,13 @@ function EditFamily() {
                         )}
                       </button>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td
+                      className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 cursor-pointer "
+                      onClick={() => handleEdit(allocation.donorId)}
+                    >
                       {allocation.donarUin || "N/A"}
                     </td>
+
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {allocation.donarName || "N/A"}
                     </td>
