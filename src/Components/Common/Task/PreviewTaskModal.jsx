@@ -71,6 +71,7 @@ function PreviewTaskModal({ taskId, onClose }) {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
+  
   // Check if there's an active timer for this task
   const checkActiveTimer = async () => {
     if (!taskId) return;
@@ -400,8 +401,8 @@ function PreviewTaskModal({ taskId, onClose }) {
                 <span class="text-sm font-medium text-blue-800">Session Duration</span>
               </div>
               <div class="text-2xl font-bold text-blue-900 font-mono text-center">${formatTime(
-                timerSeconds
-              )}</div>
+          timerSeconds
+        )}</div>
             </div>
           </div>
         </div>
@@ -626,63 +627,74 @@ function PreviewTaskModal({ taskId, onClose }) {
   };
 
   // Component for note icon with right-side tooltip
-  const NoteTooltipIcon = ({ note, noteId, openNoteId, setOpenNoteId }) => {
-    const wrapperRef = useRef(null);
-    const isOpen = openNoteId === noteId;
+ const NoteTooltipIcon = ({ note, noteId, openNoteId, setOpenNoteId }) => {
+  const wrapperRef = useRef(null);
+  const noteContentRef = useRef(null);
+  const isOpen = openNoteId === noteId;
 
-    if (!note) return null;
+  if (!note) return null;
 
-    return (
-      <div
-        ref={wrapperRef}
-        className="relative inline-block ml-2"
-        onPointerDownCapture={(e) => {
-          if (isOpen && !wrapperRef.current.contains(e.target)) {
-            setOpenNoteId(null); // ✅ close only on outside click
-          }
+  return (
+    <div
+      ref={wrapperRef}
+      className="relative inline-block ml-2"
+    >
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault(); // Prevent any default behavior
+          setOpenNoteId(isOpen ? null : noteId);
         }}
+        onPointerDown={(e) => {
+          e.stopPropagation(); // Prevent event bubbling
+          setOpenNoteId(isOpen ? null : noteId);
+        }}
+        className="cursor-pointer text-gray-400 hover:text-blue-500 transition relative"
       >
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setOpenNoteId(isOpen ? null : noteId); // ✅ toggle safely
-          }}
-          className="cursor-pointer text-gray-400 hover:text-blue-500 transition relative"
+        <svg
+          className="w-4 h-4 pointer-events-none"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
         >
-          <svg
-            className="w-4 h-4 pointer-events-none"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+          />
+        </svg>
+        <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse pointer-events-none"></span>
+      </button>
+
+      {isOpen && (
+        <div
+          ref={noteContentRef}
+          onClick={(e) => e.stopPropagation()}
+          className="absolute z-50 w-72 p-3 text-xs bg-gray-900 text-white rounded-lg shadow-xl left-full top-1/2 transform -translate-y-1/2 ml-3"
+          style={{ scrollbarWidth: 'thin' }} // Thin scrollbar for Firefox
+        >
+          <div className="font-medium text-blue-300 mb-1">Time Log Note</div>
+
+          {/* Note content with thin scrollbar */}
+          <div 
+            className="bg-gray-800 p-2 rounded border border-gray-700 whitespace-pre-wrap max-h-40 overflow-y-auto"
+            style={{ 
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#4b5563 #1f2937'
+            }}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-            />
-          </svg>
-          <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse pointer-events-none"></span>
-        </button>
-
-        {isOpen && (
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="absolute z-50 w-72 p-3 text-xs bg-gray-900 text-white rounded-lg shadow-xl left-full top-1/2 transform -translate-y-1/2 ml-3"
-          >
-            <div className="font-medium text-blue-300 mb-1">Time Log Note</div>
-
-            <div className="bg-gray-800 p-2 rounded border border-gray-700 whitespace-pre-wrap max-h-40 overflow-y-auto">
-              {note}
-            </div>
-
-            <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-t-transparent border-b-transparent border-r-gray-900"></div>
+            {note}
           </div>
-        )}
-      </div>
-    );
-  };
+
+          <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-t-transparent border-b-transparent border-r-gray-900"></div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 
   if (loading) {
     return (
@@ -803,11 +815,10 @@ function PreviewTaskModal({ taskId, onClose }) {
                     </h3>
                     <button
                       onClick={handleToggleTimer}
-                      className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 ${
-                        isTimerRunning
+                      className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 ${isTimerRunning
                           ? "bg-red-500 hover:bg-red-600 text-white"
                           : "bg-blue-600 hover:bg-blue-700 text-white"
-                      }`}
+                        }`}
                     >
                       {isTimerRunning ? (
                         <>
@@ -891,41 +902,37 @@ function PreviewTaskModal({ taskId, onClose }) {
                     <nav className="flex">
                       <button
                         onClick={() => setActiveTab("timelogs")}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${
-                          activeTab === "timelogs"
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "timelogs"
                             ? "border-b-2 border-blue-600 text-blue-600"
                             : "text-gray-500 hover:text-gray-700"
-                        }`}
+                          }`}
                       >
                         Time Logs
                       </button>
                       <button
                         onClick={() => setActiveTab("statistics")}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${
-                          activeTab === "statistics"
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "statistics"
                             ? "border-b-2 border-blue-600 text-blue-600"
                             : "text-gray-500 hover:text-gray-700"
-                        }`}
+                          }`}
                       >
                         Statistics
                       </button>
                       <button
                         onClick={() => setActiveTab("comments")}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${
-                          activeTab === "comments"
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "comments"
                             ? "border-b-2 border-blue-600 text-blue-600"
                             : "text-gray-500 hover:text-gray-700"
-                        }`}
+                          }`}
                       >
                         Comments
                       </button>
                       <button
                         onClick={() => setActiveTab("attachments")}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${
-                          activeTab === "attachments"
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "attachments"
                             ? "border-b-2 border-blue-600 text-blue-600"
                             : "text-gray-500 hover:text-gray-700"
-                        }`}
+                          }`}
                       >
                         Attachments
                       </button>
@@ -1214,6 +1221,8 @@ function PreviewTaskModal({ taskId, onClose }) {
         </div>
       </div>
     </div>
+
+    
   );
 }
 
