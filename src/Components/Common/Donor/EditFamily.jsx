@@ -106,6 +106,23 @@ function EditFamily() {
   // Fetch final report data and generate PDF
   // Fetch final report data and generate PDF
   const handleGenerateDonorReport = async (allocationId) => {
+    const educationLabelMap = {
+      below_10th: "Below 10th",
+      ssc_10th: "10th Pass (SSC)",
+      hsc_12th: "12th Pass (HSC)",
+      diploma: "Diploma",
+      iti_vocational: "ITI / Vocational Training",
+      ug_pursuing: "Undergraduate (UG) - Pursuing",
+      bachelor_completed: "Undergraduate (Bachelor’s Degree)",
+      pg_pursuing: "Postgraduate (PG) - Pursuing",
+      masters_completed: "Postgraduate (Master’s Degree)",
+      doctorate: "Doctorate (PhD)",
+      professional_course: "Professional Course (CA / CS / CMA)",
+      other: "Other"
+    };
+
+    const getEducationLabel = (value) => educationLabelMap[value] || "-";
+
     setPdfLoadingId(allocationId);
 
     try {
@@ -323,7 +340,8 @@ function EditFamily() {
             "Eyes",
             reportData.eyeColor || "-",
             "Education",
-            reportData.education || "-",
+            getEducationLabel(reportData.education)
+
           ],
           [
             "Profession",
