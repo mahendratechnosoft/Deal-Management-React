@@ -5,7 +5,7 @@ import {
   showErrorAlert,
   showAutoCloseSuccess,
   showCustomAlert,
-} from "../../BaseComponet/alertUtils"; // Adjust path as needed
+} from "../../BaseComponet/alertUtils";
 import Chart from "chart.js/auto";
 import TaskComments from "./TaskComments";
 import CircularAssigneesSelector from "./CircularAssigneesSelector";
@@ -26,6 +26,7 @@ function PreviewTaskModal({ taskId, onClose }) {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
   const [openNoteId, setOpenNoteId] = useState(null);
+
   // Fetch team members on component mount
   useEffect(() => {
     fetchTeamMembers();
@@ -36,23 +37,31 @@ function PreviewTaskModal({ taskId, onClose }) {
     if (taskId) {
       fetchTaskDetails();
       fetchTimeLogs();
-      checkActiveTimer();
+      checkActiveTimerForCurrentUser(); // Add this line
     }
   }, [taskId]);
 
+
+  // Timer interval effect
   useEffect(() => {
-    if (isTimerRunning) {
+    if (isTimerRunning && activeTimerLog) {
       timerRef.current = setInterval(() => {
-        setTimerSeconds((prev) => prev + 1);
+        setTimerSeconds((prev) => {
+          const startTime = new Date(activeTimerLog.startTime);
+          const now = new Date();
+          return Math.floor((now - startTime) / 1000);
+        });
       }, 1000);
     } else if (timerRef.current) {
       clearInterval(timerRef.current);
     }
+
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isTimerRunning]);
+  }, [isTimerRunning, activeTimerLog]);
 
+  // Chart initialization effect
   useEffect(() => {
     if (activeTab === "statistics" && chartRef.current && timeLogs.length > 0) {
       initChart();
@@ -62,38 +71,17 @@ function PreviewTaskModal({ taskId, onClose }) {
     };
   }, [activeTab, timeLogs]);
 
+  // Close note on outside click
   useEffect(() => {
     const handleClickOutside = () => {
-      setOpenNoteId(null); // ✅ Close note when clicking anywhere
+      setOpenNoteId(null);
     };
 
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  
-  // Check if there's an active timer for this task
-  const checkActiveTimer = async () => {
-    if (!taskId) return;
 
-    try {
-      const response = await axiosInstance.get(`getAllTimerLogs/${taskId}`);
-      if (response.data && Array.isArray(response.data)) {
-        const activeLog = response.data.find((log) => !log.endTime);
-        if (activeLog) {
-          setActiveTimerLog(activeLog);
-          setIsTimerRunning(true);
-          // Calculate elapsed time
-          const startTime = new Date(activeLog.startTime);
-          const now = new Date();
-          const elapsedSeconds = Math.floor((now - startTime) / 1000);
-          setTimerSeconds(elapsedSeconds);
-        }
-      }
-    } catch (error) {
-      console.error("Error checking active timer:", error);
-    }
-  };
 
   const fetchTeamMembers = async () => {
     setLoadingTeam(true);
@@ -114,26 +102,59 @@ function PreviewTaskModal({ taskId, onClose }) {
     }
   };
 
-  const fetchTimeLogs = async () => {
-    if (!taskId) return;
+  // Add this function after fetchTimeLogs
+const checkActiveTimerForCurrentUser = async () => {
+  if (!taskId) return;
 
-    try {
-      const response = await axiosInstance.get(`getAllTimerLogs/${taskId}`);
-      if (response.data && Array.isArray(response.data)) {
-        // Set all time logs including active ones
-        setTimeLogs(response.data);
-      }
-    } catch (error) {
-      console.error("Error fetching time logs:", error);
+  try {
+    const response = await axiosInstance.get(`getActiveTimerForTask/${taskId}`);
+    
+    // If we get a valid response with taskLogId, show Stop button
+    if (response.data && response.data.taskLogId) {
+      setActiveTimerLog(response.data);
+      setIsTimerRunning(true);
+      
+      // Calculate elapsed time from startTime to now
+      const startTime = new Date(response.data.startTime);
+      const now = new Date();
+      const elapsedSeconds = Math.floor((now - startTime) / 1000);
+      setTimerSeconds(elapsedSeconds);
+    } else {
+      // If we get no data (blank/empty response), show Start button
+      setActiveTimerLog(null);
+      setIsTimerRunning(false);
+      setTimerSeconds(0);
     }
-  };
+  } catch (error) {
+    console.error("Error checking active timer:", error);
+    // If API returns error or 204 No Content, show Start button
+    setActiveTimerLog(null);
+    setIsTimerRunning(false);
+    setTimerSeconds(0);
+  }
+};
+
+const fetchTimeLogs = async () => {
+  if (!taskId) return;
+
+  try {
+    const response = await axiosInstance.get(`getAllTimerLogs/${taskId}`);
+    if (response.data && Array.isArray(response.data)) {
+      // Set ALL time logs (including active ones)
+      setTimeLogs(response.data);
+
+      // REMOVE the active timer check from here - we're using separate API
+      // Don't set activeTimerLog here anymore
+    }
+  } catch (error) {
+    console.error("Error fetching time logs:", error);
+  }
+};
 
   const initChart = useCallback(() => {
     if (chartInstance.current) chartInstance.current.destroy();
 
-    // Filter only completed logs for chart
-    const completedLogs = timeLogs.filter((log) => log.endTime);
-    const weeklyData = processWeeklyTimeData(completedLogs);
+    const weeklyData = processWeeklyTimeData(timeLogs);
 
     const ctx = chartRef.current.getContext("2d");
     const data = {
@@ -208,18 +229,13 @@ function PreviewTaskModal({ taskId, onClose }) {
   }, [timeLogs]);
 
   const processWeeklyTimeData = (logs) => {
-    // Initialize array for 7 days (Monday to Sunday)
     const weeklyData = [0, 0, 0, 0, 0, 0, 0];
 
     logs.forEach((log) => {
       if (log.startTime && log.durationInMinutes) {
         const startDate = new Date(log.startTime);
-        const dayOfWeek = startDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-
-        // Convert to Monday-based index (0 = Monday, 6 = Sunday)
+        const dayOfWeek = startDate.getDay();
         const mondayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-
-        // Convert minutes to hours
         const hours = log.durationInMinutes / 60;
         weeklyData[mondayIndex] += hours;
       }
@@ -279,7 +295,7 @@ function PreviewTaskModal({ taskId, onClose }) {
           estimateHours: taskData.estimatedHours || 0,
           isBillable: taskData.isBillable || false,
           isPublic: taskData.isPublic || false,
-          totalLoggedTime: 0, // Will be calculated from time logs
+          totalLoggedTime: 0,
           createdAt: taskData.createdAt || "",
           createdBy: taskData.createdBy || "",
           projectName: taskData.projectName || "No Project",
@@ -292,7 +308,6 @@ function PreviewTaskModal({ taskId, onClose }) {
       console.error("Error fetching task details:", error);
       showErrorAlert("Failed to load task details");
 
-      // Fallback mock data
       const mockTask = {
         id: taskId,
         subject: "Sample Task",
@@ -331,12 +346,10 @@ function PreviewTaskModal({ taskId, onClose }) {
       });
 
       if (response.data) {
-        setActiveTimerLog(response.data);
-        setIsTimerRunning(true);
-        setTimerSeconds(0);
         showAutoCloseSuccess("Timer started");
-
-        // Refresh time logs
+        // Check for active timer using the new API
+        checkActiveTimerForCurrentUser();
+        // Also refresh time logs
         fetchTimeLogs();
       }
     } catch (error) {
@@ -345,6 +358,7 @@ function PreviewTaskModal({ taskId, onClose }) {
     }
   };
 
+
   const handleStopTimer = async () => {
     if (!taskId || !activeTimerLog) {
       showErrorAlert("No active timer to stop");
@@ -352,7 +366,6 @@ function PreviewTaskModal({ taskId, onClose }) {
     }
 
     try {
-      // Show attractive custom popup for note input
       const result = await showCustomAlert(
         `
         <div class="p-4">
@@ -451,7 +464,7 @@ function PreviewTaskModal({ taskId, onClose }) {
       );
 
       if (!result.isConfirmed) {
-        return; // User cancelled
+        return;
       }
 
       const endNote = result.value;
@@ -461,11 +474,14 @@ function PreviewTaskModal({ taskId, onClose }) {
         endNote: endNote,
       });
 
+
       if (response.data) {
+        showAutoCloseSuccess("Time entry completed successfully");
+
+        // Immediately update UI state
         setIsTimerRunning(false);
         setActiveTimerLog(null);
         setTimerSeconds(0);
-        showAutoCloseSuccess("Time entry completed successfully");
 
         // Refresh time logs
         fetchTimeLogs();
@@ -475,7 +491,6 @@ function PreviewTaskModal({ taskId, onClose }) {
       showErrorAlert("Failed to stop timer");
     }
   };
-
   const handleToggleTimer = () => {
     if (isTimerRunning) {
       handleStopTimer();
@@ -594,107 +609,94 @@ function PreviewTaskModal({ taskId, onClose }) {
     }
   };
 
+
   // Calculate total time including current session
   const getTotalTime = () => {
-    // Only count completed logs for total
-    const completedLogs = timeLogs.filter((log) => log.endTime);
-    const totalFromLogs = completedLogs.reduce((total, log) => {
-      return total + (log.durationInMinutes || 0);
+    // Sum only completed logs (with endTime and durationInMinutes)
+    const totalFromLogs = timeLogs.reduce((total, log) => {
+      if (log.endTime && log.durationInMinutes) {
+        return total + log.durationInMinutes;
+      }
+      return total;
     }, 0);
 
-    // Convert minutes to seconds and add current timer
+    // Convert minutes to seconds and add current timer (if running)
     return totalFromLogs * 60 + timerSeconds;
   };
 
-  // Get display logs - remove active timer from completed logs array
+
+  // Get display logs - mark active logs
+  // Get display logs - show all logs as they are
   const getDisplayLogs = () => {
-    // If there's an active timer, show it first
-    if (activeTimerLog) {
-      const activeLogDisplay = {
-        ...activeTimerLog,
-        // Mark as active for display purposes
-        isActive: true,
-      };
-
-      // Get completed logs
-      const completedLogs = timeLogs.filter((log) => log.endTime);
-
-      return [activeLogDisplay, ...completedLogs];
-    }
-
-    // Otherwise show only completed logs
-    return timeLogs.filter((log) => log.endTime);
+    return timeLogs; // Just return all logs
   };
-
   // Component for note icon with right-side tooltip
- const NoteTooltipIcon = ({ note, noteId, openNoteId, setOpenNoteId }) => {
-  const wrapperRef = useRef(null);
-  const noteContentRef = useRef(null);
-  const isOpen = openNoteId === noteId;
+  const NoteTooltipIcon = ({ note, noteId, openNoteId, setOpenNoteId }) => {
+    const wrapperRef = useRef(null);
+    const noteContentRef = useRef(null);
+    const isOpen = openNoteId === noteId;
 
-  if (!note) return null;
+    if (!note) return null;
 
-  return (
-    <div
-      ref={wrapperRef}
-      className="relative inline-block ml-2"
-    >
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          e.preventDefault(); // Prevent any default behavior
-          setOpenNoteId(isOpen ? null : noteId);
-        }}
-        onPointerDown={(e) => {
-          e.stopPropagation(); // Prevent event bubbling
-          setOpenNoteId(isOpen ? null : noteId);
-        }}
-        className="cursor-pointer text-gray-400 hover:text-blue-500 transition relative"
+    return (
+      <div
+        ref={wrapperRef}
+        className="relative inline-block ml-2"
       >
-        <svg
-          className="w-4 h-4 pointer-events-none"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setOpenNoteId(isOpen ? null : noteId);
+          }}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            setOpenNoteId(isOpen ? null : noteId);
+          }}
+          className="cursor-pointer text-gray-400 hover:text-blue-500 transition relative"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-          />
-        </svg>
-        <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse pointer-events-none"></span>
-      </button>
-
-      {isOpen && (
-        <div
-          ref={noteContentRef}
-          onClick={(e) => e.stopPropagation()}
-          className="absolute z-50 w-72 p-3 text-xs bg-gray-900 text-white rounded-lg shadow-xl left-full top-1/2 transform -translate-y-1/2 ml-3"
-          style={{ scrollbarWidth: 'thin' }} // Thin scrollbar for Firefox
-        >
-          <div className="font-medium text-blue-300 mb-1">Time Log Note</div>
-
-          {/* Note content with thin scrollbar */}
-          <div 
-            className="bg-gray-800 p-2 rounded border border-gray-700 whitespace-pre-wrap max-h-40 overflow-y-auto"
-            style={{ 
-              scrollbarWidth: 'thin',
-              scrollbarColor: '#4b5563 #1f2937'
-            }}
+          <svg
+            className="w-4 h-4 pointer-events-none"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            {note}
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+            />
+          </svg>
+          <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse pointer-events-none"></span>
+        </button>
+
+        {isOpen && (
+          <div
+            ref={noteContentRef}
+            onClick={(e) => e.stopPropagation()}
+            className="absolute z-50 w-72 p-3 text-xs bg-gray-900 text-white rounded-lg shadow-xl left-full top-1/2 transform -translate-y-1/2 ml-3"
+            style={{ scrollbarWidth: 'thin' }}
+          >
+            <div className="font-medium text-blue-300 mb-1">Time Log Note</div>
+
+            <div
+              className="bg-gray-800 p-2 rounded border border-gray-700 whitespace-pre-wrap max-h-40 overflow-y-auto"
+              style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#4b5563 #1f2937'
+              }}
+            >
+              {note}
+            </div>
+
+            <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-t-transparent border-b-transparent border-r-gray-900"></div>
           </div>
-
-          <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-t-transparent border-b-transparent border-r-gray-900"></div>
-        </div>
-      )}
-    </div>
-  );
-};
-
+        )}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -777,11 +779,10 @@ function PreviewTaskModal({ taskId, onClose }) {
           <div className="grid grid-cols-1 lg:grid-cols-3 h-full">
             {/* Left Column - Compact Task Info */}
             <div className="lg:col-span-2 border-r border-gray-200 overflow-y-auto p-4">
-              {/* Task Header - WITHOUT Mark Complete button */}
+              {/* Task Header */}
               <div className="mb-3">
                 <div className="flex items-start justify-between mb-1">
                   <div className="flex items-center justify-between w-full">
-                    {/* Left Side: Title + Status in one row */}
                     <div className="flex items-center gap-3 flex-wrap">
                       <h1 className="text-xl font-bold text-gray-900">
                         {task.subject}
@@ -795,7 +796,6 @@ function PreviewTaskModal({ taskId, onClose }) {
                       >
                         {getStatusDisplay(task.status)}
                       </span>
-                      {/* Right Side: Priority */}
                       <span
                         className={`px-4 py-1 rounded text-xs font-medium ${getPriorityColor(
                           task.priority
@@ -807,78 +807,79 @@ function PreviewTaskModal({ taskId, onClose }) {
                   </div>
                 </div>
 
-                {/* Timer Section - REDUCED SIZE */}
+                {/* Timer Section */}
+                {/* Timer Section */}
                 <div className="mb-2 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-medium text-gray-900 text-xs">
                       Time Tracking
                     </h3>
-                    <button
-                      onClick={handleToggleTimer}
-                      className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 ${isTimerRunning
-                          ? "bg-red-500 hover:bg-red-600 text-white"
-                          : "bg-blue-600 hover:bg-blue-700 text-white"
-                        }`}
-                    >
-                      {isTimerRunning ? (
-                        <>
-                          <svg
-                            className="w-2.5 h-2.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"
-                            />
-                          </svg>
-                          Stop
-                        </>
-                      ) : (
-                        <>
-                          <svg
-                            className="w-2.5 h-2.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                          Start
-                        </>
-                      )}
-                    </button>
+                    {/* Show Stop button only if activeTimerLog exists (from getActiveTimerForTask API) */}
+                    {activeTimerLog ? (
+                      <button
+                        onClick={handleStopTimer}
+                        className="px-2 py-1 rounded text-xs font-medium flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white"
+                      >
+                        <svg
+                          className="w-2.5 h-2.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"
+                          />
+                        </svg>
+                        Stop
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleStartTimer}
+                        className="px-2 py-1 rounded text-xs font-medium flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <svg
+                          className="w-2.5 h-2.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        Start
+                      </button>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div className="text-center p-1.5 bg-white rounded border border-gray-200">
                       <div className="text-base font-bold text-gray-900 font-mono mb-0.5">
-                        {formatTime(timerSeconds)}
+                        {/* Show current session time only if activeTimerLog exists */}
+                        {activeTimerLog ? formatTime(timerSeconds) : "00:00:00"}
                       </div>
                       <div className="text-[10px] text-gray-600">
                         Current Session
                       </div>
-                      {isTimerRunning && (
+                      {activeTimerLog && (
                         <div className="text-[10px] text-green-600 mt-0.5 flex items-center justify-center gap-0.5">
                           <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
                           Active
@@ -903,8 +904,8 @@ function PreviewTaskModal({ taskId, onClose }) {
                       <button
                         onClick={() => setActiveTab("timelogs")}
                         className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "timelogs"
-                            ? "border-b-2 border-blue-600 text-blue-600"
-                            : "text-gray-500 hover:text-gray-700"
+                          ? "border-b-2 border-blue-600 text-blue-600"
+                          : "text-gray-500 hover:text-gray-700"
                           }`}
                       >
                         Time Logs
@@ -912,8 +913,8 @@ function PreviewTaskModal({ taskId, onClose }) {
                       <button
                         onClick={() => setActiveTab("statistics")}
                         className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "statistics"
-                            ? "border-b-2 border-blue-600 text-blue-600"
-                            : "text-gray-500 hover:text-gray-700"
+                          ? "border-b-2 border-blue-600 text-blue-600"
+                          : "text-gray-500 hover:text-gray-700"
                           }`}
                       >
                         Statistics
@@ -921,8 +922,8 @@ function PreviewTaskModal({ taskId, onClose }) {
                       <button
                         onClick={() => setActiveTab("comments")}
                         className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "comments"
-                            ? "border-b-2 border-blue-600 text-blue-600"
-                            : "text-gray-500 hover:text-gray-700"
+                          ? "border-b-2 border-blue-600 text-blue-600"
+                          : "text-gray-500 hover:text-gray-700"
                           }`}
                       >
                         Comments
@@ -930,8 +931,8 @@ function PreviewTaskModal({ taskId, onClose }) {
                       <button
                         onClick={() => setActiveTab("attachments")}
                         className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "attachments"
-                            ? "border-b-2 border-blue-600 text-blue-600"
-                            : "text-gray-500 hover:text-gray-700"
+                          ? "border-b-2 border-blue-600 text-blue-600"
+                          : "text-gray-500 hover:text-gray-700"
                           }`}
                       >
                         Attachments
@@ -992,9 +993,9 @@ function PreviewTaskModal({ taskId, onClose }) {
                                   </td>
                                   <td className="px-2 py-1.5 whitespace-nowrap">
                                     <div className="font-medium text-gray-900 text-xs">
-                                      {log.isActive
-                                        ? formatTime(timerSeconds)
-                                        : formatDuration(log.durationInMinutes)}
+                                      {!log.endTime
+                                        ? "In Progress"
+                                        : formatDuration(log.durationInMinutes) /* For completed logs */}
                                     </div>
                                   </td>
                                 </tr>
@@ -1198,6 +1199,7 @@ function PreviewTaskModal({ taskId, onClose }) {
                   getInitials={getInitials}
                   type="assignees"
                   taskId={taskId}
+                  excludeIds={task.followers || []}
                 />
               </div>
 
@@ -1214,6 +1216,7 @@ function PreviewTaskModal({ taskId, onClose }) {
                   getInitials={getInitials}
                   type="followers"
                   taskId={taskId}
+                  excludeIds={task.assignees || []}
                 />
               </div>
             </div>
@@ -1221,8 +1224,6 @@ function PreviewTaskModal({ taskId, onClose }) {
         </div>
       </div>
     </div>
-
-    
   );
 }
 

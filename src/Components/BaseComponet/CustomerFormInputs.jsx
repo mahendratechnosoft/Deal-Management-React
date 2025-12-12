@@ -509,6 +509,268 @@ export const GlobalMultiSelectField = ({
   );
 };
 
+
+
+export const CustomMultiSelect = ({
+  label,
+  name,
+  value = [],
+  onChange,
+  options = [],
+  placeholder = 'Select employees...',
+  error,
+  required = false,
+  disabled = false,
+  loading = false,
+  className = '',
+  helpText = '',
+  excludedValues = [],
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const wrapperRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filter options based on search term
+  const filteredOptions = options.filter(option =>
+    option.label.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Handle option click
+  const handleOptionClick = (optionValue) => {
+    if (disabled) return;
+
+    let newValue;
+    if (value.includes(optionValue)) {
+      // Remove if already selected
+      newValue = value.filter(v => v !== optionValue);
+    } else {
+      // Add if not selected
+      newValue = [...value, optionValue];
+    }
+    onChange(newValue);
+  };
+
+  // Clear search when dropdown closes
+  const handleToggleDropdown = () => {
+    if (disabled || loading) return;
+    setIsOpen(!isOpen);
+    if (isOpen) {
+      setSearchTerm('');
+    }
+  };
+
+  // Placeholder text
+  const displayPlaceholder = value.length > 0 
+    ? `${value.length} employee(s) selected` 
+    : placeholder;
+
+  return (
+    <div className={`relative ${className}`} ref={wrapperRef}>
+      {/* Label */}
+      {label && (
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label}
+          {required && <span className="text-red-500">*</span>}
+        </label>
+      )}
+
+      {/* Main Input - Just shows count, not names */}
+      <div className="relative">
+        <div
+          onClick={handleToggleDropdown}
+          className={`
+            w-full min-h-[40px] px-3 py-2 border rounded-md cursor-pointer
+            flex items-center justify-between
+            ${error ? 'border-red-500' : 'border-gray-300'}
+            ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}
+            hover:border-blue-500 transition-colors
+          `}
+        >
+          <span className={`truncate ${value.length > 0 ? 'text-gray-900' : 'text-gray-500'}`}>
+            {displayPlaceholder}
+          </span>
+          <svg 
+            className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+
+        {/* Loading indicator */}
+        {loading && (
+          <div className="absolute right-10 top-2">
+            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
+      </div>
+
+      {/* Dropdown */}
+      {isOpen && !disabled && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-80 overflow-hidden">
+          {/* Search Bar */}
+          <div className="p-2 border-b border-gray-200">
+            <div className="relative">
+              <svg 
+                className="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400"
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search employees..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoFocus
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Options List */}
+          <div className="overflow-y-auto max-h-60">
+            {filteredOptions.length === 0 ? (
+              <div className="px-3 py-4 text-center text-gray-500 text-sm">
+                {searchTerm ? 'No matching employees found' : 'No employees available'}
+              </div>
+            ) : (
+              <ul className="py-1">
+                {filteredOptions.map((option) => {
+                  const isSelected = value.includes(option.value);
+                  const isExcluded = excludedValues.includes(option.value) && !isSelected;
+                  const isDisabled = isExcluded;
+
+                  return (
+                    <li key={option.value}>
+                      <div
+                        onClick={() => !isDisabled && handleOptionClick(option.value)}
+                        className={`
+                          px-3 py-2 text-sm cursor-pointer flex items-center justify-between
+                          ${isSelected 
+                            ? 'bg-gray-300 text-black' 
+                            : isDisabled
+                            ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                            : 'hover:bg-gray-50 text-gray-900'
+                          }
+                        `}
+                      >
+                        <div className="flex items-center">
+                          {/* Checkbox/Checkmark */}
+                          <div className={`
+                            w-4 h-4 border rounded mr-3 flex items-center justify-center
+                            ${isSelected 
+                              ? 'bg-white border-white' 
+                              : 'border-gray-300'
+                            }
+                            ${isDisabled ? 'border-gray-300' : ''}
+                          `}>
+                            {isSelected && (
+                              <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </div>
+                          <span className="truncate">{option.label}</span>
+                        </div>
+                        {isDisabled && (
+                          <span className="text-xs text-gray-500 italic ml-2">(assigned elsewhere)</span>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+
+  
+        </div>
+      )}
+
+
+
+
+    
+      {/* Help Text */}
+      {helpText && !error && (
+        <div className="mt-1 text-xs text-gray-500">{helpText}</div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="mt-1 text-xs text-red-600">{error}</div>
+      )}
+    </div>
+  );
+};
+
+/* ---------------------------------------------
+   🔹 CustomMultiSelectWithExclusion
+   Wrapper that automatically handles mutual exclusion
+--------------------------------------------- */
+export const CustomMultiSelectWithExclusion = (props) => {
+  const { 
+    type, // 'assignees' or 'followers'
+    assignees = [],
+    followers = [],
+    onAssigneesChange,
+    onFollowersChange,
+    ...otherProps 
+  } = props;
+
+  if (type === 'assignees') {
+    return (
+      <CustomMultiSelect
+        {...otherProps}
+        value={assignees}
+        onChange={onAssigneesChange}
+        excludedValues={followers}
+        placeholder="Select assignees..."
+     
+      />
+    );
+  }
+
+  if (type === 'followers') {
+    return (
+      <CustomMultiSelect
+        {...otherProps}
+        value={followers}
+        onChange={onFollowersChange}
+        excludedValues={assignees}
+        placeholder="Select followers..."
+
+      />
+    );
+  }
+
+  return <CustomMultiSelect {...otherProps} />;
+};
+
 /* ---------------------------------------------
    🔹 GlobalFormSection — Section Wrapper
 --------------------------------------------- */
