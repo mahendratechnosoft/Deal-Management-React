@@ -10,7 +10,7 @@ const CircularAssigneesSelector = ({
   getInitials,
   type = 'assignees',
   taskId,
-  excludeIds = []  // New prop for excluding IDs from other selector
+  excludeIds = [],  // New prop for excluding IDs from other selector
 }) => {
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);

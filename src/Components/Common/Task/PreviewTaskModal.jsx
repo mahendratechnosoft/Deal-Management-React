@@ -11,7 +11,7 @@ import TaskComments from "./TaskComments";
 import CircularAssigneesSelector from "./CircularAssigneesSelector";
 import TaskAttachments from "./TaskAttachments";
 
-function PreviewTaskModal({ taskId, onClose }) {
+function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, onFollowerUpdate }) {
   const [loading, setLoading] = useState(true);
   const [task, setTask] = useState(null);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -26,7 +26,9 @@ function PreviewTaskModal({ taskId, onClose }) {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
   const [openNoteId, setOpenNoteId] = useState(null);
-
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [canEdit, setCanEdit] = useState(false);
+  const [canStartTimer, setCanStartTimer] = useState(false);
   // Fetch team members on component mount
   useEffect(() => {
     fetchTeamMembers();
@@ -103,53 +105,53 @@ function PreviewTaskModal({ taskId, onClose }) {
   };
 
   // Add this function after fetchTimeLogs
-const checkActiveTimerForCurrentUser = async () => {
-  if (!taskId) return;
+  const checkActiveTimerForCurrentUser = async () => {
+    if (!taskId) return;
 
-  try {
-    const response = await axiosInstance.get(`getActiveTimerForTask/${taskId}`);
-    
-    // If we get a valid response with taskLogId, show Stop button
-    if (response.data && response.data.taskLogId) {
-      setActiveTimerLog(response.data);
-      setIsTimerRunning(true);
-      
-      // Calculate elapsed time from startTime to now
-      const startTime = new Date(response.data.startTime);
-      const now = new Date();
-      const elapsedSeconds = Math.floor((now - startTime) / 1000);
-      setTimerSeconds(elapsedSeconds);
-    } else {
-      // If we get no data (blank/empty response), show Start button
+    try {
+      const response = await axiosInstance.get(`getActiveTimerForTask/${taskId}`);
+
+      // If we get a valid response with taskLogId, show Stop button
+      if (response.data && response.data.taskLogId) {
+        setActiveTimerLog(response.data);
+        setIsTimerRunning(true);
+
+        // Calculate elapsed time from startTime to now
+        const startTime = new Date(response.data.startTime);
+        const now = new Date();
+        const elapsedSeconds = Math.floor((now - startTime) / 1000);
+        setTimerSeconds(elapsedSeconds);
+      } else {
+        // If we get no data (blank/empty response), show Start button
+        setActiveTimerLog(null);
+        setIsTimerRunning(false);
+        setTimerSeconds(0);
+      }
+    } catch (error) {
+      console.error("Error checking active timer:", error);
+      // If API returns error or 204 No Content, show Start button
       setActiveTimerLog(null);
       setIsTimerRunning(false);
       setTimerSeconds(0);
     }
-  } catch (error) {
-    console.error("Error checking active timer:", error);
-    // If API returns error or 204 No Content, show Start button
-    setActiveTimerLog(null);
-    setIsTimerRunning(false);
-    setTimerSeconds(0);
-  }
-};
+  };
 
-const fetchTimeLogs = async () => {
-  if (!taskId) return;
+  const fetchTimeLogs = async () => {
+    if (!taskId) return;
 
-  try {
-    const response = await axiosInstance.get(`getAllTimerLogs/${taskId}`);
-    if (response.data && Array.isArray(response.data)) {
-      // Set ALL time logs (including active ones)
-      setTimeLogs(response.data);
+    try {
+      const response = await axiosInstance.get(`getAllTimerLogs/${taskId}`);
+      if (response.data && Array.isArray(response.data)) {
+        // Set ALL time logs (including active ones)
+        setTimeLogs(response.data);
 
-      // REMOVE the active timer check from here - we're using separate API
-      // Don't set activeTimerLog here anymore
+        // REMOVE the active timer check from here - we're using separate API
+        // Don't set activeTimerLog here anymore
+      }
+    } catch (error) {
+      console.error("Error fetching time logs:", error);
     }
-  } catch (error) {
-    console.error("Error fetching time logs:", error);
-  }
-};
+  };
 
   const initChart = useCallback(() => {
     if (chartInstance.current) chartInstance.current.destroy();
@@ -251,7 +253,8 @@ const fetchTimeLogs = async () => {
 
       if (response.data) {
         const taskData = response.data.task;
-
+        setCanEdit(response.data.canEdit || false);
+        setCanStartTimer(response.data.canStartTimer);
         const formatDate = (dateString) => {
           if (!dateString) return "";
           try {
@@ -286,7 +289,7 @@ const fetchTimeLogs = async () => {
           startDate: formatDate(taskData.startDate),
           dueDate: formatDate(taskData.endDate),
           priority: taskData.priority || "Medium",
-          status: taskData.status || "pending",
+          status: (taskData.status || "NOT_STARTED").toUpperCase(),
           relatedTo: taskData.relatedTo || "",
           relatedId: taskData.relatedToId || "",
           relatedName: taskData.relatedToName || "",
@@ -300,6 +303,10 @@ const fetchTimeLogs = async () => {
           createdBy: taskData.createdBy || "",
           projectName: taskData.projectName || "No Project",
           projectId: taskData.projectId || "N/A",
+          // canStartTimer: canStartTimer ?? true,
+          taskId: taskData.taskId,
+          adminId: taskData.adminId || "",
+          subject: taskData.subject || "",
         });
 
         setAttachments(formattedAttachments);
@@ -307,7 +314,10 @@ const fetchTimeLogs = async () => {
     } catch (error) {
       console.error("Error fetching task details:", error);
       showErrorAlert("Failed to load task details");
+      setCanEdit(false);
 
+      // Set canEdit to false for mock data
+      setCanEdit(false);
       const mockTask = {
         id: taskId,
         subject: "Sample Task",
@@ -505,17 +515,30 @@ const fetchTimeLogs = async () => {
         ...prev,
         assignees: selectedIds,
       }));
+
+      // Call parent callback if provided
+      if (onAssigneeUpdate) {
+        onAssigneeUpdate(selectedIds);
+      }
     }
   };
 
+  // Update the handleFollowersChange function
   const handleFollowersChange = (selectedIds) => {
     if (task) {
       setTask((prev) => ({
         ...prev,
         followers: selectedIds,
       }));
+
+      // Call parent callback if provided
+      if (onFollowerUpdate) {
+        onFollowerUpdate(selectedIds);
+      }
     }
   };
+
+
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -580,36 +603,72 @@ const fetchTimeLogs = async () => {
   };
 
   const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case "completed":
+    switch (status?.toUpperCase()) {
+      case "COMPLETE":
         return "bg-green-500 text-white";
-      case "in-progress":
+      case "IN_PROGRESS":
         return "bg-blue-500 text-white";
-      case "pending":
+      case "TESTING":
         return "bg-yellow-500 text-white";
-      case "on-hold":
-        return "bg-red-500 text-white";
+      case "AWAITING_FEEDBACK":
+        return "bg-orange-500 text-white";
+      case "NOT_STARTED":
+        return "bg-gray-500 text-white";
       default:
         return "bg-gray-500 text-white";
     }
   };
 
+
   const getStatusDisplay = (status) => {
-    switch (status?.toLowerCase()) {
-      case "completed":
-        return "✓ Completed";
-      case "in-progress":
+    switch (status?.toUpperCase()) {
+      case "COMPLETE":
+        return "✓ Complete";
+      case "IN_PROGRESS":
         return "▶ In Progress";
-      case "pending":
-        return "⏳ Pending";
-      case "on-hold":
-        return "⏸ On Hold";
+      case "TESTING":
+        return "🔧 Testing";
+      case "AWAITING_FEEDBACK":
+        return "⏳ Awaiting Feedback";
+      case "NOT_STARTED":
+        return "⏸ Not Started";
       default:
         return status?.charAt(0).toUpperCase() + status?.slice(1);
     }
   };
 
+  // Add this function after other handler functions
+  const handleStatusChange = async (newStatus) => {
+    if (!taskId || !task) {
+      showErrorAlert("No task selected");
+      return;
+    }
 
+    setStatusLoading(true);
+    try {
+      const response = await axiosInstance.put(`updateTaskStatus/${taskId}/${newStatus}`);
+
+      if (response.data) {
+        // 1. Update local task state
+        setTask(prev => ({
+          ...prev,
+          status: newStatus
+        }));
+
+        // 2. Call parent callback to update TaskList
+        if (onStatusUpdate) {
+          onStatusUpdate(taskId, newStatus);
+        }
+
+        showAutoCloseSuccess(`Status updated to ${getStatusDisplay(newStatus)}`);
+      }
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      showErrorAlert("Failed to update task status");
+    } finally {
+      setStatusLoading(false);
+    }
+  };
   // Calculate total time including current session
   const getTotalTime = () => {
     // Sum only completed logs (with endTime and durationInMinutes)
@@ -789,13 +848,37 @@ const fetchTimeLogs = async () => {
                       </h1>
                     </div>
                     <div className="ml-auto flex items-center gap-3 flex-wrap">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          task.status
-                        )}`}
-                      >
-                        {getStatusDisplay(task.status)}
-                      </span>
+                      {/* Status Dropdown */}
+                      <div className="relative">
+                        <select
+                          value={task.status || "NOT_STARTED"}
+                          onChange={(e) => handleStatusChange(e.target.value)}
+                          disabled={statusLoading}
+                          className={`px-2 py-1 rounded text-xs font-medium appearance-none pr-6 cursor-pointer ${getStatusColor(
+                            task.status
+                          )} ${statusLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                        >
+                          <option value="NOT_STARTED">Not Started</option>
+                          <option value="IN_PROGRESS">In Progress</option>
+                          <option value="TESTING">Testing</option>
+                          <option value="AWAITING_FEEDBACK">Awaiting Feedback</option>
+                          <option value="COMPLETE">Complete</option>
+                        </select>
+
+                        {/* Dropdown arrow */}
+                        <div className="absolute right-1 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                          <svg
+                            className="w-3 h-3 text-white"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* Priority Badge */}
                       <span
                         className={`px-4 py-1 rounded text-xs font-medium ${getPriorityColor(
                           task.priority
@@ -843,8 +926,17 @@ const fetchTimeLogs = async () => {
                       </button>
                     ) : (
                       <button
-                        onClick={handleStartTimer}
-                        className="px-2 py-1 rounded text-xs font-medium flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white"
+                        onClick={canStartTimer ? handleStartTimer : undefined}
+                        disabled={canStartTimer}
+                        className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 
+    text-white
+    ${canStartTimer
+                            ? "bg-blue-600 hover:bg-blue-700"
+                            : "bg-gray-400 cursor-not-allowed"
+                          }`}
+
+                        title={canStartTimer ? "Start Task" : "You have not Assignee or Owner of this Task"}
+
                       >
                         <svg
                           className="w-2.5 h-2.5"
@@ -947,7 +1039,7 @@ const fetchTimeLogs = async () => {
                           <thead className="bg-gray-50">
                             <tr>
                               <th className="px-2 py-1.5 text-left font-medium text-gray-500">
-                                Employee
+                                Member
                               </th>
                               <th className="px-2 py-1.5 text-left font-medium text-gray-500">
                                 Start Time
@@ -970,10 +1062,10 @@ const fetchTimeLogs = async () => {
                                   <td className="px-2 py-1.5 whitespace-nowrap">
                                     <div className="flex items-center group">
                                       <div className="flex-shrink-0 w-5 h-5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-[10px] font-bold mr-1.5">
-                                        {getInitials(log.employeeName)}
+                                        {getInitials(log.name)}
                                       </div>
                                       <span className="font-medium text-gray-900 text-xs">
-                                        {log.employeeName}
+                                        {log.name}
                                       </span>
                                       <NoteTooltipIcon
                                         note={log.endNote}
@@ -1186,38 +1278,102 @@ const fetchTimeLogs = async () => {
                 </div>
               </div>
 
-              {/* Assignees Card */}
+              {/* Assignees Section */}
               <div className="bg-white rounded-lg border border-gray-200 p-3 mb-3">
                 <h3 className="font-semibold text-gray-900 mb-2 text-xs">
                   Assignees
                 </h3>
-                <CircularAssigneesSelector
-                  value={task.assignees || []}
-                  options={teamMembers}
-                  loading={loadingTeam}
-                  onChange={handleAssigneesChange}
-                  getInitials={getInitials}
-                  type="assignees"
-                  taskId={taskId}
-                  excludeIds={task.followers || []}
-                />
+
+                {canEdit ? (
+                  <CircularAssigneesSelector
+                    value={task.assignees || []}
+                    options={teamMembers}
+                    loading={loadingTeam}
+                    onChange={handleAssigneesChange}
+                    getInitials={getInitials}
+                    type="assignees"
+                    taskId={taskId}
+                    excludeIds={task.followers || []}
+                  />
+                ) : (
+                  // Read-only view
+                  <div className="flex flex-wrap gap-1.5">
+                    {task.assignees && task.assignees.length > 0 ? (
+                      teamMembers
+                        .filter(member => task.assignees.includes(member.value))
+                        .map(member => (
+                          <div
+                            key={member.value}
+                            className="relative group w-7 h-7 rounded-full
+                         bg-gradient-to-br from-blue-500 to-purple-600
+                         flex items-center justify-center
+                         text-white text-[10px] font-bold shadow"
+                            title={member.label}
+                          >
+                            {getInitials(member.label)}
+                            <div className="absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 hidden group-hover:block
+                              bg-gray-900 text-white text-[9px] rounded px-1.5 py-0.5
+                              whitespace-nowrap shadow z-10">
+                              {member.label}
+                            </div>
+                          </div>
+                        ))
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">
+                        No assignees
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Followers Card */}
+              {/* Followers Section */}
               <div className="bg-white rounded-lg border border-gray-200 p-3">
                 <h3 className="font-semibold text-gray-900 mb-2 text-xs">
                   Followers
                 </h3>
-                <CircularAssigneesSelector
-                  value={task.followers || []}
-                  options={teamMembers}
-                  loading={loadingTeam}
-                  onChange={handleFollowersChange}
-                  getInitials={getInitials}
-                  type="followers"
-                  taskId={taskId}
-                  excludeIds={task.assignees || []}
-                />
+
+                {canEdit ? (
+                  <CircularAssigneesSelector
+                    value={task.followers || []}
+                    options={teamMembers}
+                    loading={loadingTeam}
+                    onChange={handleFollowersChange}
+                    getInitials={getInitials}
+                    type="followers"
+                    taskId={taskId}
+                    excludeIds={task.assignees || []}
+                  />
+                ) : (
+                  // Read-only view
+                  <div className="flex flex-wrap gap-1.5">
+                    {task.followers && task.followers.length > 0 ? (
+                      teamMembers
+                        .filter(member => task.followers.includes(member.value))
+                        .map(member => (
+                          <div
+                            key={member.value}
+                            className="relative group w-7 h-7 rounded-full
+                         bg-gradient-to-br from-blue-500 to-purple-600
+                         flex items-center justify-center
+                         text-white text-[10px] font-bold shadow"
+                            title={member.label}
+                          >
+                            {getInitials(member.label)}
+                            <div className="absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 hidden group-hover:block
+                              bg-gray-900 text-white text-[9px] rounded px-1.5 py-0.5
+                              whitespace-nowrap shadow z-10">
+                              {member.label}
+                            </div>
+                          </div>
+                        ))
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">
+                        No followers
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

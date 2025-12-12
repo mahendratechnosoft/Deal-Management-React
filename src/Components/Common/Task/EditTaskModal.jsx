@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import {
   GlobalInputField,
   GlobalTextAreaField,
   GlobalSelectField,
-  GlobalMultiSelectField,
+  CustomMultiSelectWithExclusion
 } from "../../BaseComponet/CustomerFormInputs";
-
 import {
   formatInvoiceNumber,
   formatProposalNumber,
-  formatCurrency,
-} from "../../BaseComponet/UtilFunctions"; // Adjust the path as needed
+  formatDate,
+  formatCurrency
+} from "../../BaseComponet/UtilFunctions";
 
 function EditTaskModal({ taskId, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -22,41 +22,39 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
   const [relatedData, setRelatedData] = useState([]);
   const [loadingRelatedData, setLoadingRelatedData] = useState(false);
 
-  const [formData, setFormData] = useState({
-    taskId: "",
-    adminId: "",
-    employeeId: null,
-    subject: "",
-    description: "",
-    hourlyRate: "",
-    startDate: "",
-    dueDate: "",
-    priority: "Medium",
-    relatedTo: "",
-    relatedId: "",
-    relatedName: "",
-    assignees: [],
-    followers: [],
-    estimateHours: "",
-    status: "pending",
-    createdAt: "",
-    createdBy: "",
-  });
+const [formData, setFormData] = useState({
+  taskId: "",
+  adminId: "",
+  employeeId: null,
+  subject: "",
+  description: "",
+  hourlyRate: "",
+  startDate: "",
+  dueDate: "",
+  repeatEvery: "",
+  relatedTo: "",
+  relatedId: "",
+  relatedName: "",
+  assignees: [],
+  followers: [],
+  tags: [],
+  estimateHours: "",
+  status: "NOT_STARTED",
+  priority: "Medium", // Add this
+  createdAt: "",
+  createdBy: "",
+});
 
   const [errors, setErrors] = useState({});
 
-  const priorityOptions = [
-    { value: "Low", label: "Low" },
-    { value: "Medium", label: "Medium" },
-    { value: "High", label: "High" },
-    { value: "Urgent", label: "Urgent" },
-  ];
+
 
   const statusOptions = [
-    { value: "pending", label: "Pending" },
-    { value: "in-progress", label: "In Progress" },
-    { value: "completed", label: "Completed" },
-    { value: "on-hold", label: "On Hold" },
+    { value: "NOT_STARTED", label: " Not Started" },
+    { value: "IN_PROGRESS", label: " In Progress" },
+    { value: "TESTING", label: " Testing" },
+    { value: "AWAITING_FEEDBACK", label: " Awaiting Feedback" },
+    { value: "COMPLETE", label: " Complete" }
   ];
 
   const relatedToOptions = [
@@ -65,7 +63,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
     { value: "customer", label: "Customer" },
     { value: "proposal", label: "Proposal" },
     { value: "proforma", label: "Proforma" },
-    { value: "invoice", label: "Invoice" },
+    { value: "invoice", label: "Invoice" }
   ];
 
   // Fetch team members on component mount
@@ -99,7 +97,6 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
     try {
       const response = await axiosInstance.get("getEmployeeNameAndId");
       if (response.data && Array.isArray(response.data)) {
-        // Format for react-select
         const formattedTeamMembers = response.data.map((member) => ({
           value: member.employeeId,
           label: member.name,
@@ -121,7 +118,6 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
     try {
       let endpoint = "";
 
-      // Updated API endpoints
       switch (formData.relatedTo) {
         case "lead":
           endpoint = "getLeadNameAndIdWithConverted";
@@ -146,71 +142,52 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
       const responseData = response.data || [];
 
       if (Array.isArray(responseData)) {
-        // Format data using utility functions
         const formattedData = responseData.map((item) => {
           switch (formData.relatedTo) {
             case "lead":
               return {
                 id: item.leadId || item.id,
                 name: item.clientName || `Lead #${item.leadId || item.id}`,
-                email: item.email || "",
-                phone: item.phone || "",
-                originalData: item,
+                originalData: item
               };
 
             case "customer":
               return {
                 id: item.id,
-                name: `${item.companyName || "Customer"} (${
-                  item.email || "No email"
-                })`,
-                email: item.email || "",
-                phone: item.phone || "",
-                originalData: item,
+                name: `${item.companyName || 'Customer'} (${item.email || 'No email'})`,
+                originalData: item
               };
 
             case "proforma":
               return {
                 id: item.proformaInvoiceId || item.id,
-                name: item.proformaInvoiceNumber
-                  ? formatInvoiceNumber(item.proformaInvoiceNumber)
-                  : `Proforma #${item.proformaInvoiceId || item.id}`,
-                number: item.proformaInvoiceNumber || "",
-                amount: item.totalAmount || 0,
-                currency: item.currency || "INR",
-                originalData: item,
+                name: formatInvoiceNumber(item.proformaInvoiceNumber) ||
+                  `Proforma #${item.proformaInvoiceId || item.id}`,
+                originalData: item
               };
 
             case "proposal":
               return {
                 id: item.proposalId || item.id,
-                name: item.proposalNumber
-                  ? formatProposalNumber(item.proposalNumber)
-                  : `Proposal #${item.proposalId || item.id}`,
-                number: item.proposalNumber || "",
-                amount: item.totalAmount || 0,
-                currency: item.currency || "INR",
-                originalData: item,
+                name: formatProposalNumber(item.proposalNumber) ||
+                  `Proposal #${item.proposalId || item.id}`,
+                originalData: item
               };
 
             case "invoice":
               return {
                 id: item.invoiceId || item.id,
-                name: item.invoiceNumber
-                  ? formatInvoiceNumber(item.invoiceNumber)
-                  : `Invoice #${item.invoiceId || item.id}`,
-                number: item.invoiceNumber || "",
-                amount: item.totalAmount || 0,
-                currency: item.currency || "INR",
-                date: item.invoiceDate || "",
-                originalData: item,
+                name: formatInvoiceNumber(item.invoiceNumber) ||
+                  `Invoice #${item.invoiceId || item.id}`,
+                amount: item.totalAmount ? formatCurrency(item.totalAmount, item.currency) : '',
+                originalData: item
               };
 
             default:
               return {
                 id: item.id,
                 name: String(item.name || item.title || `Item #${item.id}`),
-                originalData: item,
+                originalData: item
               };
           }
         });
@@ -236,10 +213,9 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
 
       if (response.data) {
         const taskData = response.data.task;
-        const canStartTimer = response.data.canStartTimer;
 
         // Format dates to YYYY-MM-DD for input fields
-        const formatDate = (dateString) => {
+        const formatDateForInput = (dateString) => {
           if (!dateString) return "";
           try {
             const date = new Date(dateString);
@@ -250,7 +226,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
           }
         };
 
-        // Extract assignee and follower IDs from the response
+        // Extract assignee and follower IDs
         const assigneeIds = taskData.assignedEmployees
           ? taskData.assignedEmployees.map((emp) => emp.employeeId)
           : [];
@@ -259,7 +235,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
           ? taskData.followersEmployees.map((emp) => emp.employeeId)
           : [];
 
-        // Set form data with the fetched task data
+        // Set form data
         setFormData({
           taskId: taskData.taskId,
           adminId: taskData.adminId || "",
@@ -267,24 +243,22 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
           subject: taskData.subject || "",
           description: taskData.description || "",
           hourlyRate: taskData.hourlyRate?.toString() || "",
-          startDate: formatDate(taskData.startDate),
-          dueDate: formatDate(taskData.endDate), // Note: API returns 'endDate' not 'dueDate'
-          priority: taskData.priority || "Medium",
+          startDate: formatDateForInput(taskData.startDate),
+          dueDate: formatDateForInput(taskData.endDate),
+      
           relatedTo: taskData.relatedTo || "",
           relatedId: taskData.relatedToId || "",
           relatedName: taskData.relatedToName || "",
           assignees: assigneeIds,
           followers: followerIds,
           estimateHours: taskData.estimatedHours?.toString() || "",
-          status: taskData.status || "pending",
-          // Include createdAt and createdBy from API
+          status: (taskData.status || "NOT_STARTED").toUpperCase(),
           createdAt: taskData.createdAt || "",
           createdBy: taskData.createdBy || "",
         });
 
         // If task has relatedTo, fetch the related data
         if (taskData.relatedTo) {
-          // Small delay to ensure state is updated
           setTimeout(() => {
             fetchRelatedData();
           }, 100);
@@ -301,9 +275,50 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
+    let processedValue = value;
+
+    switch (name) {
+      case 'subject':
+        if (value.length <= 150) {
+          processedValue = value;
+        } else {
+          return;
+        }
+        break;
+
+      case 'description':
+        if (value.length <= 500) {
+          processedValue = value;
+        } else {
+          return;
+        }
+        break;
+
+      case 'hourlyRate':
+      case 'estimateHours':
+        if (value === '') {
+          processedValue = value;
+        } else {
+          const numValue = parseFloat(value);
+          if (isNaN(numValue)) {
+            processedValue = value;
+          } else {
+            const intPart = Math.floor(numValue).toString();
+            if (intPart.length > 4) {
+              return;
+            }
+            processedValue = value;
+          }
+        }
+        break;
+
+      default:
+        processedValue = value;
+    }
+
     const updatedFormData = {
       ...formData,
-      [name]: value,
+      [name]: processedValue,
     };
 
     // Reset related fields when relatedTo changes
@@ -341,15 +356,19 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
   const validateForm = () => {
     const newErrors = {};
 
+    // Subject validation
     if (!formData.subject?.trim()) {
       newErrors.subject = "Subject is required";
+    } else if (formData.subject.length > 150) {
+      newErrors.subject = "Subject cannot exceed 150 characters";
     }
 
+    // Start date validation
     if (!formData.startDate) {
       newErrors.startDate = "Start date is required";
     }
 
-    // Check due date only if it's provided
+    // Due date validation
     if (formData.dueDate && formData.startDate) {
       const startDate = new Date(formData.startDate);
       const dueDate = new Date(formData.dueDate);
@@ -359,15 +378,32 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
       }
     }
 
-    if (formData.hourlyRate && parseFloat(formData.hourlyRate) < 0) {
-      newErrors.hourlyRate = "Hourly rate cannot be negative";
+    // Hourly rate validation
+    if (formData.hourlyRate) {
+      const hourlyRateNum = parseFloat(formData.hourlyRate);
+      if (hourlyRateNum < 0) {
+        newErrors.hourlyRate = "Hourly rate cannot be negative";
+      } else if (hourlyRateNum.toString().split('.')[0].length > 4) {
+        newErrors.hourlyRate = "Hourly rate cannot exceed 4 digits";
+      }
     }
 
-    if (formData.estimateHours && parseFloat(formData.estimateHours) < 0) {
-      newErrors.estimateHours = "Estimate hours cannot be negative";
+    // Estimate hours validation
+    if (formData.estimateHours) {
+      const estimateHoursNum = parseFloat(formData.estimateHours);
+      if (estimateHoursNum < 0) {
+        newErrors.estimateHours = "Estimate hours cannot be negative";
+      } else if (estimateHoursNum.toString().split('.')[0].length > 4) {
+        newErrors.estimateHours = "Estimate hours cannot exceed 4 digits";
+      }
     }
 
-    // Validate relatedId if relatedTo is selected
+    // Description validation
+    if (formData.description.length > 500) {
+      newErrors.description = "Description cannot exceed 500 characters";
+    }
+
+    // Related ID validation
     if (formData.relatedTo && !formData.relatedId) {
       newErrors.relatedId = `Please select a ${formData.relatedTo}`;
     }
@@ -376,61 +412,86 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!validateForm()) {
-      toast.error("Please fix the form errors before submitting.");
-      return;
+  if (!validateForm()) {
+    toast.error("Please fix the form errors before submitting.");
+    return;
+  }
+
+  setLoading(true);
+  try {
+    // Construct the payload in the exact format the API expects
+    const payload = {
+      taskId: formData.taskId,
+      adminId: formData.adminId,
+      employeeId: formData.employeeId,
+      subject: formData.subject.trim(),
+      description: formData.description.trim(),
+      startDate: formData.startDate,
+      endDate: formData.dueDate || null,
+      priority: "Medium", // You need to add this to your form if it's not included
+      relatedTo: formData.relatedTo || null,
+      relatedToId: formData.relatedId || null,
+      relatedToName: formData.relatedName || null,
+      hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : 0,
+      estimatedHours: formData.estimateHours ? parseFloat(formData.estimateHours) : 0,
+      status: formData.status,
+      // Build assignedEmployees array
+      assignedEmployees: formData.assignees.map(employeeId => {
+        const employee = teamMembers.find(member => member.value === employeeId);
+        return {
+          employeeId: employeeId,
+          name: employee ? employee.label : `Employee ${employeeId}`
+        };
+      }),
+      // Build followersEmployees array
+      followersEmployees: formData.followers.map(employeeId => {
+        const employee = teamMembers.find(member => member.value === employeeId);
+        return {
+          employeeId: employeeId,
+          name: employee ? employee.label : `Employee ${employeeId}`
+        };
+      }),
+      createdAt: formData.createdAt,
+      createdBy: formData.createdBy,
+    };
+
+    console.log('Sending update payload:', JSON.stringify(payload, null, 2));
+
+    // Send the payload directly (not wrapped in a task object)
+    const response = await axiosInstance.put("updateTask", payload);
+
+    if (response.data) {
+      toast.success("Task updated successfully!");
+      onSuccess();
+    } else {
+      throw new Error("No response data received");
     }
+  } catch (error) {
+    console.error("Error updating task:", error);
 
-    setLoading(true);
-    try {
-      const payload = {
-        taskId: formData.taskId,
-        adminId: formData.adminId,
-        employeeId: formData.employeeId,
-        subject: formData.subject.trim(),
-        description: formData.description.trim(),
-        hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : 0,
-        startDate: new Date(formData.startDate).toISOString(),
-        endDate: formData.dueDate
-          ? new Date(formData.dueDate).toISOString()
-          : null,
-        priority: formData.priority,
-        relatedTo: formData.relatedTo || null,
-        relatedToId: formData.relatedId || null,
-        relatedToName: formData.relatedName || null,
-        assignedEmployees: formData.assignees.map((employeeId) => ({
-          employeeId: employeeId,
-        })),
-        followersEmployees: formData.followers.map((employeeId) => ({
-          employeeId: employeeId,
-        })),
-        estimatedHours: formData.estimateHours
-          ? parseFloat(formData.estimateHours)
-          : null,
-        status: formData.status,
-        // Include createdAt and createdBy from fetched data
-        createdAt: formData.createdAt,
-        createdBy: formData.createdBy,
-      };
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
 
-      const response = await axiosInstance.put("updateTask", payload);
-
-      if (response.data) {
-        toast.success("Task updated successfully!");
-        onSuccess();
+      if (error.response.status === 500) {
+        toast.error('Server error: ' + (error.response.data?.message || 'Check console for details'));
       } else {
-        throw new Error("No response data received");
+        toast.error('Failed to update task: ' + (error.response.data?.message || 'Unknown error'));
       }
-    } catch (error) {
-      console.error("Error updating task:", error);
-      toast.error("Failed to update task. Please try again.");
-    } finally {
-      setLoading(false);
+    } else if (error.request) {
+      console.error('Request error:', error.request);
+      toast.error('Network error. Please check your connection.');
+    } else {
+      console.error('Error:', error.message);
+      toast.error('Failed to update task. Please try again.');
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   const getTodayDate = () => {
     return new Date().toISOString().split("T")[0];
@@ -458,45 +519,24 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
     });
   }
 
-  // Read-only info display for createdAt and createdBy
-  const displayCreatedInfo = () => {
-    if (!formData.createdAt && !formData.createdBy) return null;
+ 
 
-    const formatDate = (dateString) => {
-      try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-      } catch (e) {
-        return dateString;
-      }
-    };
-
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pt-3 border-t border-gray-200">
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-gray-500">
-            Created By
-          </label>
-          <div className="text-sm text-gray-800 bg-gray-50 px-3 py-2 rounded border border-gray-200">
-            {formData.createdBy || "N/A"}
-          </div>
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-gray-500">
-            Created At
-          </label>
-          <div className="text-sm text-gray-800 bg-gray-50 px-3 py-2 rounded border border-gray-200">
-            {formData.createdAt ? formatDate(formData.createdAt) : "N/A"}
-          </div>
-        </div>
-      </div>
-    );
+  // Get status color classes
+  const getStatusColor = (status) => {
+    switch (status?.toUpperCase()) {
+      case "COMPLETE":
+        return "bg-green-500 text-white";
+      case "IN_PROGRESS":
+        return "bg-blue-500 text-white";
+      case "TESTING":
+        return "bg-yellow-500 text-white";
+      case "AWAITING_FEEDBACK":
+        return "bg-orange-500 text-white";
+      case "NOT_STARTED":
+        return "bg-gray-500 text-white";
+      default:
+        return "bg-gray-500 text-white";
+    }
   };
 
   if (loadingTask) {
@@ -566,27 +606,46 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Subject - Full width */}
               <div className="md:col-span-2">
-                <GlobalInputField
-                  label="Subject"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  required={true}
-                  error={errors.subject}
-                  placeholder="Enter task subject"
-                  className="text-sm"
-                />
+                <div className="relative">
+                  <GlobalInputField
+                    label="Subject"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    required={true}
+                    error={errors.subject}
+                    placeholder="Enter task subject"
+                    className="text-sm"
+                  />
+                  <div className="absolute right-2 top-0 text-xs text-gray-500">
+                    {formData.subject.length}/150
+                  </div>
+                </div>
               </div>
 
               {/* Status */}
-              <GlobalSelectField
-                label="Status"
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                options={statusOptions}
-                className="text-sm"
-              />
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <div className="relative">
+                  <select
+                    value={formData.status || "NOT_STARTED"}
+                    onChange={handleChange}
+                    name="status"
+                    className={`w-full px-3 py-2 border rounded text-xs`}
+                  >
+                    {statusOptions.map((option) => (
+                      <option key={option.value} value={option.value} className="text-gray-900">
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.status && (
+                    <p className="mt-1 text-xs text-red-600">{errors.status}</p>
+                  )}
+                </div>
+              </div>
 
               {/* Hourly Rate */}
               <GlobalInputField
@@ -598,6 +657,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
                 error={errors.hourlyRate}
                 placeholder="0"
                 min="0"
+                max="9999"
                 step="0.01"
                 className="text-sm"
               />
@@ -627,15 +687,6 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
                 />
               </div>
 
-              {/* Priority */}
-              <GlobalSelectField
-                label="Priority"
-                name="priority"
-                value={formData.priority}
-                onChange={handleChange}
-                options={priorityOptions}
-                className="text-sm"
-              />
 
               {/* Related To */}
               <GlobalSelectField
@@ -647,47 +698,14 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
                 className="text-sm"
               />
 
-              {/* MultiSelect for Assignees */}
-              <GlobalMultiSelectField
-                label="Assignees"
-                name="assignees"
-                value={formData.assignees}
-                onChange={handleAssigneesChange}
-                options={teamMembers}
-                placeholder="Select assignees..."
-                loading={loadingTeam}
-                className="text-sm"
-                isSearchable={true}
-                closeMenuOnSelect={false}
-              />
-
-              {/* MultiSelect for Followers */}
-              <GlobalMultiSelectField
-                label="Followers"
-                name="followers"
-                value={formData.followers}
-                onChange={handleFollowersChange}
-                options={teamMembers}
-                placeholder="Select followers..."
-                loading={loadingTeam}
-                className="text-sm"
-                isSearchable={true}
-                closeMenuOnSelect={false}
-              />
-
               {/* Related Item Selection */}
               {formData.relatedTo && (
                 <GlobalSelectField
-                  label={`Select ${
-                    formData.relatedTo.charAt(0).toUpperCase() +
-                    formData.relatedTo.slice(1)
-                  }`}
+                  label={`Select ${formData.relatedTo.charAt(0).toUpperCase() + formData.relatedTo.slice(1)}`}
                   name="relatedId"
                   value={formData.relatedId}
                   onChange={(e) => {
-                    const selected = relatedData.find(
-                      (item) => item.id === e.target.value
-                    );
+                    const selected = relatedData.find((item) => item.id === e.target.value);
                     setFormData((prev) => ({
                       ...prev,
                       relatedId: e.target.value,
@@ -701,6 +719,32 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
                 />
               )}
 
+              {/* Assignees */}
+              <CustomMultiSelectWithExclusion
+                type="assignees"
+                label="Assignees"
+                options={teamMembers}
+                assignees={formData.assignees}
+                followers={formData.followers}
+                onAssigneesChange={handleAssigneesChange}
+                onFollowersChange={handleFollowersChange}
+                loading={loadingTeam}
+                className="mb-4"
+              />
+
+              {/* Followers */}
+              <CustomMultiSelectWithExclusion
+                type="followers"
+                label="Followers"
+                options={teamMembers}
+                assignees={formData.assignees}
+                followers={formData.followers}
+                onAssigneesChange={handleAssigneesChange}
+                onFollowersChange={handleFollowersChange}
+                loading={loadingTeam}
+                className="mb-4"
+              />
+
               {/* Estimate Hours */}
               <GlobalInputField
                 label="Estimate hours"
@@ -711,55 +755,66 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
                 error={errors.estimateHours}
                 placeholder="0"
                 min="0"
+                max="9999"
                 step="0.5"
                 className="text-sm"
               />
             </div>
 
-            {/* Task Description - Full width */}
+            {/* Task Description */}
             <div className="mt-3">
-              <GlobalTextAreaField
-                label="Task Description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Add Description"
-                rows={3}
-                className="text-sm"
-              />
+              <div className="relative">
+                <GlobalTextAreaField
+                  label="Task Description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="Add Description"
+                  rows={3}
+                  error={errors.description}
+                  className="text-sm"
+                />
+                <div className="absolute right-2 bottom-2 text-xs text-gray-500">
+                  {formData.description.length}/500
+                </div>
+              </div>
             </div>
 
-            {/* Display Created Info (Read-only) */}
-            {displayCreatedInfo()}
+       
           </form>
         </div>
 
         {/* Modal Footer */}
         <div className="border-t border-gray-200 bg-gray-50 p-3">
-          <div className="flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-3 py-1.5 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 text-xs font-medium"
-            >
-              Cancel
-            </button>
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-gray-500">
+             
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3 py-1.5 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 text-xs font-medium"
+              >
+                Cancel
+              </button>
 
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={loading}
-              className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <>
-                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block mr-1.5"></div>
-                  Updating...
-                </>
-              ) : (
-                "Update Task"
-              )}
-            </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading}
+                className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded hover:from-blue-700 hover:to-indigo-800 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block mr-1.5"></div>
+                    Updating...
+                  </>
+                ) : (
+                  'Update Task'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
