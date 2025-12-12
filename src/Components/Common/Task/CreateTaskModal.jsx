@@ -5,7 +5,7 @@ import {
   GlobalInputField,
   GlobalTextAreaField,
   GlobalSelectField,
-  GlobalMultiSelectField
+  CustomMultiSelectWithExclusion
 } from '../../BaseComponet/CustomerFormInputs';
 import {
   formatInvoiceNumber,
@@ -14,13 +14,86 @@ import {
   formatCurrency
 } from '../../BaseComponet/UtilFunctions';
 
+const formatFileSize = (base64String) => {
+  if (!base64String) return '0 KB';
+  const sizeInBytes = (base64String.length * 3) / 4;
+
+  if (sizeInBytes < 1024) return `${sizeInBytes} B`;
+  if (sizeInBytes < 1024 * 1024) return `${(sizeInBytes / 1024).toFixed(1)} KB`;
+  return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const getFileIconComponent = (fileName, contentType) => {
+  const extension = fileName.split('.').pop().toLowerCase();
+
+  // Check by content type first
+  if (contentType.includes('image')) {
+    return (
+      <div className="text-blue-500">
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (contentType.includes('pdf')) {
+    return (
+      <div className="text-red-500">
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (contentType.includes('word') || contentType.includes('document') || extension === 'doc' || extension === 'docx') {
+    return (
+      <div className="text-blue-600">
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (contentType.includes('excel') || contentType.includes('spreadsheet') || extension === 'xls' || extension === 'xlsx') {
+    return (
+      <div className="text-green-600">
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (contentType.includes('zip') || contentType.includes('compressed') || extension === 'zip' || extension === 'rar' || extension === '7z') {
+    return (
+      <div className="text-yellow-600">
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+        </svg>
+      </div>
+    );
+  }
+
+  // Default file icon
+  return (
+    <div className="text-gray-600">
+      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+      </svg>
+    </div>
+  );
+};
+
 function CreateTaskModal({ onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [teamMembers, setTeamMembers] = useState([]);
   const [loadingTeam, setLoadingTeam] = useState(false);
   const [relatedData, setRelatedData] = useState([]);
   const [loadingRelatedData, setLoadingRelatedData] = useState(false);
-  
+
   // Attachment state
   const [attachments, setAttachments] = useState([]);
   const [attachmentError, setAttachmentError] = useState('');
@@ -60,6 +133,11 @@ function CreateTaskModal({ onClose, onSuccess }) {
     { value: 'proforma', label: 'Proforma' },
     { value: 'invoice', label: 'Invoice' }
   ];
+
+
+
+
+
 
   // Fetch team members on component mount
   useEffect(() => {
@@ -188,7 +266,6 @@ function CreateTaskModal({ onClose, onSuccess }) {
     }
   };
 
-  // Handle file attachment selection
   const handleAttachmentChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -249,12 +326,14 @@ function CreateTaskModal({ onClose, onSuccess }) {
         file,
         fileName: file.name,
         size: file.size,
-        type: file.type
+        type: file.type,
+        // Generate a base64 preview for images
+        preview: file.type.includes('image') ? URL.createObjectURL(file) : null
       }));
 
       setAttachments(prev => [...prev, ...newAttachments]);
       setAttachmentError('');
-      
+
       if (validFiles.length > 0) {
         toast.success(`Added ${validFiles.length} file(s)`);
       }
@@ -266,18 +345,170 @@ function CreateTaskModal({ onClose, onSuccess }) {
     }
   };
 
-  // Remove single attachment
-  const handleRemoveAttachment = (id) => {
-    setAttachments(prev => prev.filter(att => att.id !== id));
-    setAttachmentError('');
+  // Add these new functions after handleRemoveAllAttachments:
+  const handlePreviewAttachment = (attachment) => {
+    try {
+      // Check if it's an image file
+      if (attachment.type.includes('image')) {
+        // Create blob URL from the File object
+        const blobUrl = URL.createObjectURL(attachment.file);
+
+        // Open in new tab
+        const newWindow = window.open(blobUrl, '_blank');
+
+        if (newWindow) {
+          newWindow.focus();
+
+          // Clean up the URL after the window is loaded
+          newWindow.onload = () => {
+            setTimeout(() => {
+              URL.revokeObjectURL(blobUrl);
+            }, 1000);
+          };
+
+          // Fallback cleanup if onload doesn't fire
+          setTimeout(() => {
+            try {
+              URL.revokeObjectURL(blobUrl);
+            } catch (e) {
+              // Ignore errors
+            }
+          }, 5000);
+        } else {
+          // If popup blocked, show image in a modal
+          toast.error('Popup blocked. Please allow popups to preview images.');
+
+          // Alternative: Show image in a modal/dialog
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.style.maxWidth = '90vw';
+            img.style.maxHeight = '90vh';
+
+            // Create a simple modal
+            const modal = document.createElement('div');
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100%';
+            modal.style.height = '100%';
+            modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
+            modal.style.display = 'flex';
+            modal.style.alignItems = 'center';
+            modal.style.justifyContent = 'center';
+            modal.style.zIndex = '9999';
+            modal.style.cursor = 'pointer';
+
+            modal.appendChild(img);
+            modal.onclick = () => document.body.removeChild(modal);
+
+            document.body.appendChild(modal);
+          };
+          reader.readAsDataURL(attachment.file);
+
+          // Clean up blob URL
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+        }
+      } else if (attachment.type.includes('pdf')) {
+        // For PDF files, we can't preview before upload
+        toast('PDF preview will be available after task creation', {
+          icon: 'ℹ️',
+          duration: 3000,
+        });
+      } else if (attachment.type.includes('text')) {
+        // For text files, we can read and display content
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target.result;
+          const newWindow = window.open();
+          if (newWindow) {
+            newWindow.document.write(`
+            <html>
+              <head>
+                <title>${attachment.fileName} - Preview</title>
+                <style>
+                  body { font-family: monospace; white-space: pre-wrap; padding: 20px; }
+                </style>
+              </head>
+              <body>${content}</body>
+            </html>
+          `);
+            newWindow.document.close();
+          } else {
+            toast.error('Popup blocked. Unable to preview text file.');
+          }
+        };
+        reader.readAsText(attachment.file);
+      } else {
+        // For other files, show appropriate message
+        const fileType = attachment.type.split('/')[1] || 'file';
+        toast(`Preview for .${fileType} files is available after task creation`, {
+          icon: 'ℹ️',
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      console.error('Error previewing attachment:', error);
+      toast.error('Failed to preview file');
+    }
   };
 
-  // Remove all attachments
-  const handleRemoveAllAttachments = () => {
-    setAttachments([]);
-    setAttachmentError('');
-    toast.info('All attachments removed');
+  const handleDownloadAttachment = (attachment) => {
+    try {
+      // Create blob URL from the File object
+      const blobUrl = URL.createObjectURL(attachment.file);
+
+      // Create download link
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = attachment.fileName;
+      a.style.display = 'none';
+
+      // Append to body, click, and cleanup
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // Clean up blob URL
+      setTimeout(() => {
+        try {
+          URL.revokeObjectURL(blobUrl);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }, 100);
+
+      toast.success(`Downloading ${attachment.fileName}`);
+    } catch (error) {
+      console.error('Error downloading attachment:', error);
+      toast.error('Failed to download file');
+    }
   };
+
+  // Update handleRemoveAttachment to clean up object URLs
+const handleRemoveAttachment = (id) => {
+  setAttachments(prev => prev.filter(att => att.id !== id));
+  setAttachmentError('');
+  toast.success('File removed');
+};
+
+  // Update handleRemoveAllAttachments to clean up all object URLs
+const handleRemoveAllAttachments = () => {
+  setAttachments([]);
+  setAttachmentError('');
+  toast.info('All attachments removed');
+};
+
+  useEffect(() => {
+    return () => {
+      attachments.forEach(attachment => {
+        if (attachment.preview) {
+          URL.revokeObjectURL(attachment.preview);
+        }
+      });
+    };
+  }, [attachments])
 
   // Get file icon based on type
   const getFileIcon = (fileType) => {
@@ -291,19 +522,19 @@ function CreateTaskModal({ onClose, onSuccess }) {
   };
 
   // Convert file to base64
-// Convert file to base64 (returns just the base64 string)
-const convertFileToBase64 = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      // Remove the data URL prefix (e.g., "data:image/png;base64,")
-      const base64String = reader.result.split(',')[1];
-      resolve(base64String);
-    };
-    reader.onerror = error => reject(error);
-  });
-};
+  // Convert file to base64 (returns just the base64 string)
+  const convertFileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        // Remove the data URL prefix (e.g., "data:image/png;base64,")
+        const base64String = reader.result.split(',')[1];
+        resolve(base64String);
+      };
+      reader.onerror = error => reject(error);
+    });
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -444,108 +675,108 @@ const convertFileToBase64 = (file) => {
     return Object.keys(newErrors).length === 0;
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!validateForm()) {
-    toast.error("Please fix the form errors before submitting.");
-    return;
-  }
+    if (!validateForm()) {
+      toast.error("Please fix the form errors before submitting.");
+      return;
+    }
 
-  setLoading(true);
-  try {
-    // Convert attachments to base64
-    const taskAttachments = [];
-    
-    for (const attachment of attachments) {
-      try {
-        // Read file as data URL
-        const base64Data = await convertFileToBase64(attachment.file);
-        
-        // Push the attachment object with fileName, contentType, and data
-        taskAttachments.push({
-          fileName: attachment.fileName,
-          contentType: attachment.type, // This should be the actual MIME type
-          data: base64Data // The base64 string without data URL prefix
-        });
-      } catch (error) {
-        console.error('Error converting file to base64:', error);
-        toast.error(`Failed to process file: ${attachment.fileName}`);
+    setLoading(true);
+    try {
+      // Convert attachments to base64
+      const taskAttachments = [];
+
+      for (const attachment of attachments) {
+        try {
+          // Read file as data URL
+          const base64Data = await convertFileToBase64(attachment.file);
+
+          // Push the attachment object with fileName, contentType, and data
+          taskAttachments.push({
+            fileName: attachment.fileName,
+            contentType: attachment.type, // This should be the actual MIME type
+            data: base64Data // The base64 string without data URL prefix
+          });
+        } catch (error) {
+          console.error('Error converting file to base64:', error);
+          toast.error(`Failed to process file: ${attachment.fileName}`);
+        }
       }
-    }
 
-    // Create the nested payload structure as per API requirement
-    const payload = {
-      task: {
-        subject: formData.subject.trim(),
-        description: formData.description.trim(),
-        hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : 0,
-        startDate: formData.startDate,
-        endDate: formData.dueDate || null,
-        priority: formData.priority,
-        relatedTo: formData.relatedTo || null,
-        relatedToId: formData.relatedId || null,
-        relatedToName: formData.relatedName || '',
-        assignedEmployees: formData.assignees.map(employeeId => {
-          // Find the employee object to get name
-          const employee = teamMembers.find(member => member.value === employeeId);
-          return {
-            employeeId: employeeId,
-            name: employee ? employee.label : `Employee ${employeeId}`
-          };
-        }),
-        followersEmployees: formData.followers.map(employeeId => {
-          // Find the employee object to get name
-          const employee = teamMembers.find(member => member.value === employeeId);
-          return {
-            employeeId: employeeId,
-            name: employee ? employee.label : `Employee ${employeeId}`
-          };
-        }),
-        estimatedHours: formData.estimateHours ? parseFloat(formData.estimateHours) : 0,
-        // status: 'pending'
+      // Create the nested payload structure as per API requirement
+      const payload = {
+        task: {
+          subject: formData.subject.trim(),
+          description: formData.description.trim(),
+          hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : 0,
+          startDate: formData.startDate,
+          endDate: formData.dueDate || null,
+          priority: formData.priority,
+          relatedTo: formData.relatedTo || null,
+          relatedToId: formData.relatedId || null,
+          relatedToName: formData.relatedName || '',
+          assignedEmployees: formData.assignees.map(employeeId => {
+            // Find the employee object to get name
+            const employee = teamMembers.find(member => member.value === employeeId);
+            return {
+              employeeId: employeeId,
+              name: employee ? employee.label : `Employee ${employeeId}`
+            };
+          }),
+          followersEmployees: formData.followers.map(employeeId => {
+            // Find the employee object to get name
+            const employee = teamMembers.find(member => member.value === employeeId);
+            return {
+              employeeId: employeeId,
+              name: employee ? employee.label : `Employee ${employeeId}`
+            };
+          }),
+          estimatedHours: formData.estimateHours ? parseFloat(formData.estimateHours) : 0,
+          // status: 'pending'
+        }
+      };
+
+      // Add taskAttachments array only if there are attachments
+      if (taskAttachments.length > 0) {
+        payload.taskAttachments = taskAttachments;
       }
-    };
 
-    // Add taskAttachments array only if there are attachments
-    if (taskAttachments.length > 0) {
-      payload.taskAttachments = taskAttachments;
-    }
+      console.log('Sending payload:', JSON.stringify(payload, null, 2));
 
-    console.log('Sending payload:', JSON.stringify(payload, null, 2));
+      const response = await axiosInstance.post('createTask', payload);
 
-    const response = await axiosInstance.post('createTask', payload);
-
-    if (response.data) {
-      console.log('Response:', response.data);
-      toast.success('Task created successfully!');
-      onSuccess();
-    } else {
-      throw new Error('No response data received');
-    }
-  } catch (error) {
-    console.error('Error creating task:', error);
-    
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', error.response.data);
-      
-      if (error.response.status === 500) {
-        toast.error('Server error: ' + (error.response.data?.message || 'Check console for details'));
+      if (response.data) {
+        console.log('Response:', response.data);
+        toast.success('Task created successfully!');
+        onSuccess();
       } else {
-        toast.error('Failed to create task: ' + (error.response.data?.message || 'Unknown error'));
+        throw new Error('No response data received');
       }
-    } else if (error.request) {
-      console.error('Request error:', error.request);
-      toast.error('Network error. Please check your connection.');
-    } else {
-      console.error('Error:', error.message);
-      toast.error('Failed to create task. Please try again.');
+    } catch (error) {
+      console.error('Error creating task:', error);
+
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+
+        if (error.response.status === 500) {
+          toast.error('Server error: ' + (error.response.data?.message || 'Check console for details'));
+        } else {
+          toast.error('Failed to create task: ' + (error.response.data?.message || 'Unknown error'));
+        }
+      } else if (error.request) {
+        console.error('Request error:', error.request);
+        toast.error('Network error. Please check your connection.');
+      } else {
+        console.error('Error:', error.message);
+        toast.error('Failed to create task. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const getTodayDate = () => {
     return new Date().toISOString().split('T')[0];
@@ -623,7 +854,7 @@ const handleSubmit = async (e) => {
                 step="0.01"
                 className="text-sm"
               />
-              
+
               {/* Date Fields */}
               <div className="grid grid-cols-2 gap-2">
                 <GlobalInputField
@@ -649,15 +880,7 @@ const handleSubmit = async (e) => {
                 />
               </div>
 
-              {/* Priority */}
-              <GlobalSelectField
-                label="Priority"
-                name="priority"
-                value={formData.priority}
-                onChange={handleChange}
-                options={priorityOptions}
-                className="text-sm"
-              />
+        
 
               {/* Related To */}
               <GlobalSelectField
@@ -669,33 +892,6 @@ const handleSubmit = async (e) => {
                 className="text-sm"
               />
 
-              {/* Assignees */}
-              <GlobalMultiSelectField
-                label="Assignees"
-                name="assignees"
-                value={formData.assignees}
-                onChange={handleAssigneesChange}
-                options={teamMembers}
-                placeholder="Select assignees..."
-                loading={loadingTeam}
-                className="text-sm"
-                isSearchable={true}
-                closeMenuOnSelect={false}
-              />
-
-              {/* Followers */}
-              <GlobalMultiSelectField
-                label="Followers"
-                name="followers"
-                value={formData.followers}
-                onChange={handleFollowersChange}
-                options={teamMembers}
-                placeholder="Select followers..."
-                loading={loadingTeam}
-                className="text-sm"
-                isSearchable={true}
-                closeMenuOnSelect={false}
-              />
               
               {/* Related Item Selection */}
               {formData.relatedTo && (
@@ -721,6 +917,43 @@ const handleSubmit = async (e) => {
                 />
               )}
 
+              {/* Assignees */}
+              <CustomMultiSelectWithExclusion
+                type="assignees"
+                label="Assignees"
+                options={teamMembers}
+                assignees={formData.assignees}
+                followers={formData.followers}
+                onAssigneesChange={handleAssigneesChange}
+                onFollowersChange={handleFollowersChange}
+                loading={loadingTeam}
+                className="mb-4"
+              />
+
+              {/* Followers */}
+              <CustomMultiSelectWithExclusion
+                type="followers"
+                label="Followers"
+                options={teamMembers}
+                assignees={formData.assignees}
+                followers={formData.followers}
+                onAssigneesChange={handleAssigneesChange}
+                onFollowersChange={handleFollowersChange}
+                loading={loadingTeam}
+                className="mb-4"
+              />
+
+
+
+      {/* Priority */}
+              <GlobalSelectField
+                label="Priority"
+                name="priority"
+                value={formData.priority}
+                onChange={handleChange}
+                options={priorityOptions}
+                className="text-sm"
+              />
               {/* Estimate Hours */}
               <GlobalInputField
                 label="Estimate hours"
@@ -777,7 +1010,7 @@ const handleSubmit = async (e) => {
                   )}
                 </div>
               </div>
-              
+
               {/* Single File Input */}
               <div className="mb-3">
                 <div className="relative">
@@ -799,7 +1032,7 @@ const handleSubmit = async (e) => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                       </svg>
                       <p className="text-sm text-gray-600">
-                        {attachments.length >= 4 
+                        {attachments.length >= 4
                           ? 'Maximum 4 files reached'
                           : 'Click to select files or drag and drop'
                         }
@@ -810,7 +1043,7 @@ const handleSubmit = async (e) => {
                     </div>
                   </label>
                 </div>
-                
+
                 {attachmentError && (
                   <p className="mt-2 text-xs text-red-600">{attachmentError}</p>
                 )}
@@ -819,40 +1052,85 @@ const handleSubmit = async (e) => {
               {/* Selected Files Row */}
               {attachments.length > 0 && (
                 <div className="mt-3">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Files:</h4>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium text-gray-700">Selected Attachments</h4>
+                    <span className="text-xs text-gray-500">
+                      {attachments.length}/4 files
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
                     {attachments.map((attachment) => (
                       <div
                         key={attachment.id}
-                        className="group relative flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 hover:bg-blue-100 transition-colors"
+                        className="flex items-center justify-between p-2 bg-gray-50 hover:bg-blue-50 rounded border border-gray-200 transition-colors group"
                       >
-                        <span className="text-lg">{getFileIcon(attachment.type)}</span>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-800 truncate max-w-[150px]">
-                            {attachment.fileName}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {(attachment.size / (1024 * 1024)).toFixed(2)} MB
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveAttachment(attachment.id)}
-                          className="ml-2 p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                          title="Remove file"
+                        <div
+                          className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
+                          onClick={() => handlePreviewAttachment(attachment)}
+                          title={`Click to preview ${attachment.fileName}`}
                         >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
+                          <div className="flex-shrink-0 w-8 h-8 bg-white rounded border border-gray-200 flex items-center justify-center">
+                            {getFileIconComponent(attachment.fileName, attachment.type)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-gray-900 text-xs truncate hover:text-blue-600">
+                              {attachment.fileName}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {(attachment.size / (1024 * 1024)).toFixed(2)} MB
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePreviewAttachment(attachment);
+                            }}
+                            className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                            title="Preview"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownloadAttachment(attachment);
+                            }}
+                            className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                            title="Download"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveAttachment(attachment.id);
+                            }}
+                            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                            title="Remove"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
-                  
+
                   {/* File Summary */}
                   <div className="mt-2 text-xs text-gray-500">
                     <p>
-                      Total: {attachments.length} file(s) • 
                       Total size: {(attachments.reduce((sum, att) => sum + att.size, 0) / (1024 * 1024)).toFixed(2)} MB
                     </p>
                   </div>
