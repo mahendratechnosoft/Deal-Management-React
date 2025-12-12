@@ -118,7 +118,7 @@ function EditFamily() {
       masters_completed: "Postgraduate (Master’s Degree)",
       doctorate: "Doctorate (PhD)",
       professional_course: "Professional Course (CA / CS / CMA)",
-      other: "Other"
+      other: "Other",
     };
 
     const getEducationLabel = (value) => educationLabelMap[value] || "-";
@@ -276,11 +276,7 @@ function EditFamily() {
       // =====================================================
       // HELPER FUNCTION FOR SECTION TABLES WITHOUT HEADERS
       // =====================================================
-      const createFourColumnTableWithoutHeader = (
-        startY,
-        title,
-        bodyRows
-      ) => {
+      const createFourColumnTableWithoutHeader = (startY, title, bodyRows) => {
         let currentY = startY;
 
         doc.setFont("helvetica", "bold");
@@ -325,99 +321,89 @@ function EditFamily() {
       // =====================================================
       // DONOR INFORMATION
       // =====================================================
-      y = createFourColumnTableWithoutHeader(
-        y,
-        "Donor Information",
+      y = createFourColumnTableWithoutHeader(y, "Donor Information", [
         [
-          ["Donor UIN", reportData.donorUin || "-", "Height", reportData.height || "-"],
-          [
-            "Blood Group",
-            reportData.bloodGroup || "-",
-            "Skin Tone",
-            reportData.skinColor || "-",
-          ],
-          [
-            "Eyes",
-            reportData.eyeColor || "-",
-            "Education",
-            getEducationLabel(reportData.education)
-
-          ],
-          [
-            "Profession",
-            reportData.profession || "-",
-            "Religion",
-            reportData.religion || "-",
-          ],
-          ["Vials Assigned", reportData.vialsAssignedCount || "0", "", ""],
-        ]
-      );
+          "Donor UIN",
+          reportData.donorUin || "-",
+          "Height",
+          reportData.height || "-",
+        ],
+        [
+          "Blood Group",
+          reportData.bloodGroup || "-",
+          "Skin Tone",
+          reportData.skinColor || "-",
+        ],
+        [
+          "Eyes",
+          reportData.eyeColor || "-",
+          "Education",
+          getEducationLabel(reportData.education),
+        ],
+        [
+          "Profession",
+          reportData.profession || "-",
+          "Religion",
+          reportData.religion || "-",
+        ],
+        ["Vials Assigned", reportData.vialsAssignedCount || "0", "", ""],
+      ]);
 
       // =====================================================
       // BLOOD REPORT
       // =====================================================
-      y = createFourColumnTableWithoutHeader(
-        y,
-        "Blood Report",
+      y = createFourColumnTableWithoutHeader(y, "Blood Report", [
         [
-          [
-            "Blood Group",
-            reportData.bloodGroup || "-",
-            "HIV I & II",
-            reportData.hiv || "-",
-          ],
-          ["HBsAg", reportData.hbsag || "-", "VDRL", reportData.vdrl || "-"],
-          [
-            "HCV",
-            reportData.hcv || "-",
-            "HB Electrophoresis",
-            reportData.hbelectrophoresis || "-",
-          ],
-          [
-            "BSL",
-            reportData.bsl || "-",
-            "Serum Creatinine",
-            reportData.srcreatinine || "-",
-          ],
-          ["CMV", reportData.cmv || "-", "", ""],
-        ]
-      );
+          "Blood Group",
+          reportData.bloodGroup || "-",
+          "HIV I & II",
+          reportData.hiv || "-",
+        ],
+        ["HBsAg", reportData.hbsag || "-", "VDRL", reportData.vdrl || "-"],
+        [
+          "HCV",
+          reportData.hcv || "-",
+          "HB Electrophoresis",
+          reportData.hbelectrophoresis || "-",
+        ],
+        [
+          "BSL",
+          reportData.bsl || "-",
+          "Serum Creatinine",
+          reportData.srcreatinine || "-",
+        ],
+        ["CMV", reportData.cmv || "-", "", ""],
+      ]);
 
       // =====================================================
       // SEMEN REPORT (REMOVED DATE, MEDIA, TIME, VOLUME, REPORT)
       // =====================================================
-      y = createFourColumnTableWithoutHeader(
-        y,
-        "Semen Report",
+      y = createFourColumnTableWithoutHeader(y, "Semen Report", [
         [
-          [
-            "Concentration",
-            reportData.million
-              ? `${reportData.million} Million/ML`
-              : "-",
-            "Motility A",
-            reportData.progressiveMotilityA
-              ? `${reportData.progressiveMotilityA}%`
-              : "-",
-          ],
-          [
-            "Motility B",
-            reportData.progressiveMotilityB
-              ? `${reportData.progressiveMotilityB}%`
-              : "-",
-            "Motility C",
-            reportData.progressiveMotilityC
-              ? `${reportData.progressiveMotilityC}%`
-              : "-",
-          ],
-          [
-            "Morphology",
-            reportData.morphology || "-",
-            "Abnormality",
-            reportData.abnormality || "-",
-          ],
-        ]
-      );
+          "Concentration",
+          reportData.million ? `${reportData.million} Million/ML` : "-",
+          "Motility A",
+          reportData.progressiveMotilityA
+            ? `${reportData.progressiveMotilityA}%`
+            : "-",
+        ],
+        [
+          "Motility B",
+          reportData.progressiveMotilityB
+            ? `${reportData.progressiveMotilityB}%`
+            : "-",
+          "Motility C",
+          reportData.progressiveMotilityC
+            ? `${reportData.progressiveMotilityC}%`
+            : "-",
+        ],
+        [
+          "Morphology",
+          reportData.morphology || "-",
+          "Abnormality",
+          reportData.abnormality || "-",
+        ],
+      ]);
 
       // =====================================================
       // DECLARATION SECTION
@@ -471,7 +457,6 @@ function EditFamily() {
 
       doc.setFont("helvetica", "bold");
       doc.text("Signature :", margin.left, signatureY + 9);
-
 
       // WIFE SECTION (Right side) - Positioned below husband section
       const wifeSignatureY = signatureY + 18;
@@ -656,7 +641,6 @@ function EditFamily() {
     }
   };
 
-
   // --- Render Functions ---
 
   const renderFamilyInformation = () => (
@@ -798,19 +782,20 @@ function EditFamily() {
             <FormTextarea
               label="Genetic Illness"
               name="husbandGenticIllness"
-              value={familyInfo.husbandGenticIllness}
+              value={familyInfo.husbandGenticIllness || ""}
               onChange={handleChange}
               rows={2}
               error={errors.husbandGenticIllness}
             />
             <div className="text-right mt-1">
               <span
-                className={`text-xs ${familyInfo.husbandGenticIllness.length > 500
-                  ? "text-red-500"
-                  : "text-gray-500"
-                  }`}
+                className={`text-xs ${
+                  (familyInfo.husbandGenticIllness || "").length > 500
+                    ? "text-red-500"
+                    : "text-gray-500"
+                }`}
               >
-                {familyInfo.husbandGenticIllness.length}/500 characters
+                {(familyInfo.husbandGenticIllness || "").length}/500 characters
               </span>
             </div>
           </div>
@@ -908,19 +893,20 @@ function EditFamily() {
             <FormTextarea
               label="Genetic Illness"
               name="wifeGenticIllness"
-              value={familyInfo.wifeGenticIllness}
+              value={familyInfo.wifeGenticIllness || ""}
               onChange={handleChange}
               rows={2}
               error={errors.wifeGenticIllness}
             />
             <div className="text-right mt-1">
               <span
-                className={`text-xs ${familyInfo.wifeGenticIllness.length > 500
-                  ? "text-red-500"
-                  : "text-gray-500"
-                  }`}
+                className={`text-xs ${
+                  (familyInfo.wifeGenticIllness || "").length > 500
+                    ? "text-red-500"
+                    : "text-gray-500"
+                }`}
               >
-                {familyInfo.wifeGenticIllness.length}/500 characters
+                {(familyInfo.wifeGenticIllness || "").length}/500 characters
               </span>
             </div>
           </div>
@@ -1125,10 +1111,11 @@ function EditFamily() {
                       <button
                         type="button"
                         onClick={() => setActiveTab(tab.id)}
-                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${activeTab === tab.id
-                          ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
-                          : "hover:text-gray-700 hover:bg-gray-50"
-                          }`}
+                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${
+                          activeTab === tab.id
+                            ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
+                            : "hover:text-gray-700 hover:bg-gray-50"
+                        }`}
                       >
                         {tab.label}
                       </button>
