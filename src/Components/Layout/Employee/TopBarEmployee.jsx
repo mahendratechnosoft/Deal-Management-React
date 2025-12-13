@@ -3,11 +3,23 @@ import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import CheckInOutButton from "../../Common/Timesheet/CheckInOutButton";
 import { hasPermission } from "../../BaseComponet/permissions";
+import { useTimer } from "../../BaseComponet/TaskTimerContext"; // Added
+import { formatDuration } from "../../BaseComponet/UtilFunctions"; // Added
+import {
+  showAutoCloseSuccess,
+  showCustomAlert,
+  showErrorAlert, // Ensure this is imported for the validation in handleStopTimer
+} from "../../BaseComponet/alertUtils";
 
 function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
+  // Timer Context
+  const { activeTimer, elapsedTime, fetchActiveTimer } = useTimer();
+
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAttendanceList, setShowAttendanceList] = useState(false);
+  const [showTimerDropdown, setShowTimerDropdown] = useState(false); // Added
+
   const [userData, setUserData] = useState(null);
   const [notificationCount, setNotificationCount] = useState(3);
   const [attendanceData, setAttendanceData] = useState([]);
@@ -18,9 +30,11 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
   const userMenuRef = useRef(null);
   const notificationRef = useRef(null);
   const attendanceRef = useRef(null);
+  const timerRef = useRef(null); // Added
   const userButtonRef = useRef(null);
   const notificationButtonRef = useRef(null);
   const attendanceButtonRef = useRef(null);
+  const timerButtonRef = useRef(null); // Added
 
   // Get user data from localStorage
   useEffect(() => {
@@ -34,23 +48,34 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
     }
   }, []);
 
+  // Fetch active timer on mount
+  useEffect(() => {
+    fetchActiveTimer();
+  }, []);
+
   // Function to fetch today's attendance data
   const fetchTodayAttendance = async () => {
     setLoadingAttendance(true);
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const response = await axiosInstance.get(`getAttendanceBetween?fromDate=${today}&toDate=${today}`);
+      const today = new Date().toISOString().split("T")[0];
+      const response = await axiosInstance.get(
+        `getAttendanceBetween?fromDate=${today}&toDate=${today}`
+      );
 
       let processedData = [];
 
-      if (typeof response.data === 'object' && response.data !== null) {
-        Object.keys(response.data).forEach(employeeName => {
+      if (typeof response.data === "object" && response.data !== null) {
+        Object.keys(response.data).forEach((employeeName) => {
           const employeeData = response.data[employeeName];
-          const todayKey = Object.keys(employeeData).find(key => key.includes(today));
+          const todayKey = Object.keys(employeeData).find((key) =>
+            key.includes(today)
+          );
 
           if (todayKey && employeeData[todayKey]) {
             const records = employeeData[todayKey];
-            const sortedRecords = [...records].sort((a, b) => a.timeStamp - b.timeStamp);
+            const sortedRecords = [...records].sort(
+              (a, b) => a.timeStamp - b.timeStamp
+            );
 
             // Get latest record
             let status = "not-checked-in";
@@ -65,13 +90,13 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
             processedData.push({
               employeeName,
               status,
-              lastTime
+              lastTime,
             });
           } else {
             processedData.push({
               employeeName,
               status: "not-checked-in",
-              lastTime: null
+              lastTime: null,
             });
           }
         });
@@ -79,7 +104,11 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
 
       // Sort: checked-in first, then checked-out, then not-checked-in
       processedData.sort((a, b) => {
-        const statusOrder = { 'checked-in': 1, 'checked-out': 2, 'not-checked-in': 3 };
+        const statusOrder = {
+          "checked-in": 1,
+          "checked-out": 2,
+          "not-checked-in": 3,
+        };
         return statusOrder[a.status] - statusOrder[b.status];
       });
 
@@ -92,7 +121,8 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
     }
   };
 
-  // Function to toggle attendance list
+  // --- Toggles ---
+
   const toggleAttendanceList = () => {
     if (!showAttendanceList) {
       fetchTodayAttendance();
@@ -101,9 +131,37 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
 
     if (showUserMenu) setShowUserMenu(false);
     if (showNotifications) setShowNotifications(false);
+    if (showTimerDropdown) setShowTimerDropdown(false);
   };
 
-  // Handle click outside to close dropdowns
+  const toggleNotifications = () => {
+    setShowNotifications(!showNotifications);
+    if (showUserMenu) setShowUserMenu(false);
+    if (showAttendanceList) setShowAttendanceList(false);
+    if (showTimerDropdown) setShowTimerDropdown(false);
+
+    if (!showNotifications && notificationCount > 0) {
+      setNotificationCount(0);
+    }
+  };
+
+  const toggleUserMenu = () => {
+    setShowUserMenu(!showUserMenu);
+    if (showNotifications) setShowNotifications(false);
+    if (showAttendanceList) setShowAttendanceList(false);
+    if (showTimerDropdown) setShowTimerDropdown(false);
+  };
+
+  const toggleTimerDropdown = () => {
+    if (activeTimer) {
+      setShowTimerDropdown(!showTimerDropdown);
+      setShowUserMenu(false);
+      setShowNotifications(false);
+      setShowAttendanceList(false);
+    }
+  };
+
+  // --- Handle Click Outside ---
   useEffect(() => {
     const handleClickOutside = (event) => {
       // Close user menu
@@ -138,25 +196,38 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
       ) {
         setShowAttendanceList(false);
       }
+
+      // Close Timer Dropdown
+      if (
+        showTimerDropdown &&
+        timerRef.current &&
+        !timerRef.current.contains(event.target) &&
+        timerButtonRef.current &&
+        !timerButtonRef.current.contains(event.target)
+      ) {
+        setShowTimerDropdown(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showUserMenu, showNotifications, showAttendanceList]);
+  }, [showUserMenu, showNotifications, showAttendanceList, showTimerDropdown]);
 
-  // Function to format time (e.g., "9:32 am")
+  // --- Logic Functions ---
+
   const formatTime = (date) => {
     if (!date) return "";
-    return date.toLocaleTimeString("en-IN", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true
-    }).toLowerCase();
+    return date
+      .toLocaleTimeString("en-IN", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+      .toLowerCase();
   };
 
-  // Get initials from user name
   const getUserInitials = () => {
     if (!userData?.loginUserName) return "UN";
     const name = userData.loginUserName.trim();
@@ -170,7 +241,6 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
     ).toUpperCase();
   };
 
-  // Function to truncate text
   const truncateText = (text, maxLength = 20) => {
     if (!text || text.length <= maxLength) return text;
     return text.substring(0, maxLength) + "...";
@@ -203,19 +273,137 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
     }
   };
 
-  const toggleNotifications = () => {
-    if (showUserMenu) setShowUserMenu(false);
-    if (showAttendanceList) setShowAttendanceList(false);
-    setShowNotifications(!showNotifications);
-    if (!showNotifications && notificationCount > 0) {
-      setNotificationCount(0);
+  const handleStopTimer = async () => {
+    if (!activeTimer || !activeTimer.taskId) {
+      return;
     }
-  };
 
-  const toggleUserMenu = () => {
-    if (showNotifications) setShowNotifications(false);
-    if (showAttendanceList) setShowAttendanceList(false);
-    setShowUserMenu(!showUserMenu);
+    try {
+      setShowTimerDropdown(false);
+
+      const result = await showCustomAlert(
+        `
+        <div class="p-4">
+          <div class="flex items-center justify-center mb-4">
+            <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+            </div>
+          </div>
+          
+          <h3 class="text-lg font-bold text-center text-gray-900 mb-1">Time Log Note</h3>
+          <p class="text-center text-gray-600 mb-4">Please add a note to complete your time entry</p>
+          
+          <div class="space-y-3">
+            <div>
+              <label for="timeLogNote" class="block text-sm font-medium text-gray-700 mb-2">
+                <span class="text-red-500">*</span> Note (required):
+              </label>
+            <textarea 
+              id="timeLogNote" 
+              maxlength="1000"
+              oninput="document.getElementById('charCount').innerText = this.value.length + ' / 1000'"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition duration-200 resize-none" 
+              rows="4" 
+              placeholder="What did you work on? Describe your task completion..."
+              autofocus></textarea>
+            
+            <div id="charCount" class="text-right text-xs text-gray-500 mt-1">
+              0 / 1000
+            </div>
+      
+            <div class="mt-1 text-xs text-gray-500 flex items-center">
+              <svg class="w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              This note is required to complete your time entry
+            </div>
+          </div>
+              
+            <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">
+              <div class="flex items-center gap-2 mb-1">
+                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-sm font-medium text-blue-800">Session Duration</span>
+              </div>
+              <div class="text-2xl font-bold text-blue-900 font-mono text-center">${formatDuration(
+                elapsedTime
+              )}</div>
+            </div>
+          </div>
+        </div>
+          `,
+        "",
+        {
+          showCancelButton: true,
+          confirmButtonText: "Complete Time Entry",
+          cancelButtonText: "Cancel",
+          confirmButtonColor: "#10b981",
+          cancelButtonColor: "#ef4444",
+          width: "500px",
+          customClass: {
+            popup: "rounded-xl shadow-2xl",
+            title: "hidden",
+            htmlContainer: "p-0",
+            confirmButton:
+              "bg-green-500 hover:bg-green-600 text-white px-6 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2",
+            cancelButton:
+              "bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2",
+          },
+          preConfirm: () => {
+            const noteInput = document.getElementById("timeLogNote");
+            const value = noteInput?.value.trim();
+
+            if (!value) {
+              if (typeof showErrorAlert === "function") {
+                showErrorAlert(
+                  "Please enter a note to complete your time entry"
+                );
+              } else {
+                alert("Please enter a note to complete your time entry");
+              }
+              return false;
+            }
+
+            if (value.length > 1000) {
+              if (typeof showErrorAlert === "function") {
+                showErrorAlert("Note cannot exceed 1000 characters");
+              }
+              return false;
+            }
+
+            return value;
+          },
+
+          didOpen: () => {
+            const noteInput = document.getElementById("timeLogNote");
+            if (noteInput) {
+              noteInput.focus();
+            }
+          },
+        }
+      );
+
+      if (result.isConfirmed) {
+        const endNote = result.value;
+        const response = await axiosInstance.post("stopTimerOfTask", {
+          taskId: activeTimer.taskId,
+          endNote: endNote,
+        });
+
+        if (response.data) {
+          showAutoCloseSuccess("Timer stopped successfully");
+          await fetchActiveTimer();
+        }
+      }
+    } catch (error) {
+      console.error("Error stopping timer:", error);
+      if (typeof showErrorAlert === "function") {
+        showErrorAlert("Failed to stop timer");
+      }
+    }
   };
 
   return (
@@ -230,8 +418,9 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
             title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
           >
             <svg
-              className={`w-4 h-4 text-white transform transition-transform duration-300 ${sidebarOpen ? "rotate-0" : "rotate-180"
-                } group-hover:scale-110`}
+              className={`w-4 h-4 text-white transform transition-transform duration-300 ${
+                sidebarOpen ? "rotate-0" : "rotate-180"
+              } group-hover:scale-110`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -248,148 +437,110 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
 
         {/* Right Section */}
         <div className="flex items-center space-x-3">
+          {/* TIMER SECTION START */}
+          {hasPermission("task", "Access") && (
+            <div className="relative">
+              <button
+                ref={timerButtonRef}
+                onClick={toggleTimerDropdown}
+                disabled={!activeTimer}
+                className={`p-2 rounded-lg transition-all duration-300 backdrop-blur-sm group relative ${
+                  activeTimer
+                    ? "bg-white/10 hover:bg-white/20 cursor-pointer"
+                    : "bg-transparent cursor-default opacity-60"
+                }`}
+                title={activeTimer ? "View Active Timer" : "No Active Timer"}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  style={{ animationDuration: "2s" }}
+                  className={`w-5 h-5 text-white transition-transform duration-1000 ${
+                    activeTimer ? "animate-spin" : ""
+                  }`}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                {activeTimer && (
+                  <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                  </span>
+                )}
+              </button>
+
+              {showTimerDropdown && activeTimer && (
+                <div
+                  ref={timerRef}
+                  className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200 py-0 z-50 animate-fadeIn overflow-hidden"
+                >
+                  <div className="p-4">
+                    {/* Time Display */}
+                    <div className="text-center mb-4">
+                      <div className="text-3xl font-mono font-bold text-gray-800 tracking-tight">
+                        {formatDuration(elapsedTime)}
+                      </div>
+                      <div className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">
+                        Elapsed Duration
+                      </div>
+                    </div>
+
+                    {/* Task Info */}
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 mb-4">
+                      <p className="text-[10px] text-gray-500 font-semibold mb-1 uppercase">
+                        Current Task
+                      </p>
+                      <p className="text-sm text-gray-800 font-medium break-words leading-snug">
+                        {activeTimer.taskSubject || "No Subject"}
+                      </p>
+                    </div>
+
+                    {/* STOP BUTTON */}
+                    <button
+                      onClick={handleStopTimer}
+                      className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      Stop Timer
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {/* TIMER SECTION END */}
+
           {/* Quick Actions */}
           {!hasPermission("donor", "Access") && (
             <>
               <div className="flex items-center space-x-1">
-
-               <div className="relative">
-            <button
-              ref={attendanceButtonRef}
-              onClick={toggleAttendanceList}
-              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative"
-              title="Today's Attendance Status"
-            >
-              <svg
-                className="w-5 h-5 text-white group-hover:scale-110 transition-transform duration-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </button>
-
-            {/* Attendance List Dropdown */}
-            {showAttendanceList && (
-              <div
-                ref={attendanceRef}
-                className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 py-0 z-50 overflow-hidden"
-              >
-                {/* Header */}
-                <div className="px-4 py-3 border-b border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <h3 className="font-semibold text-gray-800 text-sm">Today's Status</h3>
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {new Date().toLocaleDateString('en-IN', { 
-                        day: 'numeric',
-                        month: 'short'
-                      })}
-                    </span>
-                  </div>
-                </div>
-                
-                {/* Employee List */}
-                <div className="max-h-80 overflow-y-auto">
-                  {loadingAttendance ? (
-                    <div className="flex justify-center items-center py-6">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-                    </div>
-                  ) : attendanceData.length === 0 ? (
-                    <div className="px-4 py-6 text-center">
-                      <p className="text-gray-500 text-sm">No attendance data</p>
-                    </div>
-                  ) : (
-                    <div className="px-3 py-2">
-                      {attendanceData.map((employee, index) => (
-                        <div 
-                          key={index} 
-                          className="py-2 px-1"
-                        >
-                          {/* Visual separator line between different status groups */}
-                          {index > 0 && 
-                            attendanceData[index].status !== attendanceData[index - 1].status && (
-                            <div className="my-2 border-t border-gray-200 border-dashed"></div>
-                          )}
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {/* Small profile circle */}
-                              <div className="relative">
-                                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                                  <span className="text-blue-600 font-medium text-xs">
-                                    {employee.employeeName?.charAt(0)?.toUpperCase() || "E"}
-                                  </span>
-                                </div>
-                                {/* Tiny status dot */}
-                                <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${
-                                  employee.status === "checked-in" ? "bg-green-500" :
-                                  employee.status === "checked-out" ? "bg-blue-500" :
-                                  "bg-gray-400"
-                                }`}></div>
-                              </div>
-                              
-                              {/* Name */}
-                              <span className="text-sm text-gray-800 font-medium truncate max-w-[100px]">
-                                {employee.employeeName}
-                              </span>
-                            </div>
-                            
-                            {/* Status & Time - Compact */}
-                            <div className="text-right">
-                              {employee.status === "checked-in" && employee.lastTime && (
-                                <div className="flex items-center gap-1">
-                                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                                  <span className="text-xs text-gray-600">
-                                    at {formatTime(employee.lastTime)}
-                                  </span>
-                                </div>
-                              )}
-                              {employee.status === "checked-out" && employee.lastTime && (
-                                <div className="flex items-center gap-1">
-                                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                  <span className="text-xs text-gray-600">
-                                    at {formatTime(employee.lastTime)}
-                                  </span>
-                                </div>
-                              )}
-                              {employee.status === "not-checked-in" && (
-                                <div className="flex items-center gap-1">
-                                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
-                                  <span className="text-xs text-gray-500">
-                                    Not in
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-                {/* Notifications */}
                 <div className="relative">
                   <button
-                    ref={notificationButtonRef}
-                    onClick={toggleNotifications}
+                    ref={attendanceButtonRef}
+                    onClick={toggleAttendanceList}
                     className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative"
-                    title="Notifications"
+                    title="Today's Attendance Status"
                   >
                     <svg
+                      xmlns="http://www.w3.org/2000/svg"
                       className="w-5 h-5 text-white group-hover:scale-110 transition-transform duration-300"
                       fill="none"
                       stroke="currentColor"
@@ -399,80 +550,206 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M15 17h5l-5 5v-5zM10.24 8.56a5.97 5.97 0 01-4.66-6.24M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"
                       />
                     </svg>
-
-                    {/* Notification Badge */}
-                    {notificationCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
-                        {notificationCount > 9 ? "9+" : notificationCount}
-                      </span>
-                    )}
                   </button>
 
-
-
-                  {/* Notifications Dropdown */}
-                  {showNotifications && (
+                  {/* Attendance List Dropdown */}
+                  {showAttendanceList && (
                     <div
-                      ref={notificationRef}
-                      className="absolute right-0 mt-1 w-72 bg-white rounded-xl shadow border border-gray-200 py-1 z-50"
+                      ref={attendanceRef}
+                      className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 py-0 z-50 overflow-hidden"
                     >
-                      <div className="px-3 py-1.5 border-b border-gray-100 flex justify-between items-center">
-                        <h3 className="font-medium text-gray-800 text-sm">
-                          Notifications
-                        </h3>
-                        <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                          {notificationCount} new
-                        </span>
-                      </div>
-                      <div className="max-h-48 overflow-y-auto">
-                        {/* Sample notifications */}
-                        <div className="px-3 py-2 hover:bg-blue-50 transition-colors duration-200 border-b border-gray-50">
-                          <p className="text-xs text-gray-700 font-medium">
-                            New task assigned
-                          </p>
-                          <p className="text-xs text-gray-600 mt-0.5">
-                            You have been assigned a new project task.
-                          </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            2 minutes ago
-                          </p>
-                        </div>
-
-                        <div className="px-3 py-2 hover:bg-blue-50 transition-colors duration-200 border-b border-gray-50">
-                          <p className="text-xs text-gray-700 font-medium">
-                            Meeting reminder
-                          </p>
-                          <p className="text-xs text-gray-600 mt-0.5">
-                            Team meeting starts in 30 minutes.
-                          </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            1 hour ago
-                          </p>
-                        </div>
-
-                        <div className="px-3 py-2 hover:bg-blue-50 transition-colors duration-200">
-                          <p className="text-xs text-gray-700 font-medium">
-                            Timesheet approved
-                          </p>
-                          <p className="text-xs text-gray-600 mt-0.5">
-                            Your weekly timesheet has been approved.
-                          </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            3 hours ago
-                          </p>
+                      {/* Header */}
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <svg
+                              className="w-4 h-4 text-blue-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            <h3 className="font-semibold text-gray-800 text-sm">
+                              Today's Status
+                            </h3>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {new Date().toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                            })}
+                          </span>
                         </div>
                       </div>
-                      <div className="border-t border-gray-100 pt-1">
-                        <button className="w-full text-center text-xs text-blue-600 hover:text-blue-800 font-medium py-2">
-                          View All Notifications
-                        </button>
+
+                      {/* Employee List */}
+                      <div className="max-h-80 overflow-y-auto">
+                        {loadingAttendance ? (
+                          <div className="flex justify-center items-center py-6">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                          </div>
+                        ) : attendanceData.length === 0 ? (
+                          <div className="px-4 py-6 text-center">
+                            <p className="text-gray-500 text-sm">
+                              No attendance data
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="px-3 py-2">
+                            {attendanceData.map((employee, index) => (
+                              <div key={index} className="py-2 px-1">
+                                {/* Visual separator line */}
+                                {index > 0 &&
+                                  attendanceData[index].status !==
+                                    attendanceData[index - 1].status && (
+                                    <div className="my-2 border-t border-gray-200 border-dashed"></div>
+                                  )}
+
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    {/* Small profile circle */}
+                                    <div className="relative">
+                                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                                        <span className="text-blue-600 font-medium text-xs">
+                                          {employee.employeeName
+                                            ?.charAt(0)
+                                            ?.toUpperCase() || "E"}
+                                        </span>
+                                      </div>
+                                      {/* Tiny status dot */}
+                                      <div
+                                        className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${
+                                          employee.status === "checked-in"
+                                            ? "bg-green-500"
+                                            : employee.status === "checked-out"
+                                            ? "bg-blue-500"
+                                            : "bg-gray-400"
+                                        }`}
+                                      ></div>
+                                    </div>
+
+                                    {/* Name */}
+                                    <span className="text-sm text-gray-800 font-medium truncate max-w-[100px]">
+                                      {employee.employeeName}
+                                    </span>
+                                  </div>
+
+                                  {/* Status & Time - Compact */}
+                                  <div className="text-right">
+                                    {employee.status === "checked-in" &&
+                                      employee.lastTime && (
+                                        <div className="flex items-center gap-1">
+                                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                                          <span className="text-xs text-gray-600">
+                                            at {formatTime(employee.lastTime)}
+                                          </span>
+                                        </div>
+                                      )}
+                                    {employee.status === "checked-out" &&
+                                      employee.lastTime && (
+                                        <div className="flex items-center gap-1">
+                                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                                          <span className="text-xs text-gray-600">
+                                            at {formatTime(employee.lastTime)}
+                                          </span>
+                                        </div>
+                                      )}
+                                    {employee.status === "not-checked-in" && (
+                                      <div className="flex items-center gap-1">
+                                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                                        <span className="text-xs text-gray-500">
+                                          Not in
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
                 </div>
+                {/* Notifications (Hidden/False in original code) */}
+                {false && (
+                  <div className="relative">
+                    <button
+                      ref={notificationButtonRef}
+                      onClick={toggleNotifications}
+                      className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative"
+                      title="Notifications"
+                    >
+                      <svg
+                        className="w-5 h-5 text-white group-hover:scale-110 transition-transform duration-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 17h5l-5 5v-5zM10.24 8.56a5.97 5.97 0 01-4.66-6.24M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+
+                      {/* Notification Badge */}
+                      {notificationCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                          {notificationCount > 9 ? "9+" : notificationCount}
+                        </span>
+                      )}
+                    </button>
+
+                    {/* Notifications Dropdown */}
+                    {showNotifications && (
+                      <div
+                        ref={notificationRef}
+                        className="absolute right-0 mt-1 w-72 bg-white rounded-xl shadow border border-gray-200 py-1 z-50"
+                      >
+                        <div className="px-3 py-1.5 border-b border-gray-100 flex justify-between items-center">
+                          <h3 className="font-medium text-gray-800 text-sm">
+                            Notifications
+                          </h3>
+                          <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                            {notificationCount} new
+                          </span>
+                        </div>
+                        <div className="max-h-48 overflow-y-auto">
+                          {/* Sample notifications */}
+                          <div className="px-3 py-2 hover:bg-blue-50 transition-colors duration-200 border-b border-gray-50">
+                            <p className="text-xs text-gray-700 font-medium">
+                              New task assigned
+                            </p>
+                            <p className="text-xs text-gray-600 mt-0.5">
+                              You have been assigned a new project task.
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              2 minutes ago
+                            </p>
+                          </div>
+                          {/* ... other notifications ... */}
+                          <div className="border-t border-gray-100 pt-1">
+                            <button className="w-full text-center text-xs text-blue-600 hover:text-blue-800 font-medium py-2">
+                              View All Notifications
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <CheckInOutButton />
@@ -500,8 +777,9 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
                 </p>
               </div>
               <svg
-                className={`w-3 h-3 text-blue-200 transform transition-transform duration-300 ${showUserMenu ? "rotate-180" : "rotate-0"
-                  }`}
+                className={`w-3 h-3 text-blue-200 transform transition-transform duration-300 ${
+                  showUserMenu ? "rotate-180" : "rotate-0"
+                }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -538,20 +816,6 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
                     )}
                   </p>
                 </div>
-                {/* <div className="py-1">
-                  <button
-                    onClick={handleProfile}
-                    className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-blue-50 transition-colors duration-200"
-                  >
-                    Profile
-                  </button>
-                  <button
-                    onClick={handleSettings}
-                    className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-blue-50 transition-colors duration-200"
-                  >
-                    Settings
-                  </button>
-                </div> */}
                 <div className="border-t border-gray-100 pt-1">
                   <button
                     onClick={handleSignOut}
