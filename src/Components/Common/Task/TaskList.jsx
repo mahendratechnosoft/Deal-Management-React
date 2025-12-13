@@ -28,7 +28,7 @@ function TaskList() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
-  const [statusFilter, setStatusFilter] = useState("NOT_STARTED");
+  const [statusFilter, setStatusFilter] = useState("IN_PROGRESS");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -306,6 +306,7 @@ function TaskList() {
   };
 
   // Add this function to update counts optimistically
+  // Update the updateCountsOnCreate function to use NOT_STARTED as default:
   const updateCountsOnCreate = (newTaskStatus = "NOT_STARTED") => {
     setTaskCounts(prevCounts => ({
       ...prevCounts,
@@ -313,51 +314,46 @@ function TaskList() {
       [newTaskStatus]: (prevCounts[newTaskStatus] || 0) + 1,
     }));
   };
-  // Update the handleCreateSuccess function to refresh task counts
+
   // Update the handleCreateSuccess function
   const handleCreateSuccess = (newTaskData = null) => {
-    console.log('Task created successfully!', newTaskData);
+  console.log('Task created successfully!', newTaskData);
 
-    setShowCreateModal(false);
-    toast.success("Task created successfully!");
+  setShowCreateModal(false);
+  toast.success("Task created successfully!");
 
-    // Always refresh counts from server first
-    fetchTaskCounts();
+  // Fetch fresh counts from server
+  fetchTaskCounts();
 
-    // IMPORTANT: First update counts optimistically based on new task data
-    if (newTaskData && newTaskData.status) {
-      setTaskCounts(prevCounts => ({
-        ...prevCounts,
-        TOTAL: (prevCounts.TOTAL || 0) + 1,
-        [newTaskData.status]: (prevCounts[newTaskData.status] || 0) + 1,
-      }));
-    } else {
-      // If no newTaskData, increment NOT_STARTED by default
-      setTaskCounts(prevCounts => ({
-        ...prevCounts,
-        TOTAL: (prevCounts.TOTAL || 0) + 1,
-        NOT_STARTED: (prevCounts.NOT_STARTED || 0) + 1,
-      }));
-    }
+  // Create tasks with NOT_STARTED status
+  const newTaskStatus = "NOT_STARTED";
+  
+  // Update counts optimistically for NOT_STARTED
+  setTaskCounts(prevCounts => ({
+    ...prevCounts,
+    TOTAL: (prevCounts.TOTAL || 0) + 1,
+    [newTaskStatus]: (prevCounts[newTaskStatus] || 0) + 1,
+  }));
 
-    // Set the flag to trigger Kanban refresh
-    setNewTaskCreated(true);
+  // TEMPORARILY SWITCH TO "all" FILTER SO USER CAN SEE THE NEW TASK
+  setStatusFilter("all");
+  
+  // Set current page to 0 to show first page
+  setCurrentPage(0);
 
-    // Refresh tasks list
-    fetchTasks(
-      currentPage,
-      searchTerm,
-      viewMode === "kanban" ? "all" : statusFilter,
-      priorityFilter,
-      assigneeFilter
-    );
-
-    // Reset the flag after a short delay
-    setTimeout(() => {
-      setNewTaskCreated(false);
-    }, 2000); // Increased delay to ensure Kanban has time to refresh
-  };
-
+  setNewTaskCreated(true);
+  
+  // Refresh tasks with "all" filter so new NOT_STARTED task appears
+  fetchTasks(
+    0, // Start from page 0
+    searchTerm,
+    "all", // Force "all" filter to show all tasks including new NOT_STARTED one
+    priorityFilter,
+    assigneeFilter
+  );
+  
+  setTimeout(() => setNewTaskCreated(false), 2000);
+};
   // Edit Modal handlers
   const handleEdit = (taskId) => {
     setSelectedTaskId(taskId);
@@ -464,64 +460,64 @@ function TaskList() {
   };
 
 
- const handleStatusChange = async (taskId, newStatus) => {
-  console.log(`handleStatusChange called: taskId=${taskId}, newStatus=${newStatus}`);
+  const handleStatusChange = async (taskId, newStatus) => {
+    console.log(`handleStatusChange called: taskId=${taskId}, newStatus=${newStatus}`);
 
-  try {
-    // Find the current task to get old status
-    const task = tasks.find(t => t.taskId === taskId);
-    const oldStatus = task?.status;
+    try {
+      // Find the current task to get old status
+      const task = tasks.find(t => t.taskId === taskId);
+      const oldStatus = task?.status;
 
-    // Only proceed if status actually changed
-    if (oldStatus === newStatus) {
-      return;
-    }
+      // Only proceed if status actually changed
+      if (oldStatus === newStatus) {
+        return;
+      }
 
-    // Update the tasks state first (optimistic update)
-    setTasks(prevTasks =>
-      prevTasks.map(task =>
-        task.taskId === taskId ? { ...task, status: newStatus } : task
-      )
-    );
-
-    // Update task counts - but only if this is NOT coming from an edit modal
-    if (oldStatus && oldStatus !== newStatus) {
-      setTaskCounts(prevCounts => {
-        const newCounts = { ...prevCounts };
-        newCounts[oldStatus] = Math.max(0, (prevCounts[oldStatus] || 0) - 1);
-        newCounts[newStatus] = (prevCounts[newStatus] || 0) + 1;
-        return newCounts;
-      });
-    }
-
-    // Force Kanban refresh
-    forceKanbanRefresh();
-
-    // Call API to update status
-    console.log(`Calling API: updateTaskStatus/${taskId}/${newStatus}`);
-    await axiosInstance.put(`updateTaskStatus/${taskId}/${newStatus}`);
-    toast.success("Task status updated!");
-
-    // 🔥 CRITICAL: Refresh the tasks list to get correct filtering
-    // This ensures the table shows correct filtered results
-    setTimeout(() => {
-      fetchTasks(
-        currentPage,
-        searchTerm,
-        viewMode === "kanban" ? "all" : statusFilter,
-        priorityFilter,
-        assigneeFilter
+      // Update the tasks state first (optimistic update)
+      setTasks(prevTasks =>
+        prevTasks.map(task =>
+          task.taskId === taskId ? { ...task, status: newStatus } : task
+        )
       );
-    }, 300); // Small delay to ensure server has processed the update
 
-  } catch (error) {
-    console.error("Error updating status:", error);
-    toast.error("Failed to update status");
+      // Update task counts - but only if this is NOT coming from an edit modal
+      if (oldStatus && oldStatus !== newStatus) {
+        setTaskCounts(prevCounts => {
+          const newCounts = { ...prevCounts };
+          newCounts[oldStatus] = Math.max(0, (prevCounts[oldStatus] || 0) - 1);
+          newCounts[newStatus] = (prevCounts[newStatus] || 0) + 1;
+          return newCounts;
+        });
+      }
 
-    // Revert the optimistic update on error
-    handleRefresh();
-  }
-};
+      // Force Kanban refresh
+      forceKanbanRefresh();
+
+      // Call API to update status
+      console.log(`Calling API: updateTaskStatus/${taskId}/${newStatus}`);
+      await axiosInstance.put(`updateTaskStatus/${taskId}/${newStatus}`);
+      toast.success("Task status updated!");
+
+      // 🔥 CRITICAL: Refresh the tasks list to get correct filtering
+      // This ensures the table shows correct filtered results
+      setTimeout(() => {
+        fetchTasks(
+          currentPage,
+          searchTerm,
+          viewMode === "kanban" ? "all" : statusFilter,
+          priorityFilter,
+          assigneeFilter
+        );
+      }, 300); // Small delay to ensure server has processed the update
+
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error("Failed to update status");
+
+      // Revert the optimistic update on error
+      handleRefresh();
+    }
+  };
 
 
 
@@ -596,15 +592,16 @@ function TaskList() {
     // Similar logic for followers if needed
   };
 
-  const getCardActiveStyle = (cardStatus) => {
-    const baseStyle =
-      "rounded-lg transition-all duration-200 cursor-pointer overflow-hidden";
-    if (statusFilter === cardStatus) {
-      return `${baseStyle} ring-2 ring-blue-600 ring-inset shadow-lg shadow-blue-100/50 scale-105`;
-    }
-    return `${baseStyle} opacity-80 hover:opacity-100`;
-  };
-
+ const getCardActiveStyle = (cardStatus) => {
+  const baseStyle =
+    "rounded-lg transition-all duration-200 cursor-pointer overflow-hidden";
+  
+  // Highlight "Not Started" card when filter is "all"
+  if (statusFilter === cardStatus || (statusFilter === "all" && cardStatus === "NOT_STARTED")) {
+    return `${baseStyle} ring-2 ring-blue-600 ring-inset shadow-lg shadow-blue-100/50 scale-105`;
+  }
+  return `${baseStyle} opacity-80 hover:opacity-100`;
+};
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
     if (mode === "table") {
