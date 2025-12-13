@@ -10,8 +10,15 @@ import Chart from "chart.js/auto";
 import TaskComments from "./TaskComments";
 import CircularAssigneesSelector from "./CircularAssigneesSelector";
 import TaskAttachments from "./TaskAttachments";
+import { useTimer } from "../../BaseComponet/TaskTimerContext";
 
-function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, onFollowerUpdate }) {
+function PreviewTaskModal({
+  taskId,
+  onClose,
+  onStatusUpdate,
+  onAssigneeUpdate,
+  onFollowerUpdate,
+}) {
   const [loading, setLoading] = useState(true);
   const [task, setTask] = useState(null);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -29,6 +36,9 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
   const [statusLoading, setStatusLoading] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [canStartTimer, setCanStartTimer] = useState(false);
+
+  const { fetchActiveTimer } = useTimer();
+
   // Fetch team members on component mount
   useEffect(() => {
     fetchTeamMembers();
@@ -42,7 +52,6 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
       checkActiveTimerForCurrentUser(); // Add this line
     }
   }, [taskId]);
-
 
   // Timer interval effect
   useEffect(() => {
@@ -83,8 +92,6 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-
-
   const fetchTeamMembers = async () => {
     setLoadingTeam(true);
     try {
@@ -109,7 +116,9 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
     if (!taskId) return;
 
     try {
-      const response = await axiosInstance.get(`getActiveTimerForTask/${taskId}`);
+      const response = await axiosInstance.get(
+        `getActiveTimerForTask/${taskId}`
+      );
 
       // If we get a valid response with taskLogId, show Stop button
       if (response.data && response.data.taskLogId) {
@@ -303,10 +312,6 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
           createdBy: taskData.createdBy || "",
           projectName: taskData.projectName || "No Project",
           projectId: taskData.projectId || "N/A",
-          // canStartTimer: canStartTimer ?? true,
-          taskId: taskData.taskId,
-          adminId: taskData.adminId || "",
-          subject: taskData.subject || "",
         });
 
         setAttachments(formattedAttachments);
@@ -357,17 +362,15 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
 
       if (response.data) {
         showAutoCloseSuccess("Timer started");
-        // Check for active timer using the new API
         checkActiveTimerForCurrentUser();
-        // Also refresh time logs
         fetchTimeLogs();
+        fetchActiveTimer();
       }
     } catch (error) {
       console.error("Error starting timer:", error);
       showErrorAlert("Failed to start timer");
     }
   };
-
 
   const handleStopTimer = async () => {
     if (!taskId || !activeTimerLog) {
@@ -424,8 +427,8 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
                 <span class="text-sm font-medium text-blue-800">Session Duration</span>
               </div>
               <div class="text-2xl font-bold text-blue-900 font-mono text-center">${formatTime(
-          timerSeconds
-        )}</div>
+                timerSeconds
+              )}</div>
             </div>
           </div>
         </div>
@@ -484,28 +487,17 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
         endNote: endNote,
       });
 
-
       if (response.data) {
         showAutoCloseSuccess("Time entry completed successfully");
-
-        // Immediately update UI state
         setIsTimerRunning(false);
         setActiveTimerLog(null);
         setTimerSeconds(0);
-
-        // Refresh time logs
         fetchTimeLogs();
+        fetchActiveTimer();
       }
     } catch (error) {
       console.error("Error stopping timer:", error);
       showErrorAlert("Failed to stop timer");
-    }
-  };
-  const handleToggleTimer = () => {
-    if (isTimerRunning) {
-      handleStopTimer();
-    } else {
-      handleStartTimer();
     }
   };
 
@@ -537,8 +529,6 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
       }
     }
   };
-
-
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -619,7 +609,6 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
     }
   };
 
-
   const getStatusDisplay = (status) => {
     switch (status?.toUpperCase()) {
       case "COMPLETE":
@@ -646,13 +635,15 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
 
     setStatusLoading(true);
     try {
-      const response = await axiosInstance.put(`updateTaskStatus/${taskId}/${newStatus}`);
+      const response = await axiosInstance.put(
+        `updateTaskStatus/${taskId}/${newStatus}`
+      );
 
       if (response.data) {
         // 1. Update local task state
-        setTask(prev => ({
+        setTask((prev) => ({
           ...prev,
-          status: newStatus
+          status: newStatus,
         }));
 
         // 2. Call parent callback to update TaskList
@@ -660,7 +651,9 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
           onStatusUpdate(taskId, newStatus);
         }
 
-        showAutoCloseSuccess(`Status updated to ${getStatusDisplay(newStatus)}`);
+        showAutoCloseSuccess(
+          `Status updated to ${getStatusDisplay(newStatus)}`
+        );
       }
     } catch (error) {
       console.error("Error updating task status:", error);
@@ -683,7 +676,6 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
     return totalFromLogs * 60 + timerSeconds;
   };
 
-
   // Get display logs - mark active logs
   // Get display logs - show all logs as they are
   const getDisplayLogs = () => {
@@ -698,10 +690,7 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
     if (!note) return null;
 
     return (
-      <div
-        ref={wrapperRef}
-        className="relative inline-block ml-2"
-      >
+      <div ref={wrapperRef} className="relative inline-block ml-2">
         <button
           type="button"
           onClick={(e) => {
@@ -736,15 +725,15 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
             ref={noteContentRef}
             onClick={(e) => e.stopPropagation()}
             className="absolute z-50 w-72 p-3 text-xs bg-gray-900 text-white rounded-lg shadow-xl left-full top-1/2 transform -translate-y-1/2 ml-3"
-            style={{ scrollbarWidth: 'thin' }}
+            style={{ scrollbarWidth: "thin" }}
           >
             <div className="font-medium text-blue-300 mb-1">Time Log Note</div>
 
             <div
               className="bg-gray-800 p-2 rounded border border-gray-700 whitespace-pre-wrap max-h-40 overflow-y-auto"
               style={{
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#4b5563 #1f2937'
+                scrollbarWidth: "thin",
+                scrollbarColor: "#4b5563 #1f2937",
               }}
             >
               {note}
@@ -856,12 +845,16 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
                           disabled={statusLoading}
                           className={`px-2 py-1 rounded text-xs font-medium appearance-none pr-6 cursor-pointer ${getStatusColor(
                             task.status
-                          )} ${statusLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                          )} ${
+                            statusLoading ? "opacity-50 cursor-not-allowed" : ""
+                          }`}
                         >
                           <option value="NOT_STARTED">Not Started</option>
                           <option value="IN_PROGRESS">In Progress</option>
                           <option value="TESTING">Testing</option>
-                          <option value="AWAITING_FEEDBACK">Awaiting Feedback</option>
+                          <option value="AWAITING_FEEDBACK">
+                            Awaiting Feedback
+                          </option>
                           <option value="COMPLETE">Complete</option>
                         </select>
 
@@ -873,7 +866,12 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
                             stroke="currentColor"
                             viewBox="0 0 24 24"
                           >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
                           </svg>
                         </div>
                       </div>
@@ -927,16 +925,19 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
                     ) : (
                       <button
                         onClick={canStartTimer ? handleStartTimer : undefined}
-                        disabled={canStartTimer}
+                        disabled={!canStartTimer}
                         className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 
-    text-white
-    ${canStartTimer
-                            ? "bg-blue-600 hover:bg-blue-700"
-                            : "bg-gray-400 cursor-not-allowed"
+                          text-white
+                          ${
+                            canStartTimer
+                              ? "bg-blue-600 hover:bg-blue-700"
+                              : "bg-gray-400 cursor-not-allowed"
                           }`}
-
-                        title={canStartTimer ? "Start Task" : "You have not Assignee or Owner of this Task"}
-
+                        title={
+                          canStartTimer
+                            ? "Start Task"
+                            : "You have not Assignee or Owner of this Task"
+                        }
                       >
                         <svg
                           className="w-2.5 h-2.5"
@@ -995,37 +996,41 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
                     <nav className="flex">
                       <button
                         onClick={() => setActiveTab("timelogs")}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "timelogs"
-                          ? "border-b-2 border-blue-600 text-blue-600"
-                          : "text-gray-500 hover:text-gray-700"
-                          }`}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${
+                          activeTab === "timelogs"
+                            ? "border-b-2 border-blue-600 text-blue-600"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
                       >
                         Time Logs
                       </button>
                       <button
                         onClick={() => setActiveTab("statistics")}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "statistics"
-                          ? "border-b-2 border-blue-600 text-blue-600"
-                          : "text-gray-500 hover:text-gray-700"
-                          }`}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${
+                          activeTab === "statistics"
+                            ? "border-b-2 border-blue-600 text-blue-600"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
                       >
                         Statistics
                       </button>
                       <button
                         onClick={() => setActiveTab("comments")}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "comments"
-                          ? "border-b-2 border-blue-600 text-blue-600"
-                          : "text-gray-500 hover:text-gray-700"
-                          }`}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${
+                          activeTab === "comments"
+                            ? "border-b-2 border-blue-600 text-blue-600"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
                       >
                         Comments
                       </button>
                       <button
                         onClick={() => setActiveTab("attachments")}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "attachments"
-                          ? "border-b-2 border-blue-600 text-blue-600"
-                          : "text-gray-500 hover:text-gray-700"
-                          }`}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${
+                          activeTab === "attachments"
+                            ? "border-b-2 border-blue-600 text-blue-600"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
                       >
                         Attachments
                       </button>
@@ -1085,9 +1090,13 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
                                   </td>
                                   <td className="px-2 py-1.5 whitespace-nowrap">
                                     <div className="font-medium text-gray-900 text-xs">
-                                      {!log.endTime
-                                        ? "In Progress"
-                                        : formatDuration(log.durationInMinutes) /* For completed logs */}
+                                      {
+                                        !log.endTime
+                                          ? "In Progress"
+                                          : formatDuration(
+                                              log.durationInMinutes
+                                            ) /* For completed logs */
+                                      }
                                     </div>
                                   </td>
                                 </tr>
@@ -1300,8 +1309,10 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
                   <div className="flex flex-wrap gap-1.5">
                     {task.assignees && task.assignees.length > 0 ? (
                       teamMembers
-                        .filter(member => task.assignees.includes(member.value))
-                        .map(member => (
+                        .filter((member) =>
+                          task.assignees.includes(member.value)
+                        )
+                        .map((member) => (
                           <div
                             key={member.value}
                             className="relative group w-7 h-7 rounded-full
@@ -1311,9 +1322,11 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
                             title={member.label}
                           >
                             {getInitials(member.label)}
-                            <div className="absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 hidden group-hover:block
+                            <div
+                              className="absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 hidden group-hover:block
                               bg-gray-900 text-white text-[9px] rounded px-1.5 py-0.5
-                              whitespace-nowrap shadow z-10">
+                              whitespace-nowrap shadow z-10"
+                            >
                               {member.label}
                             </div>
                           </div>
@@ -1349,8 +1362,10 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
                   <div className="flex flex-wrap gap-1.5">
                     {task.followers && task.followers.length > 0 ? (
                       teamMembers
-                        .filter(member => task.followers.includes(member.value))
-                        .map(member => (
+                        .filter((member) =>
+                          task.followers.includes(member.value)
+                        )
+                        .map((member) => (
                           <div
                             key={member.value}
                             className="relative group w-7 h-7 rounded-full
@@ -1360,9 +1375,11 @@ function PreviewTaskModal({ taskId, onClose, onStatusUpdate, onAssigneeUpdate, o
                             title={member.label}
                           >
                             {getInitials(member.label)}
-                            <div className="absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 hidden group-hover:block
+                            <div
+                              className="absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 hidden group-hover:block
                               bg-gray-900 text-white text-[9px] rounded px-1.5 py-0.5
-                              whitespace-nowrap shadow z-10">
+                              whitespace-nowrap shadow z-10"
+                            >
                               {member.label}
                             </div>
                           </div>
