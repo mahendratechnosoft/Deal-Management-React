@@ -190,6 +190,8 @@ export const GlobalSelectField = ({
         isDisabled={disabled}
         styles={customStyles}
         menuPlacement="auto"
+        menuPosition="fixed"
+
       />
       
       {error && (

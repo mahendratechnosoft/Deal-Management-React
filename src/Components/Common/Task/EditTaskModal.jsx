@@ -41,7 +41,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
     tags: [],
     estimateHours: "",
     status: "NOT_STARTED",
-    priority: "Medium", // Add this
+    priority: "", // Add this
     createdAt: "",
     createdBy: "",
   });
@@ -49,6 +49,12 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
   const [errors, setErrors] = useState({});
 
 
+  const priorityOptions = [
+    { value: 'low', label: 'Low' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'high', label: 'High' },
+    { value: 'urgent', label: 'Urgent' }
+  ];
 
   const statusOptions = [
     { value: "NOT_STARTED", label: " Not Started" },
@@ -249,7 +255,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
           hourlyRate: taskData.hourlyRate?.toString() || "",
           startDate: formatDateForInput(taskData.startDate),
           dueDate: formatDateForInput(taskData.endDate),
-          priority: (taskData.priority || "medium").toLowerCase(), // Ensure lowercase
+          priority: (taskData.priority || "").toLowerCase(), // Ensure lowercase
           relatedTo: taskData.relatedTo || "",
           relatedId: taskData.relatedToId || "",
           relatedName: taskData.relatedToName || "",
@@ -456,7 +462,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
         description: formData.description.trim(),
         startDate: formData.startDate,
         endDate: formData.dueDate || null,
-        priority: "medium",
+        priority: formData.priority,
         relatedTo: formData.relatedTo || null,
         relatedToId: formData.relatedId || null,
         relatedToName: formData.relatedName || null,
@@ -839,7 +845,20 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
                 step="0.5"
                 className="text-sm"
               />
+              {/* Priority */}
+              {/* Priority */}
+              <GlobalSelectField
+                label="Priority"
+                name="priority"
+                value={formData.priority}
+                onChange={handleChange}
+                options={priorityOptions}
+                error={errors.priority}
+                className="text-sm"
+              
+              />
             </div>
+
 
             {/* Task Description */}
             <div className="mt-3">
