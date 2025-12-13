@@ -487,18 +487,18 @@ function CreateTaskModal({ onClose, onSuccess }) {
   };
 
   // Update handleRemoveAttachment to clean up object URLs
-const handleRemoveAttachment = (id) => {
-  setAttachments(prev => prev.filter(att => att.id !== id));
-  setAttachmentError('');
-  toast.success('File removed');
-};
+  const handleRemoveAttachment = (id) => {
+    setAttachments(prev => prev.filter(att => att.id !== id));
+    setAttachmentError('');
+    toast.success('File removed');
+  };
 
   // Update handleRemoveAllAttachments to clean up all object URLs
-const handleRemoveAllAttachments = () => {
-  setAttachments([]);
-  setAttachmentError('');
-  toast.info('All attachments removed');
-};
+  const handleRemoveAllAttachments = () => {
+    setAttachments([]);
+    setAttachmentError('');
+    toast.info('All attachments removed');
+  };
 
   useEffect(() => {
     return () => {
@@ -747,10 +747,32 @@ const handleRemoveAllAttachments = () => {
 
       const response = await axiosInstance.post('createTask', payload);
 
+      // In CreateTaskModal handleSubmit function, after successful creation:
       if (response.data) {
         console.log('Response:', response.data);
         toast.success('Task created successfully!');
-        onSuccess();
+
+        // Prepare the created task data to pass back
+        const createdTaskData = {
+          taskId: response.data.taskId || response.data.id,
+          subject: formData.subject.trim(),
+          description: formData.description.trim(),
+          status: "NOT_STARTED", // Default status for newly created tasks
+          priority: formData.priority,
+          assignees: formData.assignees.map(id => {
+            const member = teamMembers.find(m => m.value === id);
+            return member ? member.label : `Employee ${id}`;
+          }),
+          startDate: formData.startDate,
+          dueDate: formData.dueDate || null,
+          hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : 0,
+          estimateHours: formData.estimateHours ? parseFloat(formData.estimateHours) : 0,
+          relatedTo: formData.relatedTo || "",
+          relatedToName: formData.relatedName || "",
+        };
+
+        // Pass the data back to parent
+        onSuccess(createdTaskData);
       } else {
         throw new Error('No response data received');
       }
@@ -880,7 +902,7 @@ const handleRemoveAllAttachments = () => {
                 />
               </div>
 
-        
+
 
               {/* Related To */}
               <GlobalSelectField
@@ -892,7 +914,7 @@ const handleRemoveAllAttachments = () => {
                 className="text-sm"
               />
 
-              
+
               {/* Related Item Selection */}
               {formData.relatedTo && (
                 <GlobalSelectField
@@ -945,7 +967,7 @@ const handleRemoveAllAttachments = () => {
 
 
 
-      {/* Priority */}
+              {/* Priority */}
               <GlobalSelectField
                 label="Priority"
                 name="priority"
