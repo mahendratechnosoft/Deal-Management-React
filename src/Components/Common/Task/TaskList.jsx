@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../BaseComponet/axiosInstance.js";
 import { useLayout } from "../../Layout/useLayout";
@@ -34,6 +34,9 @@ function TaskList() {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [previewTaskId, setPreviewTaskId] = useState(null);
   const [newTaskCreated, setNewTaskCreated] = useState(false);
+  // Add a ref to track initial mount
+  const initialMount = useRef(true);
+
   const [taskCounts, setTaskCounts] = useState({
     NOT_STARTED: 0,
     IN_PROGRESS: 0,
@@ -199,6 +202,19 @@ function TaskList() {
     }
   };
 
+  useEffect(() => {
+    // Don't trigger on initial mount
+    if (initialMount.current) {
+      initialMount.current = false;
+      return;
+    }
+
+    // Trigger Kanban refresh when task counts change
+    console.log('Task counts updated, refreshing Kanban');
+    forceKanbanRefresh();
+  }, [taskCounts]);
+
+
   const fetchTaskCounts = useCallback(async () => {
     setLoadingCounts(true);
     try {
@@ -298,49 +314,49 @@ function TaskList() {
     }));
   };
   // Update the handleCreateSuccess function to refresh task counts
-// Update the handleCreateSuccess function
-const handleCreateSuccess = (newTaskData = null) => {
-  console.log('Task created successfully!', newTaskData);
-  
-  setShowCreateModal(false);
-  toast.success("Task created successfully!");
-  
-  // Always refresh counts from server first
-  fetchTaskCounts();
-  
-  // IMPORTANT: First update counts optimistically based on new task data
-  if (newTaskData && newTaskData.status) {
-    setTaskCounts(prevCounts => ({
-      ...prevCounts,
-      TOTAL: (prevCounts.TOTAL || 0) + 1,
-      [newTaskData.status]: (prevCounts[newTaskData.status] || 0) + 1,
-    }));
-  } else {
-    // If no newTaskData, increment NOT_STARTED by default
-    setTaskCounts(prevCounts => ({
-      ...prevCounts,
-      TOTAL: (prevCounts.TOTAL || 0) + 1,
-      NOT_STARTED: (prevCounts.NOT_STARTED || 0) + 1,
-    }));
-  }
-  
-  // Set the flag to trigger Kanban refresh
-  setNewTaskCreated(true);
-  
-  // Refresh tasks list
-  fetchTasks(
-    currentPage,
-    searchTerm,
-    viewMode === "kanban" ? "all" : statusFilter,
-    priorityFilter,
-    assigneeFilter
-  );
-  
-  // Reset the flag after a short delay
-  setTimeout(() => {
-    setNewTaskCreated(false);
-  }, 2000); // Increased delay to ensure Kanban has time to refresh
-};
+  // Update the handleCreateSuccess function
+  const handleCreateSuccess = (newTaskData = null) => {
+    console.log('Task created successfully!', newTaskData);
+
+    setShowCreateModal(false);
+    toast.success("Task created successfully!");
+
+    // Always refresh counts from server first
+    fetchTaskCounts();
+
+    // IMPORTANT: First update counts optimistically based on new task data
+    if (newTaskData && newTaskData.status) {
+      setTaskCounts(prevCounts => ({
+        ...prevCounts,
+        TOTAL: (prevCounts.TOTAL || 0) + 1,
+        [newTaskData.status]: (prevCounts[newTaskData.status] || 0) + 1,
+      }));
+    } else {
+      // If no newTaskData, increment NOT_STARTED by default
+      setTaskCounts(prevCounts => ({
+        ...prevCounts,
+        TOTAL: (prevCounts.TOTAL || 0) + 1,
+        NOT_STARTED: (prevCounts.NOT_STARTED || 0) + 1,
+      }));
+    }
+
+    // Set the flag to trigger Kanban refresh
+    setNewTaskCreated(true);
+
+    // Refresh tasks list
+    fetchTasks(
+      currentPage,
+      searchTerm,
+      viewMode === "kanban" ? "all" : statusFilter,
+      priorityFilter,
+      assigneeFilter
+    );
+
+    // Reset the flag after a short delay
+    setTimeout(() => {
+      setNewTaskCreated(false);
+    }, 2000); // Increased delay to ensure Kanban has time to refresh
+  };
 
   // Edit Modal handlers
   const handleEdit = (taskId) => {
@@ -354,43 +370,43 @@ const handleCreateSuccess = (newTaskData = null) => {
   };
 
   // In TaskList.js - Update handleEditSuccess function
-const handleEditSuccess = (updatedTaskData) => {
-  setShowEditModal(false);
-  setSelectedTaskId(null);
-  
-  // Update counts optimistically only if we have status info
-  if (updatedTaskData && updatedTaskData.status) {
-    // Find the old task to get the previous status
-    const oldTask = tasks.find(t => t.taskId === updatedTaskData.taskId);
-    
-    if (oldTask && oldTask.status !== updatedTaskData.status) {
-      setTaskCounts(prevCounts => {
-        const newCounts = { ...prevCounts };
-        
-        // Ensure we don't go below 0
-        newCounts[oldTask.status] = Math.max(0, (prevCounts[oldTask.status] || 0) - 1);
-        newCounts[updatedTaskData.status] = (prevCounts[updatedTaskData.status] || 0) + 1;
-        
-        return newCounts;
-      });
+  const handleEditSuccess = (updatedTaskData) => {
+    setShowEditModal(false);
+    setSelectedTaskId(null);
+
+    // Update counts optimistically only if we have status info
+    if (updatedTaskData && updatedTaskData.status) {
+      // Find the old task to get the previous status
+      const oldTask = tasks.find(t => t.taskId === updatedTaskData.taskId);
+
+      if (oldTask && oldTask.status !== updatedTaskData.status) {
+        setTaskCounts(prevCounts => {
+          const newCounts = { ...prevCounts };
+
+          // Ensure we don't go below 0
+          newCounts[oldTask.status] = Math.max(0, (prevCounts[oldTask.status] || 0) - 1);
+          newCounts[updatedTaskData.status] = (prevCounts[updatedTaskData.status] || 0) + 1;
+
+          return newCounts;
+        });
+      }
     }
-  }
-  
-  toast.success("Task updated successfully!");
-  
-  // Force Kanban refresh
-  forceKanbanRefresh();
-  
-  // Refresh all data to ensure sync with server
-  fetchTaskCounts();
-  fetchTasks(
-    currentPage,
-    searchTerm,
-    viewMode === "kanban" ? "all" : statusFilter,
-    priorityFilter,
-    assigneeFilter
-  );
-};
+
+    toast.success("Task updated successfully!");
+
+    // Force Kanban refresh
+    forceKanbanRefresh();
+
+    // Refresh all data to ensure sync with server
+    fetchTaskCounts();
+    fetchTasks(
+      currentPage,
+      searchTerm,
+      viewMode === "kanban" ? "all" : statusFilter,
+      priorityFilter,
+      assigneeFilter
+    );
+  };
 
   // Add this state and callback
   const [taskUpdateTrigger, setTaskUpdateTrigger] = useState(0);
@@ -424,11 +440,7 @@ const handleEditSuccess = (updatedTaskData) => {
         const deletedTask = tasks.find(t => t.taskId === taskId);
         if (!deletedTask) return;
 
-        // Optimistic UI update
-        setTasks(prev => prev.filter(task => task.taskId !== taskId));
-        setTotalItems(prev => Math.max(0, prev - 1));
-
-        // 🔥 Update counts locally
+        // 🔥 Update counts locally in PARENT
         setTaskCounts(prev => ({
           ...prev,
           TOTAL: Math.max(0, prev.TOTAL - 1),
@@ -452,53 +464,66 @@ const handleEditSuccess = (updatedTaskData) => {
   };
 
 
-  const handleStatusChange = async (taskId, newStatus) => {
-    console.log(`handleStatusChange called: taskId=${taskId}, newStatus=${newStatus}`);
+ const handleStatusChange = async (taskId, newStatus) => {
+  console.log(`handleStatusChange called: taskId=${taskId}, newStatus=${newStatus}`);
 
-    try {
-      // Find the current task to get old status
-      const task = tasks.find(t => t.taskId === taskId);
-      const oldStatus = task?.status;
+  try {
+    // Find the current task to get old status
+    const task = tasks.find(t => t.taskId === taskId);
+    const oldStatus = task?.status;
 
-      // Only proceed if status actually changed
-      if (oldStatus === newStatus) {
-        return;
-      }
-
-      // Update the tasks state first (optimistic update)
-      setTasks(prevTasks =>
-        prevTasks.map(task =>
-          task.taskId === taskId ? { ...task, status: newStatus } : task
-        )
-      );
-
-      // Update task counts - but only if this is NOT coming from an edit modal
-      // (The edit modal will handle its own count updates)
-      if (oldStatus && oldStatus !== newStatus) {
-        setTaskCounts(prevCounts => {
-          const newCounts = { ...prevCounts };
-
-          // Ensure we don't go below 0
-          newCounts[oldStatus] = Math.max(0, (prevCounts[oldStatus] || 0) - 1);
-          newCounts[newStatus] = (prevCounts[newStatus] || 0) + 1;
-
-          return newCounts;
-        });
-      }
-
-      // Call API to update status
-      console.log(`Calling API: updateTaskStatus/${taskId}/${newStatus}`);
-      await axiosInstance.put(`updateTaskStatus/${taskId}/${newStatus}`);
-      toast.success("Task status updated!");
-
-    } catch (error) {
-      console.error("Error updating status:", error);
-      toast.error("Failed to update status");
-
-      // Revert the optimistic update on error
-      handleRefresh();
+    // Only proceed if status actually changed
+    if (oldStatus === newStatus) {
+      return;
     }
-  };
+
+    // Update the tasks state first (optimistic update)
+    setTasks(prevTasks =>
+      prevTasks.map(task =>
+        task.taskId === taskId ? { ...task, status: newStatus } : task
+      )
+    );
+
+    // Update task counts - but only if this is NOT coming from an edit modal
+    if (oldStatus && oldStatus !== newStatus) {
+      setTaskCounts(prevCounts => {
+        const newCounts = { ...prevCounts };
+        newCounts[oldStatus] = Math.max(0, (prevCounts[oldStatus] || 0) - 1);
+        newCounts[newStatus] = (prevCounts[newStatus] || 0) + 1;
+        return newCounts;
+      });
+    }
+
+    // Force Kanban refresh
+    forceKanbanRefresh();
+
+    // Call API to update status
+    console.log(`Calling API: updateTaskStatus/${taskId}/${newStatus}`);
+    await axiosInstance.put(`updateTaskStatus/${taskId}/${newStatus}`);
+    toast.success("Task status updated!");
+
+    // 🔥 CRITICAL: Refresh the tasks list to get correct filtering
+    // This ensures the table shows correct filtered results
+    setTimeout(() => {
+      fetchTasks(
+        currentPage,
+        searchTerm,
+        viewMode === "kanban" ? "all" : statusFilter,
+        priorityFilter,
+        assigneeFilter
+      );
+    }, 300); // Small delay to ensure server has processed the update
+
+  } catch (error) {
+    console.error("Error updating status:", error);
+    toast.error("Failed to update status");
+
+    // Revert the optimistic update on error
+    handleRefresh();
+  }
+};
+
+
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -945,7 +970,7 @@ const handleEditSuccess = (updatedTaskData) => {
                             <td className="px-4 py-3">
                               <div className="min-w-[200px]">
                                 <div
-                                  className="font-semibold text-gray-900 mb-1 truncate"
+                                  className="font-semibold text-gray-900 mb-1 truncate max-w-[260px]"
                                   title={task.subject}
                                 >
                                   {task.subject}

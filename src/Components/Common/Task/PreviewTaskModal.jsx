@@ -349,6 +349,8 @@ function PreviewTaskModal({
     }
   };
 
+  // In PreviewTaskModal.js - Update handleStartTimer function
+
   const handleStartTimer = async () => {
     if (!taskId) {
       showErrorAlert("No task selected");
@@ -362,6 +364,18 @@ function PreviewTaskModal({
 
       if (response.data) {
         showAutoCloseSuccess("Timer started");
+
+        // 🔥 UPDATE: Only notify parent about status change, don't update modal state
+        if (task && task.status === "NOT_STARTED") {
+          // Call parent callback to update TaskList ONLY
+          if (onStatusUpdate) {
+            onStatusUpdate(taskId, "IN_PROGRESS");
+          }
+
+          // DON'T update modal state - keep it as is
+          // The modal will show the old status until closed, but that's OK
+        }
+
         checkActiveTimerForCurrentUser();
         fetchTimeLogs();
         fetchActiveTimer();
@@ -427,8 +441,8 @@ function PreviewTaskModal({
                 <span class="text-sm font-medium text-blue-800">Session Duration</span>
               </div>
               <div class="text-2xl font-bold text-blue-900 font-mono text-center">${formatTime(
-                timerSeconds
-              )}</div>
+          timerSeconds
+        )}</div>
             </div>
           </div>
         </div>
@@ -627,41 +641,54 @@ function PreviewTaskModal({
   };
 
   // Add this function after other handler functions
-  const handleStatusChange = async (newStatus) => {
-    if (!taskId || !task) {
-      showErrorAlert("No task selected");
-      return;
-    }
+  const handleStatusChange = async (taskId, newStatus) => {
+    console.log(`handleStatusChange called: taskId=${taskId}, newStatus=${newStatus}`);
 
-    setStatusLoading(true);
     try {
-      const response = await axiosInstance.put(
-        `updateTaskStatus/${taskId}/${newStatus}`
+      const task = tasks.find(t => t.taskId === taskId);
+      const oldStatus = task?.status;
+
+      // Only proceed if status actually changed
+      if (oldStatus === newStatus) {
+        return;
+      }
+
+      // Update the tasks state (optimistic update for table view)
+      setTasks(prevTasks =>
+        prevTasks.map(task =>
+          task.taskId === taskId ? { ...task, status: newStatus } : task
+        )
       );
 
-      if (response.data) {
-        // 1. Update local task state
-        setTask((prev) => ({
-          ...prev,
-          status: newStatus,
-        }));
-
-        // 2. Call parent callback to update TaskList
-        if (onStatusUpdate) {
-          onStatusUpdate(taskId, newStatus);
-        }
-
-        showAutoCloseSuccess(
-          `Status updated to ${getStatusDisplay(newStatus)}`
-        );
+      // Update task counts
+      if (oldStatus && oldStatus !== newStatus) {
+        setTaskCounts(prevCounts => {
+          const newCounts = { ...prevCounts };
+          newCounts[oldStatus] = Math.max(0, (prevCounts[oldStatus] || 0) - 1);
+          newCounts[newStatus] = (prevCounts[newStatus] || 0) + 1;
+          return newCounts;
+        });
       }
+
+      // Force Kanban refresh
+      forceKanbanRefresh();
+
+      // If task is in current filtered view and status changed, remove it
+      if (viewMode === "table" && statusFilter !== "all" && newStatus !== statusFilter) {
+        setTasks(prevTasks => prevTasks.filter(t => t.taskId !== taskId));
+      }
+
+      // Don't show toast for timer-triggered changes (optional)
+      // toast.success("Task status updated!");
+
     } catch (error) {
-      console.error("Error updating task status:", error);
-      showErrorAlert("Failed to update task status");
-    } finally {
-      setStatusLoading(false);
+      console.error("Error updating status:", error);
+
+      // Revert on error
+      handleRefresh();
     }
   };
+
   // Calculate total time including current session
   const getTotalTime = () => {
     // Sum only completed logs (with endTime and durationInMinutes)
@@ -676,7 +703,15 @@ function PreviewTaskModal({
     return totalFromLogs * 60 + timerSeconds;
   };
 
-  // Get display logs - mark active logs
+  const formatDDMMYYYY = (date) => {
+    if (!date) return "-";
+    return new Date(date).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
   // Get display logs - show all logs as they are
   const getDisplayLogs = () => {
     return timeLogs; // Just return all logs
@@ -724,7 +759,7 @@ function PreviewTaskModal({
           <div
             ref={noteContentRef}
             onClick={(e) => e.stopPropagation()}
-            className="absolute z-50 w-72 p-3 text-xs bg-gray-900 text-white rounded-lg shadow-xl left-full top-1/2 transform -translate-y-1/2 ml-3"
+            className="absolute z-80 w-72 p-3 text-xs bg-gray-900 text-white rounded-lg shadow-xl left-full top-1/2 transform -translate-y-1/2 ml-3"
             style={{ scrollbarWidth: "thin" }}
           >
             <div className="font-medium text-blue-300 mb-1">Time Log Note</div>
@@ -845,9 +880,8 @@ function PreviewTaskModal({
                           disabled={statusLoading}
                           className={`px-2 py-1 rounded text-xs font-medium appearance-none pr-6 cursor-pointer ${getStatusColor(
                             task.status
-                          )} ${
-                            statusLoading ? "opacity-50 cursor-not-allowed" : ""
-                          }`}
+                          )} ${statusLoading ? "opacity-50 cursor-not-allowed" : ""
+                            }`}
                         >
                           <option value="NOT_STARTED">Not Started</option>
                           <option value="IN_PROGRESS">In Progress</option>
@@ -928,10 +962,9 @@ function PreviewTaskModal({
                         disabled={!canStartTimer}
                         className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 
                           text-white
-                          ${
-                            canStartTimer
-                              ? "bg-blue-600 hover:bg-blue-700"
-                              : "bg-gray-400 cursor-not-allowed"
+                          ${canStartTimer
+                            ? "bg-blue-600 hover:bg-blue-700"
+                            : "bg-gray-400 cursor-not-allowed"
                           }`}
                         title={
                           canStartTimer
@@ -963,7 +996,7 @@ function PreviewTaskModal({
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2">
                     <div className="text-center p-1.5 bg-white rounded border border-gray-200">
                       <div className="text-base font-bold text-gray-900 font-mono mb-0.5">
                         {/* Show current session time only if activeTimerLog exists */}
@@ -979,14 +1012,14 @@ function PreviewTaskModal({
                         </div>
                       )}
                     </div>
-                    <div className="text-center p-1.5 bg-white rounded border border-gray-200">
+                    {/* <div className="text-center p-1.5 bg-white rounded border border-gray-200">
                       <div className="text-base font-bold text-gray-900 font-mono mb-0.5">
                         {formatTime(getTotalTime())}
                       </div>
                       <div className="text-[10px] text-gray-600">
                         Total Time
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
@@ -996,50 +1029,46 @@ function PreviewTaskModal({
                     <nav className="flex">
                       <button
                         onClick={() => setActiveTab("timelogs")}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${
-                          activeTab === "timelogs"
-                            ? "border-b-2 border-blue-600 text-blue-600"
-                            : "text-gray-500 hover:text-gray-700"
-                        }`}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "timelogs"
+                          ? "border-b-2 border-blue-600 text-blue-600"
+                          : "text-gray-500 hover:text-gray-700"
+                          }`}
                       >
                         Time Logs
                       </button>
                       <button
                         onClick={() => setActiveTab("statistics")}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${
-                          activeTab === "statistics"
-                            ? "border-b-2 border-blue-600 text-blue-600"
-                            : "text-gray-500 hover:text-gray-700"
-                        }`}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "statistics"
+                          ? "border-b-2 border-blue-600 text-blue-600"
+                          : "text-gray-500 hover:text-gray-700"
+                          }`}
                       >
                         Statistics
                       </button>
                       <button
                         onClick={() => setActiveTab("comments")}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${
-                          activeTab === "comments"
-                            ? "border-b-2 border-blue-600 text-blue-600"
-                            : "text-gray-500 hover:text-gray-700"
-                        }`}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "comments"
+                          ? "border-b-2 border-blue-600 text-blue-600"
+                          : "text-gray-500 hover:text-gray-700"
+                          }`}
                       >
                         Comments
                       </button>
                       <button
                         onClick={() => setActiveTab("attachments")}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${
-                          activeTab === "attachments"
-                            ? "border-b-2 border-blue-600 text-blue-600"
-                            : "text-gray-500 hover:text-gray-700"
-                        }`}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "attachments"
+                          ? "border-b-2 border-blue-600 text-blue-600"
+                          : "text-gray-500 hover:text-gray-700"
+                          }`}
                       >
                         Attachments
                       </button>
                     </nav>
                   </div>
 
-                  <div className="bg-white border border-gray-200 border-t-0 rounded-b-lg p-3 min-h-[300px]">
+                  <div className="bg-white border border-gray-200 border-t-0 rounded-b-lg p-3 h-full">
                     {activeTab === "timelogs" && (
-                      <div className="overflow-x-auto">
+                      <div className="overflow-x-auto min-h-[300px]">
                         <table className="min-w-full divide-y divide-gray-200 text-xs">
                           <thead className="bg-gray-50">
                             <tr>
@@ -1094,8 +1123,8 @@ function PreviewTaskModal({
                                         !log.endTime
                                           ? "In Progress"
                                           : formatDuration(
-                                              log.durationInMinutes
-                                            ) /* For completed logs */
+                                            log.durationInMinutes
+                                          ) /* For completed logs */
                                       }
                                     </div>
                                   </td>
@@ -1193,7 +1222,7 @@ function PreviewTaskModal({
                         Start Date
                       </div>
                       <div className="text-xs font-medium text-gray-900">
-                        {task.startDate}
+                        {formatDDMMYYYY(task.startDate)}
                       </div>
                     </div>
                     <div>
@@ -1201,7 +1230,7 @@ function PreviewTaskModal({
                         Due Date
                       </div>
                       <div className="text-xs font-medium text-gray-900">
-                        {task.dueDate}
+                        {formatDDMMYYYY(task.dueDate)}
                       </div>
                     </div>
                   </div>
@@ -1213,7 +1242,7 @@ function PreviewTaskModal({
                         Hourly Rate
                       </div>
                       <div className="text-xs font-medium text-gray-900">
-                        ₹{parseFloat(task.hourlyRate || 0).toFixed(2)}
+                        {parseFloat(task.hourlyRate || 0).toFixed(2)}
                       </div>
                     </div>
                     <div>

@@ -62,6 +62,20 @@ function TasklistKanBan({
         }
     }, [taskUpdateTrigger]);
 
+    // Add this useEffect after your existing useEffects
+    useEffect(() => {
+        console.log('Syncing kanban counts with parent counts', initialTotalCounts);
+
+        setColumns(prevColumns =>
+            prevColumns.map(col => ({
+                ...col,
+                totalCount: initialTotalCounts[col.id] || 0
+            }))
+        );
+
+        // Also update local totalCounts
+        setTotalCounts(initialTotalCounts);
+    }, [initialTotalCounts]);
 
     useEffect(() => {
         console.log('Kanban: initialTotalCounts updated', initialTotalCounts);
@@ -83,6 +97,7 @@ function TasklistKanBan({
     }, [initialTotalCounts]); // Remove the countsChanged logic
 
     // Initialize columns with total counts
+    // Initialize columns with total counts from parent
     const initializeColumns = () => {
         return [
             {
@@ -91,7 +106,7 @@ function TasklistKanBan({
                 color: "bg-gray-50",
                 textColor: "text-gray-800",
                 borderColor: "border-gray-300",
-                totalCount: totalCounts.NOT_STARTED || 0,
+                totalCount: initialTotalCounts.NOT_STARTED || 0, // Use parent's counts
                 currentPage: 0,
                 hasMore: true,
                 isLoading: false,
@@ -103,7 +118,7 @@ function TasklistKanBan({
                 color: "bg-blue-50",
                 textColor: "text-blue-800",
                 borderColor: "border-blue-200",
-                totalCount: totalCounts.IN_PROGRESS || 0,
+                totalCount: initialTotalCounts.IN_PROGRESS || 0, // Use parent's counts
                 currentPage: 0,
                 hasMore: true,
                 isLoading: false,
@@ -115,7 +130,7 @@ function TasklistKanBan({
                 color: "bg-yellow-50",
                 textColor: "text-yellow-800",
                 borderColor: "border-yellow-200",
-                totalCount: totalCounts.TESTING || 0,
+                totalCount: initialTotalCounts.TESTING || 0, // Use parent's counts
                 currentPage: 0,
                 hasMore: true,
                 isLoading: false,
@@ -127,7 +142,7 @@ function TasklistKanBan({
                 color: "bg-orange-50",
                 textColor: "text-orange-800",
                 borderColor: "border-orange-200",
-                totalCount: totalCounts.AWAITING_FEEDBACK || 0,
+                totalCount: initialTotalCounts.AWAITING_FEEDBACK || 0, // Use parent's counts
                 currentPage: 0,
                 hasMore: true,
                 isLoading: false,
@@ -139,7 +154,7 @@ function TasklistKanBan({
                 color: "bg-green-50",
                 textColor: "text-green-800",
                 borderColor: "border-green-200",
-                totalCount: totalCounts.COMPLETE || 0,
+                totalCount: initialTotalCounts.COMPLETE || 0, // Use parent's counts
                 currentPage: 0,
                 hasMore: true,
                 isLoading: false,
@@ -273,10 +288,8 @@ function TasklistKanBan({
             setKanbanLoading(true);
             setKanbanTasks([]);
 
-            // Fetch total counts first
-            await fetchTotalTaskCounts();
-
-            // Initialize columns
+            // Use parent's counts directly, don't fetch separately
+            // Initialize columns with parent's counts
             const initialColumns = initializeColumns();
             setColumns(initialColumns);
 
@@ -329,7 +342,8 @@ function TasklistKanBan({
             // Remove from kanbanTasks
             setKanbanTasks(prevTasks => prevTasks.filter(task => task.taskId !== taskId));
 
-            // Update columns
+            // Update columns - but DO NOT update totalCount here
+            // Let parent handle the count updates
             setColumns(prevColumns =>
                 prevColumns.map(col => {
                     if (col.id === taskToRemove.status) {
@@ -337,22 +351,17 @@ function TasklistKanBan({
                         return {
                             ...col,
                             tasks: newTasks,
-                            totalCount: Math.max(0, col.totalCount - 1)
+                            // Don't update totalCount here - parent will handle it
                         };
                     }
                     return col;
                 })
             );
 
-            // Update total counts
-            setTotalCounts(prev => ({
-                ...prev,
-                [taskToRemove.status]: Math.max(0, (prev[taskToRemove.status] || 0) - 1),
-                TOTAL: Math.max(0, prev.TOTAL - 1)
-            }));
+            // Don't update totalCounts - parent handles this
+            // The parent's forceKanbanRefresh will fetch new counts
         }
     };
-
     // Update a task in Kanban (for edit operations)
     const updateTaskInKanban = (updatedTask) => {
         if (!updatedTask || !updatedTask.taskId) return;
@@ -434,17 +443,26 @@ function TasklistKanBan({
     };
 
     // Handle delete with proper state updates
+    // Handle delete with proper state updates
     const handleDeleteClick = async (taskId, taskName) => {
         try {
-            // Remove from local state immediately (optimistic update)
-            removeTaskFromKanban(taskId);
+            // Call parent's delete function FIRST and wait for confirmation
+            const deleteConfirmed = await onDelete(taskId, taskName);
 
-            // Call parent's delete function
-            await onDelete(taskId, taskName);
+            // Only remove from local state if delete was confirmed
+            if (deleteConfirmed) {
+                removeTaskFromKanban(taskId);
+
+                // DON'T fetch counts here - parent will update them
+                // The parent's forceKanbanRefresh will trigger a refresh
+
+                toast.success("Task deleted successfully");
+            }
+            // If delete was cancelled, do nothing - task stays in UI
 
         } catch (error) {
             console.error("Error in kanban delete:", error);
-            // If error, refresh everything
+            // If error, refresh everything to ensure sync
             await fetchInitialKanbanTasks();
             toast.error("Failed to delete task");
         }
@@ -647,7 +665,7 @@ function TasklistKanBan({
                 {columns.map((column) => (
                     <div
                         key={column.id}
-                        className={`flex-shrink-0 w-72 ${dragOverColumn === column.id ? 'ring-2 ring-blue-500 ring-inset rounded-lg' : ''}`}
+                        className={`flex-shrink-0 w-72 p-1 ${dragOverColumn === column.id ? 'ring-2 ring-blue-500 ring-inset rounded-lg' : ''}`}
                         onDragOver={(e) => handleDragOver(e, column.id)}
                         onDragLeave={handleDragLeave}
                         onDrop={(e) => handleDrop(e, column.id)}

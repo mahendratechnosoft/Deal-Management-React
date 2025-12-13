@@ -11,7 +11,8 @@ import {
   formatInvoiceNumber,
   formatProposalNumber,
   formatDate,
-  formatCurrency
+  formatCurrency,
+  formatProformaNumber
 } from "../../BaseComponet/UtilFunctions";
 
 function EditTaskModal({ taskId, onClose, onSuccess }) {
@@ -84,11 +85,14 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
       fetchRelatedData();
     } else {
       setRelatedData([]);
-      setFormData((prev) => ({
-        ...prev,
-        relatedId: "",
-        relatedName: "",
-      }));
+      // Only clear if they're not already empty
+      if (formData.relatedId || formData.relatedName) {
+        setFormData((prev) => ({
+          ...prev,
+          relatedId: "",
+          relatedName: "",
+        }));
+      }
     }
   }, [formData.relatedTo]);
 
@@ -161,7 +165,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
             case "proforma":
               return {
                 id: item.proformaInvoiceId || item.id,
-                name: formatInvoiceNumber(item.proformaInvoiceNumber) ||
+                name: formatProformaNumber(item.proformaInvoiceNumber) ||
                   `Proforma #${item.proformaInvoiceId || item.id}`,
                 originalData: item
               };
@@ -206,71 +210,76 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
     }
   };
 
-const fetchTaskData = async () => {
-  try {
-    setLoadingTask(true);
-    const response = await axiosInstance.get(`getTaskByItemId/${taskId}`);
+  const fetchTaskData = async () => {
+    try {
+      setLoadingTask(true);
+      const response = await axiosInstance.get(`getTaskByItemId/${taskId}`);
 
-    if (response.data) {
-      const taskData = response.data.task;
+      if (response.data) {
+        const taskData = response.data.task;
 
-      // Format dates to YYYY-MM-DD for input fields
-      const formatDateForInput = (dateString) => {
-        if (!dateString) return "";
-        try {
-          const date = new Date(dateString);
-          return date.toISOString().split("T")[0];
-        } catch (e) {
-          console.error("Error parsing date:", dateString, e);
-          return "";
+        // Format dates to YYYY-MM-DD for input fields
+        const formatDateForInput = (dateString) => {
+          if (!dateString) return "";
+          try {
+            const date = new Date(dateString);
+            return date.toISOString().split("T")[0];
+          } catch (e) {
+            console.error("Error parsing date:", dateString, e);
+            return "";
+          }
+        };
+
+        // Extract assignee and follower IDs
+        const assigneeIds = taskData.assignedEmployees
+          ? taskData.assignedEmployees.map((emp) => emp.employeeId)
+          : [];
+
+        const followerIds = taskData.followersEmployees
+          ? taskData.followersEmployees.map((emp) => emp.employeeId)
+          : [];
+
+        // Set form data
+        setFormData({
+          taskId: taskData.taskId,
+          adminId: taskData.adminId || "",
+          employeeId: taskData.employeeId || null,
+          subject: taskData.subject || "",
+          description: taskData.description || "",
+          hourlyRate: taskData.hourlyRate?.toString() || "",
+          startDate: formatDateForInput(taskData.startDate),
+          dueDate: formatDateForInput(taskData.endDate),
+          priority: (taskData.priority || "medium").toLowerCase(), // Ensure lowercase
+          relatedTo: taskData.relatedTo || "",
+          relatedId: taskData.relatedToId || "",
+          relatedName: taskData.relatedToName || "",
+          assignees: assigneeIds,
+          followers: followerIds,
+          estimateHours: taskData.estimatedHours?.toString() || "",
+          status: (taskData.status || "NOT_STARTED").toUpperCase(),
+          createdAt: taskData.createdAt || "",
+          createdBy: taskData.createdBy || "",
+        });
+
+        if (taskData.relatedTo) {
+          // Clear any existing related data first
+          setRelatedData([]);
+          // Then fetch new data after a small delay
+          setTimeout(() => {
+            fetchRelatedData();
+          }, 100);
+        } else {
+          // If no relatedTo, ensure related data is cleared
+          setRelatedData([]);
         }
-      };
-
-      // Extract assignee and follower IDs
-      const assigneeIds = taskData.assignedEmployees
-        ? taskData.assignedEmployees.map((emp) => emp.employeeId)
-        : [];
-
-      const followerIds = taskData.followersEmployees
-        ? taskData.followersEmployees.map((emp) => emp.employeeId)
-        : [];
-
-      // Set form data
-      setFormData({
-        taskId: taskData.taskId,
-        adminId: taskData.adminId || "",
-        employeeId: taskData.employeeId || null,
-        subject: taskData.subject || "",
-        description: taskData.description || "",
-        hourlyRate: taskData.hourlyRate?.toString() || "",
-        startDate: formatDateForInput(taskData.startDate),
-        dueDate: formatDateForInput(taskData.endDate),
-        priority: (taskData.priority || "medium").toLowerCase(), // Ensure lowercase
-        relatedTo: taskData.relatedTo || "",
-        relatedId: taskData.relatedToId || "",
-        relatedName: taskData.relatedToName || "",
-        assignees: assigneeIds,
-        followers: followerIds,
-        estimateHours: taskData.estimatedHours?.toString() || "",
-        status: (taskData.status || "NOT_STARTED").toUpperCase(),
-        createdAt: taskData.createdAt || "",
-        createdBy: taskData.createdBy || "",
-      });
-
-      // If task has relatedTo, fetch the related data
-      if (taskData.relatedTo) {
-        setTimeout(() => {
-          fetchRelatedData();
-        }, 100);
       }
+    } catch (error) {
+      console.error("Error fetching task data:", error);
+      toast.error("Failed to load task data");
+    } finally {
+      setLoadingTask(false);
     }
-  } catch (error) {
-    console.error("Error fetching task data:", error);
-    toast.error("Failed to load task data");
-  } finally {
-    setLoadingTask(false);
-  }
-};
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -316,16 +325,20 @@ const fetchTaskData = async () => {
         processedValue = value;
     }
 
+    // Store previous relatedTo value for comparison
+    const previousRelatedTo = formData.relatedTo;
+
+    // Update form data
     const updatedFormData = {
       ...formData,
       [name]: processedValue,
     };
 
-    // Reset related fields when relatedTo changes
-    if (name === "relatedTo") {
+    // Reset related fields when relatedTo changes to a different value
+    if (name === "relatedTo" && processedValue !== previousRelatedTo) {
       updatedFormData.relatedId = "";
       updatedFormData.relatedName = "";
-      setRelatedData([]);
+      setRelatedData([]); // Clear the related data options
     }
 
     setFormData(updatedFormData);
@@ -412,152 +425,152 @@ const fetchTaskData = async () => {
     return Object.keys(newErrors).length === 0;
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!validateForm()) {
-    toast.error("Please fix the form errors before submitting.");
-    return;
-  }
+    if (!validateForm()) {
+      toast.error("Please fix the form errors before submitting.");
+      return;
+    }
 
-  setLoading(true);
-  try {
-    // Get assignee names from teamMembers for the response
-    const assigneeNames = formData.assignees.map(employeeId => {
-      const employee = teamMembers.find(member => member.value === employeeId);
-      return employee ? employee.label : `Employee ${employeeId}`;
-    });
+    setLoading(true);
+    try {
+      // Get assignee names from teamMembers for the response
+      const assigneeNames = formData.assignees.map(employeeId => {
+        const employee = teamMembers.find(member => member.value === employeeId);
+        return employee ? employee.label : `Employee ${employeeId}`;
+      });
 
-    // Get follower names from teamMembers for the response
-    const followerNames = formData.followers.map(employeeId => {
-      const employee = teamMembers.find(member => member.value === employeeId);
-      return employee ? employee.label : `Employee ${employeeId}`;
-    });
+      // Get follower names from teamMembers for the response
+      const followerNames = formData.followers.map(employeeId => {
+        const employee = teamMembers.find(member => member.value === employeeId);
+        return employee ? employee.label : `Employee ${employeeId}`;
+      });
 
-    // Construct the payload
-    const payload = {
-      taskId: formData.taskId,
-      adminId: formData.adminId,
-      employeeId: formData.employeeId,
-      subject: formData.subject.trim(),
-      description: formData.description.trim(),
-      startDate: formData.startDate,
-      endDate: formData.dueDate || null,
-      priority: "medium",
-      relatedTo: formData.relatedTo || null,
-      relatedToId: formData.relatedId || null,
-      relatedToName: formData.relatedName || null,
-      hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : 0,
-      estimatedHours: formData.estimateHours ? parseFloat(formData.estimateHours) : 0,
-      status: formData.status,
-      assignedEmployees: formData.assignees.map((employeeId, index) => ({
-        employeeId: employeeId,
-        name: assigneeNames[index] || `Employee ${employeeId}`
-      })),
-      followersEmployees: formData.followers.map((employeeId, index) => ({
-        employeeId: employeeId,
-        name: followerNames[index] || `Employee ${employeeId}`
-      })),
-      createdAt: formData.createdAt,
-      createdBy: formData.createdBy,
-    };
-
-    console.log('Sending update payload:', JSON.stringify(payload, null, 2));
-
-    const response = await axiosInstance.put("updateTask", payload);
-
-    // Check if request was successful (status 200-299)
-    if (response.status >= 200 && response.status < 300) {
-      toast.success("Task updated successfully!");
-      
-      // Return comprehensive updated data to parent for Kanban sync
-      const updatedTaskData = {
+      // Construct the payload
+      const payload = {
         taskId: formData.taskId,
+        adminId: formData.adminId,
+        employeeId: formData.employeeId,
         subject: formData.subject.trim(),
         description: formData.description.trim(),
-        status: formData.status,
-        priority: "medium",
-        assignees: assigneeNames,
         startDate: formData.startDate,
-        dueDate: formData.dueDate || null,
+        endDate: formData.dueDate || null,
+        priority: "medium",
+        relatedTo: formData.relatedTo || null,
+        relatedToId: formData.relatedId || null,
+        relatedToName: formData.relatedName || null,
         hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : 0,
-        estimateHours: formData.estimateHours ? parseFloat(formData.estimateHours) : 0,
-        relatedTo: formData.relatedTo || "",
-        relatedToId: formData.relatedId || "",
-        relatedToName: formData.relatedName || "",
-        assigneeIds: formData.assignees,
-        followerIds: formData.followers,
+        estimatedHours: formData.estimateHours ? parseFloat(formData.estimateHours) : 0,
+        status: formData.status,
+        assignedEmployees: formData.assignees.map((employeeId, index) => ({
+          employeeId: employeeId,
+          name: assigneeNames[index] || `Employee ${employeeId}`
+        })),
+        followersEmployees: formData.followers.map((employeeId, index) => ({
+          employeeId: employeeId,
+          name: followerNames[index] || `Employee ${employeeId}`
+        })),
+        createdAt: formData.createdAt,
+        createdBy: formData.createdBy,
       };
-      
-      // Call onSuccess with updated data
-      if (onSuccess) {
-        onSuccess(updatedTaskData);
-      } else {
-        console.warn("onSuccess callback not provided");
-        onClose();
-      }
-    } else {
-      // If response exists but with error status
-      console.warn('API returned non-success status:', response.status);
-      toast.success("Task updated successfully!"); // Still show success since data is updating
-      
-      // Still call onSuccess to update UI
-      if (onSuccess) {
+
+      console.log('Sending update payload:', JSON.stringify(payload, null, 2));
+
+      const response = await axiosInstance.put("updateTask", payload);
+
+      // Check if request was successful (status 200-299)
+      if (response.status >= 200 && response.status < 300) {
+        toast.success("Task updated successfully!");
+
+        // Return comprehensive updated data to parent for Kanban sync
         const updatedTaskData = {
           taskId: formData.taskId,
           subject: formData.subject.trim(),
+          description: formData.description.trim(),
           status: formData.status,
           priority: "medium",
           assignees: assigneeNames,
           startDate: formData.startDate,
           dueDate: formData.dueDate || null,
+          hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : 0,
+          estimateHours: formData.estimateHours ? parseFloat(formData.estimateHours) : 0,
           relatedTo: formData.relatedTo || "",
+          relatedToId: formData.relatedId || "",
           relatedToName: formData.relatedName || "",
+          assigneeIds: formData.assignees,
+          followerIds: formData.followers,
         };
-        onSuccess(updatedTaskData);
-      }
-    }
-  } catch (error) {
-    console.error("Error updating task:", error);
 
-    // Only show error toast for actual network/connection errors
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', error.response.data);
-      
-      // If it's a 500 error, show specific message
-      if (error.response.status === 500) {
-        console.error('Server error details:', error.response.data);
-        // Don't show error toast if data is actually updating
-        // Check if the task was still updated on the server
-        toast.success("Task status updated!"); 
+        // Call onSuccess with updated data
+        if (onSuccess) {
+          onSuccess(updatedTaskData);
+        } else {
+          console.warn("onSuccess callback not provided");
+          onClose();
+        }
       } else {
-        // For other HTTP errors, show the error
-        toast.error('Failed to update task: ' + (error.response.data?.message || 'Unknown error'));
+        // If response exists but with error status
+        console.warn('API returned non-success status:', response.status);
+        toast.success("Task updated successfully!"); // Still show success since data is updating
+
+        // Still call onSuccess to update UI
+        if (onSuccess) {
+          const updatedTaskData = {
+            taskId: formData.taskId,
+            subject: formData.subject.trim(),
+            status: formData.status,
+            priority: "medium",
+            assignees: assigneeNames,
+            startDate: formData.startDate,
+            dueDate: formData.dueDate || null,
+            relatedTo: formData.relatedTo || "",
+            relatedToName: formData.relatedName || "",
+          };
+          onSuccess(updatedTaskData);
+        }
       }
-    } else if (error.request) {
-      // No response received - network error
-      console.error('Network error - no response received:', error.request);
-      toast.error('Network error. Please check your connection.');
-    } else {
-      // Something else caused the error
-      console.error('Other error:', error.message);
-      toast.success("Task updated successfully!"); // Assume success for UI updates
-      
-      // Still update UI
-      if (onSuccess) {
-        const updatedTaskData = {
-          taskId: formData.taskId,
-          status: formData.status,
-          subject: formData.subject.trim(),
-        };
-        onSuccess(updatedTaskData);
+    } catch (error) {
+      console.error("Error updating task:", error);
+
+      // Only show error toast for actual network/connection errors
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+
+        // If it's a 500 error, show specific message
+        if (error.response.status === 500) {
+          console.error('Server error details:', error.response.data);
+          // Don't show error toast if data is actually updating
+          // Check if the task was still updated on the server
+          toast.success("Task status updated!");
+        } else {
+          // For other HTTP errors, show the error
+          toast.error('Failed to update task: ' + (error.response.data?.message || 'Unknown error'));
+        }
+      } else if (error.request) {
+        // No response received - network error
+        console.error('Network error - no response received:', error.request);
+        toast.error('Network error. Please check your connection.');
+      } else {
+        // Something else caused the error
+        console.error('Other error:', error.message);
+        toast.success("Task updated successfully!"); // Assume success for UI updates
+
+        // Still update UI
+        if (onSuccess) {
+          const updatedTaskData = {
+            taskId: formData.taskId,
+            status: formData.status,
+            subject: formData.subject.trim(),
+          };
+          onSuccess(updatedTaskData);
+        }
       }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const getTodayDate = () => {
     return new Date().toISOString().split("T")[0];
@@ -767,9 +780,10 @@ const handleSubmit = async (e) => {
               {/* Related Item Selection */}
               {formData.relatedTo && (
                 <GlobalSelectField
+                  key={`related-${formData.relatedTo}-${formData.relatedId}`} // Add this key
                   label={`Select ${formData.relatedTo.charAt(0).toUpperCase() + formData.relatedTo.slice(1)}`}
                   name="relatedId"
-                  value={formData.relatedId}
+                  value={formData.relatedId || ''}
                   onChange={(e) => {
                     const selected = relatedData.find((item) => item.id === e.target.value);
                     setFormData((prev) => ({
