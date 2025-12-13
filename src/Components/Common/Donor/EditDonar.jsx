@@ -204,30 +204,24 @@ function EditDonar() {
   const [pdfLoading, setPdfLoading] = useState(false);
   // --- State Management ---
 
-
-
-
-
   // Add the education mapping function
   const getEducationLabel = (value) => {
     const educationLabelMap = {
-      "below_10th": "Below 10th",
-      "ssc_10th": "10th Pass (SSC)",
-      "hsc_12th": "12th Pass (HSC)",
-      "diploma": "Diploma",
-      "iti_vocational": "ITI / Vocational Training",
-      "ug_pursuing": "Undergraduate (UG) - Pursuing",
-      "bachelor_completed": "Undergraduate (Bachelor's Degree)",
-      "pg_pursuing": "Postgraduate (PG) - Pursuing",
-      "masters_completed": "Postgraduate (Master's Degree)",
-      "doctorate": "Doctorate (PhD)",
-      "professional_course": "Professional Course (CA / CS / CMA)",
-      "other": "Other"
+      below_10th: "Below 10th",
+      ssc_10th: "10th Pass (SSC)",
+      hsc_12th: "12th Pass (HSC)",
+      diploma: "Diploma",
+      iti_vocational: "ITI / Vocational Training",
+      ug_pursuing: "Undergraduate (UG) - Pursuing",
+      bachelor_completed: "Undergraduate (Bachelor's Degree)",
+      pg_pursuing: "Postgraduate (PG) - Pursuing",
+      masters_completed: "Postgraduate (Master's Degree)",
+      doctorate: "Doctorate (PhD)",
+      professional_course: "Professional Course (CA / CS / CMA)",
+      other: "Other",
     };
     return educationLabelMap[value] || value || "-";
   };
-
-
 
   // PDF Generation Function - FIXED PAGE BREAKS AND SPACING
   const handleGenerateDonorPDF = async () => {
@@ -316,16 +310,33 @@ function EditDonar() {
           font: "helvetica",
         },
         columnStyles: {
-          0: { cellWidth: (pageWidth - margin.left - margin.right) / 4, fontStyle: "bold" },
-          1: { cellWidth: (pageWidth - margin.left - margin.right) / 4, fontStyle: "normal" },
-          2: { cellWidth: (pageWidth - margin.left - margin.right) / 4, fontStyle: "bold" },
-          3: { cellWidth: (pageWidth - margin.left - margin.right) / 4, fontStyle: "normal" },
+          0: {
+            cellWidth: (pageWidth - margin.left - margin.right) / 4,
+            fontStyle: "bold",
+          },
+          1: {
+            cellWidth: (pageWidth - margin.left - margin.right) / 4,
+            fontStyle: "normal",
+          },
+          2: {
+            cellWidth: (pageWidth - margin.left - margin.right) / 4,
+            fontStyle: "bold",
+          },
+          3: {
+            cellWidth: (pageWidth - margin.left - margin.right) / 4,
+            fontStyle: "normal",
+          },
         },
-        margin: { left: margin.left, right: margin.right, top: y, bottom: margin.bottom },
+        margin: {
+          left: margin.left,
+          right: margin.right,
+          top: y,
+          bottom: margin.bottom,
+        },
         tableWidth: pageWidth - margin.left - margin.right,
         // Prevent page breaks inside tables
-        pageBreak: 'avoid',
-        rowPageBreak: 'avoid',
+        pageBreak: "avoid",
+        rowPageBreak: "avoid",
         // Ensure table starts at correct position
         startY: y,
       };
@@ -347,19 +358,25 @@ function EditDonar() {
       doc.setFontSize(NORMAL);
       doc.setFont("helvetica", "normal");
       doc.text(
-        "Amega, S.No. 1/8, Plot 4, Dawa Chowk, Pune - 411043",
+        "Ashwini Hospital Campus, Balewadi, Pune, 411045",
         pageWidth / 2,
         y,
         { align: "center" }
       );
-      y += 3;
-
+      y += 4;
       doc.text(
         "Phone: 9975035364 | Web: www.punespermbank.com",
         pageWidth / 2,
         y,
         { align: "center" }
       );
+      y += 4;
+
+      doc.setFontSize(NORMAL);
+      doc.setFont("helvetica", "bold");
+      doc.text("Reg No : MH/AB/2022/10581/PUNE/13", pageWidth / 2, y, {
+        align: "center",
+      });
       y += 5;
 
       doc.setDrawColor(0, 0, 0);
@@ -380,7 +397,7 @@ function EditDonar() {
       // =====================================================
       const createFourColumnTable = (title, bodyRows) => {
         // Estimate table height (approximately 6mm per row + title space)
-        const estimatedTableHeight = (bodyRows.length * 6) + 8;
+        const estimatedTableHeight = bodyRows.length * 6 + 8;
 
         // Check if we need a new page before starting this section
         if (needsNewPage(estimatedTableHeight + 10)) {
@@ -398,8 +415,8 @@ function EditDonar() {
           ...fourColumnTableStyles,
           startY: y,
           margin: { ...fourColumnTableStyles.margin, top: y },
-          pageBreak: 'auto', // Let autoTable handle page breaks within this table
-          rowPageBreak: 'auto',
+          pageBreak: "auto", // Let autoTable handle page breaks within this table
+          rowPageBreak: "auto",
         };
 
         autoTable(doc, {
@@ -426,24 +443,27 @@ function EditDonar() {
 
       // Helper to check if object has meaningful data
       const hasData = (obj) => {
-        if (!obj || typeof obj !== 'object') return false;
+        if (!obj || typeof obj !== "object") return false;
 
         // Special handling for family info array
         if (Array.isArray(obj)) {
           if (obj.length === 0) return false;
 
           // Check if any family member has meaningful data
-          return obj.some(family => {
+          return obj.some((family) => {
             const hasBrotherData =
               (family.brotherAge && family.brotherAge > 0) ||
-              (family.brotherProfession && family.brotherProfession.trim() !== "") ||
+              (family.brotherProfession &&
+                family.brotherProfession.trim() !== "") ||
               (family.brotherKidsCount && family.brotherKidsCount > 0) ||
               (family.brotherIllness && family.brotherIllness.trim() !== "");
 
             const hasSisterData =
               (family.sisterAge && family.sisterAge > 0) ||
-              (family.sisterProfession && family.sisterProfession.trim() !== "") ||
-              (family.sisterKidsCount && family.sisterKidsCount.toString().trim() !== "") ||
+              (family.sisterProfession &&
+                family.sisterProfession.trim() !== "") ||
+              (family.sisterKidsCount &&
+                family.sisterKidsCount.toString().trim() !== "") ||
               (family.sisterIllness && family.sisterIllness.trim() !== "");
 
             return hasBrotherData || hasSisterData;
@@ -451,9 +471,12 @@ function EditDonar() {
         }
 
         // For objects
-        return Object.values(obj).some(val =>
-          val !== null && val !== undefined && val !== '' &&
-          !(typeof val === 'object' && Object.keys(val).length === 0)
+        return Object.values(obj).some(
+          (val) =>
+            val !== null &&
+            val !== undefined &&
+            val !== "" &&
+            !(typeof val === "object" && Object.keys(val).length === 0)
         );
       };
 
@@ -471,29 +494,89 @@ function EditDonar() {
       // =====================================================
       const personalRows = [
         ["Donor Name", donors.name || "-", "Donor UIN", donors.uin || "-"],
-        ["Age", donors.age || "-", "Date of Birth", donors.dateOfBirth
-          ? new Date(donors.dateOfBirth).toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric"
-          })
-          : "-"],
-        ["Blood Group", donors.bloodGroup || "-", "Height", donors.height ? `${donors.height} cm` : "-"],
-        ["Weight", donors.weight ? `${donors.weight} kg` : "-", "Skin Color", donors.skinColor || "-"],
-        ["Eye Color", donors.eyeColor || "-", "Education", getEducationLabel(donors.education)],
-        ["Profession", donors.profession || "-", "Religion", donors.religion || "-"],
-        ["Marital Status", donors.marriedStatus || "-", "Male Kids", donors.maleKidsCount || "0"],
-        ["Female Kids", donors.femaleKidsCount || "0", "Phone", donors.phoneNumber || "-"],
+        [
+          "Age",
+          donors.age || "-",
+          "Date of Birth",
+          donors.dateOfBirth
+            ? new Date(donors.dateOfBirth).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })
+            : "-",
+        ],
+        [
+          "Blood Group",
+          donors.bloodGroup || "-",
+          "Height",
+          donors.height ? `${donors.height} cm` : "-",
+        ],
+        [
+          "Weight",
+          donors.weight ? `${donors.weight} kg` : "-",
+          "Skin Color",
+          donors.skinColor || "-",
+        ],
+        [
+          "Eye Color",
+          donors.eyeColor || "-",
+          "Education",
+          getEducationLabel(donors.education),
+        ],
+        [
+          "Profession",
+          donors.profession || "-",
+          "Religion",
+          donors.religion || "-",
+        ],
+        [
+          "Marital Status",
+          donors.marriedStatus || "-",
+          "Male Kids",
+          donors.maleKidsCount || "0",
+        ],
+        [
+          "Female Kids",
+          donors.femaleKidsCount || "0",
+          "Phone",
+          donors.phoneNumber || "-",
+        ],
 
         // ⬇️ Status removed, Email & Address moved up
         ["Email", donors.email || "-", "Address", donors.address || "-"],
 
         ["City", donors.city || "-", "Pincode", donors.pincode || "-"],
-        ["Aadhar No", donors.adharCardNo || "-", "Genetic Illness", donors.geneticElements || "-"],
-        [ "Hospital Admission", donors.hospitalAdmissionStatus ? "Yes" : "No","Hospital Reason", donors.hospitalAdmissionReason || "-"],
-        [ "Surgery", donors.surgeryStatus ? "Yes" : "No","Surgery Reason", donors.surgeryReason ],
-        [  "Blood Donation", donors.bloodDonationStatus ? "Yes" : "No","Blood Donation Reason", donors.bloodDonationReason || "-" ],
-        ["Prolonged Illness", donors.prolongedIllnessStatus ? "Yes" : "No","Illness Reason", donors.prolongedIllnessReason || "-",],
+        [
+          "Aadhar No",
+          donors.adharCardNo || "-",
+          "Genetic Illness",
+          donors.geneticElements || "-",
+        ],
+        [
+          "Hospital Admission",
+          donors.hospitalAdmissionStatus ? "Yes" : "No",
+          "Hospital Reason",
+          donors.hospitalAdmissionReason || "-",
+        ],
+        [
+          "Surgery",
+          donors.surgeryStatus ? "Yes" : "No",
+          "Surgery Reason",
+          donors.surgeryReason,
+        ],
+        [
+          "Blood Donation",
+          donors.bloodDonationStatus ? "Yes" : "No",
+          "Blood Donation Reason",
+          donors.bloodDonationReason || "-",
+        ],
+        [
+          "Prolonged Illness",
+          donors.prolongedIllnessStatus ? "Yes" : "No",
+          "Illness Reason",
+          donors.prolongedIllnessReason || "-",
+        ],
       ];
 
       createFourColumnTable("Personal Info", personalRows);
@@ -504,10 +587,11 @@ function EditDonar() {
       if (sectionsWithData.family) {
         // Filter and map brothers with meaningful data
         const brothersList = donorFamilyInfos
-          .filter(family => {
+          .filter((family) => {
             return (
               (family.brotherAge && family.brotherAge > 0) ||
-              (family.brotherProfession && family.brotherProfession.trim() !== "") ||
+              (family.brotherProfession &&
+                family.brotherProfession.trim() !== "") ||
               (family.brotherKidsCount && family.brotherKidsCount > 0) ||
               (family.brotherIllness && family.brotherIllness.trim() !== "")
             );
@@ -517,16 +601,18 @@ function EditDonar() {
             age: family.brotherAge || 0,
             profession: family.brotherProfession || "",
             kids: family.brotherKidsCount || 0,
-            illness: family.brotherIllness || ""
+            illness: family.brotherIllness || "",
           }));
 
         // Filter and map sisters with meaningful data
         const sistersList = donorFamilyInfos
-          .filter(family => {
+          .filter((family) => {
             return (
               (family.sisterAge && family.sisterAge > 0) ||
-              (family.sisterProfession && family.sisterProfession.trim() !== "") ||
-              (family.sisterKidsCount && family.sisterKidsCount.toString().trim() !== "") ||
+              (family.sisterProfession &&
+                family.sisterProfession.trim() !== "") ||
+              (family.sisterKidsCount &&
+                family.sisterKidsCount.toString().trim() !== "") ||
               (family.sisterIllness && family.sisterIllness.trim() !== "")
             );
           })
@@ -535,13 +621,13 @@ function EditDonar() {
             age: family.sisterAge || 0,
             profession: family.sisterProfession || "",
             kids: family.sisterKidsCount || "",
-            illness: family.sisterIllness || ""
+            illness: family.sisterIllness || "",
           }));
 
         // Helper function to create 5-column table matching other tables' width
         const createFamilyFiveColumnTable = (title, headers, bodyRows) => {
           // Estimate table height
-          const estimatedTableHeight = ((bodyRows.length + 1) * 6) + 8; // +1 for header
+          const estimatedTableHeight = (bodyRows.length + 1) * 6 + 8; // +1 for header
 
           // Check if we need a new page
           if (needsNewPage(estimatedTableHeight + 10)) {
@@ -560,7 +646,7 @@ function EditDonar() {
           // For 5 columns, we'll use a similar approach to 4-column tables
           // But adjust the column widths to match the overall width
           const colWidths = [
-            availableWidth * 0.10, // Sr No (10%)
+            availableWidth * 0.1, // Sr No (10%)
             availableWidth * 0.15, // Age (15%)
             availableWidth * 0.35, // Profession (35%) - widest
             availableWidth * 0.15, // Kids (15%)
@@ -573,9 +659,9 @@ function EditDonar() {
             body: bodyRows,
             startY: y,
             margin: { left: margin.left, right: margin.right },
-            theme: 'grid',
+            theme: "grid",
             headStyles: {
-              fillColor: false,     // Same gray as other tables
+              fillColor: false, // Same gray as other tables
               textColor: [0, 0, 0],
               fontSize: TABLE_FONT,
               fontStyle: "bold",
@@ -601,27 +687,27 @@ function EditDonar() {
               0: {
                 cellWidth: colWidths[0],
                 halign: "center",
-                fontStyle: "bold" // Sr No in bold to match other tables
+                fontStyle: "bold", // Sr No in bold to match other tables
               },
               1: {
                 cellWidth: colWidths[1],
                 halign: "center",
-                fontStyle: "normal"
+                fontStyle: "normal",
               },
               2: {
                 cellWidth: colWidths[2],
                 halign: "left", // Left align for text fields
-                fontStyle: "normal"
+                fontStyle: "normal",
               },
               3: {
                 cellWidth: colWidths[3],
                 halign: "center",
-                fontStyle: "normal"
+                fontStyle: "normal",
               },
               4: {
                 cellWidth: colWidths[4],
                 halign: "left", // Left align for text fields
-                fontStyle: "normal"
+                fontStyle: "normal",
               },
             },
             styles: {
@@ -631,7 +717,7 @@ function EditDonar() {
               fontSize: TABLE_FONT,
               font: "helvetica",
             },
-            pageBreak: 'auto',
+            pageBreak: "auto",
             tableWidth: availableWidth,
           });
 
@@ -641,30 +727,50 @@ function EditDonar() {
 
         // Show Brothers Table if there are any brothers
         if (brothersList.length > 0) {
-          const brothersHeaders = ["Sr No", "Age", "Profession", "Kids", "Illness"];
-          const brothersRows = brothersList.map(brother => [
+          const brothersHeaders = [
+            "Sr No",
+            "Age",
+            "Profession",
+            "Kids",
+            "Illness",
+          ];
+          const brothersRows = brothersList.map((brother) => [
             brother.srNo.toString(),
             brother.age > 0 ? brother.age.toString() : "-",
             brother.profession.trim() || "-",
             brother.kids > 0 ? brother.kids.toString() : "0",
-            brother.illness.trim() || "-"
+            brother.illness.trim() || "-",
           ]);
 
-          createFamilyFiveColumnTable("Brothers Information", brothersHeaders, brothersRows);
+          createFamilyFiveColumnTable(
+            "Brothers Information",
+            brothersHeaders,
+            brothersRows
+          );
         }
 
         // Show Sisters Table if there are any sisters
         if (sistersList.length > 0) {
-          const sistersHeaders = ["Sr No", "Age", "Profession", "Kids", "Illness"];
-          const sistersRows = sistersList.map(sister => [
+          const sistersHeaders = [
+            "Sr No",
+            "Age",
+            "Profession",
+            "Kids",
+            "Illness",
+          ];
+          const sistersRows = sistersList.map((sister) => [
             sister.srNo.toString(),
             sister.age > 0 ? sister.age.toString() : "-",
             sister.profession.trim() || "-",
             sister.kids.toString().trim() || "-",
-            sister.illness.trim() || "-"
+            sister.illness.trim() || "-",
           ]);
 
-          createFamilyFiveColumnTable("Sisters Information", sistersHeaders, sistersRows);
+          createFamilyFiveColumnTable(
+            "Sisters Information",
+            sistersHeaders,
+            sistersRows
+          );
         }
       }
 
@@ -673,17 +779,49 @@ function EditDonar() {
       // =====================================================
       if (sectionsWithData.blood) {
         const bloodRows = [
-          ["Report Date & Time", donorBloodReport.reportDateTime ? new Date(donorBloodReport.reportDateTime).toLocaleString() : "-", "Blood Group", donorBloodReport.bloodGroup || "-"],
-          ["HIV I & II", donorBloodReport.hiv || "-", "HBsAg", donorBloodReport.hbsag || "-"],
-          ["VDRL", donorBloodReport.vdrl || "-", "HCV", donorBloodReport.hcv || "-"],
-          ["HB Electrophoresis", donorBloodReport.hbelectrophoresis || "-", "BSL", donorBloodReport.bsl || "-"],
-          ["SR. Creatinine", donorBloodReport.srcreatinine || "-", "CMV", donorBloodReport.cmv || "-"],
-
+          [
+            "Report Date & Time",
+            donorBloodReport.reportDateTime
+              ? new Date(donorBloodReport.reportDateTime).toLocaleString()
+              : "-",
+            "Blood Group",
+            donorBloodReport.bloodGroup || "-",
+          ],
+          [
+            "HIV I & II",
+            donorBloodReport.hiv || "-",
+            "HBsAg",
+            donorBloodReport.hbsag || "-",
+          ],
+          [
+            "VDRL",
+            donorBloodReport.vdrl || "-",
+            "HCV",
+            donorBloodReport.hcv || "-",
+          ],
+          [
+            "HB Electrophoresis",
+            donorBloodReport.hbelectrophoresis || "-",
+            "BSL",
+            donorBloodReport.bsl || "-",
+          ],
+          [
+            "SR. Creatinine",
+            donorBloodReport.srcreatinine || "-",
+            "CMV",
+            donorBloodReport.cmv || "-",
+          ],
         ];
 
         // Filter out completely empty rows
-        const filteredBloodRows = bloodRows.filter(row =>
-          !(row[1] === "-" && row[3] === "-" && row[0] === "Report Type" && row[2] === "Stage")
+        const filteredBloodRows = bloodRows.filter(
+          (row) =>
+            !(
+              row[1] === "-" &&
+              row[3] === "-" &&
+              row[0] === "Report Type" &&
+              row[2] === "Stage"
+            )
         );
 
         if (filteredBloodRows.length > 0) {
@@ -696,17 +834,49 @@ function EditDonar() {
       // =====================================================
       if (sectionsWithData.semen) {
         const semenRows = [
-          ["Date & Time", semenReport.dateAndTime ? new Date(semenReport.dateAndTime).toLocaleString() : "-", "Color", semenReport.media || "-"],
-          ["Volume", semenReport.volumne ? `${semenReport.volumne} ml` : "-", "Concentration", semenReport.million ? `${semenReport.million} Million/ML` : "-"],
-          ["Motility A", semenReport.progressiveMotilityA ? `${semenReport.progressiveMotilityA}%` : "-", "Motility B", semenReport.progressiveMotilityB ? `${semenReport.progressiveMotilityB}%` : "-"],
-          ["Motility C", semenReport.progressiveMotilityC ? `${semenReport.progressiveMotilityC}%` : "-", "Morphology", semenReport.morphology || "-"],
-          ["Abnormality", semenReport.abnormality || "-", "MSC", semenReport.msc],
-
+          [
+            "Date & Time",
+            semenReport.dateAndTime
+              ? new Date(semenReport.dateAndTime).toLocaleString()
+              : "-",
+            "Color",
+            semenReport.media || "-",
+          ],
+          [
+            "Volume",
+            semenReport.volumne ? `${semenReport.volumne} ml` : "-",
+            "Concentration",
+            semenReport.million ? `${semenReport.million} Million/ML` : "-",
+          ],
+          [
+            "Motility A",
+            semenReport.progressiveMotilityA
+              ? `${semenReport.progressiveMotilityA}%`
+              : "-",
+            "Motility B",
+            semenReport.progressiveMotilityB
+              ? `${semenReport.progressiveMotilityB}%`
+              : "-",
+          ],
+          [
+            "Motility C",
+            semenReport.progressiveMotilityC
+              ? `${semenReport.progressiveMotilityC}%`
+              : "-",
+            "Morphology",
+            semenReport.morphology || "-",
+          ],
+          [
+            "Abnormality",
+            semenReport.abnormality || "-",
+            "MSC",
+            semenReport.msc,
+          ],
         ];
 
         // Filter out completely empty rows
-        const filteredSemenRows = semenRows.filter(row =>
-          !(row[1] === "-" && row[3] === "-")
+        const filteredSemenRows = semenRows.filter(
+          (row) => !(row[1] === "-" && row[3] === "-")
         );
 
         if (filteredSemenRows.length > 0) {
@@ -719,14 +889,24 @@ function EditDonar() {
       // =====================================================
       if (sectionsWithData.sample) {
         const sampleRows = [
-          ["Tank No", sampleReport.tankNo || "-", "Cane No", sampleReport.caneNo || "-"],
-          ["Canister No", sampleReport.canisterNo || "-", "No. of Vials", sampleReport.numberOfVials || "0"],
+          [
+            "Tank No",
+            sampleReport.tankNo || "-",
+            "Cane No",
+            sampleReport.caneNo || "-",
+          ],
+          [
+            "Canister No",
+            sampleReport.canisterNo || "-",
+            "No. of Vials",
+            sampleReport.numberOfVials || "0",
+          ],
           ["Remarks", sampleReport.remarks || "-"],
         ];
 
         // Filter out completely empty rows
-        const filteredSampleRows = sampleRows.filter(row =>
-          !(row[1] === "-" && row[3] === "-")
+        const filteredSampleRows = sampleRows.filter(
+          (row) => !(row[1] === "-" && row[3] === "-")
         );
 
         if (filteredSampleRows.length > 0) {
@@ -756,13 +936,13 @@ function EditDonar() {
       if (sectionsWithData.semen) includedSections.push("Semen");
       if (sectionsWithData.sample) includedSections.push("Sample");
 
-
-
       // =====================================================
       // SAVE PDF
       // =====================================================
       const date = new Date().toLocaleDateString("en-GB").replace(/\//g, "-");
-      const fileName = `Donor_Profile_${donors.uin || donors.name || "unknown"}_${date}.pdf`;
+      const fileName = `Donor_Profile_${
+        donors.uin || donors.name || "unknown"
+      }_${date}.pdf`;
       doc.save(fileName);
 
       toast.success("Donor profile PDF generated successfully!");
@@ -1014,27 +1194,27 @@ function EditDonar() {
             bList.length
               ? bList
               : [
-                {
-                  age: "",
-                  profession: "",
-                  kidsCount: "",
-                  illness: "",
-                  donorFamailyId: "",
-                },
-              ]
+                  {
+                    age: "",
+                    profession: "",
+                    kidsCount: "",
+                    illness: "",
+                    donorFamailyId: "",
+                  },
+                ]
           );
           setSisters(
             sList.length
               ? sList
               : [
-                {
-                  age: "",
-                  profession: "",
-                  kidsCount: "",
-                  illness: "",
-                  donorFamailyId: "",
-                },
-              ]
+                  {
+                    age: "",
+                    profession: "",
+                    kidsCount: "",
+                    illness: "",
+                    donorFamailyId: "",
+                  },
+                ]
           );
         } else if (activeTab === "blood") {
           const res = await axiosInstance.get(`getDonorBloodReport/${donorId}`);
@@ -2233,10 +2413,10 @@ function EditDonar() {
                   report.attachmentFileType
                 )
                   ? () =>
-                    previewFile(
-                      report.attachmentFile,
-                      report.attachmentFileType
-                    )
+                      previewFile(
+                        report.attachmentFile,
+                        report.attachmentFileType
+                      )
                   : undefined
               }
               background="white"
@@ -2439,10 +2619,10 @@ function EditDonar() {
                     report.attachmentFileType
                   )
                     ? () =>
-                      previewFile(
-                        report.attachmentFile,
-                        report.attachmentFileType
-                      )
+                        previewFile(
+                          report.attachmentFile,
+                          report.attachmentFileType
+                        )
                     : undefined
                 }
               />
@@ -2782,10 +2962,11 @@ function EditDonar() {
                       <button
                         type="button"
                         onClick={() => setActiveTab(tab.id)}
-                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${activeTab === tab.id
-                          ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
-                          : "hover:text-gray-700 hover:bg-gray-50"
-                          }`}
+                        className={`inline-block p-4 rounded-t-lg transition-colors duration-200 ${
+                          activeTab === tab.id
+                            ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
+                            : "hover:text-gray-700 hover:bg-gray-50"
+                        }`}
                       >
                         {tab.label}
                       </button>

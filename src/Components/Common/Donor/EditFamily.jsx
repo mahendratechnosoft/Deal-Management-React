@@ -241,21 +241,25 @@ function EditFamily() {
       doc.setFontSize(NORMAL);
       doc.setFont("helvetica", "normal");
       doc.text(
-        "Amega, S.No. 1/8, Plot 4, Dawa Chowk, Pune - 411043",
+        "Ashwini Hospital Campus, Balewadi, Pune, 411045",
         pageWidth / 2,
         y,
         { align: "center" }
       );
-      y += 3;
-
+      y += 4;
       doc.text(
         "Phone: 9975035364 | Web: www.punespermbank.com",
         pageWidth / 2,
         y,
-        {
-          align: "center",
-        }
+        { align: "center" }
       );
+      y += 4;
+
+      doc.setFontSize(NORMAL);
+      doc.setFont("helvetica", "bold");
+      doc.text("Reg No : MH/AB/2022/10581/PUNE/13", pageWidth / 2, y, {
+        align: "center",
+      });
       y += 5;
 
       doc.setDrawColor(0, 0, 0);
@@ -421,6 +425,7 @@ function EditFamily() {
       const declarationLines = [
         "All above mentioned information is correct & true to our knowledge.",
         "Aforementioned specifications help to screen the target Donar sample.",
+        "We understand that despite of the above specifications, phenotypic & genotypic differences might occur & which is inevitable.",
       ];
 
       declarationLines.forEach((line, index) => {
