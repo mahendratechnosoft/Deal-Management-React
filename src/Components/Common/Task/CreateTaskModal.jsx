@@ -11,7 +11,9 @@ import {
   formatInvoiceNumber,
   formatProposalNumber,
   formatDate,
-  formatCurrency
+  formatCurrency,
+  formatProformaNumber
+
 } from '../../BaseComponet/UtilFunctions';
 
 const formatFileSize = (base64String) => {
@@ -166,6 +168,9 @@ function CreateTaskModal({ onClose, onSuccess }) {
   useEffect(() => {
     if (formData.relatedTo) {
       fetchRelatedData();
+    } else {
+      // If relatedTo is cleared, also clear related data
+      setRelatedData([]);
     }
   }, [formData.relatedTo]);
 
@@ -222,7 +227,7 @@ function CreateTaskModal({ onClose, onSuccess }) {
             case 'proforma':
               return {
                 id: item.proformaInvoiceId || item.id,
-                name: formatInvoiceNumber(item.proformaInvoiceNumber) ||
+                name: formatProformaNumber(item.proformaInvoiceNumber) ||
                   `Proforma #${item.proformaInvoiceId || item.id}`,
                 originalData: item
               };
@@ -580,18 +585,22 @@ function CreateTaskModal({ onClose, onSuccess }) {
         processedValue = value;
     }
 
+    // Store previous relatedTo value
+    const prevRelatedTo = formData.relatedTo;
+
     setFormData(prev => ({
       ...prev,
       [name]: processedValue
     }));
 
-    if (name === 'relatedTo') {
+    // If relatedTo changed, clear dependent fields and data
+    if (name === 'relatedTo' && processedValue !== prevRelatedTo) {
       setFormData(prev => ({
         ...prev,
         relatedId: '',
         relatedName: ''
       }));
-      setRelatedData([]);
+      setRelatedData([]); // Clear the options in dependent dropdown
     }
 
     if (errors[name]) {
@@ -601,7 +610,6 @@ function CreateTaskModal({ onClose, onSuccess }) {
       }));
     }
   };
-
   const handleAssigneesChange = (selectedIds) => {
     setFormData(prev => ({
       ...prev,
@@ -918,9 +926,10 @@ function CreateTaskModal({ onClose, onSuccess }) {
               {/* Related Item Selection */}
               {formData.relatedTo && (
                 <GlobalSelectField
+                  key={`related-${formData.relatedTo}`} // Add this key to force re-render
                   label={`Select ${formData.relatedTo.charAt(0).toUpperCase() + formData.relatedTo.slice(1)}`}
                   name="relatedId"
-                  value={formData.relatedId}
+                  value={formData.relatedId || ''}
                   onChange={(e) => {
                     const selected = relatedData.find(item => item.id === e.target.value);
                     setFormData(prev => ({

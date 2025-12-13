@@ -5,6 +5,12 @@ export const formatInvoiceNumber = (number) => {
   return `INV-${numberString.padStart(6, "0")}`;
 };
 
+export const formatProformaNumber = (number) => {
+  const numberString = String(number || 0);
+  return `P_INV-${numberString.padStart(6, "0")}`;
+};
+
+
 export const formatCurrency = (amount, currencyCode) => {
   const value = Number(amount) || 0;
   const code = currencyCode || "INR";
