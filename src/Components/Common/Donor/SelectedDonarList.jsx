@@ -509,9 +509,6 @@ function SelectedDonarList() {
                                     Quarantined
                                   </option>
                                   <option value="Qualified">Qualified</option>
-                                  <option value="Not Shortlisted">
-                                    Delete
-                                  </option>
                                 </>
                               )}
 
