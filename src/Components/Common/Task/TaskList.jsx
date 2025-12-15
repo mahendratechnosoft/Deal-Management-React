@@ -12,8 +12,6 @@ import EditTaskModal from "./EditTaskModal.jsx";
 import { ProgressCard } from "../../BaseComponet/FinancialDashboardComponents.jsx";
 import TasklistKanBan from "./TasklistKanBan.jsx";
 
-
-
 function TaskList() {
   const navigate = useNavigate();
   const { LayoutComponent, role } = useLayout();
@@ -53,7 +51,6 @@ function TaskList() {
   const [showViewDropdown, setShowViewDropdown] = useState(false);
 
   const InlineSpinner = ({ label = "Loading..." }) => (
-
     <div className="flex items-center gap-3">
       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
       <span className="text-sm text-gray-600">{label}</span>
@@ -121,8 +118,8 @@ function TaskList() {
             priority: (task.priority || "").toLowerCase(),
             assignees: task.assignedEmployees
               ? task.assignedEmployees.map(
-                (emp) => emp.name || emp.employeeName || "Unnamed"
-              )
+                  (emp) => emp.name || emp.employeeName || "Unnamed"
+                )
               : [],
             startDate: task.startDate,
             dueDate: task.endDate,
@@ -144,7 +141,7 @@ function TaskList() {
 
           if (isInfiniteScroll) {
             // For infinite scroll, append tasks
-            setTasks(prevTasks => [...prevTasks, ...transformedTasks]);
+            setTasks((prevTasks) => [...prevTasks, ...transformedTasks]);
           } else {
             // For initial load, replace tasks
             setTasks(transformedTasks);
@@ -181,8 +178,6 @@ function TaskList() {
     [pageSize, listType, viewMode, statusFilter]
   );
 
-
-
   useEffect(() => {
     fetchTeamMembers();
   }, []);
@@ -210,10 +205,9 @@ function TaskList() {
     }
 
     // Trigger Kanban refresh when task counts change
-    console.log('Task counts updated, refreshing Kanban');
+    console.log("Task counts updated, refreshing Kanban");
     forceKanbanRefresh();
   }, [taskCounts]);
-
 
   const fetchTaskCounts = useCallback(async () => {
     setLoadingCounts(true);
@@ -308,52 +302,26 @@ function TaskList() {
   // Add this function to update counts optimistically
   // Update the updateCountsOnCreate function to use NOT_STARTED as default:
   const updateCountsOnCreate = (newTaskStatus = "NOT_STARTED") => {
-    setTaskCounts(prevCounts => ({
+    setTaskCounts((prevCounts) => ({
       ...prevCounts,
       TOTAL: (prevCounts.TOTAL || 0) + 1,
       [newTaskStatus]: (prevCounts[newTaskStatus] || 0) + 1,
     }));
   };
 
-  // Update the handleCreateSuccess function
-  const handleCreateSuccess = (newTaskData = null) => {
-  console.log('Task created successfully!', newTaskData);
+  const handleCreateSuccess = () => {
+    setShowCreateModal(false);
+    fetchTasks(
+      currentPage,
+      searchTerm,
+      "NOT_STARTED",
+      priorityFilter,
+      assigneeFilter,
+      listType
+    );
+    fetchTaskCounts();
+  };
 
-  setShowCreateModal(false);
-  toast.success("Task created successfully!");
-
-  // Fetch fresh counts from server
-  fetchTaskCounts();
-
-  // Create tasks with NOT_STARTED status
-  const newTaskStatus = "NOT_STARTED";
-  
-  // Update counts optimistically for NOT_STARTED
-  setTaskCounts(prevCounts => ({
-    ...prevCounts,
-    TOTAL: (prevCounts.TOTAL || 0) + 1,
-    [newTaskStatus]: (prevCounts[newTaskStatus] || 0) + 1,
-  }));
-
-  // TEMPORARILY SWITCH TO "all" FILTER SO USER CAN SEE THE NEW TASK
-  setStatusFilter("all");
-  
-  // Set current page to 0 to show first page
-  setCurrentPage(0);
-
-  setNewTaskCreated(true);
-  
-  // Refresh tasks with "all" filter so new NOT_STARTED task appears
-  fetchTasks(
-    0, // Start from page 0
-    searchTerm,
-    "all", // Force "all" filter to show all tasks including new NOT_STARTED one
-    priorityFilter,
-    assigneeFilter
-  );
-  
-  setTimeout(() => setNewTaskCreated(false), 2000);
-};
   // Edit Modal handlers
   const handleEdit = (taskId) => {
     setSelectedTaskId(taskId);
@@ -373,15 +341,19 @@ function TaskList() {
     // Update counts optimistically only if we have status info
     if (updatedTaskData && updatedTaskData.status) {
       // Find the old task to get the previous status
-      const oldTask = tasks.find(t => t.taskId === updatedTaskData.taskId);
+      const oldTask = tasks.find((t) => t.taskId === updatedTaskData.taskId);
 
       if (oldTask && oldTask.status !== updatedTaskData.status) {
-        setTaskCounts(prevCounts => {
+        setTaskCounts((prevCounts) => {
           const newCounts = { ...prevCounts };
 
           // Ensure we don't go below 0
-          newCounts[oldTask.status] = Math.max(0, (prevCounts[oldTask.status] || 0) - 1);
-          newCounts[updatedTaskData.status] = (prevCounts[updatedTaskData.status] || 0) + 1;
+          newCounts[oldTask.status] = Math.max(
+            0,
+            (prevCounts[oldTask.status] || 0) - 1
+          );
+          newCounts[updatedTaskData.status] =
+            (prevCounts[updatedTaskData.status] || 0) + 1;
 
           return newCounts;
         });
@@ -410,10 +382,10 @@ function TaskList() {
   // Create a function to force Kanban refresh
   // In TaskList.js, make sure forceKanbanRefresh actually increments
   const forceKanbanRefresh = () => {
-    console.log('Forcing Kanban refresh, current trigger:', taskUpdateTrigger);
-    setTaskUpdateTrigger(prev => {
+    console.log("Forcing Kanban refresh, current trigger:", taskUpdateTrigger);
+    setTaskUpdateTrigger((prev) => {
       const newVal = prev + 1;
-      console.log('Setting new trigger value:', newVal);
+      console.log("Setting new trigger value:", newVal);
       return newVal;
     });
   };
@@ -431,41 +403,39 @@ function TaskList() {
   const handleDelete = async (taskId, taskName) => {
     try {
       const result = await showDeleteConfirmation(taskName || "this task");
+      if (!result.isConfirmed) return;
 
-      if (result.isConfirmed) {
-        const deletedTask = tasks.find(t => t.taskId === taskId);
-        if (!deletedTask) return;
+      await axiosInstance.delete(`deleteTask/${taskId}`);
+      setTasks((prev) => prev.filter((t) => t.taskId !== taskId));
+      setTaskCounts((prev) => ({
+        ...prev,
+        TOTAL: Math.max(0, prev.TOTAL - 1),
+        [tasks.find((t) => t.taskId === taskId)?.status]: Math.max(
+          0,
+          (prev[tasks.find((t) => t.taskId === taskId)?.status] || 0) - 1
+        ),
+      }));
 
-        // 🔥 Update counts locally in PARENT
-        setTaskCounts(prev => ({
-          ...prev,
-          TOTAL: Math.max(0, prev.TOTAL - 1),
-          [deletedTask.status]: Math.max(
-            0,
-            (prev[deletedTask.status] || 0) - 1
-          )
-        }));
-
-        await axiosInstance.delete(`deleteTask/${taskId}`);
-        if (viewMode === "kanban") {
-          forceKanbanRefresh();
-        }
-        toast.success("Task deleted successfully!");
+      if (viewMode === "kanban") {
+        forceKanbanRefresh();
       }
+
+      toast.success("Task deleted successfully!");
     } catch (error) {
-      console.error("Error deleting task:", error);
-      toast.error("Failed to delete task. Please try again.");
-      handleRefresh();
+      const message = error?.response?.data;
+      ("You are not allowed to delete this task.");
+      toast.error(message);
     }
   };
 
-
   const handleStatusChange = async (taskId, newStatus) => {
-    console.log(`handleStatusChange called: taskId=${taskId}, newStatus=${newStatus}`);
+    console.log(
+      `handleStatusChange called: taskId=${taskId}, newStatus=${newStatus}`
+    );
 
     try {
       // Find the current task to get old status
-      const task = tasks.find(t => t.taskId === taskId);
+      const task = tasks.find((t) => t.taskId === taskId);
       const oldStatus = task?.status;
 
       // Only proceed if status actually changed
@@ -474,15 +444,15 @@ function TaskList() {
       }
 
       // Update the tasks state first (optimistic update)
-      setTasks(prevTasks =>
-        prevTasks.map(task =>
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
           task.taskId === taskId ? { ...task, status: newStatus } : task
         )
       );
 
       // Update task counts - but only if this is NOT coming from an edit modal
       if (oldStatus && oldStatus !== newStatus) {
-        setTaskCounts(prevCounts => {
+        setTaskCounts((prevCounts) => {
           const newCounts = { ...prevCounts };
           newCounts[oldStatus] = Math.max(0, (prevCounts[oldStatus] || 0) - 1);
           newCounts[newStatus] = (prevCounts[newStatus] || 0) + 1;
@@ -509,7 +479,6 @@ function TaskList() {
           assigneeFilter
         );
       }, 300); // Small delay to ensure server has processed the update
-
     } catch (error) {
       console.error("Error updating status:", error);
       toast.error("Failed to update status");
@@ -518,8 +487,6 @@ function TaskList() {
       handleRefresh();
     }
   };
-
-
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -553,8 +520,6 @@ function TaskList() {
     }
   };
 
-
-
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -564,24 +529,23 @@ function TaskList() {
     });
   };
 
-
   const handleCardClick = (status) => {
     setStatusFilter(status);
     setCurrentPage(0);
   };
 
   const handleAssigneeUpdate = (taskId, updatedAssigneeIds) => {
-    setTasks(prevTasks =>
-      prevTasks.map(task => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) => {
         if (task.taskId === taskId) {
           // Get assignee names from teamMembers
           const updatedAssigneeNames = teamMembers
-            .filter(member => updatedAssigneeIds.includes(member.value))
-            .map(member => member.label);
+            .filter((member) => updatedAssigneeIds.includes(member.value))
+            .map((member) => member.label);
 
           return {
             ...task,
-            assignees: updatedAssigneeNames
+            assignees: updatedAssigneeNames,
           };
         }
         return task;
@@ -592,16 +556,19 @@ function TaskList() {
     // Similar logic for followers if needed
   };
 
- const getCardActiveStyle = (cardStatus) => {
-  const baseStyle =
-    "rounded-lg transition-all duration-200 cursor-pointer overflow-hidden";
-  
-  // Highlight "Not Started" card when filter is "all"
-  if (statusFilter === cardStatus || (statusFilter === "all" && cardStatus === "NOT_STARTED")) {
-    return `${baseStyle} ring-2 ring-blue-600 ring-inset shadow-lg shadow-blue-100/50 scale-105`;
-  }
-  return `${baseStyle} opacity-80 hover:opacity-100`;
-};
+  const getCardActiveStyle = (cardStatus) => {
+    const baseStyle =
+      "rounded-lg transition-all duration-200 cursor-pointer overflow-hidden";
+
+    // Highlight "Not Started" card when filter is "all"
+    if (
+      statusFilter === cardStatus ||
+      (statusFilter === "all" && cardStatus === "NOT_STARTED")
+    ) {
+      return `${baseStyle} ring-2 ring-blue-600 ring-inset shadow-lg shadow-blue-100/50 scale-105`;
+    }
+    return `${baseStyle} opacity-80 hover:opacity-100`;
+  };
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
     if (mode === "table") {
@@ -736,10 +703,11 @@ function TaskList() {
                     <div className="py-1">
                       <button
                         onClick={() => handleViewModeChange("table")}
-                        className={`flex items-center gap-2 w-full px-4 py-2.5 text-sm ${viewMode === "table"
-                          ? "bg-blue-50 text-blue-600"
-                          : "text-gray-700 hover:bg-gray-50"
-                          }`}
+                        className={`flex items-center gap-2 w-full px-4 py-2.5 text-sm ${
+                          viewMode === "table"
+                            ? "bg-blue-50 text-blue-600"
+                            : "text-gray-700 hover:bg-gray-50"
+                        }`}
                       >
                         <svg
                           className="w-4 h-4"
@@ -758,10 +726,11 @@ function TaskList() {
                       </button>
                       <button
                         onClick={() => handleViewModeChange("kanban")}
-                        className={`flex items-center gap-2 w-full px-4 py-2.5 text-sm ${viewMode === "kanban"
-                          ? "bg-blue-50 text-blue-600"
-                          : "text-gray-700 hover:bg-gray-50"
-                          }`}
+                        className={`flex items-center gap-2 w-full px-4 py-2.5 text-sm ${
+                          viewMode === "kanban"
+                            ? "bg-blue-50 text-blue-600"
+                            : "text-gray-700 hover:bg-gray-50"
+                        }`}
                       >
                         <svg
                           className="w-4 h-4"
@@ -784,25 +753,27 @@ function TaskList() {
               </div>
 
               {/* Create Task Button */}
-              <button
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
-                onClick={handleCreateTask}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              {hasPermission("task", "Create") && (
+                <button
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
+                  onClick={handleCreateTask}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Create Task
-              </button>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Create Task
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -814,15 +785,17 @@ function TaskList() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2 ms-auto">
                     <span className="text-sm text-gray-600 font-medium">
-                      Switch to {listType === "FOLLOWER" ? "Assigned" : "Follower"}
+                      Switch to{" "}
+                      {listType === "FOLLOWER" ? "Assigned" : "Follower"}
                       Task
                     </span>
                     <button
                       type="button"
-                      className={`${listType === "FOLLOWER"
-                        ? "bg-gradient-to-r from-blue-600 to-blue-700 border-[#6366F1]"
-                        : "bg-gray-700 border-gray-600"
-                        } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 ease-in-out focus:outline-none`}
+                      className={`${
+                        listType === "FOLLOWER"
+                          ? "bg-gradient-to-r from-blue-600 to-blue-700 border-[#6366F1]"
+                          : "bg-gray-700 border-gray-600"
+                      } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 ease-in-out focus:outline-none`}
                       role="switch"
                       onClick={() =>
                         setListType(
@@ -832,10 +805,11 @@ function TaskList() {
                     >
                       <span
                         aria-hidden="true"
-                        className={`${listType === "FOLLOWER"
-                          ? "translate-x-5"
-                          : "translate-x-0"
-                          } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                        className={`${
+                          listType === "FOLLOWER"
+                            ? "translate-x-5"
+                            : "translate-x-0"
+                        } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
                       />
                     </button>
                   </div>
@@ -951,17 +925,19 @@ function TaskList() {
                   ) : (
                     <tbody className="bg-white overflow-x-auto">
                       {tasks.map((task) => {
-                        const isOverdue = task.dueDate &&
+                        const isOverdue =
+                          task.dueDate &&
                           new Date(task.dueDate) < new Date() &&
                           task.status !== "COMPLETE";
 
                         return (
                           <tr
                             key={task.taskId}
-                            className={`hover:bg-gray-50 transition-colors duration-150 group ${isOverdue
-                              ? "border-l-3 border-l-red-600 !border-l-red-600 shadow-[inset_4px_0_0_0_rgb(220,38,38)]"
-                              : ""
-                              }`}
+                            className={`hover:bg-gray-50 transition-colors duration-150 group ${
+                              isOverdue
+                                ? "border-l-3 border-l-red-600 !border-l-red-600 shadow-[inset_4px_0_0_0_rgb(220,38,38)]"
+                                : ""
+                            }`}
                           >
                             {/* Task Details */}
                             <td className="px-4 py-3">
@@ -975,47 +951,54 @@ function TaskList() {
 
                                 <div className="mt-2">
                                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                    <button
-                                      onClick={() => handleEdit(task.taskId)}
-                                      className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                                      title="Edit Task"
-                                    >
-                                      <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                                    {hasPermission("task", "Edit") && (
+                                      <button
+                                        onClick={() => handleEdit(task.taskId)}
+                                        className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                                        title="Edit Task"
                                       >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                        />
-                                      </svg>
-                                    </button>
+                                        <svg
+                                          className="w-4 h-4"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                          />
+                                        </svg>
+                                      </button>
+                                    )}
 
-                                    <button
-                                      onClick={() =>
-                                        handleDelete(task.taskId, task.subject)
-                                      }
-                                      className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                                      title="Delete Task"
-                                    >
-                                      <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                                    {hasPermission("task", "Delete") && (
+                                      <button
+                                        onClick={() =>
+                                          handleDelete(
+                                            task.taskId,
+                                            task.subject
+                                          )
+                                        }
+                                        className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                                        title="Delete Task"
                                       >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                        />
-                                      </svg>
-                                    </button>
+                                        <svg
+                                          className="w-4 h-4"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                          />
+                                        </svg>
+                                      </button>
+                                    )}
 
                                     <button
                                       onClick={() => handlePreview(task.taskId)}
@@ -1052,7 +1035,10 @@ function TaskList() {
                               <select
                                 value={task.status}
                                 onChange={(e) =>
-                                  handleStatusChange(task.taskId, e.target.value)
+                                  handleStatusChange(
+                                    task.taskId,
+                                    e.target.value
+                                  )
                                 }
                                 className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusColor(
                                   task.status
@@ -1077,7 +1063,7 @@ function TaskList() {
                               >
                                 {task.priority
                                   ? task.priority.charAt(0).toUpperCase() +
-                                  task.priority.slice(1)
+                                    task.priority.slice(1)
                                   : "Medium"}
                               </span>
                             </td>
@@ -1093,10 +1079,14 @@ function TaskList() {
                                         <div
                                           key={index}
                                           className="relative group"
-                                          title={`${assignee}${index === 2 && task.assignees.length > 3
-                                            ? ` +${task.assignees.length - 3} more`
-                                            : ""
-                                            }`}
+                                          title={`${assignee}${
+                                            index === 2 &&
+                                            task.assignees.length > 3
+                                              ? ` +${
+                                                  task.assignees.length - 3
+                                                } more`
+                                              : ""
+                                          }`}
                                         >
                                           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-semibold border-2 border-white shadow-sm">
                                             {assignee.charAt(0).toUpperCase()}
@@ -1126,22 +1116,29 @@ function TaskList() {
                             <td className="px-4 py-3 whitespace-nowrap text-sm">
                               <div className="flex flex-col gap-1">
                                 <div className="flex items-center gap-1">
-                                  <span className="text-gray-500 text-xs">Start:</span>
+                                  <span className="text-gray-500 text-xs">
+                                    Start:
+                                  </span>
                                   <span className="font-medium">
                                     {formatDate(task.startDate)}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                  <span className="text-gray-500 text-xs">Due:</span>
+                                  <span className="text-gray-500 text-xs">
+                                    Due:
+                                  </span>
                                   <span
-                                    className={`font-medium ${task.dueDate &&
+                                    className={`font-medium ${
+                                      task.dueDate &&
                                       new Date(task.dueDate) < new Date() &&
                                       task.status !== "COMPLETE"
-                                      ? "text-red-600 font-semibold"
-                                      : ""
-                                      }`}
+                                        ? "text-red-600 font-semibold"
+                                        : ""
+                                    }`}
                                   >
-                                    {task.dueDate ? formatDate(task.dueDate) : "N/A"}
+                                    {task.dueDate
+                                      ? formatDate(task.dueDate)
+                                      : "N/A"}
                                   </span>
                                 </div>
                               </div>
@@ -1199,8 +1196,8 @@ function TaskList() {
                   </h3>
                   <p className="text-gray-600 mb-4">
                     {searchTerm ||
-                      statusFilter !== "all" ||
-                      priorityFilter !== "all"
+                    statusFilter !== "all" ||
+                    priorityFilter !== "all"
                       ? "Try adjusting your search or filter criteria."
                       : "Get started by creating your first task."}
                   </p>
@@ -1252,7 +1249,6 @@ function TaskList() {
               refreshTasks={handleRefresh}
               searchTerm={searchTerm}
               listType={listType}
-
               initialTotalCounts={taskCounts}
               refreshKanban={forceKanbanRefresh} // Add this prop
               taskUpdateTrigger={taskUpdateTrigger}

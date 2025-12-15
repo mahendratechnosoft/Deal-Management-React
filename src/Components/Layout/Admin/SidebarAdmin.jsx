@@ -26,7 +26,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
     Donor: "Donor",
     FamilyList: "FamilyList",
     Matchingdonor: "Matchingdonor",
-    TaskList: "task",
+    Tasks: "task",
   };
 
   const navigationItems = [
@@ -177,7 +177,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
       color: "from-teal-600 to-cyan-500",
     },
     {
-      name: "TaskList",
+      name: "Tasks",
       path: "/Admin/TaskList",
       icon: (
         <svg

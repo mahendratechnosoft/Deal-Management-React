@@ -10,7 +10,7 @@ import {
   FormInput,
   FormPhoneInputFloating,
   FormSelect,
-  FormTextarea
+  FormTextarea,
 } from "../../BaseComponet/CustomeFormComponents";
 import { showConfirmDialog } from "../../BaseComponet/alertUtils";
 
@@ -25,7 +25,7 @@ function EditLead() {
 
   const [timestamps, setTimestamps] = useState({
     createdDate: "",
-    updatedDate: ""
+    updatedDate: "",
   });
 
   const [formData, setFormData] = useState({
@@ -109,7 +109,7 @@ function EditLead() {
         // Store timestamps
         setTimestamps({
           createdDate: leadData.createdDate,
-          updatedDate: leadData.updatedDate
+          updatedDate: leadData.updatedDate,
         });
 
         if (leadData.employeeId) {
@@ -136,9 +136,7 @@ function EditLead() {
           city: leadData.city || "",
           zipCode: leadData.zipCode || "",
           description: leadData.description || "",
-          followUp: leadData.followUp
-            ? leadData.followUp.substring(0, 16)
-            : "",
+          followUp: leadData.followUp ? leadData.followUp.substring(0, 16) : "",
         };
 
         setFormData(mappedFormData);
@@ -329,9 +327,9 @@ function EditLead() {
 
   // Handle phone change
   const handlePhoneChange = (fieldName, phone) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [fieldName]: phone
+      [fieldName]: phone,
     }));
   };
 
@@ -414,7 +412,7 @@ function EditLead() {
         street: formData.street,
         country: formData.country
           ? dropdownData.countries.find((c) => c.value === formData.country)
-            ?.label
+              ?.label
           : "",
         state: formData.state
           ? dropdownData.states.find((s) => s.value === formData.state)?.label
@@ -426,7 +424,7 @@ function EditLead() {
           ? formData.followUp + ":00.000000000"
           : null,
         createdDate: timestamps.createdDate,
-        updatedDate: timestamps.updatedDate
+        updatedDate: timestamps.updatedDate,
       };
 
       if (role === "ROLE_EMPLOYEE" && employeeId) {
@@ -453,12 +451,12 @@ function EditLead() {
     }
   };
 
- const handleCancel = async () => {
-  const result = await showConfirmDialog(
-    "Are you sure you want to cancel? Any unsaved changes will be lost."
-  );
-  
-  if (result.isConfirmed) {
+  const handleCancel = async () => {
+    const result = await showConfirmDialog(
+      "Are you sure you want to cancel? Any unsaved changes will be lost."
+    );
+
+    if (result.isConfirmed) {
       if (role === "ROLE_ADMIN") {
         navigate("/Admin/LeadList");
       } else if (role === "ROLE_EMPLOYEE") {
@@ -627,7 +625,6 @@ function EditLead() {
                   )}
                 </button>
               )}
-        
             </div>
           </div>
         </div>
@@ -796,6 +793,8 @@ function EditLead() {
                       onChange={handleChange}
                       rows={2}
                       background="white"
+                      maxLength={5000}
+                      showCount={true}
                     />
                   </div>
                 </div>

@@ -1,23 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
-import axiosInstance from '../../BaseComponet/axiosInstance';
+import React, { useState, useEffect, useRef } from "react";
+import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import {
   GlobalInputField,
   GlobalTextAreaField,
   GlobalSelectField,
-  CustomMultiSelectWithExclusion
-} from '../../BaseComponet/CustomerFormInputs';
+  CustomMultiSelectWithExclusion,
+} from "../../BaseComponet/CustomerFormInputs";
 import {
   formatInvoiceNumber,
   formatProposalNumber,
   formatDate,
   formatCurrency,
-  formatProformaNumber
-
-} from '../../BaseComponet/UtilFunctions';
+  formatProformaNumber,
+} from "../../BaseComponet/UtilFunctions";
 
 const formatFileSize = (base64String) => {
-  if (!base64String) return '0 KB';
+  if (!base64String) return "0 KB";
   const sizeInBytes = (base64String.length * 3) / 4;
 
   if (sizeInBytes < 1024) return `${sizeInBytes} B`;
@@ -26,54 +25,90 @@ const formatFileSize = (base64String) => {
 };
 
 const getFileIconComponent = (fileName, contentType) => {
-  const extension = fileName.split('.').pop().toLowerCase();
+  const extension = fileName.split(".").pop().toLowerCase();
 
   // Check by content type first
-  if (contentType.includes('image')) {
+  if (contentType.includes("image")) {
     return (
       <div className="text-blue-500">
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+          <path
+            fillRule="evenodd"
+            d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+            clipRule="evenodd"
+          />
         </svg>
       </div>
     );
   }
 
-  if (contentType.includes('pdf')) {
+  if (contentType.includes("pdf")) {
     return (
       <div className="text-red-500">
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+          <path
+            fillRule="evenodd"
+            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+            clipRule="evenodd"
+          />
         </svg>
       </div>
     );
   }
 
-  if (contentType.includes('word') || contentType.includes('document') || extension === 'doc' || extension === 'docx') {
+  if (
+    contentType.includes("word") ||
+    contentType.includes("document") ||
+    extension === "doc" ||
+    extension === "docx"
+  ) {
     return (
       <div className="text-blue-600">
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+          <path
+            fillRule="evenodd"
+            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+            clipRule="evenodd"
+          />
         </svg>
       </div>
     );
   }
 
-  if (contentType.includes('excel') || contentType.includes('spreadsheet') || extension === 'xls' || extension === 'xlsx') {
+  if (
+    contentType.includes("excel") ||
+    contentType.includes("spreadsheet") ||
+    extension === "xls" ||
+    extension === "xlsx"
+  ) {
     return (
       <div className="text-green-600">
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+          <path
+            fillRule="evenodd"
+            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+            clipRule="evenodd"
+          />
         </svg>
       </div>
     );
   }
 
-  if (contentType.includes('zip') || contentType.includes('compressed') || extension === 'zip' || extension === 'rar' || extension === '7z') {
+  if (
+    contentType.includes("zip") ||
+    contentType.includes("compressed") ||
+    extension === "zip" ||
+    extension === "rar" ||
+    extension === "7z"
+  ) {
     return (
       <div className="text-yellow-600">
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+          <path
+            fillRule="evenodd"
+            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+            clipRule="evenodd"
+          />
         </svg>
       </div>
     );
@@ -83,7 +118,11 @@ const getFileIconComponent = (fileName, contentType) => {
   return (
     <div className="text-gray-600">
       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+        <path
+          fillRule="evenodd"
+          d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+          clipRule="evenodd"
+        />
       </svg>
     </div>
   );
@@ -98,48 +137,43 @@ function CreateTaskModal({ onClose, onSuccess }) {
 
   // Attachment state
   const [attachments, setAttachments] = useState([]);
-  const [attachmentError, setAttachmentError] = useState('');
+  const [attachmentError, setAttachmentError] = useState("");
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
-    subject: '',
-    description: '',
-    hourlyRate: '',
-    startDate: '',
-    dueDate: '',
-    priority: 'Medium',
-    repeatEvery: '',
-    relatedTo: '',
-    relatedId: '',
-    relatedName: '',
+    subject: "",
+    description: "",
+    hourlyRate: "",
+    startDate: "",
+    dueDate: "",
+    priority: "Medium",
+    repeatEvery: "",
+    relatedTo: "",
+    relatedId: "",
+    relatedName: "",
     assignees: [],
     followers: [],
     tags: [],
-    estimateHours: '',
+    estimateHours: "",
   });
 
   const [errors, setErrors] = useState({});
 
   const priorityOptions = [
-    { value: 'Low', label: 'Low' },
-    { value: 'Medium', label: 'Medium' },
-    { value: 'High', label: 'High' },
-    { value: 'Urgent', label: 'Urgent' }
+    { value: "Low", label: "Low" },
+    { value: "Medium", label: "Medium" },
+    { value: "High", label: "High" },
+    { value: "Urgent", label: "Urgent" },
   ];
 
   const relatedToOptions = [
-    { value: '', label: 'Non selected' },
-    { value: 'lead', label: 'Lead' },
-    { value: 'customer', label: 'Customer' },
-    { value: 'proposal', label: 'Proposal' },
-    { value: 'proforma', label: 'Proforma' },
-    { value: 'invoice', label: 'Invoice' }
+    { value: "", label: "Non selected" },
+    { value: "lead", label: "Lead" },
+    { value: "customer", label: "Customer" },
+    { value: "proposal", label: "Proposal" },
+    { value: "proforma", label: "Proforma" },
+    { value: "invoice", label: "Invoice" },
   ];
-
-
-
-
-
 
   // Fetch team members on component mount
   useEffect(() => {
@@ -149,17 +183,17 @@ function CreateTaskModal({ onClose, onSuccess }) {
   const fetchTeamMembers = async () => {
     setLoadingTeam(true);
     try {
-      const response = await axiosInstance.get('getEmployeeNameAndId');
+      const response = await axiosInstance.get("getEmployeeNameAndId");
       if (response.data && Array.isArray(response.data)) {
-        const formattedTeamMembers = response.data.map(member => ({
+        const formattedTeamMembers = response.data.map((member) => ({
           value: member.employeeId,
-          label: member.name
+          label: member.name,
         }));
         setTeamMembers(formattedTeamMembers);
       }
     } catch (error) {
-      console.error('Error fetching team members:', error);
-      toast.error('Failed to load team members');
+      console.error("Error fetching team members:", error);
+      toast.error("Failed to load team members");
     } finally {
       setLoadingTeam(false);
     }
@@ -176,29 +210,29 @@ function CreateTaskModal({ onClose, onSuccess }) {
 
   const fetchRelatedData = async () => {
     if (!formData.relatedTo) {
-      toast.error('Please select a Related To option first');
+      toast.error("Please select a Related To option first");
       return;
     }
 
     setLoadingRelatedData(true);
     try {
-      let endpoint = '';
+      let endpoint = "";
 
       switch (formData.relatedTo) {
-        case 'lead':
-          endpoint = 'getLeadNameAndIdWithConverted';
+        case "lead":
+          endpoint = "getLeadNameAndIdWithConverted";
           break;
-        case 'customer':
-          endpoint = 'getCustomerListWithNameAndId';
+        case "customer":
+          endpoint = "getCustomerListWithNameAndId";
           break;
-        case 'proforma':
-          endpoint = 'getProformaNumberAndId';
+        case "proforma":
+          endpoint = "getProformaNumberAndId";
           break;
-        case 'proposal':
-          endpoint = 'getProposalNumberAndId';
+        case "proposal":
+          endpoint = "getProposalNumberAndId";
           break;
-        case 'invoice':
-          endpoint = 'getInvoiceNumberAndId';
+        case "invoice":
+          endpoint = "getInvoiceNumberAndId";
           break;
         default:
           return;
@@ -208,52 +242,59 @@ function CreateTaskModal({ onClose, onSuccess }) {
       const responseData = response.data || [];
 
       if (Array.isArray(responseData)) {
-        const formattedData = responseData.map(item => {
+        const formattedData = responseData.map((item) => {
           switch (formData.relatedTo) {
-            case 'lead':
+            case "lead":
               return {
                 id: item.leadId || item.id,
                 name: item.clientName || `Lead #${item.leadId || item.id}`,
-                originalData: item
+                originalData: item,
               };
 
-            case 'customer':
+            case "customer":
               return {
                 id: item.id,
-                name: `${item.companyName || 'Customer'} (${item.email || 'No email'})`,
-                originalData: item
+                name: `${item.companyName || "Customer"} (${
+                  item.email || "No email"
+                })`,
+                originalData: item,
               };
 
-            case 'proforma':
+            case "proforma":
               return {
                 id: item.proformaInvoiceId || item.id,
-                name: formatProformaNumber(item.proformaInvoiceNumber) ||
+                name:
+                  formatProformaNumber(item.proformaInvoiceNumber) ||
                   `Proforma #${item.proformaInvoiceId || item.id}`,
-                originalData: item
+                originalData: item,
               };
 
-            case 'proposal':
+            case "proposal":
               return {
                 id: item.proposalId || item.id,
-                name: formatProposalNumber(item.proposalNumber) ||
+                name:
+                  formatProposalNumber(item.proposalNumber) ||
                   `Proposal #${item.proposalId || item.id}`,
-                originalData: item
+                originalData: item,
               };
 
-            case 'invoice':
+            case "invoice":
               return {
                 id: item.invoiceId || item.id,
-                name: formatInvoiceNumber(item.invoiceNumber) ||
+                name:
+                  formatInvoiceNumber(item.invoiceNumber) ||
                   `Invoice #${item.invoiceId || item.id}`,
-                amount: item.totalAmount ? formatCurrency(item.totalAmount, item.currency) : '',
-                originalData: item
+                amount: item.totalAmount
+                  ? formatCurrency(item.totalAmount, item.currency)
+                  : "",
+                originalData: item,
               };
 
             default:
               return {
                 id: item.id,
                 name: String(item.name || item.title || `Item #${item.id}`),
-                originalData: item
+                originalData: item,
               };
           }
         });
@@ -278,8 +319,8 @@ function CreateTaskModal({ onClose, onSuccess }) {
     // Check total number of files (max 4)
     const totalFiles = attachments.length + files.length;
     if (totalFiles > 4) {
-      setAttachmentError('Maximum 4 files allowed');
-      toast.error('You can only upload up to 4 files');
+      setAttachmentError("Maximum 4 files allowed");
+      toast.error("You can only upload up to 4 files");
       return;
     }
 
@@ -297,18 +338,18 @@ function CreateTaskModal({ onClose, onSuccess }) {
 
       // Validate file type
       const allowedTypes = [
-        'application/pdf',
-        'image/jpeg',
-        'image/png',
-        'image/gif',
-        'image/webp',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/plain',
-        'application/zip',
-        'application/x-rar-compressed'
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/plain",
+        "application/zip",
+        "application/x-rar-compressed",
       ];
 
       if (!allowedTypes.includes(file.type)) {
@@ -321,23 +362,23 @@ function CreateTaskModal({ onClose, onSuccess }) {
 
     // Show errors if any
     if (errors.length > 0) {
-      errors.forEach(error => toast.error(error));
+      errors.forEach((error) => toast.error(error));
     }
 
     // Add valid files to attachments
     if (validFiles.length > 0) {
-      const newAttachments = validFiles.map(file => ({
+      const newAttachments = validFiles.map((file) => ({
         id: Date.now() + Math.random(),
         file,
         fileName: file.name,
         size: file.size,
         type: file.type,
         // Generate a base64 preview for images
-        preview: file.type.includes('image') ? URL.createObjectURL(file) : null
+        preview: file.type.includes("image") ? URL.createObjectURL(file) : null,
       }));
 
-      setAttachments(prev => [...prev, ...newAttachments]);
-      setAttachmentError('');
+      setAttachments((prev) => [...prev, ...newAttachments]);
+      setAttachmentError("");
 
       if (validFiles.length > 0) {
         toast.success(`Added ${validFiles.length} file(s)`);
@@ -346,7 +387,7 @@ function CreateTaskModal({ onClose, onSuccess }) {
 
     // Reset file input
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -354,12 +395,12 @@ function CreateTaskModal({ onClose, onSuccess }) {
   const handlePreviewAttachment = (attachment) => {
     try {
       // Check if it's an image file
-      if (attachment.type.includes('image')) {
+      if (attachment.type.includes("image")) {
         // Create blob URL from the File object
         const blobUrl = URL.createObjectURL(attachment.file);
 
         // Open in new tab
-        const newWindow = window.open(blobUrl, '_blank');
+        const newWindow = window.open(blobUrl, "_blank");
 
         if (newWindow) {
           newWindow.focus();
@@ -381,29 +422,29 @@ function CreateTaskModal({ onClose, onSuccess }) {
           }, 5000);
         } else {
           // If popup blocked, show image in a modal
-          toast.error('Popup blocked. Please allow popups to preview images.');
+          toast.error("Popup blocked. Please allow popups to preview images.");
 
           // Alternative: Show image in a modal/dialog
           const reader = new FileReader();
           reader.onload = (e) => {
-            const img = document.createElement('img');
+            const img = document.createElement("img");
             img.src = e.target.result;
-            img.style.maxWidth = '90vw';
-            img.style.maxHeight = '90vh';
+            img.style.maxWidth = "90vw";
+            img.style.maxHeight = "90vh";
 
             // Create a simple modal
-            const modal = document.createElement('div');
-            modal.style.position = 'fixed';
-            modal.style.top = '0';
-            modal.style.left = '0';
-            modal.style.width = '100%';
-            modal.style.height = '100%';
-            modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
-            modal.style.display = 'flex';
-            modal.style.alignItems = 'center';
-            modal.style.justifyContent = 'center';
-            modal.style.zIndex = '9999';
-            modal.style.cursor = 'pointer';
+            const modal = document.createElement("div");
+            modal.style.position = "fixed";
+            modal.style.top = "0";
+            modal.style.left = "0";
+            modal.style.width = "100%";
+            modal.style.height = "100%";
+            modal.style.backgroundColor = "rgba(0,0,0,0.8)";
+            modal.style.display = "flex";
+            modal.style.alignItems = "center";
+            modal.style.justifyContent = "center";
+            modal.style.zIndex = "9999";
+            modal.style.cursor = "pointer";
 
             modal.appendChild(img);
             modal.onclick = () => document.body.removeChild(modal);
@@ -415,13 +456,13 @@ function CreateTaskModal({ onClose, onSuccess }) {
           // Clean up blob URL
           setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
         }
-      } else if (attachment.type.includes('pdf')) {
+      } else if (attachment.type.includes("pdf")) {
         // For PDF files, we can't preview before upload
-        toast('PDF preview will be available after task creation', {
-          icon: 'ℹ️',
+        toast("PDF preview will be available after task creation", {
+          icon: "ℹ️",
           duration: 3000,
         });
-      } else if (attachment.type.includes('text')) {
+      } else if (attachment.type.includes("text")) {
         // For text files, we can read and display content
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -441,21 +482,24 @@ function CreateTaskModal({ onClose, onSuccess }) {
           `);
             newWindow.document.close();
           } else {
-            toast.error('Popup blocked. Unable to preview text file.');
+            toast.error("Popup blocked. Unable to preview text file.");
           }
         };
         reader.readAsText(attachment.file);
       } else {
         // For other files, show appropriate message
-        const fileType = attachment.type.split('/')[1] || 'file';
-        toast(`Preview for .${fileType} files is available after task creation`, {
-          icon: 'ℹ️',
-          duration: 3000,
-        });
+        const fileType = attachment.type.split("/")[1] || "file";
+        toast(
+          `Preview for .${fileType} files is available after task creation`,
+          {
+            icon: "ℹ️",
+            duration: 3000,
+          }
+        );
       }
     } catch (error) {
-      console.error('Error previewing attachment:', error);
-      toast.error('Failed to preview file');
+      console.error("Error previewing attachment:", error);
+      toast.error("Failed to preview file");
     }
   };
 
@@ -465,10 +509,10 @@ function CreateTaskModal({ onClose, onSuccess }) {
       const blobUrl = URL.createObjectURL(attachment.file);
 
       // Create download link
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = blobUrl;
       a.download = attachment.fileName;
-      a.style.display = 'none';
+      a.style.display = "none";
 
       // Append to body, click, and cleanup
       document.body.appendChild(a);
@@ -486,44 +530,45 @@ function CreateTaskModal({ onClose, onSuccess }) {
 
       toast.success(`Downloading ${attachment.fileName}`);
     } catch (error) {
-      console.error('Error downloading attachment:', error);
-      toast.error('Failed to download file');
+      console.error("Error downloading attachment:", error);
+      toast.error("Failed to download file");
     }
   };
 
   // Update handleRemoveAttachment to clean up object URLs
   const handleRemoveAttachment = (id) => {
-    setAttachments(prev => prev.filter(att => att.id !== id));
-    setAttachmentError('');
-    toast.success('File removed');
+    setAttachments((prev) => prev.filter((att) => att.id !== id));
+    setAttachmentError("");
+    toast.success("File removed");
   };
 
   // Update handleRemoveAllAttachments to clean up all object URLs
   const handleRemoveAllAttachments = () => {
     setAttachments([]);
-    setAttachmentError('');
-    toast.info('All attachments removed');
+    setAttachmentError("");
+    toast.info("All attachments removed");
   };
 
   useEffect(() => {
     return () => {
-      attachments.forEach(attachment => {
+      attachments.forEach((attachment) => {
         if (attachment.preview) {
           URL.revokeObjectURL(attachment.preview);
         }
       });
     };
-  }, [attachments])
+  }, [attachments]);
 
   // Get file icon based on type
   const getFileIcon = (fileType) => {
-    if (fileType.includes('pdf')) return '📄';
-    if (fileType.includes('image')) return '🖼️';
-    if (fileType.includes('word') || fileType.includes('document')) return '📝';
-    if (fileType.includes('excel') || fileType.includes('spreadsheet')) return '📊';
-    if (fileType.includes('zip') || fileType.includes('rar')) return '🗜️';
-    if (fileType.includes('text')) return '📃';
-    return '📎';
+    if (fileType.includes("pdf")) return "📄";
+    if (fileType.includes("image")) return "🖼️";
+    if (fileType.includes("word") || fileType.includes("document")) return "📝";
+    if (fileType.includes("excel") || fileType.includes("spreadsheet"))
+      return "📊";
+    if (fileType.includes("zip") || fileType.includes("rar")) return "🗜️";
+    if (fileType.includes("text")) return "📃";
+    return "📎";
   };
 
   // Convert file to base64
@@ -534,10 +579,10 @@ function CreateTaskModal({ onClose, onSuccess }) {
       reader.readAsDataURL(file);
       reader.onload = () => {
         // Remove the data URL prefix (e.g., "data:image/png;base64,")
-        const base64String = reader.result.split(',')[1];
+        const base64String = reader.result.split(",")[1];
         resolve(base64String);
       };
-      reader.onerror = error => reject(error);
+      reader.onerror = (error) => reject(error);
     });
   };
 
@@ -547,7 +592,7 @@ function CreateTaskModal({ onClose, onSuccess }) {
     let processedValue = value;
 
     switch (name) {
-      case 'subject':
+      case "subject":
         if (value.length <= 150) {
           processedValue = value;
         } else {
@@ -555,7 +600,7 @@ function CreateTaskModal({ onClose, onSuccess }) {
         }
         break;
 
-      case 'description':
+      case "description":
         if (value.length <= 500) {
           processedValue = value;
         } else {
@@ -563,9 +608,9 @@ function CreateTaskModal({ onClose, onSuccess }) {
         }
         break;
 
-      case 'hourlyRate':
-      case 'estimateHours':
-        if (value === '') {
+      case "hourlyRate":
+      case "estimateHours":
+        if (value === "") {
           processedValue = value;
         } else {
           const numValue = parseFloat(value);
@@ -588,39 +633,39 @@ function CreateTaskModal({ onClose, onSuccess }) {
     // Store previous relatedTo value
     const prevRelatedTo = formData.relatedTo;
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: processedValue
+      [name]: processedValue,
     }));
 
     // If relatedTo changed, clear dependent fields and data
-    if (name === 'relatedTo' && processedValue !== prevRelatedTo) {
-      setFormData(prev => ({
+    if (name === "relatedTo" && processedValue !== prevRelatedTo) {
+      setFormData((prev) => ({
         ...prev,
-        relatedId: '',
-        relatedName: ''
+        relatedId: "",
+        relatedName: "",
       }));
       setRelatedData([]); // Clear the options in dependent dropdown
     }
 
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ""
+        [name]: "",
       }));
     }
   };
   const handleAssigneesChange = (selectedIds) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      assignees: selectedIds
+      assignees: selectedIds,
     }));
   };
 
   const handleFollowersChange = (selectedIds) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      followers: selectedIds
+      followers: selectedIds,
     }));
   };
 
@@ -654,7 +699,7 @@ function CreateTaskModal({ onClose, onSuccess }) {
       const hourlyRateNum = parseFloat(formData.hourlyRate);
       if (hourlyRateNum < 0) {
         newErrors.hourlyRate = "Hourly rate cannot be negative";
-      } else if (hourlyRateNum.toString().split('.')[0].length > 4) {
+      } else if (hourlyRateNum.toString().split(".")[0].length > 4) {
         newErrors.hourlyRate = "Hourly rate cannot exceed 4 digits";
       }
     }
@@ -664,7 +709,7 @@ function CreateTaskModal({ onClose, onSuccess }) {
       const estimateHoursNum = parseFloat(formData.estimateHours);
       if (estimateHoursNum < 0) {
         newErrors.estimateHours = "Estimate hours cannot be negative";
-      } else if (estimateHoursNum.toString().split('.')[0].length > 4) {
+      } else if (estimateHoursNum.toString().split(".")[0].length > 4) {
         newErrors.estimateHours = "Estimate hours cannot exceed 4 digits";
       }
     }
@@ -705,10 +750,10 @@ function CreateTaskModal({ onClose, onSuccess }) {
           taskAttachments.push({
             fileName: attachment.fileName,
             contentType: attachment.type, // This should be the actual MIME type
-            data: base64Data // The base64 string without data URL prefix
+            data: base64Data, // The base64 string without data URL prefix
           });
         } catch (error) {
-          console.error('Error converting file to base64:', error);
+          console.error("Error converting file to base64:", error);
           toast.error(`Failed to process file: ${attachment.fileName}`);
         }
       }
@@ -724,26 +769,32 @@ function CreateTaskModal({ onClose, onSuccess }) {
           priority: formData.priority,
           relatedTo: formData.relatedTo || null,
           relatedToId: formData.relatedId || null,
-          relatedToName: formData.relatedName || '',
-          assignedEmployees: formData.assignees.map(employeeId => {
+          relatedToName: formData.relatedName || "",
+          assignedEmployees: formData.assignees.map((employeeId) => {
             // Find the employee object to get name
-            const employee = teamMembers.find(member => member.value === employeeId);
+            const employee = teamMembers.find(
+              (member) => member.value === employeeId
+            );
             return {
               employeeId: employeeId,
-              name: employee ? employee.label : `Employee ${employeeId}`
+              name: employee ? employee.label : `Employee ${employeeId}`,
             };
           }),
-          followersEmployees: formData.followers.map(employeeId => {
+          followersEmployees: formData.followers.map((employeeId) => {
             // Find the employee object to get name
-            const employee = teamMembers.find(member => member.value === employeeId);
+            const employee = teamMembers.find(
+              (member) => member.value === employeeId
+            );
             return {
               employeeId: employeeId,
-              name: employee ? employee.label : `Employee ${employeeId}`
+              name: employee ? employee.label : `Employee ${employeeId}`,
             };
           }),
-          estimatedHours: formData.estimateHours ? parseFloat(formData.estimateHours) : 0,
+          estimatedHours: formData.estimateHours
+            ? parseFloat(formData.estimateHours)
+            : 0,
           // status: 'pending'
-        }
+        },
       };
 
       // Add taskAttachments array only if there are attachments
@@ -751,30 +802,29 @@ function CreateTaskModal({ onClose, onSuccess }) {
         payload.taskAttachments = taskAttachments;
       }
 
-      console.log('Sending payload:', JSON.stringify(payload, null, 2));
+      console.log("Sending payload:", JSON.stringify(payload, null, 2));
 
-      const response = await axiosInstance.post('createTask', payload);
+      const response = await axiosInstance.post("createTask", payload);
 
       // In CreateTaskModal handleSubmit function, after successful creation:
       if (response.data) {
-        console.log('Response:', response.data);
-        toast.success('Task created successfully!');
-
-        // Prepare the created task data to pass back
+        toast.success("Task created successfully!");
         const createdTaskData = {
           taskId: response.data.taskId || response.data.id,
           subject: formData.subject.trim(),
           description: formData.description.trim(),
           status: "NOT_STARTED", // Default status for newly created tasks
           priority: formData.priority,
-          assignees: formData.assignees.map(id => {
-            const member = teamMembers.find(m => m.value === id);
+          assignees: formData.assignees.map((id) => {
+            const member = teamMembers.find((m) => m.value === id);
             return member ? member.label : `Employee ${id}`;
           }),
           startDate: formData.startDate,
           dueDate: formData.dueDate || null,
           hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : 0,
-          estimateHours: formData.estimateHours ? parseFloat(formData.estimateHours) : 0,
+          estimateHours: formData.estimateHours
+            ? parseFloat(formData.estimateHours)
+            : 0,
           relatedTo: formData.relatedTo || "",
           relatedToName: formData.relatedName || "",
         };
@@ -782,26 +832,32 @@ function CreateTaskModal({ onClose, onSuccess }) {
         // Pass the data back to parent
         onSuccess(createdTaskData);
       } else {
-        throw new Error('No response data received');
+        throw new Error("No response data received");
       }
     } catch (error) {
-      console.error('Error creating task:', error);
+      console.error("Error creating task:", error);
 
       if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
+        console.error("Response status:", error.response.status);
+        console.error("Response data:", error.response.data);
 
         if (error.response.status === 500) {
-          toast.error('Server error: ' + (error.response.data?.message || 'Check console for details'));
+          toast.error(
+            "Server error: " +
+              (error.response.data?.message || "Check console for details")
+          );
         } else {
-          toast.error('Failed to create task: ' + (error.response.data?.message || 'Unknown error'));
+          toast.error(
+            "Failed to create task: " +
+              (error.response.data?.message || "Unknown error")
+          );
         }
       } else if (error.request) {
-        console.error('Request error:', error.request);
-        toast.error('Network error. Please check your connection.');
+        console.error("Request error:", error.request);
+        toast.error("Network error. Please check your connection.");
       } else {
-        console.error('Error:', error.message);
-        toast.error('Failed to create task. Please try again.');
+        console.error("Error:", error.message);
+        toast.error("Failed to create task. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -809,7 +865,7 @@ function CreateTaskModal({ onClose, onSuccess }) {
   };
 
   const getTodayDate = () => {
-    return new Date().toISOString().split('T')[0];
+    return new Date().toISOString().split("T")[0];
   };
 
   const getMinDueDate = () => {
@@ -829,18 +885,43 @@ function CreateTaskModal({ onClose, onSuccess }) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-white bg-opacity-20 rounded flex items-center justify-center">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
                 </svg>
               </div>
               <div>
                 <h2 className="text-lg font-bold">Create New Task</h2>
-                <p className="text-blue-100 text-xs">Fill in the task information below</p>
+                <p className="text-blue-100 text-xs">
+                  Fill in the task information below
+                </p>
               </div>
             </div>
-            <button onClick={onClose} className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded transition">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <button
+              onClick={onClose}
+              className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded transition"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -910,8 +991,6 @@ function CreateTaskModal({ onClose, onSuccess }) {
                 />
               </div>
 
-
-
               {/* Related To */}
               <GlobalSelectField
                 label="Related To"
@@ -922,25 +1001,29 @@ function CreateTaskModal({ onClose, onSuccess }) {
                 className="text-sm"
               />
 
-
               {/* Related Item Selection */}
               {formData.relatedTo && (
                 <GlobalSelectField
                   key={`related-${formData.relatedTo}`} // Add this key to force re-render
-                  label={`Select ${formData.relatedTo.charAt(0).toUpperCase() + formData.relatedTo.slice(1)}`}
+                  label={`Select ${
+                    formData.relatedTo.charAt(0).toUpperCase() +
+                    formData.relatedTo.slice(1)
+                  }`}
                   name="relatedId"
-                  value={formData.relatedId || ''}
+                  value={formData.relatedId || ""}
                   onChange={(e) => {
-                    const selected = relatedData.find(item => item.id === e.target.value);
-                    setFormData(prev => ({
+                    const selected = relatedData.find(
+                      (item) => item.id === e.target.value
+                    );
+                    setFormData((prev) => ({
                       ...prev,
                       relatedId: e.target.value,
-                      relatedName: selected?.name || ''
+                      relatedName: selected?.name || "",
                     }));
                   }}
-                  options={relatedData.map(item => ({
+                  options={relatedData.map((item) => ({
                     value: item.id,
-                    label: item.name
+                    label: item.name,
                   }))}
                   loading={loadingRelatedData}
                   error={errors.relatedId}
@@ -973,8 +1056,6 @@ function CreateTaskModal({ onClose, onSuccess }) {
                 loading={loadingTeam}
                 className="mb-4"
               />
-
-
 
               {/* Priority */}
               <GlobalSelectField
@@ -1056,17 +1137,30 @@ function CreateTaskModal({ onClose, onSuccess }) {
                   />
                   <label
                     htmlFor="file-upload"
-                    className={`flex items-center justify-center p-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${attachments.length >= 4 ? 'bg-gray-100 border-gray-300 cursor-not-allowed' : 'border-blue-300 hover:border-blue-500 hover:bg-blue-50'}`}
+                    className={`flex items-center justify-center p-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                      attachments.length >= 4
+                        ? "bg-gray-100 border-gray-300 cursor-not-allowed"
+                        : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
+                    }`}
                   >
                     <div className="text-center">
-                      <svg className="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      <svg
+                        className="w-8 h-8 mx-auto mb-2 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                        />
                       </svg>
                       <p className="text-sm text-gray-600">
                         {attachments.length >= 4
-                          ? 'Maximum 4 files reached'
-                          : 'Click to select files or drag and drop'
-                        }
+                          ? "Maximum 4 files reached"
+                          : "Click to select files or drag and drop"}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         PDF, Images, Documents, Text files (Max 5MB each)
@@ -1084,7 +1178,9 @@ function CreateTaskModal({ onClose, onSuccess }) {
               {attachments.length > 0 && (
                 <div className="mt-3">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-medium text-gray-700">Selected Attachments</h4>
+                    <h4 className="text-sm font-medium text-gray-700">
+                      Selected Attachments
+                    </h4>
                     <span className="text-xs text-gray-500">
                       {attachments.length}/4 files
                     </span>
@@ -1102,7 +1198,10 @@ function CreateTaskModal({ onClose, onSuccess }) {
                           title={`Click to preview ${attachment.fileName}`}
                         >
                           <div className="flex-shrink-0 w-8 h-8 bg-white rounded border border-gray-200 flex items-center justify-center">
-                            {getFileIconComponent(attachment.fileName, attachment.type)}
+                            {getFileIconComponent(
+                              attachment.fileName,
+                              attachment.type
+                            )}
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="font-medium text-gray-900 text-xs truncate hover:text-blue-600">
@@ -1123,9 +1222,24 @@ function CreateTaskModal({ onClose, onSuccess }) {
                             className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
                             title="Preview"
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            <svg
+                              className="w-3.5 h-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                              />
                             </svg>
                           </button>
                           <button
@@ -1137,8 +1251,18 @@ function CreateTaskModal({ onClose, onSuccess }) {
                             className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
                             title="Download"
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            <svg
+                              className="w-3.5 h-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                              />
                             </svg>
                           </button>
                           <button
@@ -1150,8 +1274,18 @@ function CreateTaskModal({ onClose, onSuccess }) {
                             className="p-1 text-gray-400 hover:text-red-600 transition-colors"
                             title="Remove"
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            <svg
+                              className="w-3.5 h-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                              />
                             </svg>
                           </button>
                         </div>
@@ -1162,7 +1296,12 @@ function CreateTaskModal({ onClose, onSuccess }) {
                   {/* File Summary */}
                   <div className="mt-2 text-xs text-gray-500">
                     <p>
-                      Total size: {(attachments.reduce((sum, att) => sum + att.size, 0) / (1024 * 1024)).toFixed(2)} MB
+                      Total size:{" "}
+                      {(
+                        attachments.reduce((sum, att) => sum + att.size, 0) /
+                        (1024 * 1024)
+                      ).toFixed(2)}{" "}
+                      MB
                     </p>
                   </div>
                 </div>
@@ -1194,7 +1333,7 @@ function CreateTaskModal({ onClose, onSuccess }) {
                   Saving...
                 </>
               ) : (
-                'Save Task'
+                "Save Task"
               )}
             </button>
           </div>
