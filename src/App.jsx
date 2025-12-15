@@ -52,6 +52,8 @@ import EditAdmin from "./Components/Common/SuperAdmin/EditAdmin.jsx";
 import EmployeeList from "./Components/Common/Employee/EmployeeList.jsx";
 import TaskList from "./Components/Common/Task/TaskList.jsx";
 import { TaskTimerProvider } from "./Components/BaseComponet/TaskTimerContext.jsx";
+
+import AmcList from "./Components/Common/AMC/AmcList.jsx"
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -383,6 +385,15 @@ function App() {
               }
             />
 
+
+            <Route
+              path="/Admin/AMC"
+              element={
+                <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                  <AmcList />
+                </RoleBasedRoute>
+              }
+            />
             {/* Employee Routes - Individual routes with layout */}
             <Route
               path="/Employee/LeadList"
