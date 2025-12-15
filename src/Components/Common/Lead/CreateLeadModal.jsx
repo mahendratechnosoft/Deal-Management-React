@@ -77,7 +77,6 @@ function CreateLeadModal({ onClose, onSuccess }) {
     { id: "description", label: "Description" },
   ];
 
-
   // Load countries on component mount
   useEffect(() => {
     const countries = Country.getAllCountries().map((country) => ({
@@ -398,7 +397,10 @@ function CreateLeadModal({ onClose, onSuccess }) {
         }
       }
 
-      if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      if (
+        formData.email &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+      ) {
         newErrors.email = "Please enter a valid email address";
       }
     } else if (activeSection === "details") {
@@ -419,8 +421,7 @@ function CreateLeadModal({ onClose, onSuccess }) {
       newErrors.clientName = "Client name is required";
     if (!formData.companyName?.trim())
       newErrors.companyName = "Company name is required";
-    if (!formData.source?.trim())
-      newErrors.source = "Lead source is required";
+    if (!formData.source?.trim()) newErrors.source = "Lead source is required";
 
     // Primary number validation
     if (!formData.mobileNumber?.trim()) {
@@ -494,9 +495,11 @@ function CreateLeadModal({ onClose, onSuccess }) {
 
   // Show validation toast
   const showValidationToast = () => {
-    const errorMessages = Object.values(errors).filter(msg => msg);
+    const errorMessages = Object.values(errors).filter((msg) => msg);
     if (errorMessages.length > 0) {
-      toast.error(`Please fix the following errors: ${errorMessages.join(', ')}`);
+      toast.error(
+        `Please fix the following errors: ${errorMessages.join(", ")}`
+      );
     } else {
       toast.error("Please fill in all required fields before proceeding.");
     }
@@ -511,11 +514,10 @@ function CreateLeadModal({ onClose, onSuccess }) {
     }
     let followUpFormatted = null;
 
-if (formData.followUp) {
-  const dt = formData.followUp; // example: "2025-11-15T10:13"
-  followUpFormatted = dt + ":00.000000000";
-}
-
+    if (formData.followUp) {
+      const dt = formData.followUp; // example: "2025-11-15T10:13"
+      followUpFormatted = dt + ":00.000000000";
+    }
 
     setLoading(true);
     try {
@@ -535,7 +537,7 @@ if (formData.followUp) {
         street: formData.street,
         country: formData.country
           ? dropdownData.countries.find((c) => c.value === formData.country)
-            ?.label
+              ?.label
           : "",
         state: formData.state
           ? dropdownData.states.find((s) => s.value === formData.state)?.label
@@ -543,7 +545,7 @@ if (formData.followUp) {
         city: formData.city,
         zipCode: formData.zipCode,
         description: formData.description,
-          followUp: followUpFormatted,
+        followUp: followUpFormatted,
       };
 
       await axiosInstance.post("createLead", submitData);
@@ -611,8 +613,8 @@ if (formData.followUp) {
       borderColor: state.isFocused
         ? "#3b82f6"
         : errors.country || errors.state || errors.city
-          ? "#ef4444"
-          : "#e5e7eb",
+        ? "#ef4444"
+        : "#e5e7eb",
       borderWidth: "1px",
       borderRadius: "6px",
       boxShadow: state.isFocused ? "0 0 0 3px rgba(59, 130, 246, 0.1)" : "none",
@@ -632,8 +634,8 @@ if (formData.followUp) {
       backgroundColor: state.isSelected
         ? "#3b82f6"
         : state.isFocused
-          ? "#f3f4f6"
-          : "white",
+        ? "#f3f4f6"
+        : "white",
       color: state.isSelected ? "white" : "#1f2937",
       "&:active": {
         backgroundColor: "#3b82f6",
@@ -721,10 +723,11 @@ if (formData.followUp) {
               <button
                 key={item.id}
                 onClick={() => setActiveSection(item.id)}
-                className={`px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 ${activeSection === item.id
+                className={`px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 ${
+                  activeSection === item.id
                     ? "bg-blue-50 text-blue-700 border border-blue-200"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
+                }`}
               >
                 {item.label}
               </button>
@@ -732,7 +735,7 @@ if (formData.followUp) {
           </div>
         </div>
         {/* Modal Body */}
-        <div className="overflow-y-auto max-h-[calc(80vh-180px)]" >
+        <div className="overflow-y-auto max-h-[calc(80vh-180px)]">
           <form onSubmit={handleSubmit} className="p-6">
             {/* Basic Information Section */}
             {activeSection === "basic" && (
@@ -749,8 +752,9 @@ if (formData.followUp) {
                       name="clientName"
                       value={formData.clientName}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.clientName ? "border-red-500" : "border-gray-300"
-                        }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                        errors.clientName ? "border-red-500" : "border-gray-300"
+                      }`}
                       placeholder="Enter client name"
                     />
                     {errors.clientName && (
@@ -784,10 +788,11 @@ if (formData.followUp) {
                       name="companyName"
                       value={formData.companyName}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.companyName
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                        errors.companyName
                           ? "border-red-500"
                           : "border-gray-300"
-                        }`}
+                      }`}
                       placeholder="Enter company name"
                     />
                     {errors.companyName && (
@@ -817,8 +822,9 @@ if (formData.followUp) {
                       <span className="text-red-500">*</span>
                     </label>
                     <div
-                      className={`phone-input-wrapper ${errors.mobileNumber ? "border-red-500 rounded-lg" : ""
-                        }`}
+                      className={`phone-input-wrapper ${
+                        errors.mobileNumber ? "border-red-500 rounded-lg" : ""
+                      }`}
                     >
                       <PhoneInput
                         country={"in"}
@@ -875,8 +881,9 @@ if (formData.followUp) {
                       Secondary Number
                     </label>
                     <div
-                      className={`phone-input-wrapper ${errors.phoneNumber ? "border-red-500 rounded-lg" : ""
-                        }`}
+                      className={`phone-input-wrapper ${
+                        errors.phoneNumber ? "border-red-500 rounded-lg" : ""
+                      }`}
                     >
                       <PhoneInput
                         country={"in"}
@@ -939,8 +946,9 @@ if (formData.followUp) {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.email ? "border-red-500" : "border-gray-300"
-                        }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                        errors.email ? "border-red-500" : "border-gray-300"
+                      }`}
                       placeholder="Enter email address"
                     />
                     {errors.email && (
@@ -1008,7 +1016,7 @@ if (formData.followUp) {
                       placeholder="Select country"
                       isSearchable
                       styles={customStyles}
-                       menuPlacement="top"
+                      menuPlacement="top"
                     />
                     {errors.country && (
                       <p className="text-red-500 text-xs flex items-center gap-1">
@@ -1047,7 +1055,7 @@ if (formData.followUp) {
                       isSearchable
                       isDisabled={!formData.country}
                       styles={customStyles}
-                       menuPlacement="top"
+                      menuPlacement="top"
                     />
                     {errors.state && (
                       <p className="text-red-500 text-xs flex items-center gap-1">
@@ -1086,7 +1094,7 @@ if (formData.followUp) {
                       isSearchable
                       isDisabled={!formData.state}
                       styles={customStyles}
-                       menuPlacement="top"
+                      menuPlacement="top"
                     />
                     {errors.city && (
                       <p className="text-red-500 text-xs flex items-center gap-1">
@@ -1140,8 +1148,9 @@ if (formData.followUp) {
                       name="source"
                       value={formData.source}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none bg-white ${errors.source ? "border-red-500" : "border-gray-300"
-                        }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none bg-white ${
+                        errors.source ? "border-red-500" : "border-gray-300"
+                      }`}
                     >
                       <option value="">Select Source</option>
                       <option value="Instagram">Instagram</option>
@@ -1212,8 +1221,6 @@ if (formData.followUp) {
                       <p className="text-red-500 text-xs">{errors.followUp}</p>
                     )}
                   </div>
-
-
                 </div>
               </div>
             )}
@@ -1225,14 +1232,21 @@ if (formData.followUp) {
                   <label className="text-sm font-semibold text-gray-700">
                     Description
                   </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={5}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"
-                    placeholder="Enter additional notes, requirements, or description about this lead..."
-                  />
+                  <div>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                      placeholder="Enter additional notes or description"
+                      maxLength={5000}
+                    />
+
+                    <div className="mt-1 text-xs text-gray-500 text-right">
+                      {(formData.description ?? "").length} / 5000
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -1243,9 +1257,7 @@ if (formData.followUp) {
         {/* Modal Footer */}
         <div className="border-t border-gray-200 bg-gray-50 p-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-
-            </div>
+            <div className="flex items-center gap-2"></div>
 
             <div className="flex items-center gap-2">
               {/* Previous Button - Show in all tabs except first */}

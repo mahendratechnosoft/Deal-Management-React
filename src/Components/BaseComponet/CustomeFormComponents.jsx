@@ -180,6 +180,8 @@ export const FormTextarea = ({
   className = "",
   rows = 4, // Added a default rows prop
   background = "transparent",
+  maxLength,
+  showCount = false,
 }) => (
   <div className={`relative ${className}`}>
     <textarea
@@ -190,6 +192,7 @@ export const FormTextarea = ({
       placeholder=" "
       disabled={disabled}
       rows={rows}
+      maxLength={maxLength}
       style={{
         backgroundColor: background === "white" ? "#ffffff" : "transparent",
       }}
@@ -209,6 +212,11 @@ export const FormTextarea = ({
     >
       {label} {required && <span className="text-red-500">*</span>}
     </label>
+    {showCount && maxLength && (
+      <div className="mt-1 text-xs text-gray-500 text-right">
+        {value?.length || 0} / {maxLength}
+      </div>
+    )}
     {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
   </div>
 );
