@@ -1,42 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import {
   GlobalInputField,
-  GlobalSelectField
-} from '../../BaseComponet/CustomerFormInputs';
-import AmcHistoryModal from './AmcHistoryModal';
-import DomainHistoryModal from './DomainHistoryModal';
-import axiosInstance from '../../BaseComponet/axiosInstance';
-import { showDeleteConfirmation } from '../../BaseComponet/alertUtils'; // Import the alert utility
+  GlobalSelectField,
+} from "../../BaseComponet/CustomerFormInputs";
+import AmcHistoryModal from "./AmcHistoryModal";
+import DomainHistoryModal from "./DomainHistoryModal";
+import axiosInstance from "../../BaseComponet/axiosInstance";
+import { showDeleteConfirmation } from "../../BaseComponet/alertUtils"; // Import the alert utility
+import GsuiteHistoryModal from "./GsuiteHistoryModal";
 
 function EditAmcModal({ amc, onClose, onSuccess }) {
-  const [activeTab, setActiveTab] = useState('basic');
+  const [activeTab, setActiveTab] = useState("basic");
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
-  
+
   // Modal states
   const [showAmcHistoryModal, setShowAmcHistoryModal] = useState(false);
   const [showDomainHistoryModal, setShowDomainHistoryModal] = useState(false);
   const [editingHistory, setEditingHistory] = useState(null);
   const [editingDomain, setEditingDomain] = useState(null);
-  
+
+  const [gsuiteHistory, setGsuiteHistory] = useState([]);
+  const [showGsuiteHistoryModal, setShowGsuiteHistoryModal] = useState(false);
+  const [editingGsuite, setEditingGsuite] = useState(null);
+
   // Tab 1: Basic AMC Info - Match API field names exactly
   const [basicInfo, setBasicInfo] = useState({
-    companyName: '',
-    contactPersonName: '',
-    email: '',
-    phoneNumber: '',
-    websiteURL: '',
-    technology: '',
-    hostingProvider: 'Wix',
-    domainProvider: '',
-    assingedTo: '', // Note: double 's' to match API
-    clientName: ''
+    companyName: "",
+    contactPersonName: "",
+    email: "",
+    phoneNumber: "",
+    websiteURL: "",
+    technology: "",
+    hostingProvider: "Wix",
+    domainProvider: "",
+    assingedTo: "", // Note: double 's' to match API
+    clientName: "",
   });
-  
+
   // Tab 2: AMC History
   const [amcHistory, setAmcHistory] = useState([]);
-  
+
   // Tab 3: Domain History
   const [domainHistory, setDomainHistory] = useState([]);
 
@@ -53,7 +58,7 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
     { value: "Wix", label: "Wix" },
     { value: "WordPress", label: "WordPress" },
     { value: "Shopify", label: "Shopify" },
-    { value: "Other", label: "Other" }
+    { value: "Other", label: "Other" },
   ];
 
   const hostingProviderOptions = [
@@ -65,7 +70,7 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
     { value: "Hostinger", label: "Hostinger" },
     { value: "Bluehost", label: "Bluehost" },
     { value: "GoDaddy", label: "GoDaddy" },
-    { value: "Other", label: "Other" }
+    { value: "Other", label: "Other" },
   ];
 
   const domainProviderOptions = [
@@ -75,41 +80,47 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
     { value: "Google Domains", label: "Google Domains" },
     { value: "Cloudflare", label: "Cloudflare" },
     { value: "Name.com", label: "Name.com" },
-    { value: "Other", label: "Other" }
+    { value: "Other", label: "Other" },
   ];
 
   // Tabs configuration
   const tabs = [
-    { id: 'basic', label: 'Basic Information' },
-    { id: 'amc', label: 'AMC History' },
-    { id: 'domain', label: 'Domain History' }
+    { id: "basic", label: "Basic Information" },
+    { id: "amc", label: "AMC History" },
+    { id: "domain", label: "Domain History" },
+    { id: "gsuite", label: "GSuite History" },
   ];
 
   // Helper function to calculate days remaining and status
   const getDueDateStatus = (dueDate) => {
-    if (!dueDate) return { status: 'unknown', daysRemaining: null, isPastDue: false };
-    
+    if (!dueDate)
+      return { status: "unknown", daysRemaining: null, isPastDue: false };
+
     const today = new Date();
     const due = new Date(dueDate);
     const timeDiff = due.getTime() - today.getTime();
     const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
-    
+
     if (daysRemaining < 0) {
-      return { status: 'past-due', daysRemaining: Math.abs(daysRemaining), isPastDue: true };
+      return {
+        status: "past-due",
+        daysRemaining: Math.abs(daysRemaining),
+        isPastDue: true,
+      };
     } else if (daysRemaining <= 30) {
-      return { status: 'near-due', daysRemaining, isPastDue: false };
+      return { status: "near-due", daysRemaining, isPastDue: false };
     } else {
-      return { status: 'normal', daysRemaining, isPastDue: false };
+      return { status: "normal", daysRemaining, isPastDue: false };
     }
   };
 
   // Helper function to format date
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
     });
   };
 
@@ -122,13 +133,33 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
 
   useEffect(() => {
     if (amc?.amcId) {
-      if (activeTab === 'amc') {
+      if (activeTab === "amc") {
         fetchAmcHistory();
-      } else if (activeTab === 'domain') {
+      } else if (activeTab === "domain") {
         fetchDomainHistory();
+      } else if (activeTab === "gsuite") {
+        // NEW
+        fetchGsuiteHistory();
       }
     }
   }, [activeTab, amc]);
+
+  const fetchGsuiteHistory = async () => {
+    try {
+      setLoadingData(true);
+      const response = await axiosInstance.get(
+        `getAllAMCGsuitHistory/${amc.amcId}`
+      );
+      if (response.data && Array.isArray(response.data)) {
+        setGsuiteHistory(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching GSuite history:", error);
+      toast.error("Failed to load GSuite history");
+    } finally {
+      setLoadingData(false);
+    }
+  };
 
   const fetchBasicInfo = async () => {
     try {
@@ -136,21 +167,21 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
       const response = await axiosInstance.get(`getAmcById/${amc.amcId}`);
       if (response.data) {
         setBasicInfo({
-          companyName: response.data.companyName || '',
-          contactPersonName: response.data.contactPersonName || '',
-          email: response.data.email || '',
-          phoneNumber: response.data.phoneNumber || '',
-          websiteURL: response.data.websiteURL || '',
-          technology: response.data.technology || '',
-          hostingProvider: response.data.hostingProvider || 'Wix',
-          domainProvider: response.data.domainProvider || '',
-          assingedTo: response.data.assingedTo || '',
-          clientName: response.data.clientName || ''
+          companyName: response.data.companyName || "",
+          contactPersonName: response.data.contactPersonName || "",
+          email: response.data.email || "",
+          phoneNumber: response.data.phoneNumber || "",
+          websiteURL: response.data.websiteURL || "",
+          technology: response.data.technology || "",
+          hostingProvider: response.data.hostingProvider || "Wix",
+          domainProvider: response.data.domainProvider || "",
+          assingedTo: response.data.assingedTo || "",
+          clientName: response.data.clientName || "",
         });
       }
     } catch (error) {
-      console.error('Error fetching AMC info:', error);
-      toast.error('Failed to load AMC information');
+      console.error("Error fetching AMC info:", error);
+      toast.error("Failed to load AMC information");
     } finally {
       setLoadingData(false);
     }
@@ -164,8 +195,8 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
         setAmcHistory(response.data);
       }
     } catch (error) {
-      console.error('Error fetching AMC history:', error);
-      toast.error('Failed to load AMC history');
+      console.error("Error fetching AMC history:", error);
+      toast.error("Failed to load AMC history");
     } finally {
       setLoadingData(false);
     }
@@ -174,59 +205,63 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
   const fetchDomainHistory = async () => {
     try {
       setLoadingData(true);
-      const response = await axiosInstance.get(`getAllAMCDomainHistoy/${amc.amcId}`);
+      const response = await axiosInstance.get(
+        `getAllAMCDomainHistoy/${amc.amcId}`
+      );
       if (response.data && Array.isArray(response.data)) {
         setDomainHistory(response.data);
       }
     } catch (error) {
-      console.error('Error fetching domain history:', error);
-      toast.error('Failed to load domain history');
+      console.error("Error fetching domain history:", error);
+      toast.error("Failed to load domain history");
     } finally {
       setLoadingData(false);
     }
   };
 
   const handleBasicInfoChange = (field, value) => {
-    setBasicInfo(prev => ({
+    setBasicInfo((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
-  const handleSubmitBasicInfo = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      // Prepare payload matching API exactly
-      const updatePayload = {
-        amcId: amc.amcId,
-        adminId: amc.adminId || "", // Get from amc prop or context
-        employeeId: "", // If you have this field
-        ...basicInfo,
-        // Ensure all fields are included even if empty
-        clientName: basicInfo.clientName || null,
-        domainProvider: basicInfo.domainProvider || "",
-        employeeId: "" // Set to empty string instead of null
-      };
+  // GSuite History Functions
+  const handleCreateGsuiteHistory = () => {
+    setEditingGsuite(null);
+    setShowGsuiteHistoryModal(true);
+  };
 
-      console.log('Update payload:', updatePayload);
-      
-      const response = await axiosInstance.put(`updateAMC`, updatePayload);
-      
-      if (response.data) {
-        toast.success('AMC information updated successfully');
-        onSuccess();
-      } else {
-        throw new Error('No response data');
+  const handleEditGsuiteHistory = (gsuite) => {
+    setEditingGsuite(gsuite);
+    setShowGsuiteHistoryModal(true);
+  };
+
+  const handleGsuiteHistorySuccess = () => {
+    fetchGsuiteHistory();
+    setShowGsuiteHistoryModal(false);
+  };
+
+  const handleDeleteGsuite = async (amcGsuitHistoryId, domainName) => {
+    const result = await showDeleteConfirmation(
+      `GSuite History for ${domainName}`
+    );
+
+    if (result.isConfirmed) {
+      try {
+        await axiosInstance.delete(
+          `deleteAMCGsuitHistory/${amcGsuitHistoryId}`
+        );
+        toast.success("GSuite history record deleted successfully");
+        fetchGsuiteHistory();
+      } catch (error) {
+        console.error("Error deleting GSuite history:", error);
+        toast.error("Failed to delete GSuite history record");
       }
-    } catch (error) {
-      console.error('Error updating AMC:', error);
-      console.error('Error response:', error.response?.data);
-      toast.error(error.response?.data?.message || 'Failed to update AMC information');
-    } finally {
-      setLoading(false);
     }
   };
+
+
 
   // AMC History Functions
   const handleCreateAmcHistory = () => {
@@ -245,16 +280,18 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
   };
 
   const handleDeleteHistory = async (amcHistoryId, sequence) => {
-    const result = await showDeleteConfirmation(`AMC History Record #${sequence}`);
-    
+    const result = await showDeleteConfirmation(
+      `AMC History Record #${sequence}`
+    );
+
     if (result.isConfirmed) {
       try {
         await axiosInstance.delete(`deleteAMCHistory/${amcHistoryId}`);
-        toast.success('History record deleted successfully');
+        toast.success("History record deleted successfully");
         fetchAmcHistory();
       } catch (error) {
-        console.error('Error deleting history:', error);
-        toast.error('Failed to delete history record');
+        console.error("Error deleting history:", error);
+        toast.error("Failed to delete history record");
       }
     }
   };
@@ -276,20 +313,60 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
   };
 
   const handleDeleteDomain = async (acmDomainHistoryId, sequence) => {
-    const result = await showDeleteConfirmation(`Domain History Record #${sequence}`);
-    
+    const result = await showDeleteConfirmation(
+      `Domain History Record #${sequence}`
+    );
+
     if (result.isConfirmed) {
       try {
-        await axiosInstance.delete(`deleteAMCDomainHistory/${acmDomainHistoryId}`);
-        toast.success('Domain history record deleted successfully');
+        await axiosInstance.delete(
+          `deleteAMCDomainHistory/${acmDomainHistoryId}`
+        );
+        toast.success("Domain history record deleted successfully");
         fetchDomainHistory();
       } catch (error) {
-        console.error('Error deleting domain history:', error);
-        toast.error('Failed to delete domain history record');
+        console.error("Error deleting domain history:", error);
+        toast.error("Failed to delete domain history record");
       }
     }
   };
 
+    const handleSubmitBasicInfo = async (e) => {
+      e.preventDefault();
+      setLoading(true);
+      try {
+        // Prepare payload matching API exactly
+        const updatePayload = {
+          amcId: amc.amcId,
+          adminId: amc.adminId || "", // Get from amc prop or context
+          employeeId: "", // If you have this field
+          ...basicInfo,
+          // Ensure all fields are included even if empty
+          clientName: basicInfo.clientName || null,
+          domainProvider: basicInfo.domainProvider || "",
+          employeeId: "", // Set to empty string instead of null
+        };
+
+        console.log("Update payload:", updatePayload);
+
+        const response = await axiosInstance.put(`updateAMC`, updatePayload);
+
+        if (response.data) {
+          toast.success("AMC information updated successfully");
+          onSuccess();
+        } else {
+          throw new Error("No response data");
+        }
+      } catch (error) {
+        console.error("Error updating AMC:", error);
+        console.error("Error response:", error.response?.data);
+        toast.error(
+          error.response?.data?.message || "Failed to update AMC information"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-3 z-50">
@@ -300,21 +377,43 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-white bg-opacity-20 rounded flex items-center justify-center">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
                   </svg>
                 </div>
                 <div>
                   <h2 className="text-lg font-bold">Edit AMC</h2>
-                  <p className="text-blue-100 text-xs">{amc?.companyName || 'AMC Details'}</p>
+                  <p className="text-blue-100 text-xs">
+                    {amc?.companyName || "AMC Details"}
+                  </p>
                 </div>
               </div>
-              <button 
-                onClick={onClose} 
+              <button
+                onClick={onClose}
                 className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded transition"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -329,8 +428,8 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                   onClick={() => setActiveTab(tab.id)}
                   className={`relative flex items-center gap-2 px-4 py-3 whitespace-nowrap transition-colors ${
                     activeTab === tab.id
-                      ? 'text-blue-600 border-b-2 border-blue-600 bg-white'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      ? "text-blue-600 border-b-2 border-blue-600 bg-white"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                   }`}
                 >
                   <span className="text-sm font-medium">{tab.label}</span>
@@ -348,14 +447,19 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
             ) : (
               <>
                 {/* Tab 1: Basic Information */}
-                {activeTab === 'basic' && (
-                  <form onSubmit={handleSubmitBasicInfo} className="space-y-4">
+                {activeTab === "basic" && (
+                  <form
+                    onSubmit={handleSubmitBasicInfo}
+                    className="space-y-4"
+                  >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <GlobalInputField
                         label="Company Name"
                         name="companyName"
                         value={basicInfo.companyName}
-                        onChange={(e) => handleBasicInfoChange('companyName', e.target.value)}
+                        onChange={(e) =>
+                          handleBasicInfoChange("companyName", e.target.value)
+                        }
                         placeholder="Enter company name"
                         className="text-sm"
                       />
@@ -364,7 +468,12 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                         label="Contact Person Name"
                         name="contactPersonName"
                         value={basicInfo.contactPersonName}
-                        onChange={(e) => handleBasicInfoChange('contactPersonName', e.target.value)}
+                        onChange={(e) =>
+                          handleBasicInfoChange(
+                            "contactPersonName",
+                            e.target.value
+                          )
+                        }
                         placeholder="Enter contact person name"
                         className="text-sm"
                       />
@@ -374,7 +483,9 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                         name="email"
                         type="email"
                         value={basicInfo.email}
-                        onChange={(e) => handleBasicInfoChange('email', e.target.value)}
+                        onChange={(e) =>
+                          handleBasicInfoChange("email", e.target.value)
+                        }
                         placeholder="client@company.com"
                         className="text-sm"
                       />
@@ -383,7 +494,9 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                         label="Phone Number"
                         name="phoneNumber"
                         value={basicInfo.phoneNumber}
-                        onChange={(e) => handleBasicInfoChange('phoneNumber', e.target.value)}
+                        onChange={(e) =>
+                          handleBasicInfoChange("phoneNumber", e.target.value)
+                        }
                         placeholder="9876543210"
                         className="text-sm"
                       />
@@ -392,7 +505,9 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                         label="Website URL"
                         name="websiteURL"
                         value={basicInfo.websiteURL}
-                        onChange={(e) => handleBasicInfoChange('websiteURL', e.target.value)}
+                        onChange={(e) =>
+                          handleBasicInfoChange("websiteURL", e.target.value)
+                        }
                         placeholder="https://www.example.com"
                         className="text-sm"
                       />
@@ -401,10 +516,12 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                         label="Technology"
                         name="technology"
                         value={basicInfo.technology}
-                        onChange={(e) => handleBasicInfoChange('technology', e.target.value)}
+                        onChange={(e) =>
+                          handleBasicInfoChange("technology", e.target.value)
+                        }
                         options={[
                           { value: "", label: "Select technology" },
-                          ...technologyOptions
+                          ...technologyOptions,
                         ]}
                         className="text-sm"
                       />
@@ -413,10 +530,15 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                         label="Hosting Provider"
                         name="hostingProvider"
                         value={basicInfo.hostingProvider}
-                        onChange={(e) => handleBasicInfoChange('hostingProvider', e.target.value)}
+                        onChange={(e) =>
+                          handleBasicInfoChange(
+                            "hostingProvider",
+                            e.target.value
+                          )
+                        }
                         options={[
                           { value: "", label: "Select hosting provider" },
-                          ...hostingProviderOptions
+                          ...hostingProviderOptions,
                         ]}
                         className="text-sm"
                       />
@@ -425,10 +547,15 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                         label="Domain Provider"
                         name="domainProvider"
                         value={basicInfo.domainProvider}
-                        onChange={(e) => handleBasicInfoChange('domainProvider', e.target.value)}
+                        onChange={(e) =>
+                          handleBasicInfoChange(
+                            "domainProvider",
+                            e.target.value
+                          )
+                        }
                         options={[
                           { value: "", label: "Select domain provider" },
-                          ...domainProviderOptions
+                          ...domainProviderOptions,
                         ]}
                         className="text-sm"
                       />
@@ -462,7 +589,7 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                             Updating...
                           </>
                         ) : (
-                          'Update AMC'
+                          "Update AMC"
                         )}
                       </button>
                     </div>
@@ -470,7 +597,7 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                 )}
 
                 {/* Tab 2: AMC History */}
-                {activeTab === 'amc' && (
+                {activeTab === "amc" && (
                   <div className="space-y-4">
                     {/* Create Button - Smaller size */}
                     <div className="flex justify-end">
@@ -478,8 +605,18 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                         onClick={handleCreateAmcHistory}
                         className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs font-medium flex items-center gap-1"
                       >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
                         </svg>
                         Create AMC History
                       </button>
@@ -490,62 +627,123 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                         {amcHistory.length === 0 ? (
                           <div className="px-4 py-8 text-center text-gray-500">
-                            No AMC history found. Click "Create AMC History" to add a new record.
+                            No AMC history found. Click "Create AMC History" to
+                            add a new record.
                           </div>
                         ) : (
                           <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                               <thead className="bg-gray-50">
                                 <tr>
-                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sequence</th>
-                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Start Date</th>
-                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">End Date</th>
-                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Sequence
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Start Date
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    End Date
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Amount
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Payment Status
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Status
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Actions
+                                  </th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-gray-200">
                                 {amcHistory.map((history) => {
-                                  const dueDateStatus = getDueDateStatus(history.amcEndDate);
+                                  const dueDateStatus = getDueDateStatus(
+                                    history.amcEndDate
+                                  );
                                   const isPastDue = dueDateStatus.isPastDue;
-                                  const daysRemaining = dueDateStatus.daysRemaining;
-                                  
+                                  const daysRemaining =
+                                    dueDateStatus.daysRemaining;
+
                                   return (
-                                    <tr 
-                                      key={history.acmHistoryId} 
-                                      className={`${isPastDue ? 'border-l-4 border-l-red-500 bg-red-50' : ''} hover:bg-gray-50`}
+                                    <tr
+                                      key={history.acmHistoryId}
+                                      className={`${
+                                        isPastDue
+                                          ? "border-l-4 border-l-red-500 bg-red-50"
+                                          : ""
+                                      } hover:bg-gray-50`}
                                     >
-                                      <td className="px-4 py-2 text-sm">{history.sequence}</td>
-                                      <td className="px-4 py-2 text-sm">{formatDate(history.amcStartDate)}</td>
                                       <td className="px-4 py-2 text-sm">
-                                        <div className={`${isPastDue ? 'text-red-600 font-semibold' : ''}`}>
+                                        {history.sequence}
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        {formatDate(history.amcStartDate)}
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        <div
+                                          className={`${
+                                            isPastDue
+                                              ? "text-red-600 font-semibold"
+                                              : ""
+                                          }`}
+                                        >
                                           {formatDate(history.amcEndDate)}
                                           {isPastDue && (
                                             <span className="block text-xs text-red-500 mt-1">
-                                              Overdue by {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}
+                                              Overdue by {daysRemaining} day
+                                              {daysRemaining !== 1 ? "s" : ""}
                                             </span>
                                           )}
                                         </div>
                                       </td>
-                                      <td className="px-4 py-2 text-sm">₹{history.amcAmount?.toLocaleString()}</td>
                                       <td className="px-4 py-2 text-sm">
-                                        {dueDateStatus.status === 'past-due' ? (
+                                        {history.amcAmount?.toLocaleString()}
+                                      </td>
+
+                                      <td className="px-4 py-2 text-sm">
+                                        <span
+                                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                            history.paid
+                                              ? "bg-green-100 text-green-800"
+                                              : "bg-red-100 text-red-800"
+                                          }`}
+                                        >
+                                          {history.paid ? "Paid" : "Unpaid"}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        {dueDateStatus.status === "past-due" ? (
                                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                             Overdue
                                           </span>
-                                        ) : dueDateStatus.status === 'near-due' && daysRemaining <= 30 ? (
+                                        ) : dueDateStatus.status ===
+                                            "near-due" &&
+                                          daysRemaining <= 30 ? (
                                           <div className="flex flex-col gap-1">
                                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                              {daysRemaining} day{daysRemaining !== 1 ? 's' : ''} left
+                                              {daysRemaining} day
+                                              {daysRemaining !== 1
+                                                ? "s"
+                                                : ""}{" "}
+                                              left
                                             </span>
                                             {daysRemaining <= 30 && (
                                               <div className="text-xs text-gray-600">
                                                 <div className="flex items-center gap-1">
                                                   <div className="w-full bg-gray-200 rounded-full h-1">
-                                                    <div 
-                                                      className="bg-yellow-500 h-1 rounded-full" 
-                                                      style={{ width: `${((30 - daysRemaining) / 30) * 100}%` }}
+                                                    <div
+                                                      className="bg-yellow-500 h-1 rounded-full"
+                                                      style={{
+                                                        width: `${
+                                                          ((30 -
+                                                            daysRemaining) /
+                                                            30) *
+                                                          100
+                                                        }%`,
+                                                      }}
                                                     ></div>
                                                   </div>
                                                 </div>
@@ -561,21 +759,48 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                       <td className="px-4 py-2 text-sm">
                                         <div className="flex gap-1">
                                           <button
-                                            onClick={() => handleEditAmcHistory(history)}
+                                            onClick={() =>
+                                              handleEditAmcHistory(history)
+                                            }
                                             className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                                             title="Edit"
                                           >
-                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            <svg
+                                              className="w-3 h-3"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                              />
                                             </svg>
                                           </button>
                                           <button
-                                            onClick={() => handleDeleteHistory(history.acmHistoryId, history.sequence)}
+                                            onClick={() =>
+                                              handleDeleteHistory(
+                                                history.acmHistoryId,
+                                                history.sequence
+                                              )
+                                            }
                                             className="p-1 text-red-600 hover:bg-red-50 rounded"
                                             title="Delete"
                                           >
-                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            <svg
+                                              className="w-3 h-3"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                              />
                                             </svg>
                                           </button>
                                         </div>
@@ -593,7 +818,7 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                 )}
 
                 {/* Tab 3: Domain History */}
-                {activeTab === 'domain' && (
+                {activeTab === "domain" && (
                   <div className="space-y-4">
                     {/* Create Button - Smaller size */}
                     <div className="flex justify-end">
@@ -601,8 +826,18 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                         onClick={handleCreateDomainHistory}
                         className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs font-medium flex items-center gap-1"
                       >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
                         </svg>
                         Create Domain History
                       </button>
@@ -613,62 +848,122 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                         {domainHistory.length === 0 ? (
                           <div className="px-4 py-8 text-center text-gray-500">
-                            No domain history found. Click "Create Domain History" to add a new record.
+                            No domain history found. Click "Create Domain
+                            History" to add a new record.
                           </div>
                         ) : (
                           <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                               <thead className="bg-gray-50">
                                 <tr>
-                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sequence</th>
-                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Start Date</th>
-                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Renewal Date</th>
-                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Sequence
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Start Date
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Renewal Date
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Amount
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Payment Status
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Status
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Actions
+                                  </th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-gray-200">
                                 {domainHistory.map((domain) => {
-                                  const dueDateStatus = getDueDateStatus(domain.domainRenewalDate);
+                                  const dueDateStatus = getDueDateStatus(
+                                    domain.domainRenewalDate
+                                  );
                                   const isPastDue = dueDateStatus.isPastDue;
-                                  const daysRemaining = dueDateStatus.daysRemaining;
-                                  
+                                  const daysRemaining =
+                                    dueDateStatus.daysRemaining;
+
                                   return (
-                                    <tr 
-                                      key={domain.acmDomainHistoryId} 
-                                      className={`${isPastDue ? 'border-l-4 border-l-red-500 bg-red-50' : ''} hover:bg-gray-50`}
+                                    <tr
+                                      key={domain.acmDomainHistoryId}
+                                      className={`${
+                                        isPastDue
+                                          ? "border-l-4 border-l-red-500 bg-red-50"
+                                          : ""
+                                      } hover:bg-gray-50`}
                                     >
-                                      <td className="px-4 py-2 text-sm">{domain.sequence}</td>
-                                      <td className="px-4 py-2 text-sm">{formatDate(domain.domainStartDate)}</td>
                                       <td className="px-4 py-2 text-sm">
-                                        <div className={`${isPastDue ? 'text-red-600 font-semibold' : ''}`}>
+                                        {domain.sequence}
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        {formatDate(domain.domainStartDate)}
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        <div
+                                          className={`${
+                                            isPastDue
+                                              ? "text-red-600 font-semibold"
+                                              : ""
+                                          }`}
+                                        >
                                           {formatDate(domain.domainRenewalDate)}
                                           {isPastDue && (
                                             <span className="block text-xs text-red-500 mt-1">
-                                              Overdue by {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}
+                                              Overdue by {daysRemaining} day
+                                              {daysRemaining !== 1 ? "s" : ""}
                                             </span>
                                           )}
                                         </div>
                                       </td>
-                                      <td className="px-4 py-2 text-sm">₹{domain.domainAmount}</td>
                                       <td className="px-4 py-2 text-sm">
-                                        {dueDateStatus.status === 'past-due' ? (
+                                        {domain.domainAmount}
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        <span
+                                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                            domain.paid
+                                              ? "bg-green-100 text-green-800"
+                                              : "bg-red-100 text-red-800"
+                                          }`}
+                                        >
+                                          {domain.paid ? "Paid" : "Unpaid"}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        {dueDateStatus.status === "past-due" ? (
                                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                             Overdue
                                           </span>
-                                        ) : dueDateStatus.status === 'near-due' && daysRemaining <= 30 ? (
+                                        ) : dueDateStatus.status ===
+                                            "near-due" &&
+                                          daysRemaining <= 30 ? (
                                           <div className="flex flex-col gap-1">
                                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                              {daysRemaining} day{daysRemaining !== 1 ? 's' : ''} left
+                                              {daysRemaining} day
+                                              {daysRemaining !== 1
+                                                ? "s"
+                                                : ""}{" "}
+                                              left
                                             </span>
                                             {daysRemaining <= 30 && (
                                               <div className="text-xs text-gray-600">
                                                 <div className="flex items-center gap-1">
                                                   <div className="w-full bg-gray-200 rounded-full h-1">
-                                                    <div 
-                                                      className="bg-yellow-500 h-1 rounded-full" 
-                                                      style={{ width: `${((30 - daysRemaining) / 30) * 100}%` }}
+                                                    <div
+                                                      className="bg-yellow-500 h-1 rounded-full"
+                                                      style={{
+                                                        width: `${
+                                                          ((30 -
+                                                            daysRemaining) /
+                                                            30) *
+                                                          100
+                                                        }%`,
+                                                      }}
                                                     ></div>
                                                   </div>
                                                 </div>
@@ -684,21 +979,309 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                       <td className="px-4 py-2 text-sm">
                                         <div className="flex gap-1">
                                           <button
-                                            onClick={() => handleEditDomainHistory(domain)}
+                                            onClick={() =>
+                                              handleEditDomainHistory(domain)
+                                            }
                                             className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                                             title="Edit"
                                           >
-                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            <svg
+                                              className="w-3 h-3"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                              />
                                             </svg>
                                           </button>
                                           <button
-                                            onClick={() => handleDeleteDomain(domain.acmDomainHistoryId, domain.sequence)}
+                                            onClick={() =>
+                                              handleDeleteDomain(
+                                                domain.acmDomainHistoryId,
+                                                domain.sequence
+                                              )
+                                            }
                                             className="p-1 text-red-600 hover:bg-red-50 rounded"
                                             title="Delete"
                                           >
-                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            <svg
+                                              className="w-3 h-3"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                              />
+                                            </svg>
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tab 4: GSuite History */}
+                {activeTab === "gsuite" && (
+                  <div className="space-y-4">
+                    {/* Create Button */}
+                    <div className="flex justify-end">
+                      <button
+                        onClick={handleCreateGsuiteHistory}
+                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs font-medium flex items-center gap-1"
+                      >
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                        Create GSuite History
+                      </button>
+                    </div>
+
+                    {/* List Section */}
+                    <div>
+                      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        {gsuiteHistory.length === 0 ? (
+                          <div className="px-4 py-8 text-center text-gray-500">
+                            No GSuite history found. Click "Create GSuite
+                            History" to add a new record.
+                          </div>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Sequence
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Domain
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Platform
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Start Date
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Renewal Date
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Licenses
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Amount
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Paid By
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Payment Status
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Status
+                                  </th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Actions
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-200">
+                                {gsuiteHistory.map((gsuite) => {
+                                  const dueDateStatus = getDueDateStatus(
+                                    gsuite.gsuitRenewalDate
+                                  );
+                                  const isPastDue = dueDateStatus.isPastDue;
+                                  const daysRemaining =
+                                    dueDateStatus.daysRemaining;
+
+                                  return (
+                                    <tr
+                                      key={gsuite.amcGsuitHistoryId}
+                                      className={`${
+                                        isPastDue
+                                          ? "border-l-4 border-l-red-500 bg-red-50"
+                                          : ""
+                                      } hover:bg-gray-50`}
+                                    >
+                                      <td className="px-4 py-2 text-sm">
+                                        {gsuite.sequence}
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        <div className="font-medium">
+                                          {gsuite.domainName}
+                                        </div>
+                                        {gsuite.adminEmail && (
+                                          <div className="text-xs text-gray-500">
+                                            {gsuite.adminEmail}
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        {gsuite.platform}
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        {formatDate(gsuite.gsuitStartDate)}
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        <div
+                                          className={`${
+                                            isPastDue
+                                              ? "text-red-600 font-semibold"
+                                              : ""
+                                          }`}
+                                        >
+                                          {formatDate(gsuite.gsuitRenewalDate)}
+                                          {isPastDue && (
+                                            <span className="block text-xs text-red-500 mt-1">
+                                              Overdue by {daysRemaining} day
+                                              {daysRemaining !== 1 ? "s" : ""}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        {gsuite.totalLicenses}
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        ₹{gsuite.gsuitAmount}
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        <span
+                                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                            gsuite.paidBy === "ADMIN"
+                                              ? "bg-purple-100 text-purple-800"
+                                              : "bg-blue-100 text-blue-800"
+                                          }`}
+                                        >
+                                          {gsuite.paidBy === "ADMIN"
+                                            ? "Admin"
+                                            : "Client"}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        <span
+                                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                            gsuite.paid
+                                              ? "bg-green-100 text-green-800"
+                                              : "bg-red-100 text-red-800"
+                                          }`}
+                                        >
+                                          {gsuite.paid ? "Paid" : "Unpaid"}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        {dueDateStatus.status === "past-due" ? (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            Overdue
+                                          </span>
+                                        ) : dueDateStatus.status ===
+                                            "near-due" &&
+                                          daysRemaining <= 30 ? (
+                                          <div className="flex flex-col gap-1">
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                              {daysRemaining} day
+                                              {daysRemaining !== 1
+                                                ? "s"
+                                                : ""}{" "}
+                                              left
+                                            </span>
+                                            {daysRemaining <= 30 && (
+                                              <div className="text-xs text-gray-600">
+                                                <div className="flex items-center gap-1">
+                                                  <div className="w-full bg-gray-200 rounded-full h-1">
+                                                    <div
+                                                      className="bg-yellow-500 h-1 rounded-full"
+                                                      style={{
+                                                        width: `${
+                                                          ((30 -
+                                                            daysRemaining) /
+                                                            30) *
+                                                          100
+                                                        }%`,
+                                                      }}
+                                                    ></div>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            Active
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        <div className="flex gap-1">
+                                          <button
+                                            onClick={() =>
+                                              handleEditGsuiteHistory(gsuite)
+                                            }
+                                            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                                            title="Edit"
+                                          >
+                                            <svg
+                                              className="w-3 h-3"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                              />
+                                            </svg>
+                                          </button>
+                                          <button
+                                            onClick={() =>
+                                              handleDeleteGsuite(
+                                                gsuite.amcGsuitHistoryId,
+                                                gsuite.domainName
+                                              )
+                                            }
+                                            className="p-1 text-red-600 hover:bg-red-50 rounded"
+                                            title="Delete"
+                                          >
+                                            <svg
+                                              className="w-3 h-3"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                              />
                                             </svg>
                                           </button>
                                         </div>
@@ -744,6 +1327,19 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
         amcId={amc?.amcId}
         isEditMode={!!editingDomain}
         initialData={editingDomain}
+      />
+
+      {/* GSuite History Modal */}
+      <GsuiteHistoryModal
+        isOpen={showGsuiteHistoryModal}
+        onClose={() => {
+          setShowGsuiteHistoryModal(false);
+          setEditingGsuite(null);
+        }}
+        onSuccess={handleGsuiteHistorySuccess}
+        amcId={amc?.amcId}
+        isEditMode={!!editingGsuite}
+        initialData={editingGsuite}
       />
     </>
   );
