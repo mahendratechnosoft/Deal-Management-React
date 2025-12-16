@@ -237,8 +237,16 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
     setShowGsuiteHistoryModal(true);
   };
 
-  const handleGsuiteHistorySuccess = () => {
-    fetchGsuiteHistory();
+  // In EditAmcModal.jsx - update this function
+  const handleGsuiteHistorySuccess = (responseData) => {
+    fetchGsuiteHistory(); // Refresh GSuite history list
+
+    // NEW: Check if we need to refresh parent AMC list
+    if (responseData?.refreshParentList) {
+      // Trigger parent component refresh
+      onSuccess(); // This will trigger AmcList to refresh
+    }
+
     setShowGsuiteHistoryModal(false);
   };
 
@@ -261,8 +269,6 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
     }
   };
 
-
-
   // AMC History Functions
   const handleCreateAmcHistory = () => {
     setEditingHistory(null);
@@ -274,8 +280,16 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
     setShowAmcHistoryModal(true);
   };
 
-  const handleAmcHistorySuccess = () => {
-    fetchAmcHistory();
+  // Update handleAmcHistorySuccess function
+  const handleAmcHistorySuccess = (responseData) => {
+    fetchAmcHistory(); // Refresh AMC history list
+
+    // NEW: Check if we need to refresh parent AMC list
+    if (responseData?.refreshParentList) {
+      // Trigger parent component refresh
+      onSuccess(); // This will trigger AmcList to refresh
+    }
+
     setShowAmcHistoryModal(false);
   };
 
@@ -307,8 +321,15 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
     setShowDomainHistoryModal(true);
   };
 
-  const handleDomainHistorySuccess = () => {
-    fetchDomainHistory();
+  const handleDomainHistorySuccess = (responseData) => {
+    fetchDomainHistory(); // Refresh domain history list
+
+    // NEW: Check if we need to refresh parent AMC list
+    if (responseData?.refreshParentList) {
+      // Trigger parent component refresh
+      onSuccess(); // This will trigger AmcList to refresh
+    }
+
     setShowDomainHistoryModal(false);
   };
 
@@ -331,42 +352,42 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
     }
   };
 
-    const handleSubmitBasicInfo = async (e) => {
-      e.preventDefault();
-      setLoading(true);
-      try {
-        // Prepare payload matching API exactly
-        const updatePayload = {
-          amcId: amc.amcId,
-          adminId: amc.adminId || "", // Get from amc prop or context
-          employeeId: "", // If you have this field
-          ...basicInfo,
-          // Ensure all fields are included even if empty
-          clientName: basicInfo.clientName || null,
-          domainProvider: basicInfo.domainProvider || "",
-          employeeId: "", // Set to empty string instead of null
-        };
+  const handleSubmitBasicInfo = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      // Prepare payload matching API exactly
+      const updatePayload = {
+        amcId: amc.amcId,
+        adminId: amc.adminId || "", // Get from amc prop or context
+        employeeId: "", // If you have this field
+        ...basicInfo,
+        // Ensure all fields are included even if empty
+        clientName: basicInfo.clientName || null,
+        domainProvider: basicInfo.domainProvider || "",
+        employeeId: "", // Set to empty string instead of null
+      };
 
-        console.log("Update payload:", updatePayload);
+      console.log("Update payload:", updatePayload);
 
-        const response = await axiosInstance.put(`updateAMC`, updatePayload);
+      const response = await axiosInstance.put(`updateAMC`, updatePayload);
 
-        if (response.data) {
-          toast.success("AMC information updated successfully");
-          onSuccess();
-        } else {
-          throw new Error("No response data");
-        }
-      } catch (error) {
-        console.error("Error updating AMC:", error);
-        console.error("Error response:", error.response?.data);
-        toast.error(
-          error.response?.data?.message || "Failed to update AMC information"
-        );
-      } finally {
-        setLoading(false);
+      if (response.data) {
+        toast.success("AMC information updated successfully");
+        onSuccess();
+      } else {
+        throw new Error("No response data");
       }
-    };
+    } catch (error) {
+      console.error("Error updating AMC:", error);
+      console.error("Error response:", error.response?.data);
+      toast.error(
+        error.response?.data?.message || "Failed to update AMC information"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-3 z-50">
@@ -448,10 +469,7 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
               <>
                 {/* Tab 1: Basic Information */}
                 {activeTab === "basic" && (
-                  <form
-                    onSubmit={handleSubmitBasicInfo}
-                    className="space-y-4"
-                  >
+                  <form onSubmit={handleSubmitBasicInfo} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <GlobalInputField
                         label="Company Name"
