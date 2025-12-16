@@ -53,7 +53,8 @@ import EmployeeList from "./Components/Common/Employee/EmployeeList.jsx";
 import TaskList from "./Components/Common/Task/TaskList.jsx";
 import { TaskTimerProvider } from "./Components/BaseComponet/TaskTimerContext.jsx";
 
-import AmcList from "./Components/Common/AMC/AmcList.jsx"
+import AmcList from "./Components/Common/AMC/AmcList.jsx";
+import PaymentModeList from "./Components/Common/Settings/Finance/PaymentMode/PaymentModeList.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -385,7 +386,6 @@ function App() {
               }
             />
 
-
             <Route
               path="/Admin/AMC"
               element={
@@ -626,10 +626,19 @@ function App() {
             >
               <Route index element={<General />} />
               <Route path="Department" element={<Department />} />
+
               <Route
                 path="Department/:departmentId/Roles"
                 element={<RoleListCompo />}
               />
+
+              {/* --- FINANCE SECTION --- */}
+              <Route path="Finance">
+                <Route path="PaymentMode" element={<PaymentModeList />} />
+                {/* <Route path="TaxRate" element={<TaxRate />} /> */}
+              </Route>
+              {/* --------------------------- */}
+
               <Route path="Form" element={<DynamicFormBase />} />
             </Route>
 
