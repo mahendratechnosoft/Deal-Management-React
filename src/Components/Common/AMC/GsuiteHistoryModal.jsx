@@ -1,55 +1,81 @@
-// AmcHistoryModal.jsx
 import React, { useState, useEffect } from "react";
+import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import {
   GlobalInputField,
-  GlobalTextAreaField,
   GlobalSelectField,
 } from "../../BaseComponet/CustomerFormInputs";
-import axiosInstance from "../../BaseComponet/axiosInstance";
 
-const AmcHistoryModal = ({
+function GsuiteHistoryModal({
   isOpen,
   onClose,
   onSuccess,
   amcId,
-  isEditMode = false,
-  initialData = null,
-}) => {
+  isEditMode,
+  initialData,
+}) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    amcStartDate: "",
-    amcEndDate: "",
-    amcAmount: "",
-    amcScope: "",
-    amcRecycleType: "Yearly",
+    domainName: "",
+    platform: "Google Workspace",
+    gsuitStartDate: "",
+    gsuitRenewalDate: "",
+    adminEmail: "",
+    adminPassword: "",
+    totalLicenses: "",
+    gsuitAmount: "",
+    paidBy: "ADMIN",
+    purchasedViaReseller: false,
+    resellerName: "",
+    gsuitRenewalCycle: "YEARLY",
     sequence: 1,
     paid: false, // Added paid field
   });
 
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [checkingSequence, setCheckingSequence] = useState(false);
   const [sequenceError, setSequenceError] = useState("");
   const [sequenceValid, setSequenceValid] = useState(false);
   const [existingSequences, setExistingSequences] = useState([]);
 
-  const recycleTypeOptions = [
-    { value: "Monthly", label: "Monthly" },
-    { value: "Quarterly", label: "Quarterly" },
-    { value: "Half-Yearly", label: "Half-Yearly" },
-    { value: "Yearly", label: "Yearly" },
-    { value: "2 Years", label: "2 Years" },
+  // Options
+  const platformOptions = [
+    { value: "Google Workspace", label: "Google Workspace" },
+    { value: "Microsoft 365", label: "Microsoft 365" },
+    { value: "Zoho Workplace", label: "Zoho Workplace" },
+  ];
+
+  const paidByOptions = [
+    { value: "ADMIN", label: "Paid by Admin" },
+    { value: "CLIENT", label: "Paid by Client" },
+  ];
+
+  const renewalCycleOptions = [
+    { value: "MONTHLY", label: "Monthly" },
+    { value: "QUARTERLY", label: "Quarterly" },
+    { value: "YEARLY", label: "Yearly" },
+    { value: "2_YEARS", label: "2 Years" },
+    { value: "3_YEARS", label: "3 Years" },
   ];
 
   // Cleanup when modal closes
   useEffect(() => {
     return () => {
+      // Reset all states when component unmounts
       setFormData({
-        amcStartDate: "",
-        amcEndDate: "",
-        amcAmount: "",
-        amcScope: "",
-        amcRecycleType: "Yearly",
+        domainName: "",
+        platform: "Google Workspace",
+        gsuitStartDate: "",
+        gsuitRenewalDate: "",
+        adminEmail: "",
+        adminPassword: "",
+        totalLicenses: "",
+        gsuitAmount: "",
+        paidBy: "ADMIN",
+        purchasedViaReseller: false,
+        resellerName: "",
+        gsuitRenewalCycle: "YEARLY",
         sequence: 1,
         paid: false, // Reset paid field
       });
@@ -57,20 +83,23 @@ const AmcHistoryModal = ({
       setSequenceError("");
       setSequenceValid(false);
       setCheckingSequence(false);
+      setShowAdminPassword(false);
     };
   }, []);
 
   // Fetch existing sequences when modal opens
   useEffect(() => {
     if (isOpen && amcId) {
+      // Reset sequences state first
+      setExistingSequences([]);
       fetchExistingSequences();
     }
   }, [isOpen, amcId]);
 
-  // Initialize form with initialData
+  // Initialize form data - FIXED VERSION
   useEffect(() => {
     if (isOpen) {
-      // Reset validation states when modal opens
+      // Reset all states when modal opens
       setErrors({});
       setSequenceError("");
       setSequenceValid(false);
@@ -79,23 +108,41 @@ const AmcHistoryModal = ({
       if (isEditMode && initialData) {
         // Edit mode: use initial data
         setFormData({
-          amcStartDate: initialData.amcStartDate || "",
-          amcEndDate: initialData.amcEndDate || "",
-          amcAmount: initialData.amcAmount || "",
-          amcScope: initialData.amcScope || "",
-          amcRecycleType: initialData.amcRecycleType || "Yearly",
+          domainName: initialData.domainName || "",
+          platform: initialData.platform || "Google Workspace",
+          gsuitStartDate: initialData.gsuitStartDate
+            ? initialData.gsuitStartDate.split("T")[0]
+            : "",
+          gsuitRenewalDate: initialData.gsuitRenewalDate
+            ? initialData.gsuitRenewalDate.split("T")[0]
+            : "",
+          adminEmail: initialData.adminEmail || "",
+          adminPassword: initialData.adminPassword || "",
+          totalLicenses: initialData.totalLicenses || "",
+          gsuitAmount: initialData.gsuitAmount || "",
+          paidBy: initialData.paidBy || "ADMIN",
+          purchasedViaReseller: initialData.purchasedViaReseller || false,
+          resellerName: initialData.resellerName || "",
+          gsuitRenewalCycle: initialData.gsuitRenewalCycle || "YEARLY",
           sequence: initialData.sequence || 1,
           paid: initialData.paid || false, // Set paid from initialData
         });
         setSequenceValid(true); // In edit mode, assume sequence is valid
       } else {
-        // Create mode: reset to default values
+        // Create mode: reset to default values first
         const defaultFormData = {
-          amcStartDate: "",
-          amcEndDate: "",
-          amcAmount: "",
-          amcScope: "",
-          amcRecycleType: "Yearly",
+          domainName: "",
+          platform: "Google Workspace",
+          gsuitStartDate: "",
+          gsuitRenewalDate: "",
+          adminEmail: "",
+          adminPassword: "",
+          totalLicenses: "",
+          gsuitAmount: "",
+          paidBy: "ADMIN",
+          purchasedViaReseller: false,
+          resellerName: "",
+          gsuitRenewalCycle: "YEARLY",
           sequence: 1,
           paid: false, // Default to false for new entries
         };
@@ -119,10 +166,12 @@ const AmcHistoryModal = ({
     }
   }, [isOpen, isEditMode, initialData, existingSequences]);
 
-  // Fetch all existing sequences for this AMC
+  // Fetch all existing sequences from the API
   const fetchExistingSequences = async () => {
     try {
-      const response = await axiosInstance.get(`getAllAMCHistoy/${amcId}`);
+      const response = await axiosInstance.get(
+        `getAllAMCGsuitHistory/${amcId}`
+      );
       if (response.data && Array.isArray(response.data)) {
         setExistingSequences(response.data);
       }
@@ -144,7 +193,7 @@ const AmcHistoryModal = ({
     return maxSequence + 1;
   };
 
-  // Check if sequence number is unique using the provided API
+  // Check if sequence number is unique
   const checkSequenceUnique = async (sequence) => {
     if (!amcId || !sequence) {
       setSequenceError("Sequence number is required");
@@ -158,27 +207,36 @@ const AmcHistoryModal = ({
 
     try {
       const response = await axiosInstance.get(
-        `isAmcHistorySequenceUnique/${amcId}/${sequence}`
+        `isGsuitHistorySequenceUnique/${amcId}/${sequence}`
       );
 
-      console.log("Sequence check response:", response.data);
+      console.log("Sequence check response:", response.data); // Debug log
 
-      // API response interpretation
+      // API response interpretation:
+      // Option 1: API returns { "unique": true } means sequence IS UNIQUE (doesn't exist)
+      // Option 2: API returns { "exists": true } means sequence ALREADY EXISTS
+      // Option 3: API returns boolean directly
+
       let isUnique;
 
+      // Check different possible response formats
       if (typeof response.data === "boolean") {
         // If API returns boolean directly
+        // true = unique (doesn't exist), false = exists
         isUnique = response.data;
       } else if (response.data.unique !== undefined) {
         // If API returns { "unique": boolean }
+        // true = unique (doesn't exist), false = exists
         isUnique = response.data.unique;
       } else if (response.data.exists !== undefined) {
         // If API returns { "exists": boolean }
+        // true = exists, false = unique
         isUnique = !response.data.exists;
       } else if (response.data.isUnique !== undefined) {
         // If API returns { "isUnique": boolean }
         isUnique = response.data.isUnique;
       } else {
+        // Default assumption: if we get any response, assume sequence exists
         console.error("Unexpected API response format:", response.data);
         setSequenceValid(false);
         setSequenceError("Unable to validate sequence. Please try again.");
@@ -191,12 +249,15 @@ const AmcHistoryModal = ({
         return true;
       } else {
         setSequenceValid(false);
-        setSequenceError(`Sequence number ${sequence} is already in use.`);
+        setSequenceError(
+          `Sequence number ${sequence} is already in use. Please choose a different sequence.`
+        );
         return false;
       }
     } catch (error) {
       console.error("Error checking sequence uniqueness:", error);
 
+      // Handle specific error cases
       if (error.response?.status === 404) {
         // 404 might mean sequence doesn't exist (is unique)
         setSequenceValid(true);
@@ -216,41 +277,39 @@ const AmcHistoryModal = ({
       setCheckingSequence(false);
     }
   };
-
-  // Auto-calculate end date when start date or recycle type changes
+  // Auto-calculate renewal date
   useEffect(() => {
-    if (formData.amcStartDate && formData.amcRecycleType) {
-      const endDate = calculateAmcEndDate(
-        formData.amcStartDate,
-        formData.amcRecycleType
+    if (formData.gsuitStartDate && formData.gsuitRenewalCycle) {
+      const renewalDate = calculateRenewalDate(
+        formData.gsuitStartDate,
+        formData.gsuitRenewalCycle
       );
-      if (endDate && endDate !== formData.amcEndDate) {
-        setFormData((prev) => ({ ...prev, amcEndDate: endDate }));
+      if (renewalDate && renewalDate !== formData.gsuitRenewalDate) {
+        setFormData((prev) => ({ ...prev, gsuitRenewalDate: renewalDate }));
       }
     }
-  }, [formData.amcStartDate, formData.amcRecycleType]);
+  }, [formData.gsuitStartDate, formData.gsuitRenewalCycle]);
 
-  // Function to calculate end date based on start date and recycle type
-  const calculateAmcEndDate = (startDate, recycleType) => {
+  const calculateRenewalDate = (startDate, cycle) => {
     if (!startDate) return "";
 
     const date = new Date(startDate);
 
-    switch (recycleType) {
-      case "Monthly":
+    switch (cycle) {
+      case "MONTHLY":
         date.setMonth(date.getMonth() + 1);
         break;
-      case "Quarterly":
+      case "QUARTERLY":
         date.setMonth(date.getMonth() + 3);
         break;
-      case "Half-Yearly":
-        date.setMonth(date.getMonth() + 6);
-        break;
-      case "Yearly":
+      case "YEARLY":
         date.setFullYear(date.getFullYear() + 1);
         break;
-      case "2 Years":
+      case "2_YEARS":
         date.setFullYear(date.getFullYear() + 2);
+        break;
+      case "3_YEARS":
+        date.setFullYear(date.getFullYear() + 3);
         break;
       default:
         date.setFullYear(date.getFullYear() + 1);
@@ -260,11 +319,9 @@ const AmcHistoryModal = ({
   };
 
   const handleChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
+    // Clear error for this field if exists
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
@@ -284,31 +341,15 @@ const AmcHistoryModal = ({
     }));
   };
 
-  // Handle start date change
-  const handleStartDateChange = (date) => {
-    setFormData((prev) => ({
-      ...prev,
-      amcStartDate: date,
-    }));
+  const handleRenewalCycleChange = (cycle) => {
+    handleChange("gsuitRenewalCycle", cycle);
 
-    if (errors.amcStartDate) {
-      setErrors((prev) => ({ ...prev, amcStartDate: "" }));
+    if (formData.gsuitStartDate) {
+      const renewalDate = calculateRenewalDate(formData.gsuitStartDate, cycle);
+      handleChange("gsuitRenewalDate", renewalDate);
     }
   };
 
-  // Handle recycle type change
-  const handleRecycleTypeChange = (recycleType) => {
-    setFormData((prev) => ({
-      ...prev,
-      amcRecycleType: recycleType,
-    }));
-
-    if (errors.amcRecycleType) {
-      setErrors((prev) => ({ ...prev, amcRecycleType: "" }));
-    }
-  };
-
-  // Handle sequence change with validation
   const handleSequenceChange = async (value) => {
     const sequence = parseInt(value);
     if (isNaN(sequence) || sequence < 1) {
@@ -330,7 +371,6 @@ const AmcHistoryModal = ({
     }
   };
 
-  // Auto-assign next sequence
   const handleAutoSequence = () => {
     const nextSequence = calculateNextSequence();
     setFormData((prev) => ({ ...prev, sequence: nextSequence }));
@@ -340,25 +380,34 @@ const AmcHistoryModal = ({
   const validateForm = async () => {
     const newErrors = {};
 
-    if (!formData.amcStartDate) {
-      newErrors.amcStartDate = "AMC start date is required";
+    if (!formData.domainName?.trim()) {
+      newErrors.domainName = "Domain name is required";
     }
 
-    if (!formData.amcEndDate) {
-      newErrors.amcEndDate = "AMC end date is required";
+    if (!formData.gsuitStartDate) {
+      newErrors.gsuitStartDate = "Start date is required";
     }
 
-    if (!formData.amcAmount) {
-      newErrors.amcAmount = "AMC amount is required";
+    if (!formData.gsuitRenewalDate) {
+      newErrors.gsuitRenewalDate = "Renewal date is required";
+    }
+
+    if (!formData.totalLicenses) {
+      newErrors.totalLicenses = "Total licenses is required";
     } else if (
-      isNaN(formData.amcAmount) ||
-      parseFloat(formData.amcAmount) <= 0
+      isNaN(formData.totalLicenses) ||
+      parseInt(formData.totalLicenses) <= 0
     ) {
-      newErrors.amcAmount = "AMC amount must be a positive number";
+      newErrors.totalLicenses = "Total licenses must be a positive number";
     }
 
-    if (!formData.amcScope?.trim()) {
-      newErrors.amcScope = "AMC scope is required";
+    if (!formData.gsuitAmount) {
+      newErrors.gsuitAmount = "GSuite amount is required";
+    } else if (
+      isNaN(formData.gsuitAmount) ||
+      parseFloat(formData.gsuitAmount) <= 0
+    ) {
+      newErrors.gsuitAmount = "GSuite amount must be a positive number";
     }
 
     if (!formData.sequence) {
@@ -367,10 +416,19 @@ const AmcHistoryModal = ({
       newErrors.sequence = "Sequence must be a positive number";
     }
 
+    if (formData.adminEmail && !/\S+@\S+\.\S+/.test(formData.adminEmail)) {
+      newErrors.adminEmail = "Admin email is invalid";
+    }
+
+    if (formData.purchasedViaReseller && !formData.resellerName?.trim()) {
+      newErrors.resellerName =
+        "Reseller name is required when purchased via reseller";
+    }
+
     setErrors(newErrors);
 
-    // Check sequence uniqueness for create mode
-    if (!newErrors.sequence && !isEditMode) {
+    // Check sequence uniqueness
+    if (!newErrors.sequence) {
       const isUnique = await checkSequenceUnique(formData.sequence);
       if (!isUnique) {
         return false;
@@ -379,8 +437,6 @@ const AmcHistoryModal = ({
 
     return Object.keys(newErrors).length === 0;
   };
-
-  // In AmcHistoryModal.jsx - Modify the handleSubmit function:
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -391,8 +447,8 @@ const AmcHistoryModal = ({
       return;
     }
 
-    // Final sequence check for create mode
-    if (!isEditMode && !sequenceValid) {
+    // Final sequence check
+    if (!sequenceValid) {
       toast.error("Please ensure sequence number is valid and unique");
       return;
     }
@@ -400,42 +456,36 @@ const AmcHistoryModal = ({
     setLoading(true);
     try {
       const payload = {
-        amcId,
         ...formData,
-        amcAmount: parseFloat(formData.amcAmount),
+        totalLicenses: formData.totalLicenses
+          ? parseInt(formData.totalLicenses)
+          : 0,
+        gsuitAmount: parseFloat(formData.gsuitAmount),
         sequence: parseInt(formData.sequence),
-        paid: formData.paid,
+        paid: formData.paid, // Include paid field in payload
+        // Include amcId if creating new
+        ...(!isEditMode && { amcId: amcId }),
       };
 
-      // Add acmHistoryId for update
-      if (isEditMode && initialData?.acmHistoryId) {
-        payload.acmHistoryId = initialData.acmHistoryId;
+      let response;
+      if (isEditMode && initialData?.acmGsuitHistoryId) {
+        // Update existing
+        response = await axiosInstance.put(`updateAMCGsuitHistory`, payload);
+      } else {
+        // Create new - using the provided endpoint for create/update
+        response = await axiosInstance.put(`updateAMCGsuitHistory`, payload);
       }
-
-      // Use correct endpoint for create/update
-      const response = isEditMode
-        ? await axiosInstance.put("updateAMCHistory", payload)
-        : await axiosInstance.put("updateAMCHistory", payload);
 
       if (response.data) {
         toast.success(
           isEditMode
-            ? "AMC History updated successfully"
-            : "AMC History created successfully"
+            ? "GSuite history updated successfully"
+            : "GSuite history created successfully"
         );
-
-        if (onSuccess) {
-          // Pass a flag to indicate refresh is needed
-          onSuccess({
-            ...response.data,
-            refreshParentList: true, // Add this flag
-          });
-        }
-
-        onClose();
+        onSuccess();
       }
     } catch (error) {
-      console.error("Error saving AMC history:", error);
+      console.error("Error saving GSuite history:", error);
 
       if (error.response?.status === 409) {
         toast.error(
@@ -448,7 +498,7 @@ const AmcHistoryModal = ({
         );
       } else {
         toast.error(
-          error.response?.data?.message || "Failed to save AMC history"
+          error.response?.data?.message || "Failed to save GSuite history"
         );
       }
     } finally {
@@ -456,11 +506,15 @@ const AmcHistoryModal = ({
     }
   };
 
+  const getTodayDate = () => {
+    return new Date().toISOString().split("T")[0];
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-3 z-50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-hidden border border-gray-200 flex flex-col">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-hidden border border-gray-200 flex flex-col">
         {/* Modal Header */}
         <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-3">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
@@ -477,14 +531,17 @@ const AmcHistoryModal = ({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
                   />
                 </svg>
               </div>
               <div>
                 <h2 className="text-lg font-bold">
-                  {isEditMode ? "Edit AMC History" : "Add New AMC History"}
+                  {isEditMode ? "Edit GSuite History" : "Create GSuite History"}
                 </h2>
+                <p className="text-blue-100 text-xs">
+                  Fill in the GSuite details below
+                </p>
               </div>
             </div>
             <button
@@ -512,7 +569,7 @@ const AmcHistoryModal = ({
         <div className="flex-1 overflow-y-auto p-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* SEQUENCE FIELD */}
+              {/* Sequence Field */}
               <div className="md:col-span-2">
                 <div className="flex items-end gap-2">
                   <div className="flex-1">
@@ -635,121 +692,236 @@ const AmcHistoryModal = ({
               </div>
 
               <GlobalInputField
-                label={
-                  <>
-                    Start Date
-                    <span className="text-red-500 ml-1">*</span>
-                  </>
-                }
-                name="amcStartDate"
-                type="date"
-                value={formData.amcStartDate}
-                onChange={(e) => handleStartDateChange(e.target.value)}
-                error={errors.amcStartDate}
+                label="Domain Name"
+                name="domainName"
+                value={formData.domainName}
+                onChange={(e) => handleChange("domainName", e.target.value)}
+                error={errors.domainName}
+                placeholder="examplecompany.com"
+                className="text-sm"
+                required
+              />
+
+              <GlobalSelectField
+                label="Platform"
+                name="platform"
+                value={formData.platform}
+                onChange={(e) => handleChange("platform", e.target.value)}
+                options={platformOptions}
                 className="text-sm"
               />
 
               <GlobalInputField
-                label={
-                  <>
-                    End Date
-                    <span className="text-red-500 ml-1">*</span>
-                  </>
-                }
-                name="amcEndDate"
+                label="Start Date"
+                name="gsuitStartDate"
                 type="date"
-                value={formData.amcEndDate}
-                onChange={(e) => handleChange("amcEndDate", e.target.value)}
-                error={errors.amcEndDate}
+                value={formData.gsuitStartDate}
+                onChange={(e) => handleChange("gsuitStartDate", e.target.value)}
+                error={errors.gsuitStartDate}
+                className="text-sm"
+                min={getTodayDate()}
+                required
+              />
+
+              <GlobalInputField
+                label="Renewal Date"
+                name="gsuitRenewalDate"
+                type="date"
+                value={formData.gsuitRenewalDate}
+                onChange={(e) =>
+                  handleChange("gsuitRenewalDate", e.target.value)
+                }
+                error={errors.gsuitRenewalDate}
                 className="text-sm"
                 readOnly
                 style={{ backgroundColor: "#f9f9f9" }}
+                required
               />
 
               <GlobalInputField
-                label={
-                  <>
-                    Amount (₹)
-                    <span className="text-red-500 ml-1">*</span>
-                  </>
-                }
-                name="amcAmount"
+                label="Admin Email"
+                name="adminEmail"
+                type="email"
+                value={formData.adminEmail}
+                onChange={(e) => handleChange("adminEmail", e.target.value)}
+                error={errors.adminEmail}
+                placeholder="admin@example.com"
+                className="text-sm"
+              />
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">
+                  Admin Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showAdminPassword ? "text" : "password"}
+                    name="adminPassword"
+                    value={formData.adminPassword}
+                    onChange={(e) =>
+                      handleChange("adminPassword", e.target.value)
+                    }
+                    placeholder="Enter admin password"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 pr-10 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminPassword(!showAdminPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  >
+                    {showAdminPassword ? (
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.59 6.59m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <GlobalInputField
+                label="Total Licenses"
+                name="totalLicenses"
                 type="number"
-                value={formData.amcAmount}
-                onChange={(e) => handleChange("amcAmount", e.target.value)}
-                error={errors.amcAmount}
-                placeholder="25000"
+                value={formData.totalLicenses}
+                onChange={(e) => handleChange("totalLicenses", e.target.value)}
+                error={errors.totalLicenses}
+                placeholder="25"
+                min="1"
+                className="text-sm"
+                required
+              />
+
+              <GlobalInputField
+                label="GSuite Amount"
+                name="gsuitAmount"
+                type="number"
+                value={formData.gsuitAmount}
+                onChange={(e) => handleChange("gsuitAmount", e.target.value)}
+                error={errors.gsuitAmount}
+                placeholder="45000"
                 min="0"
                 step="0.01"
+                className="text-sm"
+                required
+              />
+
+              <GlobalSelectField
+                label="Paid By"
+                name="paidBy"
+                value={formData.paidBy}
+                onChange={(e) => handleChange("paidBy", e.target.value)}
+                options={paidByOptions}
                 className="text-sm"
               />
 
               <GlobalSelectField
-                label="Recycle Type"
-                name="amcRecycleType"
-                value={formData.amcRecycleType}
-                onChange={(e) => handleRecycleTypeChange(e.target.value)}
-                options={recycleTypeOptions}
+                label="Renewal Cycle"
+                name="gsuitRenewalCycle"
+                value={formData.gsuitRenewalCycle}
+                onChange={(e) => handleRenewalCycleChange(e.target.value)}
+                options={renewalCycleOptions}
                 className="text-sm"
               />
 
               <div className="md:col-span-2">
-                <GlobalTextAreaField
-                  label={
-                    <>
-                      Scope
-                      <span className="text-red-500 ml-1">*</span>
-                    </>
-                  }
-                  name="amcScope"
-                  value={formData.amcScope}
-                  onChange={(e) => handleChange("amcScope", e.target.value)}
-                  error={errors.amcScope}
-                  placeholder="Describe the AMC scope..."
-                  rows={4}
-                  className="text-sm"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="purchasedViaReseller"
+                    checked={formData.purchasedViaReseller}
+                    onChange={(e) =>
+                      handleChange("purchasedViaReseller", e.target.checked)
+                    }
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="purchasedViaReseller"
+                    className="text-sm text-gray-700"
+                  >
+                    Purchased via Reseller
+                  </label>
+                </div>
+
+                {formData.purchasedViaReseller && (
+                  <div className="mt-2">
+                    <GlobalInputField
+                      label="Reseller Name"
+                      name="resellerName"
+                      value={formData.resellerName}
+                      onChange={(e) =>
+                        handleChange("resellerName", e.target.value)
+                      }
+                      error={errors.resellerName}
+                      placeholder="Google Authorized Partner Pvt Ltd"
+                      className="text-sm"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Modal Footer inside form */}
-            <div className="pt-4 border-t border-gray-200">
-              <div className="flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 text-sm font-medium"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={
-                    loading ||
-                    checkingSequence ||
-                    (!sequenceValid && !isEditMode)
-                  }
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 flex items-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      {isEditMode ? "Updating..." : "Creating..."}
-                    </>
-                  ) : isEditMode ? (
-                    "Update History"
-                  ) : (
-                    "Create History"
-                  )}
-                </button>
-              </div>
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={
+                  loading || checkingSequence || (!sequenceValid && !isEditMode)
+                }
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 flex items-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    {isEditMode ? "Updating..." : "Creating..."}
+                  </>
+                ) : isEditMode ? (
+                  "Update GSuite"
+                ) : (
+                  "Create GSuite"
+                )}
+              </button>
             </div>
           </form>
         </div>
       </div>
     </div>
   );
-};
+}
 
-export default AmcHistoryModal;
+export default GsuiteHistoryModal;

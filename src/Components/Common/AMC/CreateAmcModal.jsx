@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
-import axiosInstance from '../../BaseComponet/axiosInstance';
+import React, { useState, useEffect, useRef } from "react";
+import axiosInstance from "../../BaseComponet/axiosInstance";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 import toast from "react-hot-toast";
 import {
   GlobalInputField,
   GlobalTextAreaField,
-  GlobalSelectField
-} from '../../BaseComponet/CustomerFormInputs';
+  GlobalSelectField,
+} from "../../BaseComponet/CustomerFormInputs";
 
 function CreateAmcModal({ onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -13,10 +15,10 @@ function CreateAmcModal({ onClose, onSuccess }) {
   const [loadingEmployees, setLoadingEmployees] = useState(false);
   const [clients, setClients] = useState([]);
   const [loadingClients, setLoadingClients] = useState(false);
-  const [activeTab, setActiveTab] = useState('client'); // Tab state
-  const [selectedClientId, setSelectedClientId] = useState(''); // Track selected client ID
+  const [activeTab, setActiveTab] = useState("client"); // Tab state
+  const [selectedClientId, setSelectedClientId] = useState(""); // Track selected client ID
   const [tabErrors, setTabErrors] = useState({}); // Track which tabs have errors
-
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
   // Refs for focusing on error fields
   const errorFieldRefs = useRef({});
 
@@ -24,7 +26,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     // AMC Info
     amcInfo: {
-      adminId: "ADMIN123", // You might want to get this from auth context
+      adminId: "",
       employeeId: "",
       clinetName: "",
       companyName: "",
@@ -33,11 +35,11 @@ function CreateAmcModal({ onClose, onSuccess }) {
       phoneNumber: "",
       websiteURL: "",
       technology: "",
-      hostingProvider: "Wix", // Set Wix as default
+      hostingProvider: "Wix",
       domainProvider: "",
-      assingedTo: ""
+      assingedTo: "",
     },
-    
+
     // AMC History Info
     amcHistoryInfo: {
       amcStartDate: "",
@@ -45,17 +47,37 @@ function CreateAmcModal({ onClose, onSuccess }) {
       amcAmount: "",
       amcScope: "",
       amcRecycleType: "Yearly",
-      sequence: 1
+      sequence: 1,
+      paid: false, // Added
     },
-    
+
     // AMC Domain History Info
     amcDomainHistoryInfo: {
       domainStartDate: "",
       domainRenewalDate: "",
       domainAmount: "",
       domainRenewalCycle: "1 Year",
-      sequence: 1
-    }
+      sequence: 1,
+      paid: false, // Added
+    },
+
+    // GSuite Details (NEW)
+    gsuiteDetails: {
+      domainName: "",
+      platform: "Google Workspace",
+      gsuitStartDate: "",
+      gsuitRenewalDate: "",
+      adminEmail: "",
+      adminPassword: "",
+      totalLicenses: "",
+      gsuitAmount: "",
+      paidBy: "ADMIN", // Default value
+      purchasedViaReseller: false,
+      resellerName: "",
+      gsuitRenewalCycle: "YEARLY",
+      sequence: 1, // Default sequence
+      paid: false, // Added
+    },
   });
 
   const [errors, setErrors] = useState({});
@@ -66,7 +88,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
     { value: "Quarterly", label: "Quarterly" },
     { value: "Half-Yearly", label: "Half-Yearly" },
     { value: "Yearly", label: "Yearly" },
-    { value: "2 Years", label: "2 Years" }
+    { value: "2 Years", label: "2 Years" },
   ];
 
   const domainRenewalOptions = [
@@ -75,7 +97,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
     { value: "Half-Yearly", label: "Half-Yearly" },
     { value: "1 Year", label: "1 Year" },
     { value: "2 Years", label: "2 Years" },
-    { value: "3 Years", label: "3 Years" }
+    { value: "3 Years", label: "3 Years" },
   ];
 
   const technologyOptions = [
@@ -90,7 +112,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
     { value: "Wix", label: "Wix" },
     { value: "WordPress", label: "WordPress" },
     { value: "Shopify", label: "Shopify" },
-    { value: "Other", label: "Other" }
+    { value: "Other", label: "Other" },
   ];
 
   const hostingProviderOptions = [
@@ -102,7 +124,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
     { value: "Hostinger", label: "Hostinger" },
     { value: "Bluehost", label: "Bluehost" },
     { value: "GoDaddy", label: "GoDaddy" },
-    { value: "Other", label: "Other" }
+    { value: "Other", label: "Other" },
   ];
 
   const domainProviderOptions = [
@@ -112,18 +134,59 @@ function CreateAmcModal({ onClose, onSuccess }) {
     { value: "Google Domains", label: "Google Domains" },
     { value: "Cloudflare", label: "Cloudflare" },
     { value: "Name.com", label: "Name.com" },
-    { value: "Other", label: "Other" }
+    { value: "Other", label: "Other" },
   ];
 
-  // Tabs configuration
+  // NEW: GSuite options
+  const paidByOptions = [
+    { value: "ADMIN", label: "Paid by Admin" },
+    { value: "CLIENT", label: "Paid by Client" },
+  ];
+
+  const gsuiteRenewalCycleOptions = [
+    { value: "MONTHLY", label: "Monthly" },
+    { value: "QUARTERLY", label: "Quarterly" },
+    { value: "YEARLY", label: "Yearly" },
+    { value: "2_YEARS", label: "2 Years" },
+    { value: "3_YEARS", label: "3 Years" },
+  ];
+
+  const platformOptions = [
+    { value: "Google Workspace", label: "Google Workspace" },
+    { value: "Microsoft 365", label: "Microsoft 365" },
+    { value: "Zoho Workplace", label: "Zoho Workplace" },
+  ];
+
+  // Tabs configuration - ADDED 'gsuite' tab
   const tabs = [
-    { id: 'client', label: 'Client Information', fields: ['companyName', 'contactPersonName', 'email', 'phoneNumber'] },
-    { id: 'technical', label: 'Technical Information', fields: ['technology', 'assingedTo'] },
-    { id: 'amc', label: 'AMC Details', fields: ['amcStartDate', 'amcEndDate', 'amcAmount', 'amcScope'] },
-    { id: 'domain', label: 'Domain Details', fields: ['domainStartDate', 'domainRenewalDate', 'domainAmount'] }
+    {
+      id: "client",
+      label: "Client Information",
+      fields: ["companyName", "contactPersonName", "email", "phoneNumber"],
+    },
+    {
+      id: "technical",
+      label: "Technical Information",
+      fields: ["technology", "assingedTo"],
+    },
+    {
+      id: "amc",
+      label: "AMC Details",
+      fields: ["amcStartDate", "amcEndDate", "amcAmount", "amcScope"],
+    },
+    {
+      id: "domain",
+      label: "Domain Details",
+      fields: ["domainStartDate", "domainRenewalDate", "domainAmount"],
+    },
+    {
+      id: "gsuite",
+      label: "GSuite Details",
+      fields: ["domainName", "adminEmail", "totalLicenses", "gsuitAmount"],
+    }, // NEW
   ];
 
-  // Required fields configuration
+  // Required fields configuration - ADDED gsuite fields
   const requiredFields = {
     amcInfo: {
       companyName: true,
@@ -131,19 +194,25 @@ function CreateAmcModal({ onClose, onSuccess }) {
       email: true,
       phoneNumber: true,
       technology: true,
-      assingedTo: true
+      assingedTo: true,
     },
     amcHistoryInfo: {
       amcStartDate: true,
       amcEndDate: true,
       amcAmount: true,
-      amcScope: true
+      amcScope: true,
     },
     amcDomainHistoryInfo: {
       domainStartDate: true,
       domainRenewalDate: true,
-      domainAmount: true
-    }
+      domainAmount: true,
+    },
+    gsuiteDetails: {
+      domainName: false,
+      adminEmail: false,
+      totalLicenses: false,
+      gsuitAmount: false,
+    },
   };
 
   // Fetch employees and clients on component mount
@@ -155,39 +224,63 @@ function CreateAmcModal({ onClose, onSuccess }) {
   // Update tab errors when errors change
   useEffect(() => {
     const newTabErrors = {};
-    
-    tabs.forEach(tab => {
-      const hasError = tab.fields.some(field => {
-        if (tab.id === 'client' || tab.id === 'technical') {
+
+    tabs.forEach((tab) => {
+      const hasError = tab.fields.some((field) => {
+        if (tab.id === "client" || tab.id === "technical") {
           return errors[`amcInfo.${field}`];
-        } else if (tab.id === 'amc') {
+        } else if (tab.id === "amc") {
           return errors[`amcHistoryInfo.${field}`];
-        } else if (tab.id === 'domain') {
+        } else if (tab.id === "domain") {
           return errors[`amcDomainHistoryInfo.${field}`];
+        } else if (tab.id === "gsuite") {
+          return errors[`gsuiteDetails.${field}`];
         }
         return false;
       });
-      
+
       newTabErrors[tab.id] = hasError;
     });
-    
+
     setTabErrors(newTabErrors);
   }, [errors]);
+
+  // Auto-calculate GSuite renewal date
+  useEffect(() => {
+    if (
+      formData.gsuiteDetails.gsuitStartDate &&
+      formData.gsuiteDetails.gsuitRenewalCycle
+    ) {
+      const renewalDate = calculateGSuiteRenewalDate(
+        formData.gsuiteDetails.gsuitStartDate,
+        formData.gsuiteDetails.gsuitRenewalCycle
+      );
+      if (
+        renewalDate &&
+        renewalDate !== formData.gsuiteDetails.gsuitRenewalDate
+      ) {
+        handleChange("gsuiteDetails", "gsuitRenewalDate", renewalDate);
+      }
+    }
+  }, [
+    formData.gsuiteDetails.gsuitStartDate,
+    formData.gsuiteDetails.gsuitRenewalCycle,
+  ]);
 
   const fetchEmployees = async () => {
     setLoadingEmployees(true);
     try {
-      const response = await axiosInstance.get('getEmployeeNameAndId');
+      const response = await axiosInstance.get("getEmployeeNameAndId");
       if (response.data && Array.isArray(response.data)) {
-        const formattedEmployees = response.data.map(emp => ({
+        const formattedEmployees = response.data.map((emp) => ({
           value: emp.employeeId || emp.id,
-          label: emp.name
+          label: emp.name,
         }));
         setEmployees(formattedEmployees);
       }
     } catch (error) {
-      console.error('Error fetching employees:', error);
-      toast.error('Failed to load employees');
+      console.error("Error fetching employees:", error);
+      toast.error("Failed to load employees");
     } finally {
       setLoadingEmployees(false);
     }
@@ -196,13 +289,13 @@ function CreateAmcModal({ onClose, onSuccess }) {
   const fetchClients = async () => {
     setLoadingClients(true);
     try {
-      const response = await axiosInstance.get('getCustomerListWithNameAndId');
+      const response = await axiosInstance.get("getCustomerListWithNameAndId");
       if (response.data && Array.isArray(response.data)) {
         setClients(response.data);
       }
     } catch (error) {
-      console.error('Error fetching clients:', error);
-      toast.error('Failed to load clients');
+      console.error("Error fetching clients:", error);
+      toast.error("Failed to load clients");
     } finally {
       setLoadingClients(false);
     }
@@ -215,45 +308,65 @@ function CreateAmcModal({ onClose, onSuccess }) {
       if (response.data) {
         const customer = response.data;
         return {
-          contactPersonName: "", // Not available in API response
+          contactPersonName: "",
           email: customer.email || "",
           phoneNumber: customer.mobile || customer.phone || "",
           websiteURL: customer.website || "",
-          companyName: customer.companyName || ""
+          companyName: customer.companyName || "",
         };
       }
     } catch (error) {
-      console.error('Error fetching customer details:', error);
+      console.error("Error fetching customer details:", error);
     }
     return null;
   };
 
   // Handle form field changes
   const handleChange = (section, field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [section]: {
         ...prev[section],
-        [field]: value
-      }
+        [field]: value,
+      },
     }));
 
     // Clear error for this field if exists
     if (errors[`${section}.${field}`]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [`${section}.${field}`]: ""
+        [`${section}.${field}`]: "",
       }));
     }
+  };
+
+  // Handle phone number with country code
+  const handlePhoneChange = (e) => {
+    const value = e.target.value;
+    // Remove non-numeric characters except plus sign
+    const cleanedValue = value.replace(/[^\d+]/g, "");
+
+    // Ensure it starts with country code if not already
+    let formattedValue = cleanedValue;
+    if (!formattedValue.startsWith("+91") && !formattedValue.startsWith("+")) {
+      formattedValue = "+91" + formattedValue;
+    } else if (
+      formattedValue.startsWith("+") &&
+      !formattedValue.startsWith("+91")
+    ) {
+      // If starts with different country code, keep it
+      formattedValue = formattedValue;
+    }
+
+    handleChange("amcInfo", "phoneNumber", formattedValue);
   };
 
   // Handle client selection - auto-fill client details
   const handleClientChange = async (clientId) => {
     setSelectedClientId(clientId);
-    
+
     if (!clientId) {
-      // Clear client details if no client selected
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         amcInfo: {
           ...prev.amcInfo,
@@ -263,21 +376,19 @@ function CreateAmcModal({ onClose, onSuccess }) {
           email: "",
           phoneNumber: "",
           websiteURL: "",
-          employeeId: ""
-        }
+          employeeId: "",
+        },
       }));
       return;
     }
 
     try {
-      // Fetch customer details
       const customerDetails = await fetchCustomerDetails(clientId);
-      
+
       if (customerDetails) {
-        // Get selected client company name
-        const selectedClient = clients.find(client => client.id === clientId);
-        
-        setFormData(prev => ({
+        const selectedClient = clients.find((client) => client.id === clientId);
+
+        setFormData((prev) => ({
           ...prev,
           amcInfo: {
             ...prev.amcInfo,
@@ -286,21 +397,21 @@ function CreateAmcModal({ onClose, onSuccess }) {
             contactPersonName: customerDetails.contactPersonName || "",
             email: customerDetails.email || "",
             phoneNumber: customerDetails.phoneNumber || "",
-            websiteURL: customerDetails.websiteURL || ""
-          }
+            websiteURL: customerDetails.websiteURL || "",
+          },
         }));
       }
     } catch (error) {
-      console.error('Error handling client change:', error);
+      console.error("Error handling client change:", error);
     }
   };
 
-  // Auto-calculate AMC end date based on start date and recycle type
+  // Calculate AMC end date
   const calculateAmcEndDate = (startDate, recycleType) => {
     if (!startDate) return "";
-    
+
     const date = new Date(startDate);
-    
+
     switch (recycleType) {
       case "Monthly":
         date.setMonth(date.getMonth() + 1);
@@ -320,16 +431,16 @@ function CreateAmcModal({ onClose, onSuccess }) {
       default:
         date.setFullYear(date.getFullYear() + 1);
     }
-    
-    return date.toISOString().split('T')[0];
+
+    return date.toISOString().split("T")[0];
   };
 
-  // Auto-calculate domain renewal date based on start date and cycle
+  // Calculate domain renewal date
   const calculateDomainRenewalDate = (startDate, cycle) => {
     if (!startDate) return "";
-    
+
     const date = new Date(startDate);
-    
+
     switch (cycle) {
       case "Monthly":
         date.setMonth(date.getMonth() + 1);
@@ -352,26 +463,59 @@ function CreateAmcModal({ onClose, onSuccess }) {
       default:
         date.setFullYear(date.getFullYear() + 1);
     }
-    
-    return date.toISOString().split('T')[0];
+
+    return date.toISOString().split("T")[0];
+  };
+
+  // NEW: Calculate GSuite renewal date
+  const calculateGSuiteRenewalDate = (startDate, cycle) => {
+    if (!startDate) return "";
+
+    const date = new Date(startDate);
+
+    switch (cycle) {
+      case "MONTHLY":
+        date.setMonth(date.getMonth() + 1);
+        break;
+      case "QUARTERLY":
+        date.setMonth(date.getMonth() + 3);
+        break;
+      case "YEARLY":
+        date.setFullYear(date.getFullYear() + 1);
+        break;
+      case "2_YEARS":
+        date.setFullYear(date.getFullYear() + 2);
+        break;
+      case "3_YEARS":
+        date.setFullYear(date.getFullYear() + 3);
+        break;
+      default:
+        date.setFullYear(date.getFullYear() + 1);
+    }
+
+    return date.toISOString().split("T")[0];
   };
 
   // Handle AMC start date change
   const handleAmcStartDateChange = (date) => {
     handleChange("amcHistoryInfo", "amcStartDate", date);
-    
-    // Auto-calculate end date
-    const endDate = calculateAmcEndDate(date, formData.amcHistoryInfo.amcRecycleType);
+
+    const endDate = calculateAmcEndDate(
+      date,
+      formData.amcHistoryInfo.amcRecycleType
+    );
     handleChange("amcHistoryInfo", "amcEndDate", endDate);
   };
 
   // Handle AMC recycle type change
   const handleAmcRecycleTypeChange = (type) => {
     handleChange("amcHistoryInfo", "amcRecycleType", type);
-    
-    // Recalculate end date if start date exists
+
     if (formData.amcHistoryInfo.amcStartDate) {
-      const endDate = calculateAmcEndDate(formData.amcHistoryInfo.amcStartDate, type);
+      const endDate = calculateAmcEndDate(
+        formData.amcHistoryInfo.amcStartDate,
+        type
+      );
       handleChange("amcHistoryInfo", "amcEndDate", endDate);
     }
   };
@@ -379,23 +523,56 @@ function CreateAmcModal({ onClose, onSuccess }) {
   // Handle domain start date change
   const handleDomainStartDateChange = (date) => {
     handleChange("amcDomainHistoryInfo", "domainStartDate", date);
-    
-    // Auto-calculate renewal date
-    const renewalDate = calculateDomainRenewalDate(date, formData.amcDomainHistoryInfo.domainRenewalCycle);
+
+    const renewalDate = calculateDomainRenewalDate(
+      date,
+      formData.amcDomainHistoryInfo.domainRenewalCycle
+    );
     handleChange("amcDomainHistoryInfo", "domainRenewalDate", renewalDate);
   };
 
   // Handle domain renewal cycle change
   const handleDomainRenewalCycleChange = (cycle) => {
     handleChange("amcDomainHistoryInfo", "domainRenewalCycle", cycle);
-    
-    // Recalculate renewal date if start date exists
+
     if (formData.amcDomainHistoryInfo.domainStartDate) {
       const renewalDate = calculateDomainRenewalDate(
-        formData.amcDomainHistoryInfo.domainStartDate, 
+        formData.amcDomainHistoryInfo.domainStartDate,
         cycle
       );
       handleChange("amcDomainHistoryInfo", "domainRenewalDate", renewalDate);
+    }
+  };
+
+  // NEW: Handle GSuite start date change
+  const handleGSuiteStartDateChange = (date) => {
+    handleChange("gsuiteDetails", "gsuitStartDate", date);
+
+    const renewalDate = calculateGSuiteRenewalDate(
+      date,
+      formData.gsuiteDetails.gsuitRenewalCycle
+    );
+    handleChange("gsuiteDetails", "gsuitRenewalDate", renewalDate);
+  };
+
+  // NEW: Handle GSuite renewal cycle change
+  const handleGSuiteRenewalCycleChange = (cycle) => {
+    handleChange("gsuiteDetails", "gsuitRenewalCycle", cycle);
+
+    if (formData.gsuiteDetails.gsuitStartDate) {
+      const renewalDate = calculateGSuiteRenewalDate(
+        formData.gsuiteDetails.gsuitStartDate,
+        cycle
+      );
+      handleChange("gsuiteDetails", "gsuitRenewalDate", renewalDate);
+    }
+  };
+
+  // NEW: Handle purchasedViaReseller toggle
+  const handleResellerToggle = (checked) => {
+    handleChange("gsuiteDetails", "purchasedViaReseller", checked);
+    if (!checked) {
+      handleChange("gsuiteDetails", "resellerName", "");
     }
   };
 
@@ -408,38 +585,43 @@ function CreateAmcModal({ onClose, onSuccess }) {
   const focusOnFirstError = (newErrors) => {
     const firstErrorKey = Object.keys(newErrors)[0];
     if (firstErrorKey) {
-      // Switch to the tab containing the error
-      let errorTab = 'client';
-      let errorField = '';
-      
-      if (firstErrorKey.startsWith('amcInfo.')) {
-        errorField = firstErrorKey.replace('amcInfo.', '');
-        if (['companyName', 'contactPersonName', 'email', 'phoneNumber'].includes(errorField)) {
-          errorTab = 'client';
-        } else if (['technology', 'assingedTo'].includes(errorField)) {
-          errorTab = 'technical';
+      let errorTab = "client";
+      let errorField = "";
+
+      if (firstErrorKey.startsWith("amcInfo.")) {
+        errorField = firstErrorKey.replace("amcInfo.", "");
+        if (
+          ["companyName", "contactPersonName", "email", "phoneNumber"].includes(
+            errorField
+          )
+        ) {
+          errorTab = "client";
+        } else if (["technology", "assingedTo"].includes(errorField)) {
+          errorTab = "technical";
         }
-      } else if (firstErrorKey.startsWith('amcHistoryInfo.')) {
-        errorTab = 'amc';
-        errorField = firstErrorKey.replace('amcHistoryInfo.', '');
-      } else if (firstErrorKey.startsWith('amcDomainHistoryInfo.')) {
-        errorTab = 'domain';
-        errorField = firstErrorKey.replace('amcDomainHistoryInfo.', '');
+      } else if (firstErrorKey.startsWith("amcHistoryInfo.")) {
+        errorTab = "amc";
+        errorField = firstErrorKey.replace("amcHistoryInfo.", "");
+      } else if (firstErrorKey.startsWith("amcDomainHistoryInfo.")) {
+        errorTab = "domain";
+        errorField = firstErrorKey.replace("amcDomainHistoryInfo.", "");
+      } else if (firstErrorKey.startsWith("gsuiteDetails.")) {
+        errorTab = "gsuite";
+        errorField = firstErrorKey.replace("gsuiteDetails.", "");
       }
-      
-      // Switch to the tab with error
+
       setActiveTab(errorTab);
-      
-      // Focus on the field after a small delay to allow tab switch
+
       setTimeout(() => {
         const fieldRef = errorFieldRefs.current[firstErrorKey];
         if (fieldRef && fieldRef.focus) {
           fieldRef.focus();
-          fieldRef.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          fieldRef.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       }, 100);
     }
   };
+  
 
   // Validate form
   const validateForm = () => {
@@ -451,7 +633,8 @@ function CreateAmcModal({ onClose, onSuccess }) {
     }
 
     if (!formData.amcInfo.contactPersonName?.trim()) {
-      newErrors["amcInfo.contactPersonName"] = "Contact person name is required";
+      newErrors["amcInfo.contactPersonName"] =
+        "Contact person name is required";
     }
 
     if (!formData.amcInfo.email?.trim()) {
@@ -460,10 +643,12 @@ function CreateAmcModal({ onClose, onSuccess }) {
       newErrors["amcInfo.email"] = "Email is invalid";
     }
 
+   
     if (!formData.amcInfo.phoneNumber?.trim()) {
       newErrors["amcInfo.phoneNumber"] = "Phone number is required";
-    } else if (!/^\d{10}$/.test(formData.amcInfo.phoneNumber)) {
-      newErrors["amcInfo.phoneNumber"] = "Phone number must be 10 digits";
+    } else if (!formData.amcInfo.phoneNumber.startsWith("+")) {
+      newErrors["amcInfo.phoneNumber"] =
+        "Please enter a valid phone number with country code";
     }
 
     if (!formData.amcInfo.technology) {
@@ -485,8 +670,12 @@ function CreateAmcModal({ onClose, onSuccess }) {
 
     if (!formData.amcHistoryInfo.amcAmount) {
       newErrors["amcHistoryInfo.amcAmount"] = "AMC amount is required";
-    } else if (isNaN(formData.amcHistoryInfo.amcAmount) || parseFloat(formData.amcHistoryInfo.amcAmount) <= 0) {
-      newErrors["amcHistoryInfo.amcAmount"] = "AMC amount must be a positive number";
+    } else if (
+      isNaN(formData.amcHistoryInfo.amcAmount) ||
+      parseFloat(formData.amcHistoryInfo.amcAmount) <= 0
+    ) {
+      newErrors["amcHistoryInfo.amcAmount"] =
+        "AMC amount must be a positive number";
     }
 
     if (!formData.amcHistoryInfo.amcScope?.trim()) {
@@ -495,26 +684,59 @@ function CreateAmcModal({ onClose, onSuccess }) {
 
     // Validate Domain History Info
     if (!formData.amcDomainHistoryInfo.domainStartDate) {
-      newErrors["amcDomainHistoryInfo.domainStartDate"] = "Domain start date is required";
+      newErrors["amcDomainHistoryInfo.domainStartDate"] =
+        "Domain start date is required";
     }
 
     if (!formData.amcDomainHistoryInfo.domainRenewalDate) {
-      newErrors["amcDomainHistoryInfo.domainRenewalDate"] = "Domain renewal date is required";
+      newErrors["amcDomainHistoryInfo.domainRenewalDate"] =
+        "Domain renewal date is required";
     }
 
     if (!formData.amcDomainHistoryInfo.domainAmount) {
-      newErrors["amcDomainHistoryInfo.domainAmount"] = "Domain amount is required";
-    } else if (isNaN(formData.amcDomainHistoryInfo.domainAmount) || parseFloat(formData.amcDomainHistoryInfo.domainAmount) <= 0) {
-      newErrors["amcDomainHistoryInfo.domainAmount"] = "Domain amount must be a positive number";
+      newErrors["amcDomainHistoryInfo.domainAmount"] =
+        "Domain amount is required";
+    } else if (
+      isNaN(formData.amcDomainHistoryInfo.domainAmount) ||
+      parseFloat(formData.amcDomainHistoryInfo.domainAmount) <= 0
+    ) {
+      newErrors["amcDomainHistoryInfo.domainAmount"] =
+        "Domain amount must be a positive number";
+    }
+
+    // NEW: Validate GSuite Details
+    if (
+      formData.gsuiteDetails.totalLicenses &&
+      (isNaN(formData.gsuiteDetails.totalLicenses) ||
+        parseInt(formData.gsuiteDetails.totalLicenses) <= 0)
+    ) {
+      newErrors["gsuiteDetails.totalLicenses"] =
+        "Total licenses must be a positive number";
+    }
+
+    if (
+      formData.gsuiteDetails.gsuitAmount &&
+      (isNaN(formData.gsuiteDetails.gsuitAmount) ||
+        parseFloat(formData.gsuiteDetails.gsuitAmount) <= 0)
+    ) {
+      newErrors["gsuiteDetails.gsuitAmount"] =
+        "GSuite amount must be a positive number";
+    }
+
+    if (
+      formData.gsuiteDetails.adminEmail &&
+      !/\S+@\S+\.\S+/.test(formData.gsuiteDetails.adminEmail)
+    ) {
+      newErrors["gsuiteDetails.adminEmail"] = "Admin email is invalid";
     }
 
     setErrors(newErrors);
-    
+
     if (Object.keys(newErrors).length > 0) {
       focusOnFirstError(newErrors);
       return false;
     }
-    
+
     return true;
   };
 
@@ -523,84 +745,131 @@ function CreateAmcModal({ onClose, onSuccess }) {
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error("Please fix the form errors before submitting.", {
-       
-      });
+      toast.error("Please fix the form errors before submitting.", {});
       return;
     }
 
     setLoading(true);
     try {
-      // Prepare payload
+      // Prepare the complete payload matching the required structure
       const payload = {
         amcInfo: {
-          ...formData.amcInfo,
-          // Ensure adminId is set (you might get this from auth context)
-          adminId: formData.amcInfo.adminId || "ADMIN123",
-          // Convert amounts to numbers
-          amcAmount: parseFloat(formData.amcHistoryInfo.amcAmount),
-          domainAmount: parseFloat(formData.amcDomainHistoryInfo.domainAmount)
+          adminId: formData.amcInfo.adminId || "",
+          employeeId: formData.amcInfo.employeeId || "",
+          clinetName: formData.amcInfo.clinetName || "",
+          companyName: formData.amcInfo.companyName || "",
+          contactPersonName: formData.amcInfo.contactPersonName || "",
+          email: formData.amcInfo.email || "",
+          phoneNumber: formData.amcInfo.phoneNumber || "",
+          websiteURL: formData.amcInfo.websiteURL || "",
+          technology: formData.amcInfo.technology || "",
+          hostingProvider: formData.amcInfo.hostingProvider || "Wix",
+          domainProvider: formData.amcInfo.domainProvider || "",
+          assingedTo: formData.amcInfo.assingedTo || "",
         },
         amcHistoryInfo: {
-          ...formData.amcHistoryInfo,
-          amcAmount: parseFloat(formData.amcHistoryInfo.amcAmount)
+          amcStartDate: formData.amcHistoryInfo.amcStartDate || "",
+          amcEndDate: formData.amcHistoryInfo.amcEndDate || "",
+          amcAmount: formData.amcHistoryInfo.amcAmount
+            ? parseFloat(formData.amcHistoryInfo.amcAmount)
+            : 0,
+          amcScope: formData.amcHistoryInfo.amcScope || "",
+          amcRecycleType: formData.amcHistoryInfo.amcRecycleType || "Yearly",
+          sequence: formData.amcHistoryInfo.sequence || 1,
         },
         amcDomainHistoryInfo: {
-          ...formData.amcDomainHistoryInfo,
-          domainAmount: parseFloat(formData.amcDomainHistoryInfo.domainAmount)
-        }
+          domainStartDate: formData.amcDomainHistoryInfo.domainStartDate || "",
+          domainRenewalDate:
+            formData.amcDomainHistoryInfo.domainRenewalDate || "",
+          domainAmount: formData.amcDomainHistoryInfo.domainAmount || "",
+          domainRenewalCycle:
+            formData.amcDomainHistoryInfo.domainRenewalCycle || "1 Year",
+          sequence: formData.amcDomainHistoryInfo.sequence || 1,
+        },
       };
 
-      console.log('Sending AMC creation payload:', JSON.stringify(payload, null, 2));
+      // Only include amcGsuitHistory if GSuite details are provided
+      if (
+        formData.gsuiteDetails.domainName ||
+        formData.gsuiteDetails.adminEmail ||
+        formData.gsuiteDetails.gsuitAmount ||
+        formData.gsuiteDetails.totalLicenses
+      ) {
+        payload.amcGsuitHistory = {
+          domainName: formData.gsuiteDetails.domainName || "",
+          platform: formData.gsuiteDetails.platform || "Google Workspace",
+          gsuitStartDate: formData.gsuiteDetails.gsuitStartDate || "",
+          gsuitRenewalDate: formData.gsuiteDetails.gsuitRenewalDate || "",
+          adminEmail: formData.gsuiteDetails.adminEmail || "",
+          adminPassword: formData.gsuiteDetails.adminPassword || "",
+          totalLicenses: formData.gsuiteDetails.totalLicenses
+            ? parseInt(formData.gsuiteDetails.totalLicenses)
+            : 0,
+          gsuitAmount: formData.gsuiteDetails.gsuitAmount || "0",
+          paidBy: formData.gsuiteDetails.paidBy || "ADMIN",
+          purchasedViaReseller:
+            formData.gsuiteDetails.purchasedViaReseller || false,
+          resellerName: formData.gsuiteDetails.resellerName || "",
+          gsuitRenewalCycle:
+            formData.gsuiteDetails.gsuitRenewalCycle || "YEARLY",
+          sequence: 1,
+        };
+      }
 
-      const response = await axiosInstance.post('createAMC', payload);
+      console.log(
+        "Sending AMC creation payload:",
+        JSON.stringify(payload, null, 2)
+      );
+
+      // Send single POST request with all data
+      const response = await axiosInstance.post("createAMC", payload);
 
       if (response.data) {
-        console.log('AMC created successfully:', response.data);
-        toast.success('AMC created successfully!');
-        
-        // Pass created AMC data back to parent
+        console.log("AMC created successfully:", response.data);
+        toast.success("AMC created successfully!");
+
         onSuccess(response.data);
-        
-        // Close modal
         onClose();
       } else {
-        throw new Error('No response data received');
+        throw new Error("No response data received");
       }
     } catch (error) {
-      console.error('Error creating AMC:', error);
-      
+      console.error("Error creating AMC:", error);
+
       if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-        
         if (error.response.status === 400) {
-          toast.error('Validation error: ' + (error.response.data?.message || 'Check your input'));
+          toast.error(
+            "Validation error: " +
+              (error.response.data?.message || "Check your input")
+          );
         } else if (error.response.status === 500) {
-          toast.error('Server error: ' + (error.response.data?.message || 'Internal server error'));
+          toast.error(
+            "Server error: " +
+              (error.response.data?.message || "Internal server error")
+          );
         } else {
-          toast.error('Failed to create AMC: ' + (error.response.data?.message || 'Unknown error'));
+          toast.error(
+            "Failed to create AMC: " +
+              (error.response.data?.message || "Unknown error")
+          );
         }
       } else if (error.request) {
-        console.error('Request error:', error.request);
-        toast.error('Network error. Please check your connection.');
+        toast.error("Network error. Please check your connection.");
       } else {
-        console.error('Error:', error.message);
-        toast.error('Failed to create AMC. Please try again.');
+        toast.error("Failed to create AMC. Please try again.");
       }
     } finally {
       setLoading(false);
     }
   };
-
   // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
-    return new Date().toISOString().split('T')[0];
+    return new Date().toISOString().split("T")[0];
   };
 
   // Handle next button click
   const handleNext = () => {
-    const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
+    const currentIndex = tabs.findIndex((tab) => tab.id === activeTab);
     if (currentIndex < tabs.length - 1) {
       setActiveTab(tabs[currentIndex + 1].id);
     }
@@ -608,7 +877,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
 
   // Handle previous button click
   const handlePrevious = () => {
-    const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
+    const currentIndex = tabs.findIndex((tab) => tab.id === activeTab);
     if (currentIndex > 0) {
       setActiveTab(tabs[currentIndex - 1].id);
     }
@@ -624,7 +893,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
     return activeTab === tabs[0].id;
   };
 
-  // Tab content components
+  // Render Client Tab
   const renderClientTab = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -637,32 +906,35 @@ function CreateAmcModal({ onClose, onSuccess }) {
             onChange={(e) => handleClientChange(e.target.value)}
             options={[
               { value: "", label: "Select a client" },
-              ...clients.map(client => ({ 
-                value: client.id, 
-                label: client.companyName || `Client ${client.id.substring(0, 8)}` 
-              }))
+              ...clients.map((client) => ({
+                value: client.id,
+                label:
+                  client.companyName || `Client ${client.id.substring(0, 8)}`,
+              })),
             ]}
             loading={loadingClients}
             className="text-sm"
           />
         </div>
-
         <GlobalInputField
           label={
             <>
               Client Name
-              {isFieldRequired('amcInfo', 'clinetName') && <span className="text-red-500 ml-1">*</span>}
+              {isFieldRequired("amcInfo", "clinetName") && (
+                <span className="text-red-500 ml-1">*</span>
+              )}
             </>
           }
           name="clinetName"
           value={formData.amcInfo.clinetName}
-          onChange={(e) => handleChange("amcInfo", "clinetName", e.target.value)}
+          onChange={(e) =>
+            handleChange("amcInfo", "clinetName", e.target.value)
+          }
           error={errors["amcInfo.clinetName"]}
           placeholder="Enter client name"
           className="text-sm"
-          ref={(el) => errorFieldRefs.current["amcInfo.clinetName"] = el}
+          ref={(el) => (errorFieldRefs.current["amcInfo.clinetName"] = el)}
         />
-
         <GlobalInputField
           label={
             <>
@@ -672,13 +944,14 @@ function CreateAmcModal({ onClose, onSuccess }) {
           }
           name="companyName"
           value={formData.amcInfo.companyName}
-          onChange={(e) => handleChange("amcInfo", "companyName", e.target.value)}
+          onChange={(e) =>
+            handleChange("amcInfo", "companyName", e.target.value)
+          }
           error={errors["amcInfo.companyName"]}
           placeholder="Enter company name"
           className="text-sm"
-          ref={(el) => errorFieldRefs.current["amcInfo.companyName"] = el}
+          ref={(el) => (errorFieldRefs.current["amcInfo.companyName"] = el)}
         />
-
         <GlobalInputField
           label={
             <>
@@ -688,13 +961,16 @@ function CreateAmcModal({ onClose, onSuccess }) {
           }
           name="contactPersonName"
           value={formData.amcInfo.contactPersonName}
-          onChange={(e) => handleChange("amcInfo", "contactPersonName", e.target.value)}
+          onChange={(e) =>
+            handleChange("amcInfo", "contactPersonName", e.target.value)
+          }
           error={errors["amcInfo.contactPersonName"]}
           placeholder="Enter contact person name"
           className="text-sm"
-          ref={(el) => errorFieldRefs.current["amcInfo.contactPersonName"] = el}
+          ref={(el) =>
+            (errorFieldRefs.current["amcInfo.contactPersonName"] = el)
+          }
         />
-
         <GlobalInputField
           label={
             <>
@@ -709,30 +985,73 @@ function CreateAmcModal({ onClose, onSuccess }) {
           error={errors["amcInfo.email"]}
           placeholder="client@company.com"
           className="text-sm"
-          ref={(el) => errorFieldRefs.current["amcInfo.email"] = el}
+          ref={(el) => (errorFieldRefs.current["amcInfo.email"] = el)}
         />
-
-        <GlobalInputField
-          label={
-            <>
-              Phone Number
-              <span className="text-red-500 ml-1">*</span>
-            </>
-          }
-          name="phoneNumber"
-          value={formData.amcInfo.phoneNumber}
-          onChange={(e) => handleChange("amcInfo", "phoneNumber", e.target.value)}
-          error={errors["amcInfo.phoneNumber"]}
-          placeholder="9876543210"
-          className="text-sm"
-          ref={(el) => errorFieldRefs.current["amcInfo.phoneNumber"] = el}
-        />
-
+ 
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+            <span>Phone Number</span>
+            <span className="text-red-500 ml-1">*</span>
+          </label>
+          <div
+            className={`phone-input-wrapper ${
+              errors["amcInfo.phoneNumber"] ? "border-red-500 rounded-lg" : ""
+            }`}
+          >
+            <PhoneInput
+              country={"in"}
+              value={formData.amcInfo.phoneNumber || ""}
+              onChange={(value, country, e, formattedValue) => {
+                const completeNumber = value.startsWith("+")
+                  ? value
+                  : `+${value}`;
+                handleChange("amcInfo", "phoneNumber", completeNumber);
+              }}
+              enableSearch={true}
+              placeholder="Enter phone number"
+              inputClass="w-full h-10 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              buttonClass="!border-r-0 !rounded-l"
+              inputStyle={{
+                width: "100%",
+                height: "40px",
+                borderLeft: "none",
+                borderTopLeftRadius: "0",
+                borderBottomLeftRadius: "0",
+              }}
+              buttonStyle={{
+                borderRight: "none",
+                borderTopRightRadius: "0",
+                borderBottomRightRadius: "0",
+                height: "40px",
+              }}
+            />
+          </div>
+          {errors["amcInfo.phoneNumber"] && (
+            <p className="text-red-500 text-xs flex items-center gap-1">
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              {errors["amcInfo.phoneNumber"]}
+            </p>
+          )}
+        </div>
         <GlobalInputField
           label="Website URL"
           name="websiteURL"
           value={formData.amcInfo.websiteURL}
-          onChange={(e) => handleChange("amcInfo", "websiteURL", e.target.value)}
+          onChange={(e) =>
+            handleChange("amcInfo", "websiteURL", e.target.value)
+          }
           placeholder="https://www.example.com"
           className="text-sm"
         />
@@ -740,6 +1059,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
     </div>
   );
 
+  // Render Technical Tab
   const renderTechnicalTab = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -752,24 +1072,28 @@ function CreateAmcModal({ onClose, onSuccess }) {
           }
           name="technology"
           value={formData.amcInfo.technology}
-          onChange={(e) => handleChange("amcInfo", "technology", e.target.value)}
+          onChange={(e) =>
+            handleChange("amcInfo", "technology", e.target.value)
+          }
           options={[
             { value: "", label: "Select technology" },
-            ...technologyOptions
+            ...technologyOptions,
           ]}
           error={errors["amcInfo.technology"]}
           className="text-sm"
-          ref={(el) => errorFieldRefs.current["amcInfo.technology"] = el}
+          ref={(el) => (errorFieldRefs.current["amcInfo.technology"] = el)}
         />
 
         <GlobalSelectField
           label="Domain Provider"
           name="domainProvider"
           value={formData.amcInfo.domainProvider}
-          onChange={(e) => handleChange("amcInfo", "domainProvider", e.target.value)}
+          onChange={(e) =>
+            handleChange("amcInfo", "domainProvider", e.target.value)
+          }
           options={[
             { value: "", label: "Select domain provider" },
-            ...domainProviderOptions
+            ...domainProviderOptions,
           ]}
           className="text-sm"
         />
@@ -778,10 +1102,12 @@ function CreateAmcModal({ onClose, onSuccess }) {
           label="Hosting Provider"
           name="hostingProvider"
           value={formData.amcInfo.hostingProvider}
-          onChange={(e) => handleChange("amcInfo", "hostingProvider", e.target.value)}
+          onChange={(e) =>
+            handleChange("amcInfo", "hostingProvider", e.target.value)
+          }
           options={[
             { value: "", label: "Select hosting provider" },
-            ...hostingProviderOptions
+            ...hostingProviderOptions,
           ]}
           className="text-sm"
         />
@@ -795,20 +1121,23 @@ function CreateAmcModal({ onClose, onSuccess }) {
           }
           name="assingedTo"
           value={formData.amcInfo.assingedTo}
-          onChange={(e) => handleChange("amcInfo", "assingedTo", e.target.value)}
+          onChange={(e) =>
+            handleChange("amcInfo", "assingedTo", e.target.value)
+          }
           options={[
             { value: "", label: "Select employee" },
-            ...employees.map(emp => ({ value: emp.value, label: emp.label }))
+            ...employees.map((emp) => ({ value: emp.value, label: emp.label })),
           ]}
           loading={loadingEmployees}
           error={errors["amcInfo.assingedTo"]}
           className="text-sm"
-          ref={(el) => errorFieldRefs.current["amcInfo.assingedTo"] = el}
+          ref={(el) => (errorFieldRefs.current["amcInfo.assingedTo"] = el)}
         />
       </div>
     </div>
   );
 
+  // Render AMC Tab
   const renderAmcTab = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -826,7 +1155,9 @@ function CreateAmcModal({ onClose, onSuccess }) {
           error={errors["amcHistoryInfo.amcStartDate"]}
           className="text-sm"
           min={getTodayDate()}
-          ref={(el) => errorFieldRefs.current["amcHistoryInfo.amcStartDate"] = el}
+          ref={(el) =>
+            (errorFieldRefs.current["amcHistoryInfo.amcStartDate"] = el)
+          }
         />
 
         <GlobalInputField
@@ -839,12 +1170,16 @@ function CreateAmcModal({ onClose, onSuccess }) {
           name="amcEndDate"
           type="date"
           value={formData.amcHistoryInfo.amcEndDate}
-          onChange={(e) => handleChange("amcHistoryInfo", "amcEndDate", e.target.value)}
+          onChange={(e) =>
+            handleChange("amcHistoryInfo", "amcEndDate", e.target.value)
+          }
           error={errors["amcHistoryInfo.amcEndDate"]}
           className="text-sm"
           readOnly
-          style={{ backgroundColor: '#f9f9f9' }}
-          ref={(el) => errorFieldRefs.current["amcHistoryInfo.amcEndDate"] = el}
+          style={{ backgroundColor: "#f9f9f9" }}
+          ref={(el) =>
+            (errorFieldRefs.current["amcHistoryInfo.amcEndDate"] = el)
+          }
         />
 
         <GlobalInputField
@@ -857,13 +1192,17 @@ function CreateAmcModal({ onClose, onSuccess }) {
           name="amcAmount"
           type="number"
           value={formData.amcHistoryInfo.amcAmount}
-          onChange={(e) => handleChange("amcHistoryInfo", "amcAmount", e.target.value)}
+          onChange={(e) =>
+            handleChange("amcHistoryInfo", "amcAmount", e.target.value)
+          }
           error={errors["amcHistoryInfo.amcAmount"]}
           placeholder="25000"
           min="0"
           step="0.01"
           className="text-sm"
-          ref={(el) => errorFieldRefs.current["amcHistoryInfo.amcAmount"] = el}
+          ref={(el) =>
+            (errorFieldRefs.current["amcHistoryInfo.amcAmount"] = el)
+          }
         />
 
         <GlobalSelectField
@@ -886,17 +1225,20 @@ function CreateAmcModal({ onClose, onSuccess }) {
           }
           name="amcScope"
           value={formData.amcHistoryInfo.amcScope}
-          onChange={(e) => handleChange("amcHistoryInfo", "amcScope", e.target.value)}
+          onChange={(e) =>
+            handleChange("amcHistoryInfo", "amcScope", e.target.value)
+          }
           error={errors["amcHistoryInfo.amcScope"]}
           placeholder="e.g., Full website maintenance, bug fixes, security patches, monthly reports, 24/7 support..."
           rows={4}
           className="text-sm"
-          ref={(el) => errorFieldRefs.current["amcHistoryInfo.amcScope"] = el}
+          ref={(el) => (errorFieldRefs.current["amcHistoryInfo.amcScope"] = el)}
         />
       </div>
     </div>
   );
 
+  // Render Domain Tab
   const renderDomainTab = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -913,7 +1255,10 @@ function CreateAmcModal({ onClose, onSuccess }) {
           onChange={(e) => handleDomainStartDateChange(e.target.value)}
           error={errors["amcDomainHistoryInfo.domainStartDate"]}
           className="text-sm"
-          ref={(el) => errorFieldRefs.current["amcDomainHistoryInfo.domainStartDate"] = el}
+          ref={(el) =>
+            (errorFieldRefs.current["amcDomainHistoryInfo.domainStartDate"] =
+              el)
+          }
         />
 
         <GlobalInputField
@@ -926,12 +1271,21 @@ function CreateAmcModal({ onClose, onSuccess }) {
           name="domainRenewalDate"
           type="date"
           value={formData.amcDomainHistoryInfo.domainRenewalDate}
-          onChange={(e) => handleChange("amcDomainHistoryInfo", "domainRenewalDate", e.target.value)}
+          onChange={(e) =>
+            handleChange(
+              "amcDomainHistoryInfo",
+              "domainRenewalDate",
+              e.target.value
+            )
+          }
           error={errors["amcDomainHistoryInfo.domainRenewalDate"]}
           className="text-sm"
           readOnly
-          style={{ backgroundColor: '#f9f9f9' }}
-          ref={(el) => errorFieldRefs.current["amcDomainHistoryInfo.domainRenewalDate"] = el}
+          style={{ backgroundColor: "#f9f9f9" }}
+          ref={(el) =>
+            (errorFieldRefs.current["amcDomainHistoryInfo.domainRenewalDate"] =
+              el)
+          }
         />
 
         <GlobalInputField
@@ -944,13 +1298,17 @@ function CreateAmcModal({ onClose, onSuccess }) {
           name="domainAmount"
           type="number"
           value={formData.amcDomainHistoryInfo.domainAmount}
-          onChange={(e) => handleChange("amcDomainHistoryInfo", "domainAmount", e.target.value)}
+          onChange={(e) =>
+            handleChange("amcDomainHistoryInfo", "domainAmount", e.target.value)
+          }
           error={errors["amcDomainHistoryInfo.domainAmount"]}
           placeholder="1200"
           min="0"
           step="0.01"
           className="text-sm"
-          ref={(el) => errorFieldRefs.current["amcDomainHistoryInfo.domainAmount"] = el}
+          ref={(el) =>
+            (errorFieldRefs.current["amcDomainHistoryInfo.domainAmount"] = el)
+          }
         />
 
         <GlobalSelectField
@@ -965,36 +1323,286 @@ function CreateAmcModal({ onClose, onSuccess }) {
     </div>
   );
 
+  // Render GSuite Tab (Already provided in previous response, but included for completeness)
+  const renderGSuiteTab = () => (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <GlobalInputField
+          label="Domain Name"
+          name="domainName"
+          value={formData.gsuiteDetails.domainName}
+          onChange={(e) =>
+            handleChange("gsuiteDetails", "domainName", e.target.value)
+          }
+          placeholder="examplecompany.com"
+          className="text-sm"
+          ref={(el) =>
+            (errorFieldRefs.current["gsuiteDetails.domainName"] = el)
+          }
+        />
+
+        <GlobalSelectField
+          label="Platform"
+          name="platform"
+          value={formData.gsuiteDetails.platform}
+          onChange={(e) =>
+            handleChange("gsuiteDetails", "platform", e.target.value)
+          }
+          options={platformOptions}
+          className="text-sm"
+        />
+
+        <GlobalInputField
+          label="GSuite Start Date"
+          name="gsuitStartDate"
+          type="date"
+          value={formData.gsuiteDetails.gsuitStartDate}
+          onChange={(e) => handleGSuiteStartDateChange(e.target.value)}
+          className="text-sm"
+          min={getTodayDate()}
+          ref={(el) =>
+            (errorFieldRefs.current["gsuiteDetails.gsuitStartDate"] = el)
+          }
+        />
+
+        <GlobalInputField
+          label="GSuite Renewal Date"
+          name="gsuitRenewalDate"
+          type="date"
+          value={formData.gsuiteDetails.gsuitRenewalDate}
+          onChange={(e) =>
+            handleChange("gsuiteDetails", "gsuitRenewalDate", e.target.value)
+          }
+          className="text-sm"
+          readOnly
+          style={{ backgroundColor: "#f9f9f9" }}
+          ref={(el) =>
+            (errorFieldRefs.current["gsuiteDetails.gsuitRenewalDate"] = el)
+          }
+        />
+
+        <GlobalInputField
+          label="Admin Email"
+          name="adminEmail"
+          type="email"
+          value={formData.gsuiteDetails.adminEmail}
+          onChange={(e) =>
+            handleChange("gsuiteDetails", "adminEmail", e.target.value)
+          }
+          error={errors["gsuiteDetails.adminEmail"]}
+          placeholder="admin@example.com"
+          className="text-sm"
+          ref={(el) =>
+            (errorFieldRefs.current["gsuiteDetails.adminEmail"] = el)
+          }
+        />
+
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-gray-700">
+            Admin Password
+          </label>
+          <div className="relative">
+            <input
+              type={showAdminPassword ? "text" : "password"}
+              name="adminPassword"
+              value={formData.gsuiteDetails.adminPassword}
+              onChange={(e) =>
+                handleChange("gsuiteDetails", "adminPassword", e.target.value)
+              }
+              placeholder="Enter admin password"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 pr-10 text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => setShowAdminPassword(!showAdminPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+            >
+              {showAdminPassword ? (
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.59 6.59m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+        <GlobalInputField
+          label="Total Licenses"
+          name="totalLicenses"
+          type="number"
+          value={formData.gsuiteDetails.totalLicenses}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value === "" || parseInt(value) > 0) {
+              handleChange("gsuiteDetails", "totalLicenses", value);
+            }
+          }}
+          error={errors["gsuiteDetails.totalLicenses"]}
+          placeholder="25"
+          min="1"
+          className="text-sm"
+          ref={(el) =>
+            (errorFieldRefs.current["gsuiteDetails.totalLicenses"] = el)
+          }
+        />
+
+        <GlobalInputField
+          label="GSuite Amount"
+          name="gsuitAmount"
+          type="number"
+          value={formData.gsuiteDetails.gsuitAmount}
+          onChange={(e) =>
+            handleChange("gsuiteDetails", "gsuitAmount", e.target.value)
+          }
+          error={errors["gsuiteDetails.gsuitAmount"]}
+          placeholder="45000"
+          min="0"
+          step="0.01"
+          className="text-sm"
+          ref={(el) =>
+            (errorFieldRefs.current["gsuiteDetails.gsuitAmount"] = el)
+          }
+        />
+
+        <GlobalSelectField
+          label="Paid By"
+          name="paidBy"
+          value={formData.gsuiteDetails.paidBy}
+          onChange={(e) =>
+            handleChange("gsuiteDetails", "paidBy", e.target.value)
+          }
+          options={paidByOptions}
+          className="text-sm"
+        />
+
+        <GlobalSelectField
+          label="GSuite Renewal Cycle"
+          name="gsuitRenewalCycle"
+          value={formData.gsuiteDetails.gsuitRenewalCycle}
+          onChange={(e) => handleGSuiteRenewalCycleChange(e.target.value)}
+          options={gsuiteRenewalCycleOptions}
+          className="text-sm"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="purchasedViaReseller"
+            checked={formData.gsuiteDetails.purchasedViaReseller}
+            onChange={(e) => handleResellerToggle(e.target.checked)}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <label
+            htmlFor="purchasedViaReseller"
+            className="text-sm text-gray-700"
+          >
+            Purchased via Reseller
+          </label>
+        </div>
+
+        {formData.gsuiteDetails.purchasedViaReseller && (
+          <GlobalInputField
+            label="Reseller Name"
+            name="resellerName"
+            value={formData.gsuiteDetails.resellerName}
+            onChange={(e) =>
+              handleChange("gsuiteDetails", "resellerName", e.target.value)
+            }
+            placeholder="Google Authorized Partner Pvt Ltd"
+            className="text-sm"
+          />
+        )}
+      </div>
+    </div>
+  );
+
+  // ... keep the rest of your render functions (technical, amc, domain) exactly as they are ...
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-3 z-50">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-6xl max-h-[95vh] overflow-hidden border border-gray-200 flex flex-col">
-        {/* Modal Header - Updated to blue gradient */}
+        {/* Modal Header */}
         <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-3">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-white bg-opacity-20 rounded flex items-center justify-center">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                  />
                 </svg>
               </div>
               <div>
-                <h2 className="text-lg font-bold">Create Annual Maintenance Charges (AMC)</h2>
-                <p className="text-blue-100 text-xs">Fill in the AMC details below</p>
+                <h2 className="text-lg font-bold">
+                  Create Annual Maintenance Charges (AMC)
+                </h2>
+                <p className="text-blue-100 text-xs">
+                  Fill in the AMC details below
+                </p>
               </div>
             </div>
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded transition"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
         </div>
 
-        {/* Tab Navigation - With error indicators */}
+        {/* Tab Navigation - ADDED GSuite tab */}
         <div className="border-b border-gray-200 bg-gray-50">
           <div className="flex overflow-x-auto">
             {tabs.map((tab) => (
@@ -1003,9 +1611,9 @@ function CreateAmcModal({ onClose, onSuccess }) {
                 onClick={() => setActiveTab(tab.id)}
                 className={`relative flex items-center gap-2 px-4 py-3 whitespace-nowrap transition-colors ${
                   activeTab === tab.id
-                    ? 'text-blue-600 border-b-2 border-blue-600 bg-white'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                } ${tabErrors[tab.id] ? 'pr-8' : ''}`}
+                    ? "text-blue-600 border-b-2 border-blue-600 bg-white"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                } ${tabErrors[tab.id] ? "pr-8" : ""}`}
               >
                 <span className="text-sm font-medium">{tab.label}</span>
                 {tabErrors[tab.id] && (
@@ -1018,49 +1626,18 @@ function CreateAmcModal({ onClose, onSuccess }) {
           </div>
         </div>
 
-        {/* Error summary banner */}
-        {/* {Object.keys(errors).length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded mx-4 mt-4 p-3">
-            <div className="flex items-start gap-2">
-              <div className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5">
-                <svg fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-red-800 font-medium">
-                  Please fix the following errors:
-                </p>
-                <ul className="mt-1 text-sm text-red-700 space-y-0.5">
-                  {Object.entries(errors).slice(0, 3).map(([field, message]) => (
-                    <li key={field} className="flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-                      <span>{message}</span>
-                    </li>
-                  ))}
-                  {Object.keys(errors).length > 3 && (
-                    <li className="text-red-600 italic">
-                      ...and {Object.keys(errors).length - 3} more error(s)
-                    </li>
-                  )}
-                </ul>
-              </div>
-            </div>
-          </div>
-        )} */}
-
-        {/* Modal Body - Scrollable Form */}
+        {/* Modal Body - Updated to include GSuite tab */}
         <div className="flex-1 overflow-y-auto p-4">
           <form onSubmit={handleSubmit}>
-            {/* Tab Content */}
-            {activeTab === 'client' && renderClientTab()}
-            {activeTab === 'technical' && renderTechnicalTab()}
-            {activeTab === 'amc' && renderAmcTab()}
-            {activeTab === 'domain' && renderDomainTab()}
+            {activeTab === "client" && renderClientTab()}
+            {activeTab === "technical" && renderTechnicalTab()}
+            {activeTab === "amc" && renderAmcTab()}
+            {activeTab === "domain" && renderDomainTab()}
+            {activeTab === "gsuite" && renderGSuiteTab()} {/* NEW */}
           </form>
         </div>
 
-        {/* Modal Footer - Simplified */}
+        {/* Modal Footer */}
         <div className="border-t border-gray-200 bg-gray-50 p-4">
           <div className="flex items-center justify-end gap-3">
             <button
@@ -1103,8 +1680,18 @@ function CreateAmcModal({ onClose, onSuccess }) {
                   </>
                 ) : (
                   <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                      />
                     </svg>
                     Create AMC
                   </>
