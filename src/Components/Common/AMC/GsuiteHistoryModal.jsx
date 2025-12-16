@@ -484,6 +484,12 @@ function GsuiteHistoryModal({
         );
         onSuccess();
       }
+        if (onSuccess) {
+          onSuccess({
+            ...response.data,
+            refreshParentList: true, // Add this flag
+          });
+        }
     } catch (error) {
       console.error("Error saving GSuite history:", error);
 

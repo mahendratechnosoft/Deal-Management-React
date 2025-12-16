@@ -426,10 +426,12 @@ const AmcHistoryModal = ({
 
         if (onSuccess) {
           // Pass a flag to indicate refresh is needed
-          onSuccess({
-            ...response.data,
-            refreshParentList: true, // Add this flag
-          });
+       
+           onSuccess({
+             ...response.data,
+             refreshParentList: true, // Add this flag
+         
+           });
         }
 
         onClose();

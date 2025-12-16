@@ -121,7 +121,7 @@ const DomainHistoryModal = ({
       const response = await axiosInstance.get(
         `getAllAMCDomainHistoy/${amcId}`
       );
-      
+
       if (response.data && Array.isArray(response.data)) {
         setExistingSequences(response.data);
       }
@@ -418,9 +418,12 @@ const DomainHistoryModal = ({
             ? "Domain History updated successfully"
             : "Domain History created successfully"
         );
-
         if (onSuccess) {
-          onSuccess(response.data || payload);
+          // Pass refresh flag to parent
+          onSuccess({
+            ...(response.data || payload),
+            refreshParentList: true, // ✅ Pass as object property
+          });
         }
 
         onClose();
