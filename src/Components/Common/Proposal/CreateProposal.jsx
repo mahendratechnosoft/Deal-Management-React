@@ -31,6 +31,8 @@ function CreateProposal() {
     discount: 0,
     taxType: "GST",
     taxPercentage: 18,
+    cgstPercentage: 0,
+    sgstPercentage: 0,
     dueDate: "",
     proposalDate: new Date().toISOString().split("T")[0],
     totalAmmount: 0,
@@ -75,6 +77,8 @@ function CreateProposal() {
   const [itemOptions, setItemOptions] = useState([]);
   const [isItemLoading, setIsItemLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [cgstInput, setCgstInput] = useState("9");
+  const [sgstInput, setSgstInput] = useState("9");
 
   const relatedOptions = [
     { value: "lead", label: "Lead" },
@@ -85,6 +89,7 @@ function CreateProposal() {
     { value: "No Tax", label: "No Tax", defaultRate: 0 },
     { value: "SGST", label: "SGST", defaultRate: 9 },
     { value: "CGST", label: "CGST", defaultRate: 9 },
+    { value: "CGST+SGST", label: "CGST + SGST", defaultRate: "" },
     { value: "GST", label: "GST", defaultRate: 18 },
     { value: "IGST", label: "IGST", defaultRate: 18 },
     { value: "Custom", label: "Custom", defaultRate: "" },
@@ -533,13 +538,27 @@ function CreateProposal() {
 
     const discountAmount = (sub * (Number(proposalInfo.discount) || 0)) / 100;
     const taxableAmount = sub - discountAmount;
-    const taxRate = (Number(taxRateInput) || 0) / 100;
-
-    const tax = taxableAmount * taxRate;
+    let tax = 0;
+    if (proposalInfo.taxType === "CGST+SGST") {
+      const cgstRate = Number(cgstInput) || 0;
+      const sgstRate = Number(sgstInput) || 0;
+      const combinedRate = (cgstRate + sgstRate) / 100;
+      tax = taxableAmount * combinedRate;
+    } else {
+      const taxRate = (Number(taxRateInput) || 0) / 100;
+      tax = taxableAmount * taxRate;
+    }
     const grandTotal = taxableAmount + tax;
 
     return { subtotal: sub, taxAmount: tax, total: grandTotal };
-  }, [proposalContent, proposalInfo.discount, taxRateInput]);
+  }, [
+    proposalContent,
+    proposalInfo.discount,
+    taxRateInput,
+    cgstInput,
+    sgstInput,
+    proposalInfo.taxType,
+  ]);
 
   const currencySymbol = useMemo(() => {
     switch (proposalInfo.currencyType) {
@@ -786,6 +805,18 @@ function CreateProposal() {
         proposalNumber: parseInt(proposalInfo.proposalNumber),
         discount: Number(proposalInfo.discount),
         totalAmmount: Number(proposalInfo.totalAmmount),
+        taxPercentage:
+          proposalInfo.taxType === "CGST+SGST"
+            ? 0
+            : Number(proposalInfo.taxPercentage),
+        cgstPercentage:
+          proposalInfo.taxType === "CGST+SGST"
+            ? Number(proposalInfo.cgstPercentage)
+            : 0,
+        sgstPercentage:
+          proposalInfo.taxType === "CGST+SGST"
+            ? Number(proposalInfo.sgstPercentage)
+            : 0,
       },
       proposalContent: proposalContent.map((item) => ({
         ...item,
@@ -1405,51 +1436,116 @@ function CreateProposal() {
                         max="100"
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-2 items-center">
-                      <Select
-                        id="taxType"
-                        name="taxType"
-                        value={taxOptions.find(
-                          (o) => o.value === proposalInfo.taxType
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-end">
+                      <div className="w-full">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Tax Type
+                        </label>
+                        <Select
+                          id="taxType"
+                          name="taxType"
+                          value={taxOptions.find(
+                            (o) => o.value === proposalInfo.taxType
+                          )}
+                          onChange={(opt) => {
+                            if (opt) {
+                              handleSelectChange("taxType", opt);
+
+                              // Logic to reset or set defaults based on selection
+                              if (opt.value === "CGST+SGST") {
+                                // Set defaults for split tax (e.g., 9 + 9)
+                                setCgstInput("9");
+                                setSgstInput("9");
+                                setProposalInfo((prev) => ({
+                                  ...prev,
+                                  taxPercentage: 0, // Reset main tax
+                                  cgstPercentage: 9,
+                                  sgstPercentage: 9,
+                                }));
+                              } else {
+                                // Set default for single tax
+                                setTaxRateInput(opt.defaultRate);
+                                setProposalInfo((prev) => ({
+                                  ...prev,
+                                  taxPercentage: Number(opt.defaultRate) || 0,
+                                  cgstPercentage: 0,
+                                  sgstPercentage: 0,
+                                }));
+                              }
+                            } else {
+                              // Clear everything
+                              handleSelectChange("taxType", null);
+                              setTaxRateInput("");
+                              setCgstInput("0");
+                              setSgstInput("0");
+                              setProposalInfo((prev) => ({
+                                ...prev,
+                                taxPercentage: 0,
+                                cgstPercentage: 0,
+                                sgstPercentage: 0,
+                              }));
+                            }
+                          }}
+                          options={taxOptions}
+                          className="w-full"
+                          classNamePrefix="select"
+                          menuPlacement="auto"
+                        />
+                      </div>
+
+                      {/* Conditional Input Rendering */}
+                      <div className="w-full">
+                        {proposalInfo.taxType === "CGST+SGST" ? (
+                          <div className="flex gap-2">
+                            <FormInput
+                              label="CGST %"
+                              name="cgstInput"
+                              type="number"
+                              value={cgstInput}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setCgstInput(value);
+                                setProposalInfo((prev) => ({
+                                  ...prev,
+                                  cgstPercentage: Number(value) || 0,
+                                }));
+                              }}
+                            />
+                            <FormInput
+                              label="SGST %"
+                              name="sgstInput"
+                              type="number"
+                              value={sgstInput}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setSgstInput(value);
+                                setProposalInfo((prev) => ({
+                                  ...prev,
+                                  sgstPercentage: Number(value) || 0,
+                                }));
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <FormInput
+                            label="Tax %"
+                            name="taxRateInput"
+                            type="number"
+                            value={taxRateInput}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setTaxRateInput(value);
+                              setProposalInfo((prev) => ({
+                                ...prev,
+                                taxPercentage: Number(value) || 0,
+                              }));
+                            }}
+                            disabled={proposalInfo.taxType === "No Tax"}
+                            className="w-full"
+                          />
                         )}
-                        onChange={(opt) => {
-                          if (opt) {
-                            handleSelectChange("taxType", opt);
-                            setTaxRateInput(opt.defaultRate);
-                            setProposalInfo((prev) => ({
-                              ...prev,
-                              taxPercentage: Number(opt.defaultRate) || 0,
-                            }));
-                          } else {
-                            handleSelectChange("taxType", null);
-                            setTaxRateInput("");
-                            setProposalInfo((prev) => ({
-                              ...prev,
-                              taxPercentage: 0,
-                            }));
-                          }
-                        }}
-                        options={taxOptions}
-                        className="w-full"
-                        classNamePrefix="select"
-                        menuPlacement="auto"
-                      />
-                      <FormInput
-                        label="Tax %"
-                        name="taxRateInput"
-                        type="number"
-                        value={taxRateInput}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setTaxRateInput(value);
-                          setProposalInfo((prev) => ({
-                            ...prev,
-                            taxPercentage: Number(value) || 0,
-                          }));
-                        }}
-                        disabled={proposalInfo.taxType === "No Tax"}
-                        className="w-full"
-                      />
+                      </div>
                     </div>
                     <div className="flex justify-between text-gray-600">
                       <span>Tax Amount:</span>

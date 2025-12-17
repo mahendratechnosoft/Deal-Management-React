@@ -117,7 +117,42 @@ const IconCalendar = ({ className }) => (
   </svg>
 );
 
-const TaxRows = ({ taxType, taxPercentage, taxableAmount, currencyType }) => {
+const TaxRows = ({
+  taxType,
+  taxPercentage,
+  cgstPercentage, // New Prop
+  sgstPercentage, // New Prop
+  taxableAmount,
+  currencyType,
+}) => {
+  // 1. Handle Split Tax (CGST + SGST)
+  if (taxType === "CGST+SGST") {
+    const cgstAmount = taxableAmount * (cgstPercentage / 100);
+    const sgstAmount = taxableAmount * (sgstPercentage / 100);
+
+    return (
+      <>
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">
+            CGST ({cgstPercentage.toFixed(2)}%)
+          </span>
+          <span className="font-medium text-gray-800">
+            {formatCurrency(cgstAmount, currencyType)}
+          </span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">
+            SGST ({sgstPercentage.toFixed(2)}%)
+          </span>
+          <span className="font-medium text-gray-800">
+            {formatCurrency(sgstAmount, currencyType)}
+          </span>
+        </div>
+      </>
+    );
+  }
+
+  // 2. Handle Single Tax (Existing Logic)
   const totalTaxAmount = taxableAmount * (taxPercentage / 100);
   if (taxType !== "No Tax" && taxPercentage > 0) {
     return (
@@ -131,6 +166,8 @@ const TaxRows = ({ taxType, taxPercentage, taxableAmount, currencyType }) => {
       </div>
     );
   }
+
+  // 3. Handle No Tax
   return (
     <div className="flex justify-between text-sm">
       <span className="text-gray-600">Tax</span>
@@ -187,6 +224,8 @@ const ProposalInvoiceDisplay = ({
     currencyType,
     taxPercentage,
     taxType,
+    cgstPercentage, // New return value
+    sgstPercentage, // New return value
   } = useMemo(() => {
     if (!proposal)
       return {
@@ -197,6 +236,8 @@ const ProposalInvoiceDisplay = ({
         currencyType: "INR",
         taxPercentage: 0,
         taxType: "No Tax",
+        cgstPercentage: 0,
+        sgstPercentage: 0,
       };
 
     const info = proposal.proposalInfo;
@@ -211,9 +252,26 @@ const ProposalInvoiceDisplay = ({
     const discount = Number(info.discount) || 0;
     const dAmount = (sub * discount) / 100;
     const tAmount = sub - dAmount;
-    const tPercentage = Number(info.taxPercentage ?? info.taxRate) || 0;
+
+    // --- New Tax Logic Start ---
     const tType = info.taxType || "No Tax";
-    const totalTax = tAmount * (tPercentage / 100);
+    let totalTax = 0;
+    let tPercentage = 0;
+    let cgst = 0;
+    let sgst = 0;
+
+    if (tType === "CGST+SGST") {
+      cgst = Number(info.cgstPercentage) || 0;
+      sgst = Number(info.sgstPercentage) || 0;
+      const cgstAmount = tAmount * (cgst / 100);
+      const sgstAmount = tAmount * (sgst / 100);
+      totalTax = cgstAmount + sgstAmount;
+    } else {
+      tPercentage = Number(info.taxPercentage ?? info.taxRate) || 0;
+      totalTax = tAmount * (tPercentage / 100);
+    }
+    // --- New Tax Logic End ---
+
     const grandTotal = tAmount + totalTax;
 
     return {
@@ -224,6 +282,8 @@ const ProposalInvoiceDisplay = ({
       currencyType: cType,
       taxPercentage: tPercentage,
       taxType: tType,
+      cgstPercentage: cgst,
+      sgstPercentage: sgst,
     };
   }, [proposal]);
 
@@ -349,6 +409,8 @@ const ProposalInvoiceDisplay = ({
                 <TaxRows
                   taxType={taxType}
                   taxPercentage={taxPercentage}
+                  cgstPercentage={cgstPercentage}
+                  sgstPercentage={sgstPercentage}
                   taxableAmount={taxableAmount}
                   currencyType={currencyType}
                 />
