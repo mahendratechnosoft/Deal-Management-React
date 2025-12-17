@@ -40,9 +40,10 @@ function GsuiteHistoryModal({
   const [sequenceError, setSequenceError] = useState("");
   const [sequenceValid, setSequenceValid] = useState(false);
   const [existingSequences, setExistingSequences] = useState([]);
+  const [autoButtonLoading, setAutoButtonLoading] = useState(false);
+  const canEdit = hasPermission("amc", "Edit");
+  const canCreate = hasPermission("amc", "Create");
 
-    const canEdit = hasPermission("amc", "Edit");
-    const canCreate = hasPermission("amc", "Create");
 
   // Options
   const platformOptions = [
@@ -88,6 +89,7 @@ function GsuiteHistoryModal({
       setSequenceValid(false);
       setCheckingSequence(false);
       setShowAdminPassword(false);
+      setAutoButtonLoading(false);
     };
   }, []);
 
@@ -100,6 +102,7 @@ function GsuiteHistoryModal({
   }, [isOpen, amcId]);
 
   // Initialize form data
+  // Initialize form data
   useEffect(() => {
     if (isOpen) {
       // Reset all states when modal opens
@@ -107,6 +110,7 @@ function GsuiteHistoryModal({
       setSequenceError("");
       setSequenceValid(false);
       setCheckingSequence(false);
+      setAutoButtonLoading(false); // Add this
 
       if (isEditMode && initialData) {
         // Edit mode: use initial data
@@ -138,39 +142,46 @@ function GsuiteHistoryModal({
           checkSequenceUnique(sequence);
         }, 100);
       } else {
-        // Create mode: reset to default values first
-        const defaultFormData = {
-          domainName: "",
-          platform: "Google Workspace",
-          gsuitStartDate: "",
-          gsuitRenewalDate: "",
-          adminEmail: "",
-          adminPassword: "",
-          totalLicenses: "",
-          gsuitAmount: "",
-          paidBy: "ADMIN",
-          purchasedViaReseller: false,
-          resellerName: "",
-          gsuitRenewalCycle: "YEARLY",
-          sequence: 1,
-          paid: false,
+        // CREATE MODE: Handle empty existingSequences
+        const initializeForm = () => {
+          const defaultFormData = {
+            domainName: "",
+            platform: "Google Workspace",
+            gsuitStartDate: "",
+            gsuitRenewalDate: "",
+            adminEmail: "",
+            adminPassword: "",
+            totalLicenses: "",
+            gsuitAmount: "",
+            paidBy: "ADMIN",
+            purchasedViaReseller: false,
+            resellerName: "",
+            gsuitRenewalCycle: "YEARLY",
+            sequence: 1, // Default to 1
+            paid: false,
+          };
+
+          // If we have existing sequences, calculate next sequence
+          if (existingSequences.length > 0) {
+            const maxSequence = Math.max(
+              ...existingSequences.map((item) => item.sequence)
+            );
+            const nextSequence = maxSequence + 1;
+            defaultFormData.sequence = nextSequence;
+          } else {
+            // No existing sequences, keep as 1
+            defaultFormData.sequence = 1;
+          }
+
+          setFormData(defaultFormData);
+
+          // Check sequence uniqueness after setting
+          setTimeout(() => {
+            checkSequenceUnique(defaultFormData.sequence);
+          }, 100);
         };
 
-        // Wait for existing sequences to load, then set next sequence
-        if (existingSequences.length > 0) {
-          const maxSequence = Math.max(
-            ...existingSequences.map((item) => item.sequence)
-          );
-          const nextSequence = maxSequence + 1;
-          defaultFormData.sequence = nextSequence;
-
-          // Set form data and check sequence
-          setFormData(defaultFormData);
-          setTimeout(() => checkSequenceUnique(nextSequence), 100);
-        } else {
-          // If no existing sequences, just set default
-          setFormData(defaultFormData);
-        }
+        initializeForm();
       }
     }
   }, [isOpen, isEditMode, initialData, existingSequences]);
@@ -376,10 +387,30 @@ function GsuiteHistoryModal({
     return () => clearTimeout(timer);
   };
 
-  const handleAutoSequence = () => {
-    const nextSequence = calculateNextSequence();
-    setFormData((prev) => ({ ...prev, sequence: nextSequence }));
-    checkSequenceUnique(nextSequence);
+  // Auto-assign next sequence
+  const handleAutoSequence = async () => {
+    setAutoButtonLoading(true);
+    try {
+      let nextSequence;
+
+      if (existingSequences.length === 0) {
+        // No existing sequences, start with 1
+        nextSequence = 1;
+      } else {
+        const maxSequence = Math.max(
+          ...existingSequences.map((item) => item.sequence)
+        );
+        nextSequence = maxSequence + 1;
+      }
+
+      setFormData((prev) => ({ ...prev, sequence: nextSequence }));
+      await checkSequenceUnique(nextSequence);
+    } catch (error) {
+      console.error("Error in auto sequence:", error);
+      toast.error("Failed to calculate next sequence");
+    } finally {
+      setAutoButtonLoading(false);
+    }
   };
 
   const validateForm = async () => {
@@ -406,23 +437,12 @@ function GsuiteHistoryModal({
       newErrors.totalLicenses = "Total licenses must be a positive number";
     }
 
-    // REMOVED: GSuite Amount validation (no longer required)
-    // if (!formData.gsuitAmount) {
-    //   newErrors.gsuitAmount = "GSuite amount is required";
-    // } else if (
-    //   isNaN(formData.gsuitAmount) ||
-    //   parseFloat(formData.gsuitAmount) <= 0
-    // ) {
-    //   newErrors.gsuitAmount = "GSuite amount must be a positive number";
-    // }
-
-    // Add validation for amount format only (if provided)
+    // Fix GSuite Amount validation - allow 0
     if (formData.gsuitAmount && formData.gsuitAmount.trim() !== "") {
-      if (
-        isNaN(formData.gsuitAmount) ||
-        parseFloat(formData.gsuitAmount) <= 0
-      ) {
-        newErrors.gsuitAmount = "GSuite amount must be a positive number";
+      const amount = parseFloat(formData.gsuitAmount);
+      if (isNaN(amount) || amount < 0) {
+        // Changed from <= 0 to < 0
+        newErrors.gsuitAmount = "GSuite amount must be 0 or a positive number";
       }
     }
 
@@ -476,7 +496,8 @@ function GsuiteHistoryModal({
       toast.error("Please ensure sequence number is valid and unique");
       return;
     }
-
+    
+console.log("checking initial data**********", initialData);
     setLoading(true);
     try {
       const payload = {
@@ -489,17 +510,17 @@ function GsuiteHistoryModal({
           : 0, // Default to 0 if not provided
         sequence: parseInt(formData.sequence),
         paid: formData.paid,
-        // Include amcId if creating new
-        ...(!isEditMode && { amcId: amcId }),
+        amcId,
+
       };
 
       // Add amcGsuitHistoryId for update
-      if (isEditMode && initialData?.amcGsuitHistoryId) {
-        payload.amcGsuitHistoryId = initialData.amcGsuitHistoryId;
+      if (isEditMode && initialData?.acmGsuitHistoryId) {
+        payload.acmGsuitHistoryId = initialData.acmGsuitHistoryId;
       }
 
       let response;
-      if (isEditMode && initialData?.amcGsuitHistoryId) {
+      if (isEditMode && initialData?.amcGsuitHistoryId) {``
         // Update existing
         response = await axiosInstance.put(`updateAMCGsuitHistory`, payload);
       } else {
@@ -630,31 +651,45 @@ function GsuiteHistoryModal({
                     <button
                       type="button"
                       onClick={handleAutoSequence}
-                      className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 text-sm font-medium flex items-center gap-1 h-10 transition-colors"
+                      disabled={autoButtonLoading || checkingSequence}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1 h-10 transition-colors ${
+                        autoButtonLoading
+                          ? "bg-blue-300 text-blue-700 cursor-wait"
+                          : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                      }`}
                       title="Use next available sequence"
                     >
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                        />
-                      </svg>
-                      Auto
+                      {autoButtonLoading ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-blue-700 border-t-transparent rounded-full animate-spin"></div>
+                          Calculating...
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            />
+                          </svg>
+                          Auto
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
                 {checkingSequence && (
-                  <p className="text-xs text-blue-500 mt-1 flex items-center gap-1">
+                  <div className="text-xs text-blue-500 mt-1 flex items-center gap-1">
                     <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    Checking sequence availability...
-                  </p>
+                    <span>Checking sequence availability...</span>
+                  </div>
                 )}
 
                 {/* Show existing sequences for both modes */}
@@ -670,7 +705,7 @@ function GsuiteHistoryModal({
 
                 {/* Show different messages for edit vs create mode */}
                 {sequenceValid && !checkingSequence && (
-                  <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
+                  <div className="text-xs text-green-500 mt-1 flex items-center gap-1">
                     <svg
                       className="w-3 h-3"
                       fill="none"
@@ -684,10 +719,12 @@ function GsuiteHistoryModal({
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    {isEditMode
-                      ? `Sequence number ${formData.sequence} is valid (current sequence)`
-                      : `Sequence number ${formData.sequence} is available`}
-                  </p>
+                    <span>
+                      {isEditMode
+                        ? `Sequence number ${formData.sequence} is valid (current sequence)`
+                        : `Sequence number ${formData.sequence} is available`}
+                    </span>
+                  </div>
                 )}
               </div>
 

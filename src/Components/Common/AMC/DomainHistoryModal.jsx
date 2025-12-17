@@ -31,9 +31,9 @@ const DomainHistoryModal = ({
   const [sequenceError, setSequenceError] = useState("");
   const [sequenceValid, setSequenceValid] = useState(false);
   const [existingSequences, setExistingSequences] = useState([]);
-
-    const canEdit = hasPermission("amc", "Edit");
-    const canCreate = hasPermission("amc","Create");
+  const [autoButtonLoading, setAutoButtonLoading] = useState(false);
+  const canEdit = hasPermission("amc", "Edit");
+  const canCreate = hasPermission("amc", "Create");
 
   const domainRenewalOptions = [
     { value: "Monthly", label: "Monthly" },
@@ -59,6 +59,7 @@ const DomainHistoryModal = ({
       setSequenceError("");
       setSequenceValid(false);
       setCheckingSequence(false);
+       setAutoButtonLoading(false);
     };
   }, []);
 
@@ -69,6 +70,7 @@ const DomainHistoryModal = ({
     }
   }, [isOpen, amcId]);
 
+  // Initialize form with initialData
   // Initialize form with initialData
   useEffect(() => {
     if (isOpen) {
@@ -96,35 +98,41 @@ const DomainHistoryModal = ({
           checkSequenceUnique(sequence);
         }, 100);
       } else {
-        // Create mode: reset to default values
-        const defaultFormData = {
-          domainStartDate: "",
-          domainRenewalDate: "",
-          domainAmount: "",
-          domainRenewalCycle: "1 Year",
-          sequence: 1,
-          paid: false,
+        // CREATE MODE: Handle empty existingSequences
+        const initializeForm = () => {
+          const defaultFormData = {
+            domainStartDate: "",
+            domainRenewalDate: "",
+            domainAmount: "",
+            domainRenewalCycle: "1 Year",
+            sequence: 1, // Default to 1
+            paid: false,
+          };
+
+          // If we have existing sequences, calculate next sequence
+          if (existingSequences.length > 0) {
+            const maxSequence = Math.max(
+              ...existingSequences.map((item) => item.sequence)
+            );
+            const nextSequence = maxSequence + 1;
+            defaultFormData.sequence = nextSequence;
+          } else {
+            // No existing sequences, keep as 1
+            defaultFormData.sequence = 1;
+          }
+
+          setFormData(defaultFormData);
+
+          // Check sequence uniqueness after setting
+          setTimeout(() => {
+            checkSequenceUnique(defaultFormData.sequence);
+          }, 100);
         };
 
-        // Wait for existing sequences to load, then set next sequence
-        if (existingSequences.length > 0) {
-          const maxSequence = Math.max(
-            ...existingSequences.map((item) => item.sequence)
-          );
-          const nextSequence = maxSequence + 1;
-          defaultFormData.sequence = nextSequence;
-
-          // Set form data and check sequence
-          setFormData(defaultFormData);
-          setTimeout(() => checkSequenceUnique(nextSequence), 100);
-        } else {
-          // If no existing sequences, just set default
-          setFormData(defaultFormData);
-        }
+        initializeForm();
       }
     }
   }, [isOpen, isEditMode, initialData, existingSequences]);
-
   // Fetch all existing sequences for this AMC
   const fetchExistingSequences = async () => {
     try {
@@ -354,10 +362,29 @@ const DomainHistoryModal = ({
   };
 
   // Auto-assign next sequence
-  const handleAutoSequence = () => {
-    const nextSequence = calculateNextSequence();
-    setFormData((prev) => ({ ...prev, sequence: nextSequence }));
-    checkSequenceUnique(nextSequence);
+  // Auto-assign next sequence
+  const handleAutoSequence = async () => {
+    setAutoButtonLoading(true);
+    try {
+      let nextSequence;
+
+      if (existingSequences.length === 0) {
+        // No existing sequences, start with 1
+        nextSequence = 1;
+      } else {
+        const maxSequence = Math.max(
+          ...existingSequences.map((item) => item.sequence)
+        );
+        nextSequence = maxSequence + 1;
+      }
+
+      setFormData((prev) => ({ ...prev, sequence: nextSequence }));
+      await checkSequenceUnique(nextSequence);
+    } catch (error) {
+      toast.error("Failed to calculate next sequence");
+    } finally {
+      setAutoButtonLoading(false);
+    }
   };
 
   const validateForm = async () => {
@@ -573,23 +600,37 @@ const DomainHistoryModal = ({
                     <button
                       type="button"
                       onClick={handleAutoSequence}
-                      className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 text-sm font-medium flex items-center gap-1 h-10 transition-colors"
+                      disabled={autoButtonLoading || checkingSequence} // Add disabled state if using loading
+                      className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1 h-10 transition-colors ${
+                        autoButtonLoading
+                          ? "bg-blue-300 text-blue-700 cursor-wait"
+                          : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                      }`}
                       title="Use next available sequence"
                     >
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                        />
-                      </svg>
-                      Auto
+                      {autoButtonLoading ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-blue-700 border-t-transparent rounded-full animate-spin"></div>
+                          Calculating...
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            />
+                          </svg>
+                          Auto
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
