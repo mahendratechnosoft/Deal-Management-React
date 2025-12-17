@@ -23,11 +23,12 @@ function CreateAmcModal({ onClose, onSuccess }) {
   const errorFieldRefs = useRef({});
 
   // Main form state matching API structure
+  // Main form state matching API structure
   const [formData, setFormData] = useState({
-    // AMC Info
+    // AMC Info (always required)
     amcInfo: {
-      adminId: "",
-      employeeId: "",
+      adminId: null,
+      employeeId: null,
       clinetName: "",
       companyName: "",
       contactPersonName: "",
@@ -35,48 +36,48 @@ function CreateAmcModal({ onClose, onSuccess }) {
       phoneNumber: "",
       websiteURL: "",
       technology: "",
-      hostingProvider: "Wix",
+      hostingProvider: "",
       domainProvider: "",
       assingedTo: "",
     },
 
-    // AMC History Info
+    // AMC History Info (optional - can be null)
     amcHistoryInfo: {
       amcStartDate: "",
       amcEndDate: "",
       amcAmount: "",
       amcScope: "",
-      amcRecycleType: "Yearly",
+      amcRecycleType: "",
       sequence: 1,
-      paid: false, // Added
+      paid: false,
     },
 
-    // AMC Domain History Info
+    // AMC Domain History Info (optional - can be null)
     amcDomainHistoryInfo: {
       domainStartDate: "",
       domainRenewalDate: "",
       domainAmount: "",
-      domainRenewalCycle: "1 Year",
+      domainRenewalCycle: "",
       sequence: 1,
-      paid: false, // Added
+      paid: false,
     },
 
-    // GSuite Details (NEW)
+    // GSuite Details (optional - can be null)
     gsuiteDetails: {
       domainName: "",
-      platform: "Google Workspace",
+      platform: "",
       gsuitStartDate: "",
       gsuitRenewalDate: "",
       adminEmail: "",
       adminPassword: "",
       totalLicenses: "",
       gsuitAmount: "",
-      paidBy: "ADMIN", // Default value
+      paidBy: "",
       purchasedViaReseller: false,
       resellerName: "",
-      gsuitRenewalCycle: "YEARLY",
-      sequence: 1, // Default sequence
-      paid: false, // Added
+      gsuitRenewalCycle: "",
+      sequence: 1,
+      paid: false,
     },
   });
 
@@ -700,6 +701,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
   };
 
   // Handle form submission
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -713,8 +715,8 @@ function CreateAmcModal({ onClose, onSuccess }) {
       // Prepare the complete payload matching the required structure
       const payload = {
         amcInfo: {
-          adminId: formData.amcInfo.adminId || "",
-          employeeId: formData.amcInfo.employeeId || "",
+          adminId: formData.amcInfo.adminId || null,
+          employeeId: formData.amcInfo.employeeId || null,
           clinetName: formData.amcInfo.clinetName || "",
           companyName: formData.amcInfo.companyName || "",
           contactPersonName: formData.amcInfo.contactPersonName || "",
@@ -722,74 +724,86 @@ function CreateAmcModal({ onClose, onSuccess }) {
           phoneNumber: formData.amcInfo.phoneNumber || "",
           websiteURL: formData.amcInfo.websiteURL || "",
           technology: formData.amcInfo.technology || "",
-          hostingProvider: formData.amcInfo.hostingProvider || "Wix",
+          hostingProvider: formData.amcInfo.hostingProvider || "",
           domainProvider: formData.amcInfo.domainProvider || "",
           assingedTo: formData.amcInfo.assingedTo || "",
         },
-        // Only include amcHistoryInfo if any field is filled
-        ...(formData.amcHistoryInfo.amcStartDate ||
-        formData.amcHistoryInfo.amcEndDate ||
-        formData.amcHistoryInfo.amcAmount ||
-        formData.amcHistoryInfo.amcScope
-          ? {
-              amcHistoryInfo: {
-                amcStartDate: formData.amcHistoryInfo.amcStartDate || "",
-                amcEndDate: formData.amcHistoryInfo.amcEndDate || "",
-                amcAmount: formData.amcHistoryInfo.amcAmount
-                  ? parseFloat(formData.amcHistoryInfo.amcAmount)
-                  : 0,
-                amcScope: formData.amcHistoryInfo.amcScope || "",
-                amcRecycleType:
-                  formData.amcHistoryInfo.amcRecycleType || "Yearly",
-                sequence: formData.amcHistoryInfo.sequence || 1,
-              },
-            }
-          : {}),
-        // Only include amcDomainHistoryInfo if any field is filled
-        ...(formData.amcDomainHistoryInfo.domainStartDate ||
-        formData.amcDomainHistoryInfo.domainRenewalDate ||
-        formData.amcDomainHistoryInfo.domainAmount
-          ? {
-              amcDomainHistoryInfo: {
-                domainStartDate:
-                  formData.amcDomainHistoryInfo.domainStartDate || "",
-                domainRenewalDate:
-                  formData.amcDomainHistoryInfo.domainRenewalDate || "",
-                domainAmount: formData.amcDomainHistoryInfo.domainAmount || "",
-                domainRenewalCycle:
-                  formData.amcDomainHistoryInfo.domainRenewalCycle || "1 Year",
-                sequence: formData.amcDomainHistoryInfo.sequence || 1,
-              },
-            }
-          : {}),
       };
 
-      // Only include amcGsuitHistory if GSuite details are provided
-      if (
+      // Check if AMC History Info has any data
+      const isAmcHistoryFilled =
+        formData.amcHistoryInfo.amcStartDate ||
+        formData.amcHistoryInfo.amcEndDate ||
+        formData.amcHistoryInfo.amcAmount ||
+        formData.amcHistoryInfo.amcScope;
+
+      if (isAmcHistoryFilled) {
+        payload.amcHistoryInfo = {
+          amcStartDate: formData.amcHistoryInfo.amcStartDate || null,
+          amcEndDate: formData.amcHistoryInfo.amcEndDate || null,
+          amcAmount: formData.amcHistoryInfo.amcAmount
+            ? parseFloat(formData.amcHistoryInfo.amcAmount)
+            : null,
+          amcScope: formData.amcHistoryInfo.amcScope || "",
+          amcRecycleType: formData.amcHistoryInfo.amcRecycleType || "",
+          sequence: formData.amcHistoryInfo.sequence || 1,
+        };
+      } else {
+        payload.amcHistoryInfo = null;
+      }
+
+      // Check if Domain History Info has any data
+      const isDomainHistoryFilled =
+        formData.amcDomainHistoryInfo.domainStartDate ||
+        formData.amcDomainHistoryInfo.domainRenewalDate ||
+        formData.amcDomainHistoryInfo.domainAmount;
+
+      if (isDomainHistoryFilled) {
+        payload.amcDomainHistoryInfo = {
+          domainStartDate:
+            formData.amcDomainHistoryInfo.domainStartDate || null,
+          domainRenewalDate:
+            formData.amcDomainHistoryInfo.domainRenewalDate || null,
+          domainAmount: formData.amcDomainHistoryInfo.domainAmount || null,
+          domainRenewalCycle:
+            formData.amcDomainHistoryInfo.domainRenewalCycle || "",
+          sequence: formData.amcDomainHistoryInfo.sequence || 1,
+        };
+      } else {
+        payload.amcDomainHistoryInfo = null;
+      }
+
+      // Check if GSuite Details has any data
+      const isGSuiteFilled =
         formData.gsuiteDetails.domainName ||
+        formData.gsuiteDetails.gsuitStartDate ||
+        formData.gsuiteDetails.gsuitRenewalDate ||
         formData.gsuiteDetails.adminEmail ||
-        formData.gsuiteDetails.gsuitAmount ||
-        formData.gsuiteDetails.totalLicenses
-      ) {
+        formData.gsuiteDetails.adminPassword ||
+        formData.gsuiteDetails.totalLicenses ||
+        formData.gsuiteDetails.gsuitAmount;
+
+      if (isGSuiteFilled) {
         payload.amcGsuitHistory = {
           domainName: formData.gsuiteDetails.domainName || "",
-          platform: formData.gsuiteDetails.platform || "Google Workspace",
-          gsuitStartDate: formData.gsuiteDetails.gsuitStartDate || "",
-          gsuitRenewalDate: formData.gsuiteDetails.gsuitRenewalDate || "",
+          platform: formData.gsuiteDetails.platform || "",
+          gsuitStartDate: formData.gsuiteDetails.gsuitStartDate || null,
+          gsuitRenewalDate: formData.gsuiteDetails.gsuitRenewalDate || null,
           adminEmail: formData.gsuiteDetails.adminEmail || "",
           adminPassword: formData.gsuiteDetails.adminPassword || "",
           totalLicenses: formData.gsuiteDetails.totalLicenses
             ? parseInt(formData.gsuiteDetails.totalLicenses)
-            : 0,
-          gsuitAmount: formData.gsuiteDetails.gsuitAmount || "0",
-          paidBy: formData.gsuiteDetails.paidBy || "ADMIN",
+            : null,
+          gsuitAmount: formData.gsuiteDetails.gsuitAmount || null,
+          paidBy: formData.gsuiteDetails.paidBy || "",
           purchasedViaReseller:
             formData.gsuiteDetails.purchasedViaReseller || false,
           resellerName: formData.gsuiteDetails.resellerName || "",
-          gsuitRenewalCycle:
-            formData.gsuiteDetails.gsuitRenewalCycle || "YEARLY",
+          gsuitRenewalCycle: formData.gsuiteDetails.gsuitRenewalCycle || "",
           sequence: 1,
         };
+      } else {
+        payload.amcGsuitHistory = null;
       }
 
       console.log(
@@ -1036,6 +1050,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
   );
 
   // Render Technical Tab
+  // Render Technical Tab - Update hostingProvider default
   const renderTechnicalTab = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1063,7 +1078,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
         <GlobalSelectField
           label="Domain Provider"
           name="domainProvider"
-          value={formData.amcInfo.domainProvider}
+          value={formData.amcInfo.domainProvider || ""}
           onChange={(e) =>
             handleChange("amcInfo", "domainProvider", e.target.value)
           }
@@ -1077,7 +1092,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
         <GlobalSelectField
           label="Hosting Provider"
           name="hostingProvider"
-          value={formData.amcInfo.hostingProvider}
+          value={formData.amcInfo.hostingProvider || ""}
           onChange={(e) =>
             handleChange("amcInfo", "hostingProvider", e.target.value)
           }
@@ -1119,10 +1134,10 @@ function CreateAmcModal({ onClose, onSuccess }) {
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <GlobalInputField
-          label="AMC Start Date" // Removed asterisk
+          label="AMC Start Date"
           name="amcStartDate"
           type="date"
-          value={formData.amcHistoryInfo.amcStartDate}
+          value={formData.amcHistoryInfo.amcStartDate || ""}
           onChange={(e) => handleAmcStartDateChange(e.target.value)}
           error={errors["amcHistoryInfo.amcStartDate"]}
           className="text-sm"
@@ -1133,10 +1148,10 @@ function CreateAmcModal({ onClose, onSuccess }) {
         />
 
         <GlobalInputField
-          label="AMC End Date" // Removed asterisk
+          label="AMC End Date"
           name="amcEndDate"
           type="date"
-          value={formData.amcHistoryInfo.amcEndDate}
+          value={formData.amcHistoryInfo.amcEndDate || ""}
           onChange={(e) =>
             handleChange("amcHistoryInfo", "amcEndDate", e.target.value)
           }
@@ -1150,10 +1165,10 @@ function CreateAmcModal({ onClose, onSuccess }) {
         />
 
         <GlobalInputField
-          label="AMC Amount" // Removed asterisk
+          label="AMC Amount"
           name="amcAmount"
           type="number"
-          value={formData.amcHistoryInfo.amcAmount}
+          value={formData.amcHistoryInfo.amcAmount || ""}
           onChange={(e) =>
             handleChange("amcHistoryInfo", "amcAmount", e.target.value)
           }
@@ -1170,18 +1185,21 @@ function CreateAmcModal({ onClose, onSuccess }) {
         <GlobalSelectField
           label="AMC Recycle Type"
           name="amcRecycleType"
-          value={formData.amcHistoryInfo.amcRecycleType}
+          value={formData.amcHistoryInfo.amcRecycleType || ""}
           onChange={(e) => handleAmcRecycleTypeChange(e.target.value)}
-          options={recycleTypeOptions}
+          options={[
+            { value: "", label: "Select recycle type" },
+            ...recycleTypeOptions,
+          ]}
           className="text-sm"
         />
       </div>
 
       <div>
         <GlobalTextAreaField
-          label="AMC Scope" // Removed asterisk
+          label="AMC Scope"
           name="amcScope"
-          value={formData.amcHistoryInfo.amcScope}
+          value={formData.amcHistoryInfo.amcScope || ""}
           onChange={(e) =>
             handleChange("amcHistoryInfo", "amcScope", e.target.value)
           }
@@ -1201,10 +1219,10 @@ function CreateAmcModal({ onClose, onSuccess }) {
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <GlobalInputField
-          label="Domain Start Date" // Removed asterisk
+          label="Domain Start Date"
           name="domainStartDate"
           type="date"
-          value={formData.amcDomainHistoryInfo.domainStartDate}
+          value={formData.amcDomainHistoryInfo.domainStartDate || ""}
           onChange={(e) => handleDomainStartDateChange(e.target.value)}
           error={errors["amcDomainHistoryInfo.domainStartDate"]}
           className="text-sm"
@@ -1215,10 +1233,10 @@ function CreateAmcModal({ onClose, onSuccess }) {
         />
 
         <GlobalInputField
-          label="Domain Renewal Date" // Removed asterisk
+          label="Domain Renewal Date"
           name="domainRenewalDate"
           type="date"
-          value={formData.amcDomainHistoryInfo.domainRenewalDate}
+          value={formData.amcDomainHistoryInfo.domainRenewalDate || ""}
           onChange={(e) =>
             handleChange(
               "amcDomainHistoryInfo",
@@ -1237,10 +1255,10 @@ function CreateAmcModal({ onClose, onSuccess }) {
         />
 
         <GlobalInputField
-          label="Domain Amount" // Removed asterisk
+          label="Domain Amount"
           name="domainAmount"
           type="number"
-          value={formData.amcDomainHistoryInfo.domainAmount}
+          value={formData.amcDomainHistoryInfo.domainAmount || ""}
           onChange={(e) =>
             handleChange("amcDomainHistoryInfo", "domainAmount", e.target.value)
           }
@@ -1257,22 +1275,27 @@ function CreateAmcModal({ onClose, onSuccess }) {
         <GlobalSelectField
           label="Domain Renewal Cycle"
           name="domainRenewalCycle"
-          value={formData.amcDomainHistoryInfo.domainRenewalCycle}
+          value={formData.amcDomainHistoryInfo.domainRenewalCycle || ""}
           onChange={(e) => handleDomainRenewalCycleChange(e.target.value)}
-          options={domainRenewalOptions}
+          options={[
+            { value: "", label: "Select renewal cycle" },
+            ...domainRenewalOptions,
+          ]}
           className="text-sm"
         />
       </div>
     </div>
   );
+
   // Render GSuite Tab (Already provided in previous response, but included for completeness)
+  // Render GSuite Tab
   const renderGSuiteTab = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <GlobalInputField
           label="Domain Name"
           name="domainName"
-          value={formData.gsuiteDetails.domainName}
+          value={formData.gsuiteDetails.domainName || ""}
           onChange={(e) =>
             handleChange("gsuiteDetails", "domainName", e.target.value)
           }
@@ -1286,11 +1309,14 @@ function CreateAmcModal({ onClose, onSuccess }) {
         <GlobalSelectField
           label="Platform"
           name="platform"
-          value={formData.gsuiteDetails.platform}
+          value={formData.gsuiteDetails.platform || ""}
           onChange={(e) =>
             handleChange("gsuiteDetails", "platform", e.target.value)
           }
-          options={platformOptions}
+          options={[
+            { value: "", label: "Select platform" },
+            ...platformOptions,
+          ]}
           className="text-sm"
         />
 
@@ -1298,7 +1324,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
           label="GSuite Start Date"
           name="gsuitStartDate"
           type="date"
-          value={formData.gsuiteDetails.gsuitStartDate}
+          value={formData.gsuiteDetails.gsuitStartDate || ""}
           onChange={(e) => handleGSuiteStartDateChange(e.target.value)}
           className="text-sm"
           min={getTodayDate()}
@@ -1311,7 +1337,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
           label="GSuite Renewal Date"
           name="gsuitRenewalDate"
           type="date"
-          value={formData.gsuiteDetails.gsuitRenewalDate}
+          value={formData.gsuiteDetails.gsuitRenewalDate || ""}
           onChange={(e) =>
             handleChange("gsuiteDetails", "gsuitRenewalDate", e.target.value)
           }
@@ -1327,7 +1353,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
           label="Admin Email"
           name="adminEmail"
           type="email"
-          value={formData.gsuiteDetails.adminEmail}
+          value={formData.gsuiteDetails.adminEmail || ""}
           onChange={(e) =>
             handleChange("gsuiteDetails", "adminEmail", e.target.value)
           }
@@ -1347,7 +1373,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
             <input
               type={showAdminPassword ? "text" : "password"}
               name="adminPassword"
-              value={formData.gsuiteDetails.adminPassword}
+              value={formData.gsuiteDetails.adminPassword || ""}
               onChange={(e) =>
                 handleChange("gsuiteDetails", "adminPassword", e.target.value)
               }
@@ -1401,7 +1427,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
           label="Total Licenses"
           name="totalLicenses"
           type="number"
-          value={formData.gsuiteDetails.totalLicenses}
+          value={formData.gsuiteDetails.totalLicenses || ""}
           onChange={(e) => {
             const value = e.target.value;
             if (value === "" || parseInt(value) > 0) {
@@ -1421,7 +1447,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
           label="GSuite Amount"
           name="gsuitAmount"
           type="number"
-          value={formData.gsuiteDetails.gsuitAmount}
+          value={formData.gsuiteDetails.gsuitAmount || ""}
           onChange={(e) =>
             handleChange("gsuiteDetails", "gsuitAmount", e.target.value)
           }
@@ -1438,20 +1464,26 @@ function CreateAmcModal({ onClose, onSuccess }) {
         <GlobalSelectField
           label="Paid By"
           name="paidBy"
-          value={formData.gsuiteDetails.paidBy}
+          value={formData.gsuiteDetails.paidBy || ""}
           onChange={(e) =>
             handleChange("gsuiteDetails", "paidBy", e.target.value)
           }
-          options={paidByOptions}
+          options={[
+            { value: "", label: "Select payment method" },
+            ...paidByOptions,
+          ]}
           className="text-sm"
         />
 
         <GlobalSelectField
           label="GSuite Renewal Cycle"
           name="gsuitRenewalCycle"
-          value={formData.gsuiteDetails.gsuitRenewalCycle}
+          value={formData.gsuiteDetails.gsuitRenewalCycle || ""}
           onChange={(e) => handleGSuiteRenewalCycleChange(e.target.value)}
-          options={gsuiteRenewalCycleOptions}
+          options={[
+            { value: "", label: "Select renewal cycle" },
+            ...gsuiteRenewalCycleOptions,
+          ]}
           className="text-sm"
         />
       </div>
@@ -1461,7 +1493,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
           <input
             type="checkbox"
             id="purchasedViaReseller"
-            checked={formData.gsuiteDetails.purchasedViaReseller}
+            checked={formData.gsuiteDetails.purchasedViaReseller || false}
             onChange={(e) => handleResellerToggle(e.target.checked)}
             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
           />
@@ -1477,7 +1509,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
           <GlobalInputField
             label="Reseller Name"
             name="resellerName"
-            value={formData.gsuiteDetails.resellerName}
+            value={formData.gsuiteDetails.resellerName || ""}
             onChange={(e) =>
               handleChange("gsuiteDetails", "resellerName", e.target.value)
             }
