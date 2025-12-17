@@ -158,6 +158,12 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
     taskCreate: false,
     taskDelete: false,
     taskEdit: false,
+
+    amcAccess: false,
+    amcCreate: false,
+    amcDelete: false,
+    amcEdit: false,
+    amcViewAll: false,
   });
 
   // =======================================COUNTrY STATE CITY DROPDOWN START__>===================================
@@ -478,6 +484,12 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
         taskCreate: role.taskCreate,
         taskDelete: role.taskDelete,
         taskEdit: role.taskEdit,
+
+        amcAccess: role.amcAccess ,
+        amcViewAll: role.amcViewAll,
+        amcCreate: role.amcCreate ,
+        amcDelete: role.amcDelete,
+        amcEdit: role.amcEdit,
       }));
       setRoleOptions(options);
     } catch (error) {
@@ -554,6 +566,12 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
       taskCreate: false,
       taskDelete: false,
       taskEdit: false,
+
+      amcAccess: false,
+      amcCreate: false,
+      amcDelete: false,
+      amcEdit: false,
+      amcViewAll: false,
     });
 
     if (errors.departmentId) {
@@ -641,6 +659,12 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
           taskCreate: selectedRole.taskCreate || false,
           taskDelete: selectedRole.taskDelete || false,
           taskEdit: selectedRole.taskEdit || false,
+
+          amcAccess: selectedRole.amcAccess || false,
+          amcViewAll: selectedRole.amcViewAll || false,
+          amcCreate: selectedRole.amcCreate || false,
+          amcDelete: selectedRole.amcDelete || false,
+          amcEdit: selectedRole.amcEdit || false,
         });
 
         // Show success message
@@ -712,6 +736,12 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
         taskCreate: false,
         taskDelete: false,
         taskEdit: false,
+
+        amcAccess: false,
+        amcCreate: false,
+        amcDelete: false,
+        amcEdit: false,
+        amcViewAll: false,
       });
 
       toast.success("Permissions reset");
@@ -997,20 +1027,22 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
             <button
               type="button"
               onClick={() => setActiveTab("personal")}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors duration-200 ${activeTab === "personal"
-                ? "border-blue-600 text-blue-600 bg-blue-50"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                activeTab === "personal"
+                  ? "border-blue-600 text-blue-600 bg-blue-50"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
             >
               Personal Information
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("permissions")}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors duration-200 ${activeTab === "permissions"
-                ? "border-blue-600 text-blue-600 bg-blue-50"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                activeTab === "permissions"
+                  ? "border-blue-600 text-blue-600 bg-blue-50"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
             >
               Module Access
             </button>
@@ -1036,8 +1068,9 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.name ? "border-red-500" : "border-gray-300"
-                        }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                        errors.name ? "border-red-500" : "border-gray-300"
+                      }`}
                       placeholder="Enter full name"
                     />
                     {errors.name && (
@@ -1071,8 +1104,9 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                       name="loginEmail"
                       value={formData.loginEmail}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.loginEmail ? "border-red-500" : "border-gray-300"
-                        }`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                        errors.loginEmail ? "border-red-500" : "border-gray-300"
+                      }`}
                       placeholder="Enter email address"
                     />
                     {errors.loginEmail && (
@@ -1107,8 +1141,9 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                         name="password"
                         value={formData.password}
                         onChange={handleChange}
-                        className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors.password ? "border-red-500" : "border-gray-300"
-                          }`}
+                        className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                          errors.password ? "border-red-500" : "border-gray-300"
+                        }`}
                         placeholder="Enter password"
                       />
                       <button
@@ -1180,8 +1215,9 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                       <span className="text-red-500">*</span>
                     </label>
                     <div
-                      className={`phone-input-wrapper ${errors.phone ? "border-red-500 rounded-lg" : ""
-                        }`}
+                      className={`phone-input-wrapper ${
+                        errors.phone ? "border-red-500 rounded-lg" : ""
+                      }`}
                     >
                       <PhoneInput
                         country={"in"}
@@ -1476,7 +1512,6 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
 
                   {!hasPermission("donor", "Access") && (
                     <>
-
                       {hasModulePermission("lead") && (
                         <ModuleAccessGroup
                           title="Leads"
@@ -1491,7 +1526,6 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                           handleAccessChange={handleAccessChange}
                         />
                       )}
-
 
                       {hasModulePermission("customer") && (
                         <ModuleAccessGroup
@@ -1508,7 +1542,6 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                         />
                       )}
 
-
                       {hasModulePermission("proposal") && (
                         <ModuleAccessGroup
                           title="Proposal"
@@ -1524,13 +1557,15 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                         />
                       )}
 
-
                       {hasModulePermission("proformaInvoice") && (
                         <ModuleAccessGroup
                           title="Proforma Invoice"
                           permissions={[
                             { label: "Access", field: "proformaInvoiceAccess" },
-                            { label: "View All", field: "proformaInvoiceViewAll" },
+                            {
+                              label: "View All",
+                              field: "proformaInvoiceViewAll",
+                            },
                             { label: "Create", field: "proformaInvoiceCreate" },
                             { label: "Edit", field: "proformaInvoiceEdit" },
                             { label: "Delete", field: "proformaInvoiceDelete" },
@@ -1539,7 +1574,6 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                           handleAccessChange={handleAccessChange}
                         />
                       )}
-
 
                       {hasModulePermission("invoice") && (
                         <ModuleAccessGroup
@@ -1556,7 +1590,6 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                         />
                       )}
 
-
                       {hasModulePermission("payment") && (
                         <ModuleAccessGroup
                           title="Payment"
@@ -1572,7 +1605,6 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                         />
                       )}
 
-
                       {hasModulePermission("timeSheet") && (
                         <ModuleAccessGroup
                           title="TimeSheet"
@@ -1587,7 +1619,6 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                           handleAccessChange={handleAccessChange}
                         />
                       )}
-
 
                       {hasModulePermission("lead") && (
                         <ModuleAccessGroup
@@ -1618,9 +1649,23 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                           handleAccessChange={handleAccessChange}
                         />
                       )}
+
+                      {hasModulePermission("amc") && (
+                        <ModuleAccessGroup
+                          title="AMC Permissions"
+                          permissions={[
+                            { label: "Access", field: "amcAccess" },
+                            { label: "View All", field: "amcViewAll" },
+                            { label: "Create", field: "amcCreate" },
+                            { label: "Edit", field: "amcEdit" },
+                            { label: "Delete", field: "amcDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
                     </>
                   )}
-
 
                   {hasPermission("donor", "Access") && (
                     <ModuleAccessGroup

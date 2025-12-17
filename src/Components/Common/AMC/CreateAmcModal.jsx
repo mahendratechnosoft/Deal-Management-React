@@ -129,6 +129,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
 
   const domainProviderOptions = [
     { value: "Wix", label: "Wix" },
+    { value: "Hostinger", label: "Hostinger" },
     { value: "GoDaddy", label: "GoDaddy" },
     { value: "Namecheap", label: "Namecheap" },
     { value: "Google Domains", label: "Google Domains" },
@@ -187,6 +188,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
   ];
 
   // Required fields configuration - ADDED gsuite fields
+  // Required fields configuration - UPDATE AMC and Domain to be optional
   const requiredFields = {
     amcInfo: {
       companyName: true,
@@ -197,15 +199,15 @@ function CreateAmcModal({ onClose, onSuccess }) {
       assingedTo: true,
     },
     amcHistoryInfo: {
-      amcStartDate: true,
-      amcEndDate: true,
-      amcAmount: true,
-      amcScope: true,
+      amcStartDate: false, // Changed from true to false
+      amcEndDate: false, // Changed from true to false
+      amcAmount: false, // Changed from true to false
+      amcScope: false, // Changed from true to false
     },
     amcDomainHistoryInfo: {
-      domainStartDate: true,
-      domainRenewalDate: true,
-      domainAmount: true,
+      domainStartDate: false, // Changed from true to false
+      domainRenewalDate: false, // Changed from true to false
+      domainAmount: false, // Changed from true to false
     },
     gsuiteDetails: {
       domainName: false,
@@ -621,13 +623,12 @@ function CreateAmcModal({ onClose, onSuccess }) {
       }, 100);
     }
   };
-  
 
   // Validate form
   const validateForm = () => {
     const newErrors = {};
 
-    // Validate AMC Info
+    // Validate AMC Info (keep these required)
     if (!formData.amcInfo.companyName?.trim()) {
       newErrors["amcInfo.companyName"] = "Company name is required";
     }
@@ -643,7 +644,6 @@ function CreateAmcModal({ onClose, onSuccess }) {
       newErrors["amcInfo.email"] = "Email is invalid";
     }
 
-   
     if (!formData.amcInfo.phoneNumber?.trim()) {
       newErrors["amcInfo.phoneNumber"] = "Phone number is required";
     } else if (!formData.amcInfo.phoneNumber.startsWith("+")) {
@@ -659,52 +659,11 @@ function CreateAmcModal({ onClose, onSuccess }) {
       newErrors["amcInfo.assingedTo"] = "Assigned to is required";
     }
 
-    // Validate AMC History Info
-    if (!formData.amcHistoryInfo.amcStartDate) {
-      newErrors["amcHistoryInfo.amcStartDate"] = "AMC start date is required";
-    }
+    // REMOVED: AMC History Info validation (no longer required)
 
-    if (!formData.amcHistoryInfo.amcEndDate) {
-      newErrors["amcHistoryInfo.amcEndDate"] = "AMC end date is required";
-    }
+    // REMOVED: Domain History Info validation (no longer required)
 
-    if (!formData.amcHistoryInfo.amcAmount) {
-      newErrors["amcHistoryInfo.amcAmount"] = "AMC amount is required";
-    } else if (
-      isNaN(formData.amcHistoryInfo.amcAmount) ||
-      parseFloat(formData.amcHistoryInfo.amcAmount) <= 0
-    ) {
-      newErrors["amcHistoryInfo.amcAmount"] =
-        "AMC amount must be a positive number";
-    }
-
-    if (!formData.amcHistoryInfo.amcScope?.trim()) {
-      newErrors["amcHistoryInfo.amcScope"] = "AMC scope is required";
-    }
-
-    // Validate Domain History Info
-    if (!formData.amcDomainHistoryInfo.domainStartDate) {
-      newErrors["amcDomainHistoryInfo.domainStartDate"] =
-        "Domain start date is required";
-    }
-
-    if (!formData.amcDomainHistoryInfo.domainRenewalDate) {
-      newErrors["amcDomainHistoryInfo.domainRenewalDate"] =
-        "Domain renewal date is required";
-    }
-
-    if (!formData.amcDomainHistoryInfo.domainAmount) {
-      newErrors["amcDomainHistoryInfo.domainAmount"] =
-        "Domain amount is required";
-    } else if (
-      isNaN(formData.amcDomainHistoryInfo.domainAmount) ||
-      parseFloat(formData.amcDomainHistoryInfo.domainAmount) <= 0
-    ) {
-      newErrors["amcDomainHistoryInfo.domainAmount"] =
-        "Domain amount must be a positive number";
-    }
-
-    // NEW: Validate GSuite Details
+    // NEW: Validate GSuite Details (keep validation but only for format, not for required)
     if (
       formData.gsuiteDetails.totalLicenses &&
       (isNaN(formData.gsuiteDetails.totalLicenses) ||
@@ -767,25 +726,42 @@ function CreateAmcModal({ onClose, onSuccess }) {
           domainProvider: formData.amcInfo.domainProvider || "",
           assingedTo: formData.amcInfo.assingedTo || "",
         },
-        amcHistoryInfo: {
-          amcStartDate: formData.amcHistoryInfo.amcStartDate || "",
-          amcEndDate: formData.amcHistoryInfo.amcEndDate || "",
-          amcAmount: formData.amcHistoryInfo.amcAmount
-            ? parseFloat(formData.amcHistoryInfo.amcAmount)
-            : 0,
-          amcScope: formData.amcHistoryInfo.amcScope || "",
-          amcRecycleType: formData.amcHistoryInfo.amcRecycleType || "Yearly",
-          sequence: formData.amcHistoryInfo.sequence || 1,
-        },
-        amcDomainHistoryInfo: {
-          domainStartDate: formData.amcDomainHistoryInfo.domainStartDate || "",
-          domainRenewalDate:
-            formData.amcDomainHistoryInfo.domainRenewalDate || "",
-          domainAmount: formData.amcDomainHistoryInfo.domainAmount || "",
-          domainRenewalCycle:
-            formData.amcDomainHistoryInfo.domainRenewalCycle || "1 Year",
-          sequence: formData.amcDomainHistoryInfo.sequence || 1,
-        },
+        // Only include amcHistoryInfo if any field is filled
+        ...(formData.amcHistoryInfo.amcStartDate ||
+        formData.amcHistoryInfo.amcEndDate ||
+        formData.amcHistoryInfo.amcAmount ||
+        formData.amcHistoryInfo.amcScope
+          ? {
+              amcHistoryInfo: {
+                amcStartDate: formData.amcHistoryInfo.amcStartDate || "",
+                amcEndDate: formData.amcHistoryInfo.amcEndDate || "",
+                amcAmount: formData.amcHistoryInfo.amcAmount
+                  ? parseFloat(formData.amcHistoryInfo.amcAmount)
+                  : 0,
+                amcScope: formData.amcHistoryInfo.amcScope || "",
+                amcRecycleType:
+                  formData.amcHistoryInfo.amcRecycleType || "Yearly",
+                sequence: formData.amcHistoryInfo.sequence || 1,
+              },
+            }
+          : {}),
+        // Only include amcDomainHistoryInfo if any field is filled
+        ...(formData.amcDomainHistoryInfo.domainStartDate ||
+        formData.amcDomainHistoryInfo.domainRenewalDate ||
+        formData.amcDomainHistoryInfo.domainAmount
+          ? {
+              amcDomainHistoryInfo: {
+                domainStartDate:
+                  formData.amcDomainHistoryInfo.domainStartDate || "",
+                domainRenewalDate:
+                  formData.amcDomainHistoryInfo.domainRenewalDate || "",
+                domainAmount: formData.amcDomainHistoryInfo.domainAmount || "",
+                domainRenewalCycle:
+                  formData.amcDomainHistoryInfo.domainRenewalCycle || "1 Year",
+                sequence: formData.amcDomainHistoryInfo.sequence || 1,
+              },
+            }
+          : {}),
       };
 
       // Only include amcGsuitHistory if GSuite details are provided
@@ -987,7 +963,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
           className="text-sm"
           ref={(el) => (errorFieldRefs.current["amcInfo.email"] = el)}
         />
- 
+
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
             <span>Phone Number</span>
@@ -1138,16 +1114,12 @@ function CreateAmcModal({ onClose, onSuccess }) {
   );
 
   // Render AMC Tab
+  // Render AMC Tab
   const renderAmcTab = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <GlobalInputField
-          label={
-            <>
-              AMC Start Date
-              <span className="text-red-500 ml-1">*</span>
-            </>
-          }
+          label="AMC Start Date" // Removed asterisk
           name="amcStartDate"
           type="date"
           value={formData.amcHistoryInfo.amcStartDate}
@@ -1161,12 +1133,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
         />
 
         <GlobalInputField
-          label={
-            <>
-              AMC End Date
-              <span className="text-red-500 ml-1">*</span>
-            </>
-          }
+          label="AMC End Date" // Removed asterisk
           name="amcEndDate"
           type="date"
           value={formData.amcHistoryInfo.amcEndDate}
@@ -1183,12 +1150,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
         />
 
         <GlobalInputField
-          label={
-            <>
-              AMC Amount
-              <span className="text-red-500 ml-1">*</span>
-            </>
-          }
+          label="AMC Amount" // Removed asterisk
           name="amcAmount"
           type="number"
           value={formData.amcHistoryInfo.amcAmount}
@@ -1217,12 +1179,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
 
       <div>
         <GlobalTextAreaField
-          label={
-            <>
-              AMC Scope
-              <span className="text-red-500 ml-1">*</span>
-            </>
-          }
+          label="AMC Scope" // Removed asterisk
           name="amcScope"
           value={formData.amcHistoryInfo.amcScope}
           onChange={(e) =>
@@ -1239,16 +1196,12 @@ function CreateAmcModal({ onClose, onSuccess }) {
   );
 
   // Render Domain Tab
+  // Render Domain Tab
   const renderDomainTab = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <GlobalInputField
-          label={
-            <>
-              Domain Start Date
-              <span className="text-red-500 ml-1">*</span>
-            </>
-          }
+          label="Domain Start Date" // Removed asterisk
           name="domainStartDate"
           type="date"
           value={formData.amcDomainHistoryInfo.domainStartDate}
@@ -1262,12 +1215,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
         />
 
         <GlobalInputField
-          label={
-            <>
-              Domain Renewal Date
-              <span className="text-red-500 ml-1">*</span>
-            </>
-          }
+          label="Domain Renewal Date" // Removed asterisk
           name="domainRenewalDate"
           type="date"
           value={formData.amcDomainHistoryInfo.domainRenewalDate}
@@ -1289,12 +1237,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
         />
 
         <GlobalInputField
-          label={
-            <>
-              Domain Amount
-              <span className="text-red-500 ml-1">*</span>
-            </>
-          }
+          label="Domain Amount" // Removed asterisk
           name="domainAmount"
           type="number"
           value={formData.amcDomainHistoryInfo.domainAmount}
@@ -1322,7 +1265,6 @@ function CreateAmcModal({ onClose, onSuccess }) {
       </div>
     </div>
   );
-
   // Render GSuite Tab (Already provided in previous response, but included for completeness)
   const renderGSuiteTab = () => (
     <div className="space-y-4">

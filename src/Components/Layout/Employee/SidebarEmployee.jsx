@@ -22,6 +22,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
     FamilyList: "FamilyList",
     Matchingdonor: "Matchingdonor",
     Tasks: "task",
+    AMC: "amc",
   };
 
   const navigationItems = [
@@ -51,6 +52,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
       ),
       color: "from-blue-500 to-cyan-500",
     },
+
     {
       name: "Customer",
       path: "/Employee/CustomerList",
@@ -152,6 +154,33 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
         </svg>
       ),
       color: "from-emerald-500 to-lime-500", // Fresh green for financial transactions
+    },
+
+    {
+      name: "AMC",
+      path: "/Employee/AMC",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 14v2m0 0v2m0-2h2m-2 0h-2"
+          />
+        </svg>
+      ),
+      color: "from-emerald-500 to-green-600",
     },
 
     {

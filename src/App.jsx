@@ -615,6 +615,15 @@ function App() {
                 </RoleBasedRoute>
               }
             />
+
+            <Route
+              path="/Employee/AMC"
+              element={
+                <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                  <AmcList />
+                </RoleBasedRoute>
+              }
+            />
             {/* Settings Routes */}
             <Route
               path="/Admin/Settings"

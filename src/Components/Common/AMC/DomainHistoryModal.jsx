@@ -6,6 +6,7 @@ import {
   GlobalSelectField,
 } from "../../BaseComponet/CustomerFormInputs";
 import axiosInstance from "../../BaseComponet/axiosInstance";
+import { hasPermission } from "../../BaseComponet/permissions";
 
 const DomainHistoryModal = ({
   isOpen,
@@ -22,7 +23,7 @@ const DomainHistoryModal = ({
     domainAmount: "",
     domainRenewalCycle: "1 Year",
     sequence: 1,
-    paid: false, // Added paid field
+    paid: false,
   });
 
   const [errors, setErrors] = useState({});
@@ -30,6 +31,9 @@ const DomainHistoryModal = ({
   const [sequenceError, setSequenceError] = useState("");
   const [sequenceValid, setSequenceValid] = useState(false);
   const [existingSequences, setExistingSequences] = useState([]);
+
+    const canEdit = hasPermission("amc", "Edit");
+    const canCreate = hasPermission("amc","Create");
 
   const domainRenewalOptions = [
     { value: "Monthly", label: "Monthly" },
@@ -49,7 +53,7 @@ const DomainHistoryModal = ({
         domainAmount: "",
         domainRenewalCycle: "1 Year",
         sequence: 1,
-        paid: false, // Reset paid field
+        paid: false,
       });
       setErrors({});
       setSequenceError("");
@@ -82,9 +86,15 @@ const DomainHistoryModal = ({
           domainAmount: initialData.domainAmount || "",
           domainRenewalCycle: initialData.domainRenewalCycle || "1 Year",
           sequence: initialData.sequence || 1,
-          paid: initialData.paid || false, // Set paid from initialData
+          paid: initialData.paid || false,
         });
-        setSequenceValid(true); // In edit mode, assume sequence is valid
+
+        // Trigger sequence validation after a short delay
+        setTimeout(() => {
+          const sequence = initialData.sequence || 1;
+          setSequenceValid(true);
+          checkSequenceUnique(sequence);
+        }, 100);
       } else {
         // Create mode: reset to default values
         const defaultFormData = {
@@ -93,7 +103,7 @@ const DomainHistoryModal = ({
           domainAmount: "",
           domainRenewalCycle: "1 Year",
           sequence: 1,
-          paid: false, // Default to false for new entries
+          paid: false,
         };
 
         // Wait for existing sequences to load, then set next sequence
@@ -189,6 +199,13 @@ const DomainHistoryModal = ({
         setSequenceError("");
         return true;
       } else {
+        // For edit mode, check if it's the same as original
+        if (isEditMode && initialData?.sequence === sequence) {
+          // Same as original, it's valid (but not "available")
+          setSequenceValid(true);
+          setSequenceError("");
+          return true;
+        }
         setSequenceValid(false);
         setSequenceError(`Sequence number ${sequence} is already in use.`);
         return false;
@@ -203,6 +220,12 @@ const DomainHistoryModal = ({
         return true;
       } else if (error.response?.status === 409) {
         // 409 Conflict means sequence exists
+        // For edit mode, check if it's the same as original
+        if (isEditMode && initialData?.sequence === sequence) {
+          setSequenceValid(true);
+          setSequenceError("");
+          return true;
+        }
         setSequenceValid(false);
         setSequenceError(`Sequence number ${sequence} is already in use.`);
         return false;
@@ -322,14 +345,12 @@ const DomainHistoryModal = ({
 
     handleChange("sequence", sequence);
 
-    // For create mode, check uniqueness immediately
-    if (!isEditMode) {
-      const timer = setTimeout(async () => {
-        await checkSequenceUnique(sequence);
-      }, 500);
+    // Always check uniqueness with debouncing
+    const timer = setTimeout(async () => {
+      await checkSequenceUnique(sequence);
+    }, 500);
 
-      return () => clearTimeout(timer);
-    }
+    return () => clearTimeout(timer);
   };
 
   // Auto-assign next sequence
@@ -350,13 +371,24 @@ const DomainHistoryModal = ({
       newErrors.domainRenewalDate = "Domain renewal date is required";
     }
 
-    if (!formData.domainAmount) {
-      newErrors.domainAmount = "Domain amount is required";
-    } else if (
-      isNaN(formData.domainAmount) ||
-      parseFloat(formData.domainAmount) <= 0
-    ) {
-      newErrors.domainAmount = "Domain amount must be a positive number";
+    // REMOVED: Domain Amount validation (no longer required)
+    // if (!formData.domainAmount) {
+    //   newErrors.domainAmount = "Domain amount is required";
+    // } else if (
+    //   isNaN(formData.domainAmount) ||
+    //   parseFloat(formData.domainAmount) <= 0
+    // ) {
+    //   newErrors.domainAmount = "Domain amount must be a positive number";
+    // }
+
+    // Add validation for amount format only (if provided)
+    if (formData.domainAmount && formData.domainAmount.trim() !== "") {
+      if (
+        isNaN(formData.domainAmount) ||
+        parseFloat(formData.domainAmount) <= 0
+      ) {
+        newErrors.domainAmount = "Domain amount must be a positive number";
+      }
     }
 
     if (!formData.sequence) {
@@ -367,11 +399,19 @@ const DomainHistoryModal = ({
 
     setErrors(newErrors);
 
-    // Check sequence uniqueness for create mode
-    if (!newErrors.sequence && !isEditMode) {
-      const isUnique = await checkSequenceUnique(formData.sequence);
-      if (!isUnique) {
-        return false;
+    // Check sequence uniqueness for both create and edit modes
+    if (!newErrors.sequence) {
+      const originalSequence = isEditMode ? initialData?.sequence : null;
+      const currentSequence = parseInt(formData.sequence);
+
+      // Only check uniqueness if:
+      // 1. In create mode, OR
+      // 2. In edit mode and sequence has changed
+      if (!isEditMode || currentSequence !== originalSequence) {
+        const isUnique = await checkSequenceUnique(currentSequence);
+        if (!isUnique) {
+          return false;
+        }
       }
     }
 
@@ -397,10 +437,14 @@ const DomainHistoryModal = ({
     try {
       const payload = {
         amcId,
-        ...formData,
-        domainAmount: parseFloat(formData.domainAmount),
+        domainStartDate: formData.domainStartDate,
+        domainRenewalDate: formData.domainRenewalDate,
+        domainAmount: formData.domainAmount
+          ? parseFloat(formData.domainAmount)
+          : 0, // Default to 0 if not provided
+        domainRenewalCycle: formData.domainRenewalCycle || "1 Year",
         sequence: parseInt(formData.sequence),
-        paid: formData.paid, // Include paid in payload
+        paid: formData.paid,
       };
 
       // Add acmDomainHistoryId for update
@@ -419,10 +463,9 @@ const DomainHistoryModal = ({
             : "Domain History created successfully"
         );
         if (onSuccess) {
-          // Pass refresh flag to parent
           onSuccess({
             ...(response.data || payload),
-            refreshParentList: true, // ✅ Pass as object property
+            refreshParentList: true,
           });
         }
 
@@ -523,7 +566,7 @@ const DomainHistoryModal = ({
                       min="1"
                       className="text-sm"
                       required
-                      disabled={checkingSequence || isEditMode}
+                      disabled={checkingSequence}
                     />
                   </div>
                   {!isEditMode && (
@@ -556,7 +599,9 @@ const DomainHistoryModal = ({
                     Checking sequence availability...
                   </p>
                 )}
-                {!isEditMode && existingSequences.length > 0 && (
+
+                {/* Show existing sequences for both modes */}
+                {existingSequences.length > 0 && (
                   <p className="text-xs text-gray-500 mt-1">
                     Existing sequences:{" "}
                     {existingSequences
@@ -565,6 +610,8 @@ const DomainHistoryModal = ({
                       .join(", ")}
                   </p>
                 )}
+
+                {/* Show different messages for edit vs create mode */}
                 {sequenceValid && !checkingSequence && (
                   <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
                     <svg
@@ -580,7 +627,9 @@ const DomainHistoryModal = ({
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    Sequence number {formData.sequence} is available
+                    {isEditMode
+                      ? `Sequence number ${formData.sequence} is valid (current sequence)`
+                      : `Sequence number ${formData.sequence} is available`}
                   </p>
                 )}
               </div>
@@ -605,16 +654,16 @@ const DomainHistoryModal = ({
                       type="button"
                       onClick={handlePaymentToggle}
                       className={`
-          relative inline-flex h-5 w-9 items-center rounded-full transition-colors
-          ${formData.paid ? "bg-green-500" : "bg-gray-300"}
-          focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1
-        `}
+                        relative inline-flex h-5 w-9 items-center rounded-full transition-colors
+                        ${formData.paid ? "bg-green-500" : "bg-gray-300"}
+                        focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1
+                      `}
                     >
                       <span
                         className={`
-            inline-block h-3 w-3 transform rounded-full bg-white transition-transform
-            ${formData.paid ? "translate-x-5" : "translate-x-1"}
-          `}
+                          inline-block h-3 w-3 transform rounded-full bg-white transition-transform
+                          ${formData.paid ? "translate-x-5" : "translate-x-1"}
+                        `}
                       />
                     </button>
                     <span
@@ -665,12 +714,7 @@ const DomainHistoryModal = ({
               />
 
               <GlobalInputField
-                label={
-                  <>
-                    Domain Amount (₹)
-                    <span className="text-red-500 ml-1">*</span>
-                  </>
-                }
+                label="Domain Amount (₹)" // Removed asterisk
                 name="domainAmount"
                 type="number"
                 value={formData.domainAmount}
@@ -693,6 +737,7 @@ const DomainHistoryModal = ({
             </div>
 
             {/* Modal Footer inside form */}
+            {/* Modal Footer inside form */}
             <div className="pt-4 border-t border-gray-200">
               <div className="flex items-center justify-end gap-3">
                 <button
@@ -703,26 +748,46 @@ const DomainHistoryModal = ({
                   Cancel
                 </button>
 
-                <button
-                  type="submit"
-                  disabled={
-                    loading ||
-                    checkingSequence ||
-                    (!sequenceValid && !isEditMode)
-                  }
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 flex items-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      {isEditMode ? "Updating..." : "Creating..."}
-                    </>
-                  ) : isEditMode ? (
-                    "Update Domain"
-                  ) : (
-                    "Create Domain"
-                  )}
-                </button>
+                {/* Conditional button rendering */}
+                {(isEditMode && canEdit) || (!isEditMode && canCreate) ? (
+                  <button
+                    type="submit"
+                    disabled={
+                      loading ||
+                      checkingSequence ||
+                      (!isEditMode && !sequenceValid)
+                    }
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        {isEditMode ? "Updating..." : "Creating..."}
+                      </>
+                    ) : isEditMode ? (
+                      "Update Domain"
+                    ) : (
+                      "Create Domain"
+                    )}
+                  </button>
+                ) : (
+                  <div className="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg text-sm font-medium flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 15v2m0 0v2m0-2h2m-2 0H9m3-6a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    {isEditMode ? "No Edit Permission" : "No Create Permission"}
+                  </div>
+                )}
               </div>
             </div>
           </form>

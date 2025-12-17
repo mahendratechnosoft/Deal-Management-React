@@ -10,6 +10,7 @@ import {
   DashboardWrapper,
   ProgressCard,
 } from "../../BaseComponet/FinancialDashboardComponents";
+import { hasPermission } from "../../BaseComponet/permissions";
 
 function AmcList() {
   const { LayoutComponent } = useLayout();
@@ -40,16 +41,22 @@ function AmcList() {
   const [dashboardLoading, setDashboardLoading] = useState(true);
 
   // Helper function to calculate days remaining and status for any date
+  // Enhanced helper function to calculate days remaining and status for any date
   const getDueDateStatus = (dueDate) => {
     if (!dueDate)
-      return { status: "unknown", daysRemaining: null, isPastDue: false };
+      return {
+        status: "unknown",
+        daysRemaining: null,
+        isPastDue: false,
+        message: null,
+      };
 
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Normalize to start of day
-    
+
     const due = new Date(dueDate);
     due.setHours(0, 0, 0, 0); // Normalize to start of day
-    
+
     const timeDiff = due.getTime() - today.getTime();
     const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
@@ -58,11 +65,26 @@ function AmcList() {
         status: "past-due",
         daysRemaining: Math.abs(daysRemaining),
         isPastDue: true,
+        message: `Overdue by ${Math.abs(daysRemaining)} day${
+          Math.abs(daysRemaining) !== 1 ? "s" : ""
+        }`,
       };
     } else if (daysRemaining <= 30) {
-      return { status: "near-due", daysRemaining, isPastDue: false };
+      return {
+        status: "near-due",
+        daysRemaining,
+        isPastDue: false,
+        message: `${daysRemaining} day${
+          daysRemaining !== 1 ? "s" : ""
+        } remaining`,
+      };
     } else {
-      return { status: "normal", daysRemaining, isPastDue: false };
+      return {
+        status: "normal",
+        daysRemaining,
+        isPastDue: false,
+        message: null,
+      };
     }
   };
 
@@ -370,28 +392,29 @@ function AmcList() {
                 >
                   Reset
                 </button>
-
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="px-2 py-1 h-7 bg-blue-600 hover:bg-blue-700
+                {hasPermission("amc", "Create") && (
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="px-2 py-1 h-7 bg-blue-600 hover:bg-blue-700
                      text-white rounded-md transition
                      flex items-center gap-1 text-xs shadow-sm"
-                >
-                  <svg
-                    className="w-3 h-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  Create
-                </button>
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    Create
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -400,8 +423,8 @@ function AmcList() {
         {/* Dashboard Counts Row */}
         <div className="flex gap-4 mb-2">
           {/* AMC */}
-          <div className="flex-1 bg-gray-50 rounded-lg border border-gray-200 p-3 min-w-0">
-            <h3 className="text-xs font-bold text-gray-700 uppercase mb-2">
+          <div className="flex-1 rounded-lg border border-blue-100 p-3 min-w-0 bg-gradient-to-br from-blue-50 to-blue-25 shadow-sm">
+            <h3 className="text-xs font-bold text-blue-800 uppercase mb-2">
               AMC
             </h3>
             <div className="grid grid-cols-2 gap-3">
@@ -421,8 +444,8 @@ function AmcList() {
           </div>
 
           {/* DOMAIN */}
-          <div className="flex-1 bg-gray-50 rounded-lg border border-gray-200 p-3 min-w-0">
-            <h3 className="text-xs font-bold text-gray-700 uppercase mb-2">
+          <div className="flex-1 rounded-lg border border-purple-100 p-3 min-w-0 bg-gradient-to-br from-purple-50 to-purple-25 shadow-sm">
+            <h3 className="text-xs font-bold text-purple-800 uppercase mb-2">
               Domain
             </h3>
             <div className="grid grid-cols-2 gap-3">
@@ -442,8 +465,8 @@ function AmcList() {
           </div>
 
           {/* G-SUITE */}
-          <div className="flex-1 bg-gray-50 rounded-lg border border-gray-200 p-3 min-w-0">
-            <h3 className="text-xs font-bold text-gray-700 uppercase mb-2">
+          <div className="flex-1 rounded-lg border border-emerald-100 p-3 min-w-0 bg-gradient-to-br from-emerald-50 to-emerald-25 shadow-sm">
+            <h3 className="text-xs font-bold text-emerald-800 uppercase mb-2">
               G-Suite
             </h3>
             <div className="grid grid-cols-2 gap-3">
@@ -494,21 +517,26 @@ function AmcList() {
                   {amcList.map((amc) => {
                     const amcDueStatus = getDueDateStatus(amc.amcEndDate);
                     const isAmcOverdue = amcDueStatus.isPastDue;
-                    const amcOverdueDays = amcDueStatus.daysRemaining;
 
-                    const isDomainOverdueFlag = isDomainOverdue(amc.domainRenewalDate);
-                    const domainOverdueDays = getDomainOverdueDays(amc.domainRenewalDate);
+                    const domainDueStatus = getDueDateStatus(
+                      amc.domainRenewalDate
+                    );
+                    const isDomainOverdueFlag = domainDueStatus.isPastDue;
 
-                    const isGSuiteOverdueFlag = isGSuiteOverdue(amc.gsuitRenewalDate);
-                    const gsuiteOverdueDays = getGSuiteOverdueDays(amc.gsuitRenewalDate);
-
+                    const gsuiteDueStatus = getDueDateStatus(
+                      amc.gsuitRenewalDate
+                    );
+                    const isGSuiteOverdueFlag = gsuiteDueStatus.isPastDue;
                     return (
                       <tr
                         key={amc.amcId}
                         className="hover:bg-gray-50 transition-colors cursor-pointer"
                         onClick={() => handleRowClick(amc)}
                       >
-                        <td className="px-4 py-3">
+                        <td
+                          className="px-4 py-3 truncate max-w-[260px]"
+                          title={amc.companyName}
+                        >
                           {amc.companyName || "N/A"}
                         </td>
 
@@ -516,14 +544,25 @@ function AmcList() {
                         <td className="px-4 py-3">
                           <div
                             className={`${
-                              isAmcOverdue ? "text-red-600 font-semibold" : ""
+                              isAmcOverdue
+                                ? "text-red-600 font-semibold"
+                                : amcDueStatus.status === "near-due"
+                                ? "text-yellow-600 font-semibold"
+                                : ""
                             }`}
                           >
                             {formatDate(amc.amcEndDate)}
-                            {isAmcOverdue && (
-                              <span className="block text-xs text-red-500 mt-1">
-                                Overdue by {amcOverdueDays} day
-                                {amcOverdueDays !== 1 ? "s" : ""}
+                            {amcDueStatus.message && (
+                              <span
+                                className={`block text-xs mt-1 ${
+                                  isAmcOverdue
+                                    ? "text-red-500"
+                                    : amcDueStatus.status === "near-due"
+                                    ? "text-yellow-500"
+                                    : ""
+                                }`}
+                              >
+                                {amcDueStatus.message}
                               </span>
                             )}
                           </div>
@@ -533,14 +572,25 @@ function AmcList() {
                         <td className="px-4 py-3">
                           <div
                             className={`${
-                              isDomainOverdueFlag ? "text-red-600 font-semibold" : ""
+                              isDomainOverdueFlag
+                                ? "text-red-600 font-semibold"
+                                : domainDueStatus.status === "near-due"
+                                ? "text-yellow-600 font-semibold"
+                                : ""
                             }`}
                           >
                             {formatDate(amc.domainRenewalDate)}
-                            {isDomainOverdueFlag && domainOverdueDays && (
-                              <span className="block text-xs text-red-500 mt-1">
-                                Overdue by {domainOverdueDays} day
-                                {domainOverdueDays !== 1 ? "s" : ""}
+                            {domainDueStatus.message && (
+                              <span
+                                className={`block text-xs mt-1 ${
+                                  isDomainOverdueFlag
+                                    ? "text-red-500"
+                                    : domainDueStatus.status === "near-due"
+                                    ? "text-yellow-500"
+                                    : ""
+                                }`}
+                              >
+                                {domainDueStatus.message}
                               </span>
                             )}
                           </div>
@@ -550,14 +600,25 @@ function AmcList() {
                         <td className="px-4 py-3">
                           <div
                             className={`${
-                              isGSuiteOverdueFlag ? "text-red-600 font-semibold" : ""
+                              isGSuiteOverdueFlag
+                                ? "text-red-600 font-semibold"
+                                : gsuiteDueStatus.status === "near-due"
+                                ? "text-yellow-600 font-semibold"
+                                : ""
                             }`}
                           >
                             {formatDate(amc.gsuitRenewalDate)}
-                            {isGSuiteOverdueFlag && gsuiteOverdueDays && (
-                              <span className="block text-xs text-red-500 mt-1">
-                                Overdue by {gsuiteOverdueDays} day
-                                {gsuiteOverdueDays !== 1 ? "s" : ""}
+                            {gsuiteDueStatus.message && (
+                              <span
+                                className={`block text-xs mt-1 ${
+                                  isGSuiteOverdueFlag
+                                    ? "text-red-500"
+                                    : gsuiteDueStatus.status === "near-due"
+                                    ? "text-yellow-500"
+                                    : ""
+                                }`}
+                              >
+                                {gsuiteDueStatus.message}
                               </span>
                             )}
                           </div>
@@ -590,52 +651,53 @@ function AmcList() {
                                 />
                               </svg>
                             </button>
-
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteAmc(amc.amcId);
-                              }}
-                              disabled={isDeleting}
-                              className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                              title="Delete AMC"
-                            >
-                              {isDeleting ? (
-                                <svg
-                                  className="w-4 h-4 animate-spin"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
+                            {hasPermission("amc", "Delete") && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteAmc(amc.amcId);
+                                }}
+                                disabled={isDeleting}
+                                className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                title="Delete AMC"
+                              >
+                                {isDeleting ? (
+                                  <svg
+                                    className="w-4 h-4 animate-spin"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    ></path>
+                                  </svg>
+                                ) : (
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
                                     stroke="currentColor"
-                                    strokeWidth="4"
-                                  ></circle>
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                  ></path>
-                                </svg>
-                              ) : (
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                  />
-                                </svg>
-                              )}
-                            </button>
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                )}
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
