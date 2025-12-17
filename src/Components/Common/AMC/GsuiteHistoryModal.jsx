@@ -1,3 +1,4 @@
+// GsuiteHistoryModal.jsx
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
@@ -5,6 +6,7 @@ import {
   GlobalInputField,
   GlobalSelectField,
 } from "../../BaseComponet/CustomerFormInputs";
+import { hasPermission } from "../../BaseComponet/permissions";
 
 function GsuiteHistoryModal({
   isOpen,
@@ -29,7 +31,7 @@ function GsuiteHistoryModal({
     resellerName: "",
     gsuitRenewalCycle: "YEARLY",
     sequence: 1,
-    paid: false, // Added paid field
+    paid: false,
   });
 
   const [showAdminPassword, setShowAdminPassword] = useState(false);
@@ -38,6 +40,9 @@ function GsuiteHistoryModal({
   const [sequenceError, setSequenceError] = useState("");
   const [sequenceValid, setSequenceValid] = useState(false);
   const [existingSequences, setExistingSequences] = useState([]);
+
+    const canEdit = hasPermission("amc", "Edit");
+    const canCreate = hasPermission("amc", "Create");
 
   // Options
   const platformOptions = [
@@ -62,7 +67,6 @@ function GsuiteHistoryModal({
   // Cleanup when modal closes
   useEffect(() => {
     return () => {
-      // Reset all states when component unmounts
       setFormData({
         domainName: "",
         platform: "Google Workspace",
@@ -77,7 +81,7 @@ function GsuiteHistoryModal({
         resellerName: "",
         gsuitRenewalCycle: "YEARLY",
         sequence: 1,
-        paid: false, // Reset paid field
+        paid: false,
       });
       setErrors({});
       setSequenceError("");
@@ -90,13 +94,12 @@ function GsuiteHistoryModal({
   // Fetch existing sequences when modal opens
   useEffect(() => {
     if (isOpen && amcId) {
-      // Reset sequences state first
       setExistingSequences([]);
       fetchExistingSequences();
     }
   }, [isOpen, amcId]);
 
-  // Initialize form data - FIXED VERSION
+  // Initialize form data
   useEffect(() => {
     if (isOpen) {
       // Reset all states when modal opens
@@ -125,9 +128,15 @@ function GsuiteHistoryModal({
           resellerName: initialData.resellerName || "",
           gsuitRenewalCycle: initialData.gsuitRenewalCycle || "YEARLY",
           sequence: initialData.sequence || 1,
-          paid: initialData.paid || false, // Set paid from initialData
+          paid: initialData.paid || false,
         });
-        setSequenceValid(true); // In edit mode, assume sequence is valid
+
+        // Trigger sequence validation after a short delay
+        setTimeout(() => {
+          const sequence = initialData.sequence || 1;
+          setSequenceValid(true);
+          checkSequenceUnique(sequence);
+        }, 100);
       } else {
         // Create mode: reset to default values first
         const defaultFormData = {
@@ -144,7 +153,7 @@ function GsuiteHistoryModal({
           resellerName: "",
           gsuitRenewalCycle: "YEARLY",
           sequence: 1,
-          paid: false, // Default to false for new entries
+          paid: false,
         };
 
         // Wait for existing sequences to load, then set next sequence
@@ -210,33 +219,20 @@ function GsuiteHistoryModal({
         `isGsuitHistorySequenceUnique/${amcId}/${sequence}`
       );
 
-      console.log("Sequence check response:", response.data); // Debug log
+      console.log("Sequence check response:", response.data);
 
-      // API response interpretation:
-      // Option 1: API returns { "unique": true } means sequence IS UNIQUE (doesn't exist)
-      // Option 2: API returns { "exists": true } means sequence ALREADY EXISTS
-      // Option 3: API returns boolean directly
-
+      // API response interpretation
       let isUnique;
 
-      // Check different possible response formats
       if (typeof response.data === "boolean") {
-        // If API returns boolean directly
-        // true = unique (doesn't exist), false = exists
         isUnique = response.data;
       } else if (response.data.unique !== undefined) {
-        // If API returns { "unique": boolean }
-        // true = unique (doesn't exist), false = exists
         isUnique = response.data.unique;
       } else if (response.data.exists !== undefined) {
-        // If API returns { "exists": boolean }
-        // true = exists, false = unique
         isUnique = !response.data.exists;
       } else if (response.data.isUnique !== undefined) {
-        // If API returns { "isUnique": boolean }
         isUnique = response.data.isUnique;
       } else {
-        // Default assumption: if we get any response, assume sequence exists
         console.error("Unexpected API response format:", response.data);
         setSequenceValid(false);
         setSequenceError("Unable to validate sequence. Please try again.");
@@ -248,6 +244,13 @@ function GsuiteHistoryModal({
         setSequenceError("");
         return true;
       } else {
+        // For edit mode, check if it's the same as original
+        if (isEditMode && initialData?.sequence === sequence) {
+          // Same as original, it's valid (but not "available")
+          setSequenceValid(true);
+          setSequenceError("");
+          return true;
+        }
         setSequenceValid(false);
         setSequenceError(
           `Sequence number ${sequence} is already in use. Please choose a different sequence.`
@@ -257,14 +260,17 @@ function GsuiteHistoryModal({
     } catch (error) {
       console.error("Error checking sequence uniqueness:", error);
 
-      // Handle specific error cases
       if (error.response?.status === 404) {
-        // 404 might mean sequence doesn't exist (is unique)
         setSequenceValid(true);
         setSequenceError("");
         return true;
       } else if (error.response?.status === 409) {
-        // 409 Conflict means sequence exists
+        // For edit mode, check if it's the same as original
+        if (isEditMode && initialData?.sequence === sequence) {
+          setSequenceValid(true);
+          setSequenceError("");
+          return true;
+        }
         setSequenceValid(false);
         setSequenceError(`Sequence number ${sequence} is already in use.`);
         return false;
@@ -277,6 +283,7 @@ function GsuiteHistoryModal({
       setCheckingSequence(false);
     }
   };
+
   // Auto-calculate renewal date
   useEffect(() => {
     if (formData.gsuitStartDate && formData.gsuitRenewalCycle) {
@@ -361,14 +368,12 @@ function GsuiteHistoryModal({
 
     handleChange("sequence", sequence);
 
-    // For create mode, check uniqueness immediately
-    if (!isEditMode) {
-      const timer = setTimeout(async () => {
-        await checkSequenceUnique(sequence);
-      }, 500);
+    // Always check uniqueness with debouncing
+    const timer = setTimeout(async () => {
+      await checkSequenceUnique(sequence);
+    }, 500);
 
-      return () => clearTimeout(timer);
-    }
+    return () => clearTimeout(timer);
   };
 
   const handleAutoSequence = () => {
@@ -401,13 +406,24 @@ function GsuiteHistoryModal({
       newErrors.totalLicenses = "Total licenses must be a positive number";
     }
 
-    if (!formData.gsuitAmount) {
-      newErrors.gsuitAmount = "GSuite amount is required";
-    } else if (
-      isNaN(formData.gsuitAmount) ||
-      parseFloat(formData.gsuitAmount) <= 0
-    ) {
-      newErrors.gsuitAmount = "GSuite amount must be a positive number";
+    // REMOVED: GSuite Amount validation (no longer required)
+    // if (!formData.gsuitAmount) {
+    //   newErrors.gsuitAmount = "GSuite amount is required";
+    // } else if (
+    //   isNaN(formData.gsuitAmount) ||
+    //   parseFloat(formData.gsuitAmount) <= 0
+    // ) {
+    //   newErrors.gsuitAmount = "GSuite amount must be a positive number";
+    // }
+
+    // Add validation for amount format only (if provided)
+    if (formData.gsuitAmount && formData.gsuitAmount.trim() !== "") {
+      if (
+        isNaN(formData.gsuitAmount) ||
+        parseFloat(formData.gsuitAmount) <= 0
+      ) {
+        newErrors.gsuitAmount = "GSuite amount must be a positive number";
+      }
     }
 
     if (!formData.sequence) {
@@ -427,11 +443,19 @@ function GsuiteHistoryModal({
 
     setErrors(newErrors);
 
-    // Check sequence uniqueness
+    // Check sequence uniqueness for both create and edit modes
     if (!newErrors.sequence) {
-      const isUnique = await checkSequenceUnique(formData.sequence);
-      if (!isUnique) {
-        return false;
+      const originalSequence = isEditMode ? initialData?.sequence : null;
+      const currentSequence = parseInt(formData.sequence);
+
+      // Only check uniqueness if:
+      // 1. In create mode, OR
+      // 2. In edit mode and sequence has changed
+      if (!isEditMode || currentSequence !== originalSequence) {
+        const isUnique = await checkSequenceUnique(currentSequence);
+        if (!isUnique) {
+          return false;
+        }
       }
     }
 
@@ -447,8 +471,8 @@ function GsuiteHistoryModal({
       return;
     }
 
-    // Final sequence check
-    if (!sequenceValid) {
+    // Final sequence check for create mode
+    if (!isEditMode && !sequenceValid) {
       toast.error("Please ensure sequence number is valid and unique");
       return;
     }
@@ -460,19 +484,26 @@ function GsuiteHistoryModal({
         totalLicenses: formData.totalLicenses
           ? parseInt(formData.totalLicenses)
           : 0,
-        gsuitAmount: parseFloat(formData.gsuitAmount),
+        gsuitAmount: formData.gsuitAmount
+          ? parseFloat(formData.gsuitAmount)
+          : 0, // Default to 0 if not provided
         sequence: parseInt(formData.sequence),
-        paid: formData.paid, // Include paid field in payload
+        paid: formData.paid,
         // Include amcId if creating new
         ...(!isEditMode && { amcId: amcId }),
       };
 
+      // Add amcGsuitHistoryId for update
+      if (isEditMode && initialData?.amcGsuitHistoryId) {
+        payload.amcGsuitHistoryId = initialData.amcGsuitHistoryId;
+      }
+
       let response;
-      if (isEditMode && initialData?.acmGsuitHistoryId) {
+      if (isEditMode && initialData?.amcGsuitHistoryId) {
         // Update existing
         response = await axiosInstance.put(`updateAMCGsuitHistory`, payload);
       } else {
-        // Create new - using the provided endpoint for create/update
+        // Create new
         response = await axiosInstance.put(`updateAMCGsuitHistory`, payload);
       }
 
@@ -482,14 +513,16 @@ function GsuiteHistoryModal({
             ? "GSuite history updated successfully"
             : "GSuite history created successfully"
         );
-        onSuccess();
-      }
+
         if (onSuccess) {
           onSuccess({
             ...response.data,
-            refreshParentList: true, // Add this flag
+            refreshParentList: true,
           });
         }
+
+        onClose();
+      }
     } catch (error) {
       console.error("Error saving GSuite history:", error);
 
@@ -590,7 +623,7 @@ function GsuiteHistoryModal({
                       min="1"
                       className="text-sm"
                       required
-                      disabled={checkingSequence || isEditMode}
+                      disabled={checkingSequence}
                     />
                   </div>
                   {!isEditMode && (
@@ -623,7 +656,9 @@ function GsuiteHistoryModal({
                     Checking sequence availability...
                   </p>
                 )}
-                {!isEditMode && existingSequences.length > 0 && (
+
+                {/* Show existing sequences for both modes */}
+                {existingSequences.length > 0 && (
                   <p className="text-xs text-gray-500 mt-1">
                     Existing sequences:{" "}
                     {existingSequences
@@ -632,6 +667,8 @@ function GsuiteHistoryModal({
                       .join(", ")}
                   </p>
                 )}
+
+                {/* Show different messages for edit vs create mode */}
                 {sequenceValid && !checkingSequence && (
                   <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
                     <svg
@@ -647,7 +684,9 @@ function GsuiteHistoryModal({
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    Sequence number {formData.sequence} is available
+                    {isEditMode
+                      ? `Sequence number ${formData.sequence} is valid (current sequence)`
+                      : `Sequence number ${formData.sequence} is available`}
                   </p>
                 )}
               </div>
@@ -672,16 +711,16 @@ function GsuiteHistoryModal({
                       type="button"
                       onClick={handlePaymentToggle}
                       className={`
-          relative inline-flex h-5 w-9 items-center rounded-full transition-colors
-          ${formData.paid ? "bg-green-500" : "bg-gray-300"}
-          focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1
-        `}
+                        relative inline-flex h-5 w-9 items-center rounded-full transition-colors
+                        ${formData.paid ? "bg-green-500" : "bg-gray-300"}
+                        focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1
+                      `}
                     >
                       <span
                         className={`
-            inline-block h-3 w-3 transform rounded-full bg-white transition-transform
-            ${formData.paid ? "translate-x-5" : "translate-x-1"}
-          `}
+                          inline-block h-3 w-3 transform rounded-full bg-white transition-transform
+                          ${formData.paid ? "translate-x-5" : "translate-x-1"}
+                        `}
                       />
                     </button>
                     <span
@@ -828,7 +867,7 @@ function GsuiteHistoryModal({
               />
 
               <GlobalInputField
-                label="GSuite Amount"
+                label="GSuite Amount" // Removed asterisk from label
                 name="gsuitAmount"
                 type="number"
                 value={formData.gsuitAmount}
@@ -838,7 +877,6 @@ function GsuiteHistoryModal({
                 min="0"
                 step="0.01"
                 className="text-sm"
-                required
               />
 
               <GlobalSelectField
@@ -904,24 +942,47 @@ function GsuiteHistoryModal({
               >
                 Cancel
               </button>
-              <button
-                type="submit"
-                disabled={
-                  loading || checkingSequence || (!sequenceValid && !isEditMode)
-                }
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 flex items-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    {isEditMode ? "Updating..." : "Creating..."}
-                  </>
-                ) : isEditMode ? (
-                  "Update GSuite"
-                ) : (
-                  "Create GSuite"
-                )}
-              </button>
+
+              {/* Conditional button rendering */}
+              {(isEditMode && canEdit) || (!isEditMode && canCreate) ? (
+                <button
+                  type="submit"
+                  disabled={
+                    loading ||
+                    checkingSequence ||
+                    (!isEditMode && !sequenceValid)
+                  }
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 flex items-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      {isEditMode ? "Updating..." : "Creating..."}
+                    </>
+                  ) : isEditMode ? (
+                    "Update GSuite"
+                  ) : (
+                    "Create GSuite"
+                  )}
+                </button>
+              ) : (
+                <div className="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg text-sm font-medium flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 15v2m0 0v2m0-2h2m-2 0H9m3-6a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  {isEditMode ? "No Edit Permission" : "No Create Permission"}
+                </div>
+              )}
             </div>
           </form>
         </div>

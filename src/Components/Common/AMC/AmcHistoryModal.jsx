@@ -7,6 +7,7 @@ import {
   GlobalSelectField,
 } from "../../BaseComponet/CustomerFormInputs";
 import axiosInstance from "../../BaseComponet/axiosInstance";
+import { hasPermission } from "../../BaseComponet/permissions";
 
 const AmcHistoryModal = ({
   isOpen,
@@ -33,7 +34,9 @@ const AmcHistoryModal = ({
   const [sequenceValid, setSequenceValid] = useState(false);
   const [existingSequences, setExistingSequences] = useState([]);
 
-  const recycleTypeOptions = [
+  const canEdit = hasPermission("amc", "Edit");
+  const canCreate = hasPermission("amc","Create");
+    const recycleTypeOptions = [
     { value: "Monthly", label: "Monthly" },
     { value: "Quarterly", label: "Quarterly" },
     { value: "Half-Yearly", label: "Half-Yearly" },
@@ -68,6 +71,7 @@ const AmcHistoryModal = ({
   }, [isOpen, amcId]);
 
   // Initialize form with initialData
+  // Initialize form with initialData
   useEffect(() => {
     if (isOpen) {
       // Reset validation states when modal opens
@@ -85,9 +89,16 @@ const AmcHistoryModal = ({
           amcScope: initialData.amcScope || "",
           amcRecycleType: initialData.amcRecycleType || "Yearly",
           sequence: initialData.sequence || 1,
-          paid: initialData.paid || false, // Set paid from initialData
+          paid: initialData.paid || false,
         });
-        setSequenceValid(true); // In edit mode, assume sequence is valid
+
+        // Trigger sequence validation after a short delay
+        setTimeout(() => {
+          const sequence = initialData.sequence || 1;
+          setSequenceValid(true); // Assume it's valid initially
+          // Also check uniqueness in case it's been changed elsewhere
+          checkSequenceUnique(sequence);
+        }, 100);
       } else {
         // Create mode: reset to default values
         const defaultFormData = {
@@ -97,7 +108,7 @@ const AmcHistoryModal = ({
           amcScope: "",
           amcRecycleType: "Yearly",
           sequence: 1,
-          paid: false, // Default to false for new entries
+          paid: false,
         };
 
         // Wait for existing sequences to load, then set next sequence
@@ -145,6 +156,7 @@ const AmcHistoryModal = ({
   };
 
   // Check if sequence number is unique using the provided API
+  // Check if sequence number is unique using the provided API
   const checkSequenceUnique = async (sequence) => {
     if (!amcId || !sequence) {
       setSequenceError("Sequence number is required");
@@ -190,6 +202,13 @@ const AmcHistoryModal = ({
         setSequenceError("");
         return true;
       } else {
+        // For edit mode, check if it's the same as original
+        if (isEditMode && initialData?.sequence === sequence) {
+          // Same as original, it's valid (but not "available")
+          setSequenceValid(true);
+          setSequenceError("");
+          return true;
+        }
         setSequenceValid(false);
         setSequenceError(`Sequence number ${sequence} is already in use.`);
         return false;
@@ -204,6 +223,12 @@ const AmcHistoryModal = ({
         return true;
       } else if (error.response?.status === 409) {
         // 409 Conflict means sequence exists
+        // For edit mode, check if it's the same as original
+        if (isEditMode && initialData?.sequence === sequence) {
+          setSequenceValid(true);
+          setSequenceError("");
+          return true;
+        }
         setSequenceValid(false);
         setSequenceError(`Sequence number ${sequence} is already in use.`);
         return false;
@@ -216,7 +241,6 @@ const AmcHistoryModal = ({
       setCheckingSequence(false);
     }
   };
-
   // Auto-calculate end date when start date or recycle type changes
   useEffect(() => {
     if (formData.amcStartDate && formData.amcRecycleType) {
@@ -309,6 +333,7 @@ const AmcHistoryModal = ({
   };
 
   // Handle sequence change with validation
+  // Handle sequence change with validation
   const handleSequenceChange = async (value) => {
     const sequence = parseInt(value);
     if (isNaN(sequence) || sequence < 1) {
@@ -320,14 +345,12 @@ const AmcHistoryModal = ({
 
     handleChange("sequence", sequence);
 
-    // For create mode, check uniqueness immediately
-    if (!isEditMode) {
-      const timer = setTimeout(async () => {
-        await checkSequenceUnique(sequence);
-      }, 500);
+    // Always check uniqueness with debouncing
+    const timer = setTimeout(async () => {
+      await checkSequenceUnique(sequence);
+    }, 500);
 
-      return () => clearTimeout(timer);
-    }
+    return () => clearTimeout(timer);
   };
 
   // Auto-assign next sequence
@@ -340,6 +363,7 @@ const AmcHistoryModal = ({
   const validateForm = async () => {
     const newErrors = {};
 
+    // Required fields
     if (!formData.amcStartDate) {
       newErrors.amcStartDate = "AMC start date is required";
     }
@@ -348,17 +372,11 @@ const AmcHistoryModal = ({
       newErrors.amcEndDate = "AMC end date is required";
     }
 
-    if (!formData.amcAmount) {
-      newErrors.amcAmount = "AMC amount is required";
-    } else if (
-      isNaN(formData.amcAmount) ||
-      parseFloat(formData.amcAmount) <= 0
-    ) {
-      newErrors.amcAmount = "AMC amount must be a positive number";
-    }
-
-    if (!formData.amcScope?.trim()) {
-      newErrors.amcScope = "AMC scope is required";
+    // Add validation for amount format only (if provided)
+    if (formData.amcAmount && formData.amcAmount.trim() !== "") {
+      if (isNaN(formData.amcAmount) || parseFloat(formData.amcAmount) <= 0) {
+        newErrors.amcAmount = "AMC amount must be a positive number";
+      }
     }
 
     if (!formData.sequence) {
@@ -369,11 +387,19 @@ const AmcHistoryModal = ({
 
     setErrors(newErrors);
 
-    // Check sequence uniqueness for create mode
-    if (!newErrors.sequence && !isEditMode) {
-      const isUnique = await checkSequenceUnique(formData.sequence);
-      if (!isUnique) {
-        return false;
+    // Check sequence uniqueness for both create and edit modes
+    if (!newErrors.sequence) {
+      const originalSequence = isEditMode ? initialData?.sequence : null;
+      const currentSequence = parseInt(formData.sequence);
+
+      // Only check uniqueness if:
+      // 1. In create mode, OR
+      // 2. In edit mode and sequence has changed
+      if (!isEditMode || currentSequence !== originalSequence) {
+        const isUnique = await checkSequenceUnique(currentSequence);
+        if (!isUnique) {
+          return false;
+        }
       }
     }
 
@@ -401,8 +427,11 @@ const AmcHistoryModal = ({
     try {
       const payload = {
         amcId,
-        ...formData,
-        amcAmount: parseFloat(formData.amcAmount),
+        amcStartDate: formData.amcStartDate,
+        amcEndDate: formData.amcEndDate,
+        amcAmount: formData.amcAmount ? parseFloat(formData.amcAmount) : 0, // Default to 0 if not provided
+        amcScope: formData.amcScope || "", // Allow empty scope
+        amcRecycleType: formData.amcRecycleType || "Yearly",
         sequence: parseInt(formData.sequence),
         paid: formData.paid,
       };
@@ -426,12 +455,10 @@ const AmcHistoryModal = ({
 
         if (onSuccess) {
           // Pass a flag to indicate refresh is needed
-       
-           onSuccess({
-             ...response.data,
-             refreshParentList: true, // Add this flag
-         
-           });
+          onSuccess({
+            ...response.data,
+            refreshParentList: true, // Add this flag
+          });
         }
 
         onClose();
@@ -515,6 +542,7 @@ const AmcHistoryModal = ({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* SEQUENCE FIELD */}
+              {/* SEQUENCE FIELD */}
               <div className="md:col-span-2">
                 <div className="flex items-end gap-2">
                   <div className="flex-1">
@@ -529,7 +557,7 @@ const AmcHistoryModal = ({
                       min="1"
                       className="text-sm"
                       required
-                      disabled={checkingSequence || isEditMode}
+                      disabled={checkingSequence}
                     />
                   </div>
                   {!isEditMode && (
@@ -556,13 +584,16 @@ const AmcHistoryModal = ({
                     </button>
                   )}
                 </div>
+
                 {checkingSequence && (
                   <p className="text-xs text-blue-500 mt-1 flex items-center gap-1">
                     <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                     Checking sequence availability...
                   </p>
                 )}
-                {!isEditMode && existingSequences.length > 0 && (
+
+                {/* Show existing sequences for both modes */}
+                {existingSequences.length > 0 && (
                   <p className="text-xs text-gray-500 mt-1">
                     Existing sequences:{" "}
                     {existingSequences
@@ -571,6 +602,8 @@ const AmcHistoryModal = ({
                       .join(", ")}
                   </p>
                 )}
+
+                {/* Show different messages for edit vs create mode */}
                 {sequenceValid && !checkingSequence && (
                   <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
                     <svg
@@ -586,7 +619,9 @@ const AmcHistoryModal = ({
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    Sequence number {formData.sequence} is available
+                    {isEditMode
+                      ? `Sequence number ${formData.sequence} is valid (current sequence)`
+                      : `Sequence number ${formData.sequence} is available`}
                   </p>
                 )}
               </div>
@@ -669,12 +704,7 @@ const AmcHistoryModal = ({
               />
 
               <GlobalInputField
-                label={
-                  <>
-                    Amount (₹)
-                    <span className="text-red-500 ml-1">*</span>
-                  </>
-                }
+                label="Amount"
                 name="amcAmount"
                 type="number"
                 value={formData.amcAmount}
@@ -697,12 +727,7 @@ const AmcHistoryModal = ({
 
               <div className="md:col-span-2">
                 <GlobalTextAreaField
-                  label={
-                    <>
-                      Scope
-                      <span className="text-red-500 ml-1">*</span>
-                    </>
-                  }
+                  label="Scope"
                   name="amcScope"
                   value={formData.amcScope}
                   onChange={(e) => handleChange("amcScope", e.target.value)}
@@ -714,7 +739,7 @@ const AmcHistoryModal = ({
               </div>
             </div>
 
-            {/* Modal Footer inside form */}
+    
             <div className="pt-4 border-t border-gray-200">
               <div className="flex items-center justify-end gap-3">
                 <button
@@ -725,26 +750,46 @@ const AmcHistoryModal = ({
                   Cancel
                 </button>
 
-                <button
-                  type="submit"
-                  disabled={
-                    loading ||
-                    checkingSequence ||
-                    (!sequenceValid && !isEditMode)
-                  }
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 flex items-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      {isEditMode ? "Updating..." : "Creating..."}
-                    </>
-                  ) : isEditMode ? (
-                    "Update History"
-                  ) : (
-                    "Create History"
-                  )}
-                </button>
+                {/* Conditional button rendering */}
+                {(isEditMode && canEdit) || (!isEditMode && canCreate) ? (
+                  <button
+                    type="submit"
+                    disabled={
+                      loading ||
+                      checkingSequence ||
+                      (!isEditMode && !sequenceValid)
+                    }
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        {isEditMode ? "Updating..." : "Creating..."}
+                      </>
+                    ) : isEditMode ? (
+                      "Update History"
+                    ) : (
+                      "Create History"
+                    )}
+                  </button>
+                ) : (
+                  <div className="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg text-sm font-medium flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 15v2m0 0v2m0-2h2m-2 0H9m3-6a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    {isEditMode ? "No Edit Permission" : "No Create Permission"}
+                  </div>
+                )}
               </div>
             </div>
           </form>

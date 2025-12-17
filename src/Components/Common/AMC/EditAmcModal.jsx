@@ -9,6 +9,7 @@ import DomainHistoryModal from "./DomainHistoryModal";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import { showDeleteConfirmation } from "../../BaseComponet/alertUtils"; // Import the alert utility
 import GsuiteHistoryModal from "./GsuiteHistoryModal";
+import { hasPermission } from "../../BaseComponet/permissions";
 
 function EditAmcModal({ amc, onClose, onSuccess }) {
   const [activeTab, setActiveTab] = useState("basic");
@@ -25,6 +26,7 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
   const [showGsuiteHistoryModal, setShowGsuiteHistoryModal] = useState(false);
   const [editingGsuite, setEditingGsuite] = useState(null);
 
+  const canEdit = hasPermission("amc", "Edit");
   // Tab 1: Basic AMC Info - Match API field names exactly
   const [basicInfo, setBasicInfo] = useState({
     companyName: "",
@@ -75,6 +77,7 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
 
   const domainProviderOptions = [
     { value: "Wix", label: "Wix" },
+    { value: "Hostinger", label: "Hostinger" },
     { value: "GoDaddy", label: "GoDaddy" },
     { value: "Namecheap", label: "Namecheap" },
     { value: "Google Domains", label: "Google Domains" },
@@ -92,12 +95,22 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
   ];
 
   // Helper function to calculate days remaining and status
+  // Enhanced helper function to calculate days remaining and status for any date
   const getDueDateStatus = (dueDate) => {
     if (!dueDate)
-      return { status: "unknown", daysRemaining: null, isPastDue: false };
+      return {
+        status: "unknown",
+        daysRemaining: null,
+        isPastDue: false,
+        message: null,
+      };
 
     const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to start of day
+
     const due = new Date(dueDate);
+    due.setHours(0, 0, 0, 0); // Normalize to start of day
+
     const timeDiff = due.getTime() - today.getTime();
     const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
@@ -106,11 +119,26 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
         status: "past-due",
         daysRemaining: Math.abs(daysRemaining),
         isPastDue: true,
+        message: `Overdue by ${Math.abs(daysRemaining)} day${
+          Math.abs(daysRemaining) !== 1 ? "s" : ""
+        }`,
       };
     } else if (daysRemaining <= 30) {
-      return { status: "near-due", daysRemaining, isPastDue: false };
+      return {
+        status: "near-due",
+        daysRemaining,
+        isPastDue: false,
+        message: `${daysRemaining} day${
+          daysRemaining !== 1 ? "s" : ""
+        } remaining`,
+      };
     } else {
-      return { status: "normal", daysRemaining, isPastDue: false };
+      return {
+        status: "normal",
+        daysRemaining,
+        isPastDue: false,
+        message: null,
+      };
     }
   };
 
@@ -596,20 +624,41 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                       >
                         Cancel
                       </button>
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 flex items-center gap-2"
-                      >
-                        {loading ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            Updating...
-                          </>
-                        ) : (
-                          "Update AMC"
-                        )}
-                      </button>
+
+                      {/* Only show Update button if user has Edit permission */}
+                      {canEdit ? (
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 flex items-center gap-2"
+                        >
+                          {loading ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              Updating...
+                            </>
+                          ) : (
+                            "Update AMC"
+                          )}
+                        </button>
+                      ) : (
+                        <div className="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg text-sm font-medium flex items-center gap-2">
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 15v2m0 0v2m0-2h2m-2 0H9m3-6a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                          </svg>
+                          No Edit Permission
+                        </div>
+                      )}
                     </div>
                   </form>
                 )}
@@ -619,25 +668,27 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                   <div className="space-y-4">
                     {/* Create Button - Smaller size */}
                     <div className="flex justify-end">
-                      <button
-                        onClick={handleCreateAmcHistory}
-                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs font-medium flex items-center gap-1"
-                      >
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                      {hasPermission("amc", "Create") && (
+                        <button
+                          onClick={handleCreateAmcHistory}
+                          className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs font-medium flex items-center gap-1"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4v16m8-8H4"
-                          />
-                        </svg>
-                        Create AMC History
-                      </button>
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4v16m8-8H4"
+                            />
+                          </svg>
+                          Create AMC History
+                        </button>
+                      )}
                     </div>
 
                     {/* List Section */}
@@ -669,9 +720,6 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                     Payment Status
                                   </th>
                                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                    Status
-                                  </th>
-                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                                     Actions
                                   </th>
                                 </tr>
@@ -682,15 +730,17 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                     history.amcEndDate
                                   );
                                   const isPastDue = dueDateStatus.isPastDue;
-                                  const daysRemaining =
-                                    dueDateStatus.daysRemaining;
+                                  const isNearDue =
+                                    dueDateStatus.status === "near-due";
 
                                   return (
                                     <tr
                                       key={history.acmHistoryId}
                                       className={`${
                                         isPastDue
-                                          ? "border-l-4 border-l-red-500 bg-red-50"
+                                          ? "border-l-4 border-l-red-500"
+                                          : isNearDue
+                                          ? "border-l-4 border-l-yellow-500"
                                           : ""
                                       } hover:bg-gray-50`}
                                     >
@@ -705,14 +755,23 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                           className={`${
                                             isPastDue
                                               ? "text-red-600 font-semibold"
+                                              : isNearDue
+                                              ? "text-yellow-600 font-semibold"
                                               : ""
                                           }`}
                                         >
                                           {formatDate(history.amcEndDate)}
-                                          {isPastDue && (
-                                            <span className="block text-xs text-red-500 mt-1">
-                                              Overdue by {daysRemaining} day
-                                              {daysRemaining !== 1 ? "s" : ""}
+                                          {dueDateStatus.message && (
+                                            <span
+                                              className={`block text-xs mt-1 ${
+                                                isPastDue
+                                                  ? "text-red-500"
+                                                  : isNearDue
+                                                  ? "text-yellow-500"
+                                                  : ""
+                                              }`}
+                                            >
+                                              {dueDateStatus.message}
                                             </span>
                                           )}
                                         </div>
@@ -720,7 +779,6 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                       <td className="px-4 py-2 text-sm">
                                         {history.amcAmount?.toLocaleString()}
                                       </td>
-
                                       <td className="px-4 py-2 text-sm">
                                         <span
                                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -731,48 +789,6 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                         >
                                           {history.paid ? "Paid" : "Unpaid"}
                                         </span>
-                                      </td>
-                                      <td className="px-4 py-2 text-sm">
-                                        {dueDateStatus.status === "past-due" ? (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                            Overdue
-                                          </span>
-                                        ) : dueDateStatus.status ===
-                                            "near-due" &&
-                                          daysRemaining <= 30 ? (
-                                          <div className="flex flex-col gap-1">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                              {daysRemaining} day
-                                              {daysRemaining !== 1
-                                                ? "s"
-                                                : ""}{" "}
-                                              left
-                                            </span>
-                                            {daysRemaining <= 30 && (
-                                              <div className="text-xs text-gray-600">
-                                                <div className="flex items-center gap-1">
-                                                  <div className="w-full bg-gray-200 rounded-full h-1">
-                                                    <div
-                                                      className="bg-yellow-500 h-1 rounded-full"
-                                                      style={{
-                                                        width: `${
-                                                          ((30 -
-                                                            daysRemaining) /
-                                                            30) *
-                                                          100
-                                                        }%`,
-                                                      }}
-                                                    ></div>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            )}
-                                          </div>
-                                        ) : (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            Active
-                                          </span>
-                                        )}
                                       </td>
                                       <td className="px-4 py-2 text-sm">
                                         <div className="flex gap-1">
@@ -836,29 +852,32 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                 )}
 
                 {/* Tab 3: Domain History */}
+                {/* Tab 3: Domain History */}
                 {activeTab === "domain" && (
                   <div className="space-y-4">
                     {/* Create Button - Smaller size */}
                     <div className="flex justify-end">
-                      <button
-                        onClick={handleCreateDomainHistory}
-                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs font-medium flex items-center gap-1"
-                      >
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                      {hasPermission("amc", "Create") && (
+                        <button
+                          onClick={handleCreateDomainHistory}
+                          className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs font-medium flex items-center gap-1"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4v16m8-8H4"
-                          />
-                        </svg>
-                        Create Domain History
-                      </button>
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4v16m8-8H4"
+                            />
+                          </svg>
+                          Create Domain History
+                        </button>
+                      )}
                     </div>
 
                     {/* List Section */}
@@ -890,9 +909,6 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                     Payment Status
                                   </th>
                                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                    Status
-                                  </th>
-                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                                     Actions
                                   </th>
                                 </tr>
@@ -903,15 +919,17 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                     domain.domainRenewalDate
                                   );
                                   const isPastDue = dueDateStatus.isPastDue;
-                                  const daysRemaining =
-                                    dueDateStatus.daysRemaining;
+                                  const isNearDue =
+                                    dueDateStatus.status === "near-due";
 
                                   return (
                                     <tr
                                       key={domain.acmDomainHistoryId}
                                       className={`${
                                         isPastDue
-                                          ? "border-l-4 border-l-red-500 bg-red-50"
+                                          ? "border-l-4 border-l-red-500"
+                                          : isNearDue
+                                          ? "border-l-4 border-l-yellow-500"
                                           : ""
                                       } hover:bg-gray-50`}
                                     >
@@ -926,14 +944,23 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                           className={`${
                                             isPastDue
                                               ? "text-red-600 font-semibold"
+                                              : isNearDue
+                                              ? "text-yellow-600 font-semibold"
                                               : ""
                                           }`}
                                         >
                                           {formatDate(domain.domainRenewalDate)}
-                                          {isPastDue && (
-                                            <span className="block text-xs text-red-500 mt-1">
-                                              Overdue by {daysRemaining} day
-                                              {daysRemaining !== 1 ? "s" : ""}
+                                          {dueDateStatus.message && (
+                                            <span
+                                              className={`block text-xs mt-1 ${
+                                                isPastDue
+                                                  ? "text-red-500"
+                                                  : isNearDue
+                                                  ? "text-yellow-500"
+                                                  : ""
+                                              }`}
+                                            >
+                                              {dueDateStatus.message}
                                             </span>
                                           )}
                                         </div>
@@ -951,48 +978,6 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                         >
                                           {domain.paid ? "Paid" : "Unpaid"}
                                         </span>
-                                      </td>
-                                      <td className="px-4 py-2 text-sm">
-                                        {dueDateStatus.status === "past-due" ? (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                            Overdue
-                                          </span>
-                                        ) : dueDateStatus.status ===
-                                            "near-due" &&
-                                          daysRemaining <= 30 ? (
-                                          <div className="flex flex-col gap-1">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                              {daysRemaining} day
-                                              {daysRemaining !== 1
-                                                ? "s"
-                                                : ""}{" "}
-                                              left
-                                            </span>
-                                            {daysRemaining <= 30 && (
-                                              <div className="text-xs text-gray-600">
-                                                <div className="flex items-center gap-1">
-                                                  <div className="w-full bg-gray-200 rounded-full h-1">
-                                                    <div
-                                                      className="bg-yellow-500 h-1 rounded-full"
-                                                      style={{
-                                                        width: `${
-                                                          ((30 -
-                                                            daysRemaining) /
-                                                            30) *
-                                                          100
-                                                        }%`,
-                                                      }}
-                                                    ></div>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            )}
-                                          </div>
-                                        ) : (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            Active
-                                          </span>
-                                        )}
                                       </td>
                                       <td className="px-4 py-2 text-sm">
                                         <div className="flex gap-1">
@@ -1056,29 +1041,32 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                 )}
 
                 {/* Tab 4: GSuite History */}
+                {/* Tab 4: GSuite History */}
                 {activeTab === "gsuite" && (
                   <div className="space-y-4">
                     {/* Create Button */}
                     <div className="flex justify-end">
-                      <button
-                        onClick={handleCreateGsuiteHistory}
-                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs font-medium flex items-center gap-1"
-                      >
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                      {hasPermission("amc", "Create") && (
+                        <button
+                          onClick={handleCreateGsuiteHistory}
+                          className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs font-medium flex items-center gap-1"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4v16m8-8H4"
-                          />
-                        </svg>
-                        Create GSuite History
-                      </button>
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4v16m8-8H4"
+                            />
+                          </svg>
+                          Create GSuite History
+                        </button>
+                      )}
                     </div>
 
                     {/* List Section */}
@@ -1122,9 +1110,6 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                     Payment Status
                                   </th>
                                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                    Status
-                                  </th>
-                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                                     Actions
                                   </th>
                                 </tr>
@@ -1135,15 +1120,17 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                     gsuite.gsuitRenewalDate
                                   );
                                   const isPastDue = dueDateStatus.isPastDue;
-                                  const daysRemaining =
-                                    dueDateStatus.daysRemaining;
+                                  const isNearDue =
+                                    dueDateStatus.status === "near-due";
 
                                   return (
                                     <tr
                                       key={gsuite.amcGsuitHistoryId}
                                       className={`${
                                         isPastDue
-                                          ? "border-l-4 border-l-red-500 bg-red-50"
+                                          ? "border-l-4 border-l-red-500"
+                                          : isNearDue
+                                          ? "border-l-4 border-l-yellow-500"
                                           : ""
                                       } hover:bg-gray-50`}
                                     >
@@ -1171,14 +1158,23 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                           className={`${
                                             isPastDue
                                               ? "text-red-600 font-semibold"
+                                              : isNearDue
+                                              ? "text-yellow-600 font-semibold"
                                               : ""
                                           }`}
                                         >
                                           {formatDate(gsuite.gsuitRenewalDate)}
-                                          {isPastDue && (
-                                            <span className="block text-xs text-red-500 mt-1">
-                                              Overdue by {daysRemaining} day
-                                              {daysRemaining !== 1 ? "s" : ""}
+                                          {dueDateStatus.message && (
+                                            <span
+                                              className={`block text-xs mt-1 ${
+                                                isPastDue
+                                                  ? "text-red-500"
+                                                  : isNearDue
+                                                  ? "text-yellow-500"
+                                                  : ""
+                                              }`}
+                                            >
+                                              {dueDateStatus.message}
                                             </span>
                                           )}
                                         </div>
@@ -1212,48 +1208,6 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                         >
                                           {gsuite.paid ? "Paid" : "Unpaid"}
                                         </span>
-                                      </td>
-                                      <td className="px-4 py-2 text-sm">
-                                        {dueDateStatus.status === "past-due" ? (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                            Overdue
-                                          </span>
-                                        ) : dueDateStatus.status ===
-                                            "near-due" &&
-                                          daysRemaining <= 30 ? (
-                                          <div className="flex flex-col gap-1">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                              {daysRemaining} day
-                                              {daysRemaining !== 1
-                                                ? "s"
-                                                : ""}{" "}
-                                              left
-                                            </span>
-                                            {daysRemaining <= 30 && (
-                                              <div className="text-xs text-gray-600">
-                                                <div className="flex items-center gap-1">
-                                                  <div className="w-full bg-gray-200 rounded-full h-1">
-                                                    <div
-                                                      className="bg-yellow-500 h-1 rounded-full"
-                                                      style={{
-                                                        width: `${
-                                                          ((30 -
-                                                            daysRemaining) /
-                                                            30) *
-                                                          100
-                                                        }%`,
-                                                      }}
-                                                    ></div>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            )}
-                                          </div>
-                                        ) : (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            Active
-                                          </span>
-                                        )}
                                       </td>
                                       <td className="px-4 py-2 text-sm">
                                         <div className="flex gap-1">

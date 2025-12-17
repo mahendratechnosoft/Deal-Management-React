@@ -95,7 +95,10 @@ function EditAdmin() {
         itemDelete: false,
         itemEdit: false,
 
-
+        amcCreate:false,
+        amcDelete:false,
+        amcEdit:false,
+        amcViewAll:false,
 
     });
 
@@ -130,26 +133,25 @@ function EditAdmin() {
 
                 if (accessData) {
                     setModuleAccess({
-                        moduleAccessId: accessData.moduleAccessId || "",
-                        adminId: adminId,
-                        employeeId: null,
-                        leadAccess: accessData.leadAccess || false,
-                        customerAccess: accessData.customerAccess || false,
-                        proposalAccess: accessData.proposalAccess || false,
-                        proformaInvoiceAccess: accessData.proformaInvoiceAccess || false,
-                        invoiceAccess: accessData.invoiceAccess || false,
-                        paymentAccess: accessData.paymentAccess || false,
-                        timeSheetAccess: accessData.timeSheetAccess || false,
-                        taskAccess: accessData.taskAccess || false,
+                      moduleAccessId: accessData.moduleAccessId || "",
+                      adminId: adminId,
+                      employeeId: null,
+                      leadAccess: accessData.leadAccess || false,
+                      customerAccess: accessData.customerAccess || false,
+                      proposalAccess: accessData.proposalAccess || false,
+                      proformaInvoiceAccess:
+                        accessData.proformaInvoiceAccess || false,
+                      invoiceAccess: accessData.invoiceAccess || false,
+                      paymentAccess: accessData.paymentAccess || false,
+                      timeSheetAccess: accessData.timeSheetAccess || false,
+                      taskAccess: accessData.taskAccess || false,
+                      amcAccess: accessData.amcAccess || false,
+                    
 
-
-                        donorAccess: accessData.donorAccess || false,
-                        employeeAccess: accessData.employeeAccess || false,
-                        settingAccess: accessData.settingAccess || false,
-                        itemAccess: accessData.itemAccess || false,
-
-
-
+                      donorAccess: accessData.donorAccess || false,
+                      employeeAccess: accessData.employeeAccess || false,
+                      settingAccess: accessData.settingAccess || false,
+                      itemAccess: accessData.itemAccess || false,
                     });
                 }
             } catch (error) {
@@ -188,20 +190,21 @@ function EditAdmin() {
 
     const handleClearAllAccess = () => {
         setModuleAccess((prev) => ({
-            ...prev,
-            leadAccess: false,
-            customerAccess: false,
-            proposalAccess: false,
-            proformaInvoiceAccess: false,
-            invoiceAccess: false,
-            paymentAccess: false,
-            timeSheetAccess: false,
-            taskAccess: false,
+          ...prev,
+          leadAccess: false,
+          customerAccess: false,
+          proposalAccess: false,
+          proformaInvoiceAccess: false,
+          invoiceAccess: false,
+          paymentAccess: false,
+          timeSheetAccess: false,
+          taskAccess: false,
 
-            donorAccess: false,
-            employeeAccess: false,
-            settingAccess: false,
-            itemAccess: false,
+          donorAccess: false,
+          employeeAccess: false,
+          settingAccess: false,
+          itemAccess: false,
+          amcAccess: false,
 
         }));
         toast.success("All permissions cleared");
@@ -209,20 +212,20 @@ function EditAdmin() {
 
     const handleSetAllAccess = () => {
         setModuleAccess((prev) => ({
-            ...prev,
-            leadAccess: true,
-            customerAccess: true,
-            proposalAccess: true,
-            proformaInvoiceAccess: true,
-            invoiceAccess: true,
-            paymentAccess: true,
-            timeSheetAccess: true,
-            taskAccess: true,
-            donorAccess: true,
-            employeeAccess: true,
-            settingAccess: true,
-            itemAccess: true,
-
+          ...prev,
+          leadAccess: true,
+          customerAccess: true,
+          proposalAccess: true,
+          proformaInvoiceAccess: true,
+          invoiceAccess: true,
+          paymentAccess: true,
+          timeSheetAccess: true,
+          taskAccess: true,
+          donorAccess: true,
+          employeeAccess: true,
+          settingAccess: true,
+          itemAccess: true,
+          amcAccess: true,
         }));
         toast.success("All permissions granted");
     };
@@ -253,69 +256,73 @@ function EditAdmin() {
         setLoading(true);
         try {
             const payload = {
-                adminId: adminId,
-                companyEmail: formData.companyEmail,
-                name: formData.name,
-                phone: formData.phone,
-                address: formData.address,
-                companyName: formData.companyName,
-                gstNumber: formData.gstNumber,
-                moduleAccess: {
-                    ...moduleAccess, // Keep existing moduleAccess values
+              adminId: adminId,
+              companyEmail: formData.companyEmail,
+              name: formData.name,
+              phone: formData.phone,
+              address: formData.address,
+              companyName: formData.companyName,
+              gstNumber: formData.gstNumber,
+              moduleAccess: {
+                ...moduleAccess, // Keep existing moduleAccess values
 
-                    // Force these detailed permissions to ALWAYS be true
-                    leadViewAll: true,
-                    leadCreate: true,
-                    leadDelete: true,
-                    leadEdit: true,
+                // Force these detailed permissions to ALWAYS be true
+                leadViewAll: true,
+                leadCreate: true,
+                leadDelete: true,
+                leadEdit: true,
 
-                    customerViewAll: true,
-                    customerCreate: true,
-                    customerDelete: true,
-                    customerEdit: true,
+                customerViewAll: true,
+                customerCreate: true,
+                customerDelete: true,
+                customerEdit: true,
 
-                    proposalViewAll: true,
-                    proposalCreate: true,
-                    proposalDelete: true,
-                    proposalEdit: true,
+                proposalViewAll: true,
+                proposalCreate: true,
+                proposalDelete: true,
+                proposalEdit: true,
 
-                    proformaInvoiceViewAll: true,
-                    proformaInvoiceCreate: true,
-                    proformaInvoiceDelete: true,
-                    proformaInvoiceEdit: true,
+                proformaInvoiceViewAll: true,
+                proformaInvoiceCreate: true,
+                proformaInvoiceDelete: true,
+                proformaInvoiceEdit: true,
 
-                    invoiceViewAll: true,
-                    invoiceCreate: true,
-                    invoiceDelete: true,
-                    invoiceEdit: true,
+                invoiceViewAll: true,
+                invoiceCreate: true,
+                invoiceDelete: true,
+                invoiceEdit: true,
 
-                    paymentViewAll: true,
-                    paymentCreate: true,
-                    paymentDelete: true,
-                    paymentEdit: true,
+                paymentViewAll: true,
+                paymentCreate: true,
+                paymentDelete: true,
+                paymentEdit: true,
 
-                    timeSheetViewAll: true,
-                    timeSheetCreate: true,
-                    timeSheetDelete: true,
-                    timeSheetEdit: true,
+                timeSheetViewAll: true,
+                timeSheetCreate: true,
+                timeSheetDelete: true,
+                timeSheetEdit: true,
 
-                    donorViewAll: true,
-                    donorCreate: true,
-                    donorDelete: true,
-                    donorEdit: true,
+                donorViewAll: true,
+                donorCreate: true,
+                donorDelete: true,
+                donorEdit: true,
 
-                    itemViewAll: true,
-                    itemCreate: true,
-                    itemDelete: true,
-                    itemEdit: true,
+                itemViewAll: true,
+                itemCreate: true,
+                itemDelete: true,
+                itemEdit: true,
 
-                    taskViewAll: true,
+                taskViewAll: true,
 
-                    taskCreate: true,
-                    taskDelete: true,
-                    taskEdit: true,
+                taskCreate: true,
+                taskDelete: true,
+                taskEdit: true,
 
-                },
+                amcCreate: true,
+                amcDelete: true,
+                amcEdit: true,
+                amcViewAll: true,
+              },
             };
 
             await axiosInstance.put("updateAdminInfoWithAccess", payload);
@@ -378,104 +385,106 @@ function EditAdmin() {
     }
 
     return (
-        <LayoutComponent>
-            <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
-                <div className="">
-                    {/* Header */}
-                    <div className="mb-4">
-                        <div className="flex items-center gap-1 mb-1">
-                            <button
-                                onClick={() => navigate("/SuperAdmin/AdminList")}
-                                className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900 transition-colors"
-                            >
-                                <svg
-                                    className="w-3 h-3"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                                    />
-                                </svg>
-                                Back to Admins
-                            </button>
-                        </div>
-                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
-                            <div>
-                                <h1 className="text-xl font-bold text-gray-900">Edit Admin</h1>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={handleCancel}
-                                    className="px-3 py-1.5 text-sm border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors font-medium"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSubmit}
-                                    disabled={loading}
-                                    className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {loading ? (
-                                        <>
-                                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                            Updating...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <svg
-                                                className="w-3 h-3"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M5 13l4 4L19 7"
-                                                />
-                                            </svg>
-                                            Update Admin
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
+      <LayoutComponent>
+        <div className="p-4 bg-gray-50 border-b border-gray-200 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
+          <div className="">
+            {/* Header */}
+            <div className="mb-4">
+              <div className="flex items-center gap-1 mb-1">
+                <button
+                  onClick={() => navigate("/SuperAdmin/AdminList")}
+                  className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <svg
+                    className="w-3 h-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                    />
+                  </svg>
+                  Back to Admins
+                </button>
+              </div>
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">
+                    Edit Admin
+                  </h1>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleCancel}
+                    className="px-3 py-1.5 text-sm border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        Update Admin
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Left Column - Admin Information */}
+              <div className="lg:col-span-2 space-y-4 ">
+                <div className="bg-white rounded-lg border border-gray-200 p-4 h-full">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
                     </div>
+                    <h2 className="text-base font-semibold text-gray-900">
+                      Admin Information
+                    </h2>
+                  </div>
 
-                    {/* Main Content */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                        {/* Left Column - Admin Information */}
-                        <div className="lg:col-span-2 space-y-4 ">
-                            <div className="bg-white rounded-lg border border-gray-200 p-4 h-full">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
-                                        <svg
-                                            className="w-3 h-3 text-white"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                            />
-                                        </svg>
-                                    </div>
-                                    <h2 className="text-base font-semibold text-gray-900">
-                                        Admin Information
-                                    </h2>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {/* <FormInput
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {/* <FormInput
                       label="Admin Name"
                       name="name"
                       value={formData.name}
@@ -484,233 +493,240 @@ function EditAdmin() {
                       error={errors.name}
                       background="white"
                     /> */}
-                                    <FormInput
-                                        label="Company Name"
-                                        name="companyName"
-                                        value={formData.companyName}
-                                        onChange={handleChange}
-                                        required={true}
-                                        error={errors.companyName}
-                                        background="white"
-                                    />
+                    <FormInput
+                      label="Company Name"
+                      name="companyName"
+                      value={formData.companyName}
+                      onChange={handleChange}
+                      required={true}
+                      error={errors.companyName}
+                      background="white"
+                    />
 
-                                    <FormInput
-                                        label="Company Email"
-                                        name="companyEmail"
-                                        value={formData.companyEmail}
-                                        onChange={handleChange}
-                                        required={true}
-                                        error={errors.companyEmail}
-                                        background="white"
-                                    />
+                    <FormInput
+                      label="Company Email"
+                      name="companyEmail"
+                      value={formData.companyEmail}
+                      onChange={handleChange}
+                      required={true}
+                      error={errors.companyEmail}
+                      background="white"
+                    />
 
-                                    <FormPhoneInputFloating
-                                        label="Phone Number"
-                                        name="phone"
-                                        value={formData.phone}
-                                        onChange={handlePhoneChange}
-                                        required={true}
-                                        error={errors.phone}
-                                        background="white"
-                                    />
+                    <FormPhoneInputFloating
+                      label="Phone Number"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handlePhoneChange}
+                      required={true}
+                      error={errors.phone}
+                      background="white"
+                    />
 
-                                    <FormInput
-                                        label="GST Number"
-                                        name="gstNumber"
-                                        value={formData.gstNumber}
-                                        onChange={handleChange}
-                                        required={true}
-                                        error={errors.gstNumber}
-                                        background="white"
-                                    />
+                    <FormInput
+                      label="GST Number"
+                      name="gstNumber"
+                      value={formData.gstNumber}
+                      onChange={handleChange}
+                      required={true}
+                      error={errors.gstNumber}
+                      background="white"
+                    />
 
-                                    <div className="md:col-span-2">
-                                        <FormTextarea
-                                            label="Address"
-                                            name="address"
-                                            value={formData.address}
-                                            onChange={handleChange}
-                                            rows={2}
-                                            background="white"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Right Column - Module Access */}
-                        {/* Right Column - Module Access */}
-                        <div className="space-y-4">
-                            <div className="bg-white rounded-lg border border-gray-200 p-4">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-6 h-6 bg-orange-600 rounded flex items-center justify-center">
-                                            <svg
-                                                className="w-3 h-3 text-white"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                                                />
-                                            </svg>
-                                        </div>
-                                        <h2 className="text-base font-semibold text-gray-900">
-                                            Module Access
-                                        </h2>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            type="button"
-                                            onClick={handleClearAllAccess}
-                                            className="px-2 py-1 text-xs border border-red-300 text-red-700 rounded bg-white hover:bg-red-50 transition-colors"
-                                        >
-                                            Clear All
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={handleSetAllAccess}
-                                            className="px-2 py-1 text-xs border border-green-300 text-green-700 rounded bg-white hover:bg-green-50 transition-colors"
-                                        >
-                                            Set All
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    {/* First row - 2 buttons */}
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <ModuleAccessToggle
-                                            title="Leads"
-                                            field="leadAccess"
-                                            isChecked={getAccess("leadAccess")}
-                                            onChange={(isChecked) =>
-                                                handleAccessChange("leadAccess", isChecked)
-                                            }
-                                        />
-                                        <ModuleAccessToggle
-                                            title="Customer"
-                                            field="customerAccess"
-                                            isChecked={getAccess("customerAccess")}
-                                            onChange={(isChecked) =>
-                                                handleAccessChange("customerAccess", isChecked)
-                                            }
-                                        />
-                                    </div>
-
-                                    {/* Second row - 2 buttons */}
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <ModuleAccessToggle
-                                            title="Proposal"
-                                            field="proposalAccess"
-                                            isChecked={getAccess("proposalAccess")}
-                                            onChange={(isChecked) =>
-                                                handleAccessChange("proposalAccess", isChecked)
-                                            }
-                                        />
-                                        <ModuleAccessToggle
-                                            title="Proforma Invoice"
-                                            field="proformaInvoiceAccess"
-                                            isChecked={getAccess("proformaInvoiceAccess")}
-                                            onChange={(isChecked) =>
-                                                handleAccessChange("proformaInvoiceAccess", isChecked)
-                                            }
-                                        />
-                                    </div>
-
-                                    {/* Third row - 2 buttons */}
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <ModuleAccessToggle
-                                            title="Invoice"
-                                            field="invoiceAccess"
-                                            isChecked={getAccess("invoiceAccess")}
-                                            onChange={(isChecked) =>
-                                                handleAccessChange("invoiceAccess", isChecked)
-                                            }
-                                        />
-                                        <ModuleAccessToggle
-                                            title="Payment"
-                                            field="paymentAccess"
-                                            isChecked={getAccess("paymentAccess")}
-                                            onChange={(isChecked) =>
-                                                handleAccessChange("paymentAccess", isChecked)
-                                            }
-                                        />
-                                    </div>
-
-                                    {/* Fourth row - 2 buttons */}
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <ModuleAccessToggle
-                                            title="TimeSheet"
-                                            field="timeSheetAccess"
-                                            isChecked={getAccess("timeSheetAccess")}
-                                            onChange={(isChecked) =>
-                                                handleAccessChange("timeSheetAccess", isChecked)
-                                            }
-                                        />
-                                        <ModuleAccessToggle
-                                            title="Donor"
-                                            field="donorAccess"
-                                            isChecked={getAccess("donorAccess")}
-                                            onChange={(isChecked) =>
-                                                handleAccessChange("donorAccess", isChecked)
-                                            }
-                                        />
-                                    </div>
-
-                                    {/* Fifth row - 2 buttons */}
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <ModuleAccessToggle
-                                            title="Employee"
-                                            field="employeeAccess"
-                                            isChecked={getAccess("employeeAccess")}
-                                            onChange={(isChecked) =>
-                                                handleAccessChange("employeeAccess", isChecked)
-                                            }
-                                        />
-                                        <ModuleAccessToggle
-                                            title="Item"
-                                            field="itemAccess"
-                                            isChecked={getAccess("itemAccess")}
-                                            onChange={(isChecked) =>
-                                                handleAccessChange("itemAccess", isChecked)
-                                            }
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <ModuleAccessToggle
-                                            title="Task"
-                                            field="taskAccess"
-                                            isChecked={getAccess("taskAccess")}
-                                            onChange={(isChecked) =>
-                                                handleAccessChange("taskAccess", isChecked)
-                                            }
-                                        />
-                                        <ModuleAccessToggle
-                                            title="Setting"
-                                            field="settingAccess"
-                                            isChecked={getAccess("settingAccess")}
-                                            onChange={(isChecked) =>
-                                                handleAccessChange("settingAccess", isChecked)
-                                            }
-                                        />
-                                    </div>
-
-                                 
-                                </div>
-                            </div>
-                        </div>
-
-
-
+                    <div className="md:col-span-2">
+                      <FormTextarea
+                        label="Address"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleChange}
+                        rows={2}
+                        background="white"
+                      />
                     </div>
+                  </div>
                 </div>
+              </div>
+
+              {/* Right Column - Module Access */}
+              {/* Right Column - Module Access */}
+              <div className="space-y-4">
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-orange-600 rounded flex items-center justify-center">
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                          />
+                        </svg>
+                      </div>
+                      <h2 className="text-base font-semibold text-gray-900">
+                        Module Access
+                      </h2>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={handleClearAllAccess}
+                        className="px-2 py-1 text-xs border border-red-300 text-red-700 rounded bg-white hover:bg-red-50 transition-colors"
+                      >
+                        Clear All
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSetAllAccess}
+                        className="px-2 py-1 text-xs border border-green-300 text-green-700 rounded bg-white hover:bg-green-50 transition-colors"
+                      >
+                        Set All
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    {/* First row - 2 buttons */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <ModuleAccessToggle
+                        title="Leads"
+                        field="leadAccess"
+                        isChecked={getAccess("leadAccess")}
+                        onChange={(isChecked) =>
+                          handleAccessChange("leadAccess", isChecked)
+                        }
+                      />
+                      <ModuleAccessToggle
+                        title="Customer"
+                        field="customerAccess"
+                        isChecked={getAccess("customerAccess")}
+                        onChange={(isChecked) =>
+                          handleAccessChange("customerAccess", isChecked)
+                        }
+                      />
+                    </div>
+
+                    {/* Second row - 2 buttons */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <ModuleAccessToggle
+                        title="Proposal"
+                        field="proposalAccess"
+                        isChecked={getAccess("proposalAccess")}
+                        onChange={(isChecked) =>
+                          handleAccessChange("proposalAccess", isChecked)
+                        }
+                      />
+                      <ModuleAccessToggle
+                        title="Proforma Invoice"
+                        field="proformaInvoiceAccess"
+                        isChecked={getAccess("proformaInvoiceAccess")}
+                        onChange={(isChecked) =>
+                          handleAccessChange("proformaInvoiceAccess", isChecked)
+                        }
+                      />
+                    </div>
+
+                    {/* Third row - 2 buttons */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <ModuleAccessToggle
+                        title="Invoice"
+                        field="invoiceAccess"
+                        isChecked={getAccess("invoiceAccess")}
+                        onChange={(isChecked) =>
+                          handleAccessChange("invoiceAccess", isChecked)
+                        }
+                      />
+                      <ModuleAccessToggle
+                        title="Payment"
+                        field="paymentAccess"
+                        isChecked={getAccess("paymentAccess")}
+                        onChange={(isChecked) =>
+                          handleAccessChange("paymentAccess", isChecked)
+                        }
+                      />
+                    </div>
+
+                    {/* Fourth row - 2 buttons */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <ModuleAccessToggle
+                        title="TimeSheet"
+                        field="timeSheetAccess"
+                        isChecked={getAccess("timeSheetAccess")}
+                        onChange={(isChecked) =>
+                          handleAccessChange("timeSheetAccess", isChecked)
+                        }
+                      />
+                      <ModuleAccessToggle
+                        title="Donor"
+                        field="donorAccess"
+                        isChecked={getAccess("donorAccess")}
+                        onChange={(isChecked) =>
+                          handleAccessChange("donorAccess", isChecked)
+                        }
+                      />
+                    </div>
+
+                    {/* Fifth row - 2 buttons */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <ModuleAccessToggle
+                        title="Employee"
+                        field="employeeAccess"
+                        isChecked={getAccess("employeeAccess")}
+                        onChange={(isChecked) =>
+                          handleAccessChange("employeeAccess", isChecked)
+                        }
+                      />
+                      <ModuleAccessToggle
+                        title="Item"
+                        field="itemAccess"
+                        isChecked={getAccess("itemAccess")}
+                        onChange={(isChecked) =>
+                          handleAccessChange("itemAccess", isChecked)
+                        }
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <ModuleAccessToggle
+                        title="Task"
+                        field="taskAccess"
+                        isChecked={getAccess("taskAccess")}
+                        onChange={(isChecked) =>
+                          handleAccessChange("taskAccess", isChecked)
+                        }
+                      />
+                      <ModuleAccessToggle
+                        title="Setting"
+                        field="settingAccess"
+                        isChecked={getAccess("settingAccess")}
+                        onChange={(isChecked) =>
+                          handleAccessChange("settingAccess", isChecked)
+                        }
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <ModuleAccessToggle
+                        title="Amc"
+                        field="amcAccess"
+                        isChecked={getAccess("amcAccess")}
+                        onChange={(isChecked) =>
+                          handleAccessChange("amcAccess", isChecked)
+                        }
+                      />
+                    
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-        </LayoutComponent>
+          </div>
+        </div>
+      </LayoutComponent>
     );
 }
 

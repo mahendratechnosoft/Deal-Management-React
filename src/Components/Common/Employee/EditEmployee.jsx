@@ -367,7 +367,6 @@ function EditEmployee() {
         timeSheetDelete: selectedRole.timeSheetDelete || false,
         timeSheetEdit: selectedRole.timeSheetEdit || false,
 
-
         donorAccess: selectedRole.donorAccess || false,
         donorViewAll: selectedRole.donorViewAll || false,
         donorCreate: selectedRole.donorCreate || false,
@@ -379,14 +378,18 @@ function EditEmployee() {
         itemCreate: selectedRole.itemCreate || false,
         itemDelete: selectedRole.itemDelete || false,
         itemEdit: selectedRole.itemEdit || false,
+
         taskAccess: selectedRole.taskAccess || false,
         taskViewAll: selectedRole.taskViewAll || false,
         taskCreate: selectedRole.taskCreate || false,
         taskDelete: selectedRole.taskDelete || false,
         taskEdit: selectedRole.taskEdit || false,
 
-
-
+        amcAccess: selectedRole.amcAccess || false,
+        amcViewAll: selectedRole.amcViewAll || false,
+        amcCreate: selectedRole.amcCreate || false,
+        amcDelete: selectedRole.amcDelete || false,
+        amcEdit: selectedRole.amcEdit || false,
       });
     }
 
@@ -454,6 +457,12 @@ function EditEmployee() {
           taskEdit: false,
           taskViewAll: false,
           [field]: value,
+
+          amcAccess: false,
+          amcCreate: false,
+          amcDelete: false,
+          amcEdit: false,
+          amcViewAll: false,
         };
       }
       return {
@@ -514,11 +523,18 @@ function EditEmployee() {
       itemCreate: false,
       itemDelete: false,
       itemEdit: false,
+
       taskAccess: false,
       taskCreate: false,
       taskDelete: false,
       taskEdit: false,
       taskViewAll: false,
+
+      amcAccess: false,
+      amcCreate: false,
+      amcDelete: false,
+      amcEdit: false,
+      amcViewAll: false,
     });
     toast.success("All permissions cleared");
   };
@@ -579,6 +595,12 @@ function EditEmployee() {
       taskDelete: true,
       taskEdit: true,
       taskViewAll: true,
+
+      amcAccess: true,
+      amcCreate: true,
+      amcDelete: true,
+      amcEdit: true,
+      amcViewAll: true,
     });
     toast.success("All permissions granted");
   };
@@ -821,7 +843,6 @@ function EditEmployee() {
                   </h3>
 
                   <div className="grid grid-cols-2 gap-3 mb-4">
-
                     {" "}
                     <div className="flex flex-col items-center">
                       <input
@@ -1058,10 +1079,8 @@ function EditEmployee() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-
                   {!hasPermission("donor", "Access") && (
                     <>
-
                       {hasModulePermission("lead") && (
                         <ModuleAccessGroup
                           title="Leads"
@@ -1076,7 +1095,6 @@ function EditEmployee() {
                           handleAccessChange={handleAccessChange}
                         />
                       )}
-
 
                       {hasModulePermission("customer") && (
                         <ModuleAccessGroup
@@ -1093,7 +1111,6 @@ function EditEmployee() {
                         />
                       )}
 
-
                       {hasModulePermission("proposal") && (
                         <ModuleAccessGroup
                           title="Proposal"
@@ -1109,13 +1126,15 @@ function EditEmployee() {
                         />
                       )}
 
-
                       {hasModulePermission("proformaInvoice") && (
                         <ModuleAccessGroup
                           title="Proforma Invoice"
                           permissions={[
                             { label: "Access", field: "proformaInvoiceAccess" },
-                            { label: "View All", field: "proformaInvoiceViewAll" },
+                            {
+                              label: "View All",
+                              field: "proformaInvoiceViewAll",
+                            },
                             { label: "Create", field: "proformaInvoiceCreate" },
                             { label: "Edit", field: "proformaInvoiceEdit" },
                             { label: "Delete", field: "proformaInvoiceDelete" },
@@ -1124,7 +1143,6 @@ function EditEmployee() {
                           handleAccessChange={handleAccessChange}
                         />
                       )}
-
 
                       {hasModulePermission("invoice") && (
                         <ModuleAccessGroup
@@ -1141,7 +1159,6 @@ function EditEmployee() {
                         />
                       )}
 
-
                       {hasModulePermission("payment") && (
                         <ModuleAccessGroup
                           title="Payment"
@@ -1156,7 +1173,6 @@ function EditEmployee() {
                           handleAccessChange={handleAccessChange}
                         />
                       )}
-
 
                       {hasModulePermission("timeSheet") && (
                         <ModuleAccessGroup
@@ -1173,7 +1189,6 @@ function EditEmployee() {
                         />
                       )}
 
-
                       {hasModulePermission("lead") && (
                         <ModuleAccessGroup
                           title="Item Permissions"
@@ -1189,7 +1204,6 @@ function EditEmployee() {
                         />
                       )}
 
-                   
                       {hasModulePermission("task") && (
                         <ModuleAccessGroup
                           title="Task Permissions"
@@ -1204,9 +1218,22 @@ function EditEmployee() {
                           handleAccessChange={handleAccessChange}
                         />
                       )}
+                      {hasModulePermission("amc") && (
+                        <ModuleAccessGroup
+                          title="AMC Permissions"
+                          permissions={[
+                            { label: "Access", field: "amcAccess" },
+                            { label: "View All", field: "amcViewAll" },
+                            { label: "Create", field: "amcCreate" },
+                            { label: "Edit", field: "amcEdit" },
+                            { label: "Delete", field: "amcDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
                     </>
                   )}
-
 
                   {hasPermission("donor", "Access") && (
                     <ModuleAccessGroup
@@ -1222,18 +1249,13 @@ function EditEmployee() {
                       handleAccessChange={handleAccessChange}
                     />
                   )}
-
-
-
-
-
                 </div>
               </div>
             </div>
           </form>
         </div>
-      </div >
-    </LayoutComponent >
+      </div>
+    </LayoutComponent>
   );
 
   function ModuleAccessGroup({
