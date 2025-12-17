@@ -112,6 +112,7 @@ function General() {
     signatureBase64: "",
     stampBase64: "",
     panNumber: "",
+    website: "",
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -139,6 +140,7 @@ function General() {
           signatureBase64: data.companySignature || "",
           stampBase64: data.companyStamp || "",
           panNumber: data.panNumber || "",
+          website: data.website || "",
         });
       } catch (error) {
         console.error("Error fetching admin info:", error);
@@ -397,6 +399,7 @@ function General() {
                     onChange={handleChange}
                     error={errors.companyEmail}
                   />
+
                   <FormPhoneInputFloating
                     label="phone"
                     name="Phone"
@@ -405,26 +408,30 @@ function General() {
                     error={errors.phone}
                     background="white"
                   />
-                  <div className="md:col-span-2">
-                    <FormTextarea
-                      name="address"
-                      label="Address"
-                      rows={3}
-                      value={formData.address}
-                      onChange={handleChange}
-                      error={errors.address}
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <FormTextarea
-                      name="description"
-                      label="Description"
-                      rows={4}
-                      value={formData.description}
-                      onChange={handleChange}
-                      error={errors.description}
-                    />
-                  </div>
+                  <FormInput
+                    name="website"
+                    label="Company Website"
+                    value={formData.website}
+                    onChange={handleChange}
+                    error={errors.website}
+                  />
+                  <div></div>
+                  <FormTextarea
+                    name="address"
+                    label="Address"
+                    rows={3}
+                    value={formData.address}
+                    onChange={handleChange}
+                    error={errors.address}
+                  />
+                  <FormTextarea
+                    name="description"
+                    label="Description"
+                    rows={3}
+                    value={formData.description}
+                    onChange={handleChange}
+                    error={errors.description}
+                  />
                 </div>
               </section>
 
