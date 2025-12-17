@@ -412,7 +412,7 @@ const DomainHistoryModal = ({
     if (formData.domainAmount && formData.domainAmount.trim() !== "") {
       if (
         isNaN(formData.domainAmount) ||
-        parseFloat(formData.domainAmount) <= 0
+        parseFloat(formData.domainAmount) < 0
       ) {
         newErrors.domainAmount = "Domain amount must be a positive number";
       }

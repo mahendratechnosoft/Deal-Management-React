@@ -10,6 +10,9 @@ import axiosInstance from "../../BaseComponet/axiosInstance";
 import { showDeleteConfirmation } from "../../BaseComponet/alertUtils"; // Import the alert utility
 import GsuiteHistoryModal from "./GsuiteHistoryModal";
 import { hasPermission } from "../../BaseComponet/permissions";
+// Add this import at the top
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 
 function EditAmcModal({ amc, onClose, onSuccess }) {
   const [activeTab, setActiveTab] = useState("basic");
@@ -538,16 +541,38 @@ const handleDeleteHistory = async (amcHistoryId, sequence) => {
                         className="text-sm"
                       />
 
-                      <GlobalInputField
-                        label="Phone Number"
-                        name="phoneNumber"
-                        value={basicInfo.phoneNumber}
-                        onChange={(e) =>
-                          handleBasicInfoChange("phoneNumber", e.target.value)
-                        }
-                        placeholder="9876543210"
-                        className="text-sm"
-                      />
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                          <span>Phone Number</span>
+                          <span className="text-red-500 ml-1">*</span>
+                        </label>
+                        <div className="phone-input-wrapper">
+                          <PhoneInput
+                            country={"in"}
+                            value={basicInfo.phoneNumber || ""}
+                            onChange={(value) =>
+                              handleBasicInfoChange("phoneNumber", value)
+                            }
+                            enableSearch={true}
+                            placeholder="Enter phone number"
+                            inputClass="w-full h-10 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            buttonClass="!border-r-0 !rounded-l"
+                            inputStyle={{
+                              width: "100%",
+                              height: "40px",
+                              borderLeft: "none",
+                              borderTopLeftRadius: "0",
+                              borderBottomLeftRadius: "0",
+                            }}
+                            buttonStyle={{
+                              borderRight: "none",
+                              borderTopRightRadius: "0",
+                              borderBottomRightRadius: "0",
+                              height: "40px",
+                            }}
+                          />
+                        </div>
+                      </div>
 
                       <GlobalInputField
                         label="Website URL"
@@ -727,119 +752,125 @@ const handleDeleteHistory = async (amcHistoryId, sequence) => {
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-gray-200">
-                              {amcHistory.map((history) => {
-  const dueDateStatus = getDueDateStatus(history.amcEndDate);
-  const isPastDue = dueDateStatus.isPastDue;
-  const isNearDue = dueDateStatus.status === "near-due";
+                                {amcHistory.map((history) => {
+                                  const dueDateStatus = getDueDateStatus(
+                                    history.amcEndDate
+                                  );
+                                  const isPastDue = dueDateStatus.isPastDue;
+                                  const isNearDue =
+                                    dueDateStatus.status === "near-due";
 
-                                return (
-                                  <tr key={history.acmHistoryId}
-                                    className=
-                                    {`${
-                                      isPastDue
-                                        ? "border-l-4 border-l-red-500"
-                                        : isNearDue
-                                        ? "border-l-4 border-l-yellow-500"
-                                        : ""
-                                    } hover:bg-gray-50`}
+                                  return (
+                                    <tr
+                                      key={history.acmHistoryId}
+                                      className={`${
+                                        isPastDue
+                                          ? "border-l-4 border-l-red-500"
+                                          : isNearDue
+                                          ? "border-l-4 border-l-yellow-500"
+                                          : ""
+                                      } hover:bg-gray-50`}
+                                      onClick={() =>
+                                        handleEditAmcHistory(history)
+                                      }
                                     >
-                                    <td className="px-4 py-2 text-sm">
-                                      {history.sequence}
-                                    </td>
-                                    <td className="px-4 py-2 text-sm">
-                                      {formatDate(history.amcStartDate)}
-                                    </td>
-                                    <td className="px-4 py-2 text-sm">
-                                      <div
-                                        className={`${
-                                          isPastDue
-                                            ? "text-red-600 font-semibold"
-                                            : isNearDue
-                                            ? "text-yellow-600 font-semibold"
-                                            : ""
-                                        }`}
-                                      >
-                                        {formatDate(history.amcEndDate)}
-                                        {dueDateStatus.message && (
-                                          <span
-                                            className={`block text-xs mt-1 ${
-                                              isPastDue
-                                                ? "text-red-500"
-                                                : isNearDue
-                                                ? "text-yellow-500"
-                                                : ""
-                                            }`}
-                                          >
-                                            {dueDateStatus.message}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </td>
-                                    <td className="px-4 py-2 text-sm">
-                                      {history.amcAmount?.toLocaleString()}
-                                    </td>
-                                    <td className="px-4 py-2 text-sm">
-                                      <span
-                                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                          history.paid
-                                            ? "bg-green-100 text-green-800"
-                                            : "bg-red-100 text-red-800"
-                                        }`}
-                                      >
-                                        {history.paid ? "Paid" : "Unpaid"}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-2 text-sm">
-                                      <div className="flex gap-1">
-                                        <button
-                                          onClick={() =>
-                                            handleEditAmcHistory(history)
-                                          }
-                                          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                                          title="Edit"
+                                      <td className="px-4 py-2 text-sm">
+                                        {history.sequence}
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        {formatDate(history.amcStartDate)}
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        <div
+                                          className={`${
+                                            isPastDue
+                                              ? "text-red-600 font-semibold"
+                                              : isNearDue
+                                              ? "text-yellow-600 font-semibold"
+                                              : ""
+                                          }`}
                                         >
-                                          <svg
-                                            className="w-3 h-3"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                            />
-                                          </svg>
-                                        </button>
-                                        <button
-                                          onClick={() =>
-                                            handleDeleteHistory(
-                                              history.acmHistoryId,
-                                              history.sequence
-                                            )
-                                          }
-                                          className="p-1 text-red-600 hover:bg-red-50 rounded"
-                                          title="Delete"
+                                          {formatDate(history.amcEndDate)}
+                                          {dueDateStatus.message && (
+                                            <span
+                                              className={`block text-xs mt-1 ${
+                                                isPastDue
+                                                  ? "text-red-500"
+                                                  : isNearDue
+                                                  ? "text-yellow-500"
+                                                  : ""
+                                              }`}
+                                            >
+                                              {dueDateStatus.message}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        {history.amcAmount?.toLocaleString()}
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        <span
+                                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                            history.paid
+                                              ? "bg-green-100 text-green-800"
+                                              : "bg-red-100 text-red-800"
+                                          }`}
                                         >
-                                          <svg
-                                            className="w-3 h-3"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
+                                          {history.paid ? "Paid" : "Unpaid"}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        <div className="flex gap-1">
+                                          <button
+                                            onClick={() =>
+                                              handleEditAmcHistory(history)
+                                            }
+                                            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                                            title="Edit"
                                           >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                            />
-                                          </svg>
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                );
+                                            <svg
+                                              className="w-3 h-3"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                              />
+                                            </svg>
+                                          </button>
+                                          <button
+                                            onClick={() =>
+                                              handleDeleteHistory(
+                                                history.acmHistoryId,
+                                                history.sequence
+                                              )
+                                            }
+                                            className="p-1 text-red-600 hover:bg-red-50 rounded"
+                                            title="Delete"
+                                          >
+                                            <svg
+                                              className="w-3 h-3"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                              />
+                                            </svg>
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
                                 })}
                               </tbody>
                             </table>
@@ -931,6 +962,9 @@ const handleDeleteHistory = async (amcHistoryId, sequence) => {
                                           ? "border-l-4 border-l-yellow-500"
                                           : ""
                                       } hover:bg-gray-50`}
+                                      onClick={() =>
+                                        handleEditDomainHistory(domain)
+                                      }
                                     >
                                       <td className="px-4 py-2 text-sm">
                                         {domain.sequence}
@@ -1132,6 +1166,9 @@ const handleDeleteHistory = async (amcHistoryId, sequence) => {
                                           ? "border-l-4 border-l-yellow-500"
                                           : ""
                                       } hover:bg-gray-50`}
+                                      onClick={() =>
+                                        handleEditGsuiteHistory(gsuite)
+                                      }
                                     >
                                       <td className="px-4 py-2 text-sm">
                                         {gsuite.sequence}
@@ -1182,7 +1219,7 @@ const handleDeleteHistory = async (amcHistoryId, sequence) => {
                                         {gsuite.totalLicenses}
                                       </td>
                                       <td className="px-4 py-2 text-sm">
-                                        ₹{gsuite.gsuitAmount}
+                                        {gsuite.gsuitAmount}
                                       </td>
                                       <td className="px-4 py-2 text-sm">
                                         <span

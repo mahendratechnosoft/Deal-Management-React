@@ -62,7 +62,6 @@ function CreateAmcModal({ onClose, onSuccess }) {
       paid: false,
     },
 
-    // GSuite Details (optional - can be null)
     gsuiteDetails: {
       domainName: "",
       platform: "",
@@ -72,10 +71,10 @@ function CreateAmcModal({ onClose, onSuccess }) {
       adminPassword: "",
       totalLicenses: "",
       gsuitAmount: "",
-      paidBy: "",
+      paidBy: "ADMIN",
       purchasedViaReseller: false,
       resellerName: "",
-      gsuitRenewalCycle: "",
+      gsuitRenewalCycle: null,
       sequence: 1,
       paid: false,
     },
@@ -155,6 +154,8 @@ function CreateAmcModal({ onClose, onSuccess }) {
 
   const platformOptions = [
     { value: "Google Workspace", label: "Google Workspace" },
+    { value: "Hostinger", label: "Hostinger" },
+    { value: "Godaddy", label: "Godaddy" },
     { value: "Microsoft 365", label: "Microsoft 365" },
     { value: "Zoho Workplace", label: "Zoho Workplace" },
   ];
@@ -660,11 +661,6 @@ function CreateAmcModal({ onClose, onSuccess }) {
       newErrors["amcInfo.assingedTo"] = "Assigned to is required";
     }
 
-    // REMOVED: AMC History Info validation (no longer required)
-
-    // REMOVED: Domain History Info validation (no longer required)
-
-    // NEW: Validate GSuite Details (keep validation but only for format, not for required)
     if (
       formData.gsuiteDetails.totalLicenses &&
       (isNaN(formData.gsuiteDetails.totalLicenses) ||
@@ -700,158 +696,173 @@ function CreateAmcModal({ onClose, onSuccess }) {
     return true;
   };
 
-  // Handle form submission
-  // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+   e.preventDefault();
 
-    if (!validateForm()) {
-      toast.error("Please fix the form errors before submitting.", {});
-      return;
-    }
+   if (!validateForm()) {
+     toast.error("Please fix the form errors before submitting.", {});
+     return;
+   }
 
-    setLoading(true);
-    try {
-      // Prepare the complete payload matching the required structure
-      const payload = {
-        amcInfo: {
-          adminId: formData.amcInfo.adminId || null,
-          employeeId: formData.amcInfo.employeeId || null,
-          clinetName: formData.amcInfo.clinetName || "",
-          companyName: formData.amcInfo.companyName || "",
-          contactPersonName: formData.amcInfo.contactPersonName || "",
-          email: formData.amcInfo.email || "",
-          phoneNumber: formData.amcInfo.phoneNumber || "",
-          websiteURL: formData.amcInfo.websiteURL || "",
-          technology: formData.amcInfo.technology || "",
-          hostingProvider: formData.amcInfo.hostingProvider || "",
-          domainProvider: formData.amcInfo.domainProvider || "",
-          assingedTo: formData.amcInfo.assingedTo || "",
-        },
-      };
+   setLoading(true);
+   try {
+     // Prepare the complete payload matching the required structure
+     const payload = {
+       amcInfo: {
+         adminId: formData.amcInfo.adminId || null,
+         employeeId: formData.amcInfo.employeeId || null,
+         clinetName: formData.amcInfo.clinetName || "",
+         companyName: formData.amcInfo.companyName || "",
+         contactPersonName: formData.amcInfo.contactPersonName || "",
+         email: formData.amcInfo.email || "",
+         phoneNumber: formData.amcInfo.phoneNumber || "",
+         websiteURL: formData.amcInfo.websiteURL || "",
+         technology: formData.amcInfo.technology || "",
+         hostingProvider: formData.amcInfo.hostingProvider || "",
+         domainProvider: formData.amcInfo.domainProvider || "",
+         assingedTo: formData.amcInfo.assingedTo || "",
+       },
+     };
 
-      // Check if AMC History Info has any data
-      const isAmcHistoryFilled =
-        formData.amcHistoryInfo.amcStartDate ||
-        formData.amcHistoryInfo.amcEndDate ||
-        formData.amcHistoryInfo.amcAmount ||
-        formData.amcHistoryInfo.amcScope;
+     // Check if AMC History Info has any data
+     const isAmcHistoryFilled =
+       formData.amcHistoryInfo.amcStartDate ||
+       formData.amcHistoryInfo.amcEndDate ||
+       formData.amcHistoryInfo.amcAmount ||
+       formData.amcHistoryInfo.amcScope;
 
-      if (isAmcHistoryFilled) {
-        payload.amcHistoryInfo = {
-          amcStartDate: formData.amcHistoryInfo.amcStartDate || null,
-          amcEndDate: formData.amcHistoryInfo.amcEndDate || null,
-          amcAmount: formData.amcHistoryInfo.amcAmount
-            ? parseFloat(formData.amcHistoryInfo.amcAmount)
-            : null,
-          amcScope: formData.amcHistoryInfo.amcScope || "",
-          amcRecycleType: formData.amcHistoryInfo.amcRecycleType || "",
-          sequence: formData.amcHistoryInfo.sequence || 1,
-        };
-      } else {
-        payload.amcHistoryInfo = null;
-      }
+     if (isAmcHistoryFilled) {
+       payload.amcHistoryInfo = {
+         amcStartDate: formData.amcHistoryInfo.amcStartDate || null,
+         amcEndDate: formData.amcHistoryInfo.amcEndDate || null,
+         amcAmount: formData.amcHistoryInfo.amcAmount
+           ? parseFloat(formData.amcHistoryInfo.amcAmount)
+           : null,
+         amcScope: formData.amcHistoryInfo.amcScope || "",
+         amcRecycleType: formData.amcHistoryInfo.amcRecycleType || "",
+         sequence: formData.amcHistoryInfo.sequence || 1,
+       };
+     } else {
+       payload.amcHistoryInfo = null;
+     }
 
-      // Check if Domain History Info has any data
-      const isDomainHistoryFilled =
-        formData.amcDomainHistoryInfo.domainStartDate ||
-        formData.amcDomainHistoryInfo.domainRenewalDate ||
-        formData.amcDomainHistoryInfo.domainAmount;
+     // Check if Domain History Info has any data
+     const isDomainHistoryFilled =
+       formData.amcDomainHistoryInfo.domainStartDate ||
+       formData.amcDomainHistoryInfo.domainRenewalDate ||
+       formData.amcDomainHistoryInfo.domainAmount;
 
-      if (isDomainHistoryFilled) {
-        payload.amcDomainHistoryInfo = {
-          domainStartDate:
-            formData.amcDomainHistoryInfo.domainStartDate || null,
-          domainRenewalDate:
-            formData.amcDomainHistoryInfo.domainRenewalDate || null,
-          domainAmount: formData.amcDomainHistoryInfo.domainAmount || null,
-          domainRenewalCycle:
-            formData.amcDomainHistoryInfo.domainRenewalCycle || "",
-          sequence: formData.amcDomainHistoryInfo.sequence || 1,
-        };
-      } else {
-        payload.amcDomainHistoryInfo = null;
-      }
+     if (isDomainHistoryFilled) {
+       payload.amcDomainHistoryInfo = {
+         domainStartDate: formData.amcDomainHistoryInfo.domainStartDate || null,
+         domainRenewalDate:
+           formData.amcDomainHistoryInfo.domainRenewalDate || null,
+         domainAmount: formData.amcDomainHistoryInfo.domainAmount || null,
+         domainRenewalCycle:
+           formData.amcDomainHistoryInfo.domainRenewalCycle || "",
+         sequence: formData.amcDomainHistoryInfo.sequence || 1,
+       };
+     } else {
+       payload.amcDomainHistoryInfo = null;
+     }
 
-      // Check if GSuite Details has any data
-      const isGSuiteFilled =
-        formData.gsuiteDetails.domainName ||
-        formData.gsuiteDetails.gsuitStartDate ||
-        formData.gsuiteDetails.gsuitRenewalDate ||
-        formData.gsuiteDetails.adminEmail ||
-        formData.gsuiteDetails.adminPassword ||
-        formData.gsuiteDetails.totalLicenses ||
-        formData.gsuiteDetails.gsuitAmount;
+     // Check if ANY GSuite field has data
+     const isAnyGSuiteFieldFilled = Object.entries(formData.gsuiteDetails).some(
+       ([key, value]) => {
+         // Skip these fields as they don't indicate user intent to fill GSuite
+         if (
+           key === "sequence" ||
+           key === "paid" ||
+           key === "purchasedViaReseller" ||
+           key === "resellerName" ||
+           key === "paidBy" || // We'll handle this separately
+           key === "gsuitRenewalCycle" // Optional field
+         ) {
+           return false;
+         }
 
-      if (isGSuiteFilled) {
-        payload.amcGsuitHistory = {
-          domainName: formData.gsuiteDetails.domainName || "",
-          platform: formData.gsuiteDetails.platform || "",
-          gsuitStartDate: formData.gsuiteDetails.gsuitStartDate || null,
-          gsuitRenewalDate: formData.gsuiteDetails.gsuitRenewalDate || null,
-          adminEmail: formData.gsuiteDetails.adminEmail || "",
-          adminPassword: formData.gsuiteDetails.adminPassword || "",
-          totalLicenses: formData.gsuiteDetails.totalLicenses
-            ? parseInt(formData.gsuiteDetails.totalLicenses)
-            : null,
-          gsuitAmount: formData.gsuiteDetails.gsuitAmount || null,
-          paidBy: formData.gsuiteDetails.paidBy || "",
-          purchasedViaReseller:
-            formData.gsuiteDetails.purchasedViaReseller || false,
-          resellerName: formData.gsuiteDetails.resellerName || "",
-          gsuitRenewalCycle: formData.gsuiteDetails.gsuitRenewalCycle || "",
-          sequence: 1,
-        };
-      } else {
-        payload.amcGsuitHistory = null;
-      }
+         // Check if field has a non-empty value
+         if (typeof value === "string") {
+           return value.trim() !== "";
+         } else if (typeof value === "number") {
+           return value > 0;
+         }
+         return Boolean(value);
+       }
+     );
 
-      console.log(
-        "Sending AMC creation payload:",
-        JSON.stringify(payload, null, 2)
-      );
+     // If ANY GSuite field is filled, include the entire object with ADMIN as default
+     if (isAnyGSuiteFieldFilled) {
+       payload.amcGsuitHistory = {
+         domainName: formData.gsuiteDetails.domainName || "",
+         platform: formData.gsuiteDetails.platform || "",
+         gsuitStartDate: formData.gsuiteDetails.gsuitStartDate || null,
+         gsuitRenewalDate: formData.gsuiteDetails.gsuitRenewalDate || null,
+         adminEmail: formData.gsuiteDetails.adminEmail || "",
+         adminPassword: formData.gsuiteDetails.adminPassword || "",
+         totalLicenses: formData.gsuiteDetails.totalLicenses
+           ? parseInt(formData.gsuiteDetails.totalLicenses)
+           : null,
+         gsuitAmount: formData.gsuiteDetails.gsuitAmount || null,
+         paidBy: "ADMIN", // Always set to ADMIN when GSuite is included
+         purchasedViaReseller:
+           formData.gsuiteDetails.purchasedViaReseller || false,
+         resellerName: formData.gsuiteDetails.resellerName || "",
+         gsuitRenewalCycle: formData.gsuiteDetails.gsuitRenewalCycle || "",
+         sequence: 1,
+       };
+     } else {
+       // If NO GSuite fields are filled, send null
+       payload.amcGsuitHistory = null;
+     }
 
-      // Send single POST request with all data
-      const response = await axiosInstance.post("createAMC", payload);
+     console.log(
+       "Sending AMC creation payload:",
+       JSON.stringify(payload, null, 2)
+     );
 
-      if (response.data) {
-        console.log("AMC created successfully:", response.data);
-        toast.success("AMC created successfully!");
+     // Send single POST request with all data
+     const response = await axiosInstance.post("createAMC", payload);
 
-        onSuccess(response.data);
-        onClose();
-      } else {
-        throw new Error("No response data received");
-      }
-    } catch (error) {
-      console.error("Error creating AMC:", error);
+     if (response.data) {
+       console.log("AMC created successfully:", response.data);
+       toast.success("AMC created successfully!");
 
-      if (error.response) {
-        if (error.response.status === 400) {
-          toast.error(
-            "Validation error: " +
-              (error.response.data?.message || "Check your input")
-          );
-        } else if (error.response.status === 500) {
-          toast.error(
-            "Server error: " +
-              (error.response.data?.message || "Internal server error")
-          );
-        } else {
-          toast.error(
-            "Failed to create AMC: " +
-              (error.response.data?.message || "Unknown error")
-          );
-        }
-      } else if (error.request) {
-        toast.error("Network error. Please check your connection.");
-      } else {
-        toast.error("Failed to create AMC. Please try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+       onSuccess(response.data);
+       onClose();
+     } else {
+       throw new Error("No response data received");
+     }
+   } catch (error) {
+     console.error("Error creating AMC:", error);
+
+     if (error.response) {
+       if (error.response.status === 400) {
+         toast.error(
+           "Validation error: " +
+             (error.response.data?.message || "Check your input")
+         );
+       } else if (error.response.status === 500) {
+         toast.error(
+           "Server error: " +
+             (error.response.data?.message || "Internal server error")
+         );
+       } else {
+         toast.error(
+           "Failed to create AMC: " +
+             (error.response.data?.message || "Unknown error")
+         );
+       }
+     } else if (error.request) {
+       toast.error("Network error. Please check your connection.");
+     } else {
+       toast.error("Failed to create AMC. Please try again.");
+     }
+   } finally {
+     setLoading(false);
+   }
+ };
+
   // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
     return new Date().toISOString().split("T")[0];
@@ -1305,7 +1316,6 @@ function CreateAmcModal({ onClose, onSuccess }) {
             (errorFieldRefs.current["gsuiteDetails.domainName"] = el)
           }
         />
-
         <GlobalSelectField
           label="Platform"
           name="platform"
@@ -1319,7 +1329,6 @@ function CreateAmcModal({ onClose, onSuccess }) {
           ]}
           className="text-sm"
         />
-
         <GlobalInputField
           label="GSuite Start Date"
           name="gsuitStartDate"
@@ -1332,7 +1341,6 @@ function CreateAmcModal({ onClose, onSuccess }) {
             (errorFieldRefs.current["gsuiteDetails.gsuitStartDate"] = el)
           }
         />
-
         <GlobalInputField
           label="GSuite Renewal Date"
           name="gsuitRenewalDate"
@@ -1348,7 +1356,6 @@ function CreateAmcModal({ onClose, onSuccess }) {
             (errorFieldRefs.current["gsuiteDetails.gsuitRenewalDate"] = el)
           }
         />
-
         <GlobalInputField
           label="Admin Email"
           name="adminEmail"
@@ -1363,8 +1370,8 @@ function CreateAmcModal({ onClose, onSuccess }) {
           ref={(el) =>
             (errorFieldRefs.current["gsuiteDetails.adminEmail"] = el)
           }
+          autoComplete="new-email"
         />
-
         <div className="space-y-2">
           <label className="text-sm font-semibold text-gray-700">
             Admin Password
@@ -1379,6 +1386,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
               }
               placeholder="Enter admin password"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 pr-10 text-sm"
+              autoComplete="new-password"
             />
             <button
               type="button"
@@ -1442,7 +1450,6 @@ function CreateAmcModal({ onClose, onSuccess }) {
             (errorFieldRefs.current["gsuiteDetails.totalLicenses"] = el)
           }
         />
-
         <GlobalInputField
           label="GSuite Amount"
           name="gsuitAmount"
@@ -1464,22 +1471,22 @@ function CreateAmcModal({ onClose, onSuccess }) {
         <GlobalSelectField
           label="Paid By"
           name="paidBy"
-          value={formData.gsuiteDetails.paidBy || ""}
+          value={formData.gsuiteDetails.paidBy || "ADMIN"} // Default to ADMIN
           onChange={(e) =>
             handleChange("gsuiteDetails", "paidBy", e.target.value)
           }
-          options={[
-            { value: "", label: "Select payment method" },
-            ...paidByOptions,
-          ]}
+          options={paidByOptions}
           className="text-sm"
         />
 
         <GlobalSelectField
           label="GSuite Renewal Cycle"
           name="gsuitRenewalCycle"
-          value={formData.gsuiteDetails.gsuitRenewalCycle || ""}
-          onChange={(e) => handleGSuiteRenewalCycleChange(e.target.value)}
+          value={formData.gsuiteDetails.gsuitRenewalCycle || ""} // Handle null
+          onChange={(e) => {
+            const value = e.target.value === "" ? null : e.target.value;
+            handleGSuiteRenewalCycleChange(value);
+          }}
           options={[
             { value: "", label: "Select renewal cycle" },
             ...gsuiteRenewalCycleOptions,
