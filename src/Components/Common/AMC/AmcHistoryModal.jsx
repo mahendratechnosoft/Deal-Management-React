@@ -74,78 +74,83 @@ const AmcHistoryModal = ({
   // Replace the useEffect that initializes form data with this:
 
   // Initialize form with initialData
+  // Replace the problematic useEffect with this:
+
+  // Initialize form with initialData
   useEffect(() => {
     if (isOpen) {
-      // Reset validation states when modal opens
+      // Reset form state
+      setFormData({
+        amcStartDate: "",
+        amcEndDate: "",
+        amcAmount: "",
+        amcScope: "",
+        amcRecycleType: "Yearly",
+        sequence: 1,
+        paid: false,
+      });
+
       setErrors({});
       setSequenceError("");
       setSequenceValid(false);
       setCheckingSequence(false);
 
-      if (isEditMode && initialData) {
-        // Edit mode: use initial data
-        setFormData({
-          amcStartDate: initialData.amcStartDate || "",
-          amcEndDate: initialData.amcEndDate || "",
-          amcAmount: initialData.amcAmount || "",
-          amcScope: initialData.amcScope || "",
-          amcRecycleType: initialData.amcRecycleType || "Yearly",
-          sequence: initialData.sequence || 1,
-          paid: initialData.paid || false,
-        });
+      const initializeForm = async () => {
+        if (isEditMode && initialData) {
+          // Edit mode: use initial data
+          setFormData({
+            amcStartDate: initialData.amcStartDate || "",
+            amcEndDate: initialData.amcEndDate || "",
+            amcAmount: initialData.amcAmount || "",
+            amcScope: initialData.amcScope || "",
+            amcRecycleType: initialData.amcRecycleType || "Yearly",
+            sequence: initialData.sequence || 1,
+            paid: initialData.paid || false,
+          });
 
-        // Trigger sequence validation after a short delay
-        setTimeout(() => {
-          const sequence = initialData.sequence || 1;
-          setSequenceValid(true);
-          checkSequenceUnique(sequence);
-        }, 100);
-      } else {
-        // CREATE MODE: Wait for existingSequences to be fetched
-        const initializeForm = async () => {
-          // First ensure we have existing sequences
-          if (existingSequences.length === 0 && !isEditMode) {
-            // Force fetch if empty (for fresh modals)
-            await fetchExistingSequences();
-          }
-
-          const defaultFormData = {
-            amcStartDate: "",
-            amcEndDate: "",
-            amcAmount: "",
-            amcScope: "",
-            amcRecycleType: "Yearly",
-            sequence: 1,
-            paid: false,
-          };
-
-          // Calculate next sequence based on fetched data
-          const sequencesToUse =
-            existingSequences.length > 0 ? existingSequences : []; // Empty array if still no data
-
-          if (sequencesToUse.length > 0) {
-            const maxSequence = Math.max(
-              ...sequencesToUse.map((item) => item.sequence)
-            );
-            const nextSequence = maxSequence + 1;
-            defaultFormData.sequence = nextSequence;
-          } else {
-            // No existing sequences, start at 1
-            defaultFormData.sequence = 1;
-          }
-
-          setFormData(defaultFormData);
-
-          // Check sequence uniqueness after setting
+          // Trigger sequence validation after a short delay
           setTimeout(() => {
-            checkSequenceUnique(defaultFormData.sequence);
+            const sequence = initialData.sequence || 1;
+            setSequenceValid(true);
+            checkSequenceUnique(sequence);
           }, 100);
-        };
+        } else {
+          // CREATE MODE: Fetch sequences first, then set initial value
+          try {
+            // Fetch existing sequences before setting default value
+            const sequences = await fetchExistingSequences();
 
-        initializeForm();
-      }
+            let nextSequence = 1;
+            if (sequences && sequences.length > 0) {
+              const maxSequence = Math.max(
+                ...sequences.map((item) => item.sequence)
+              );
+              nextSequence = maxSequence + 1;
+            }
+
+            setFormData((prev) => ({
+              ...prev,
+              sequence: nextSequence,
+            }));
+
+            // Check uniqueness
+            setTimeout(() => {
+              checkSequenceUnique(nextSequence);
+            }, 100);
+          } catch (error) {
+            // If fetch fails, default to 1
+            setFormData((prev) => ({
+              ...prev,
+              sequence: 1,
+            }));
+            checkSequenceUnique(1);
+          }
+        }
+      };
+
+      initializeForm();
     }
-  }, [isOpen, isEditMode, initialData]);
+  }, [isOpen, isEditMode, initialData, amcId]); // Added amcId dependency
 
   // Fetch all existing sequences for this AMC
   const fetchExistingSequences = async () => {
@@ -153,11 +158,14 @@ const AmcHistoryModal = ({
       const response = await axiosInstance.get(`getAllAMCHistoy/${amcId}`);
       if (response.data && Array.isArray(response.data)) {
         setExistingSequences(response.data);
+        return response.data; // Return the data
       }
+      return []; // Return empty array if no data
     } catch (error) {
       console.error("Error fetching existing sequences:", error);
       toast.error("Failed to load existing sequences");
       setExistingSequences([]);
+      return []; // Return empty array on error
     }
   };
 
@@ -371,19 +379,27 @@ const AmcHistoryModal = ({
   };
 
   // Auto-assign next sequence
+  // Auto-assign next sequence
   const handleAutoSequence = async () => {
     setAutoButtonLoading(true);
     try {
-      // Ensure we have the latest sequences
-      if (existingSequences.length === 0) {
-        await fetchExistingSequences();
+      // Always fetch fresh sequences
+      const sequences = await fetchExistingSequences();
+
+      let nextSequence = 1;
+      if (sequences.length > 0) {
+        const maxSequence = Math.max(...sequences.map((item) => item.sequence));
+        nextSequence = maxSequence + 1;
       }
 
-      const nextSequence = calculateNextSequence();
       setFormData((prev) => ({ ...prev, sequence: nextSequence }));
       await checkSequenceUnique(nextSequence);
     } catch (error) {
       toast.error("Failed to calculate next sequence");
+      // Fallback: try to calculate from existingSequences state
+      const nextSequence = calculateNextSequence();
+      setFormData((prev) => ({ ...prev, sequence: nextSequence }));
+      checkSequenceUnique(nextSequence);
     } finally {
       setAutoButtonLoading(false);
     }
@@ -629,12 +645,11 @@ const AmcHistoryModal = ({
                 </div>
 
                 {checkingSequence && (
-                  <p className="text-xs text-blue-500 mt-1 flex items-center gap-1">
+                  <div className="text-xs text-blue-500 mt-1 flex items-center gap-1">
                     <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                     Checking sequence availability...
-                  </p>
+                  </div>
                 )}
-
                 {/* Show existing sequences for both modes */}
                 {existingSequences.length > 0 && (
                   <p className="text-xs text-gray-500 mt-1">
@@ -648,7 +663,7 @@ const AmcHistoryModal = ({
 
                 {/* Show different messages for edit vs create mode */}
                 {sequenceValid && !checkingSequence && (
-                  <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
+                  <div className="text-xs text-green-500 mt-1 flex items-center gap-1">
                     <svg
                       className="w-3 h-3"
                       fill="none"
@@ -665,7 +680,7 @@ const AmcHistoryModal = ({
                     {isEditMode
                       ? `Sequence number ${formData.sequence} is valid (current sequence)`
                       : `Sequence number ${formData.sequence} is available`}
-                  </p>
+                  </div>
                 )}
               </div>
 

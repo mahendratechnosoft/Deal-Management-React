@@ -41,13 +41,15 @@ function GsuiteHistoryModal({
   const [sequenceValid, setSequenceValid] = useState(false);
   const [existingSequences, setExistingSequences] = useState([]);
   const [autoButtonLoading, setAutoButtonLoading] = useState(false);
+  const [initializing, setInitializing] = useState(false);
   const canEdit = hasPermission("amc", "Edit");
   const canCreate = hasPermission("amc", "Create");
-
 
   // Options
   const platformOptions = [
     { value: "Google Workspace", label: "Google Workspace" },
+    { value: "Hostinger", label: "Hostinger" },
+    { value: "Godaddy", label: "Godaddy" },
     { value: "Microsoft 365", label: "Microsoft 365" },
     { value: "Zoho Workplace", label: "Zoho Workplace" },
   ];
@@ -100,8 +102,6 @@ function GsuiteHistoryModal({
       fetchExistingSequences();
     }
   }, [isOpen, amcId]);
-
-  // Initialize form data
   // Initialize form data
   useEffect(() => {
     if (isOpen) {
@@ -110,81 +110,102 @@ function GsuiteHistoryModal({
       setSequenceError("");
       setSequenceValid(false);
       setCheckingSequence(false);
-      setAutoButtonLoading(false); // Add this
+      setAutoButtonLoading(false);
 
-      if (isEditMode && initialData) {
-        // Edit mode: use initial data
-        setFormData({
-          domainName: initialData.domainName || "",
-          platform: initialData.platform || "Google Workspace",
-          gsuitStartDate: initialData.gsuitStartDate
-            ? initialData.gsuitStartDate.split("T")[0]
-            : "",
-          gsuitRenewalDate: initialData.gsuitRenewalDate
-            ? initialData.gsuitRenewalDate.split("T")[0]
-            : "",
-          adminEmail: initialData.adminEmail || "",
-          adminPassword: initialData.adminPassword || "",
-          totalLicenses: initialData.totalLicenses || "",
-          gsuitAmount: initialData.gsuitAmount || "",
-          paidBy: initialData.paidBy || "ADMIN",
-          purchasedViaReseller: initialData.purchasedViaReseller || false,
-          resellerName: initialData.resellerName || "",
-          gsuitRenewalCycle: initialData.gsuitRenewalCycle || "YEARLY",
-          sequence: initialData.sequence || 1,
-          paid: initialData.paid || false,
-        });
+      const initializeForm = async () => {
+        if (isEditMode && initialData) {
+          // Edit mode: use initial data
+          setFormData({
+            domainName: initialData.domainName || "",
+            platform: initialData.platform || "Google Workspace",
+            gsuitStartDate: initialData.gsuitStartDate
+              ? initialData.gsuitStartDate.split("T")[0]
+              : "",
+            gsuitRenewalDate: initialData.gsuitRenewalDate
+              ? initialData.gsuitRenewalDate.split("T")[0]
+              : "",
+            adminEmail: initialData.adminEmail || "",
+            adminPassword: initialData.adminPassword || "",
+            totalLicenses: initialData.totalLicenses || "",
+            gsuitAmount: initialData.gsuitAmount || "",
+            paidBy: initialData.paidBy || "ADMIN",
+            purchasedViaReseller: initialData.purchasedViaReseller || false,
+            resellerName: initialData.resellerName || "",
+            gsuitRenewalCycle: initialData.gsuitRenewalCycle || "YEARLY",
+            sequence: initialData.sequence || 1,
+            paid: initialData.paid || false,
+          });
 
-        // Trigger sequence validation after a short delay
-        setTimeout(() => {
-          const sequence = initialData.sequence || 1;
-          setSequenceValid(true);
-          checkSequenceUnique(sequence);
-        }, 100);
-      } else {
-        // CREATE MODE: Handle empty existingSequences
-        const initializeForm = () => {
-          const defaultFormData = {
-            domainName: "",
-            platform: "Google Workspace",
-            gsuitStartDate: "",
-            gsuitRenewalDate: "",
-            adminEmail: "",
-            adminPassword: "",
-            totalLicenses: "",
-            gsuitAmount: "",
-            paidBy: "ADMIN",
-            purchasedViaReseller: false,
-            resellerName: "",
-            gsuitRenewalCycle: "YEARLY",
-            sequence: 1, // Default to 1
-            paid: false,
-          };
-
-          // If we have existing sequences, calculate next sequence
-          if (existingSequences.length > 0) {
-            const maxSequence = Math.max(
-              ...existingSequences.map((item) => item.sequence)
-            );
-            const nextSequence = maxSequence + 1;
-            defaultFormData.sequence = nextSequence;
-          } else {
-            // No existing sequences, keep as 1
-            defaultFormData.sequence = 1;
-          }
-
-          setFormData(defaultFormData);
-
-          // Check sequence uniqueness after setting
+          // Trigger sequence validation after a short delay
           setTimeout(() => {
-            checkSequenceUnique(defaultFormData.sequence);
+            const sequence = initialData.sequence || 1;
+            setSequenceValid(true);
+            checkSequenceUnique(sequence);
           }, 100);
-        };
+        } else {
+          // CREATE MODE: Fetch sequences first, then set initial value
+          setInitializing(true); // Start loading
+          try {
+            // Fetch existing sequences before setting default value
+            const sequences = await fetchExistingSequences();
 
-        initializeForm();
-      }
+            let nextSequence = 1;
+            if (sequences && sequences.length > 0) {
+              const maxSequence = Math.max(
+                ...sequences.map((item) => item.sequence)
+              );
+              nextSequence = maxSequence + 1;
+            }
+
+            setFormData({
+              domainName: "",
+              platform: "Google Workspace",
+              gsuitStartDate: "",
+              gsuitRenewalDate: "",
+              adminEmail: "",
+              adminPassword: "",
+              totalLicenses: "",
+              gsuitAmount: "",
+              paidBy: "ADMIN",
+              purchasedViaReseller: false,
+              resellerName: "",
+              gsuitRenewalCycle: "YEARLY",
+              sequence: nextSequence,
+              paid: false,
+            });
+
+            // Check uniqueness
+            setTimeout(() => {
+              checkSequenceUnique(nextSequence);
+            }, 100);
+          } catch (error) {
+            // If fetch fails, default to 1
+            setFormData({
+              domainName: "",
+              platform: "Google Workspace",
+              gsuitStartDate: "",
+              gsuitRenewalDate: "",
+              adminEmail: "",
+              adminPassword: "",
+              totalLicenses: "",
+              gsuitAmount: "",
+              paidBy: "ADMIN",
+              purchasedViaReseller: false,
+              resellerName: "",
+              gsuitRenewalCycle: "YEARLY",
+              sequence: 1,
+              paid: false,
+            });
+            checkSequenceUnique(1);
+          } finally {
+            setInitializing(false); // End loading
+          }
+        }
+      };
+
+      initializeForm();
     }
-  }, [isOpen, isEditMode, initialData, existingSequences]);
+  }, [isOpen, isEditMode, initialData]);
 
   // Fetch all existing sequences from the API
   const fetchExistingSequences = async () => {
@@ -194,14 +215,16 @@ function GsuiteHistoryModal({
       );
       if (response.data && Array.isArray(response.data)) {
         setExistingSequences(response.data);
+        return response.data; // Return the data
       }
+      return []; // Return empty array if no data
     } catch (error) {
       console.error("Error fetching existing sequences:", error);
       toast.error("Failed to load existing sequences");
       setExistingSequences([]);
+      return []; // Return empty array on error
     }
   };
-
   // Calculate next available sequence
   const calculateNextSequence = () => {
     if (existingSequences.length === 0) {
@@ -388,26 +411,27 @@ function GsuiteHistoryModal({
   };
 
   // Auto-assign next sequence
+  // Update handleAutoSequence function
   const handleAutoSequence = async () => {
     setAutoButtonLoading(true);
     try {
-      let nextSequence;
+      // Always fetch fresh sequences
+      const sequences = await fetchExistingSequences();
 
-      if (existingSequences.length === 0) {
-        // No existing sequences, start with 1
-        nextSequence = 1;
-      } else {
-        const maxSequence = Math.max(
-          ...existingSequences.map((item) => item.sequence)
-        );
+      let nextSequence = 1;
+      if (sequences.length > 0) {
+        const maxSequence = Math.max(...sequences.map((item) => item.sequence));
         nextSequence = maxSequence + 1;
       }
 
       setFormData((prev) => ({ ...prev, sequence: nextSequence }));
       await checkSequenceUnique(nextSequence);
     } catch (error) {
-      console.error("Error in auto sequence:", error);
       toast.error("Failed to calculate next sequence");
+      // Fallback: try to calculate from existingSequences state
+      const nextSequence = calculateNextSequence();
+      setFormData((prev) => ({ ...prev, sequence: nextSequence }));
+      checkSequenceUnique(nextSequence);
     } finally {
       setAutoButtonLoading(false);
     }
@@ -496,8 +520,8 @@ function GsuiteHistoryModal({
       toast.error("Please ensure sequence number is valid and unique");
       return;
     }
-    
-console.log("checking initial data**********", initialData);
+
+    console.log("checking initial data**********", initialData);
     setLoading(true);
     try {
       const payload = {
@@ -511,7 +535,6 @@ console.log("checking initial data**********", initialData);
         sequence: parseInt(formData.sequence),
         paid: formData.paid,
         amcId,
-
       };
 
       // Add amcGsuitHistoryId for update
@@ -520,7 +543,8 @@ console.log("checking initial data**********", initialData);
       }
 
       let response;
-      if (isEditMode && initialData?.amcGsuitHistoryId) {``
+      if (isEditMode && initialData?.amcGsuitHistoryId) {
+        ``;
         // Update existing
         response = await axiosInstance.put(`updateAMCGsuitHistory`, payload);
       } else {
@@ -630,9 +654,10 @@ console.log("checking initial data**********", initialData);
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Sequence Field */}
+              {/* Sequence Field */}
               <div className="md:col-span-2">
                 <div className="flex items-end gap-2">
-                  <div className="flex-1">
+                  <div className="flex-1 relative">
                     <GlobalInputField
                       label="Sequence Number"
                       name="sequence"
@@ -644,16 +669,21 @@ console.log("checking initial data**********", initialData);
                       min="1"
                       className="text-sm"
                       required
-                      disabled={checkingSequence}
+                      disabled={checkingSequence || initializing}
                     />
+                    {initializing && !isEditMode && (
+                      <div className="absolute right-3 top-8">
+                        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    )}
                   </div>
                   {!isEditMode && (
                     <button
                       type="button"
                       onClick={handleAutoSequence}
-                      disabled={autoButtonLoading || checkingSequence}
+                      disabled={autoButtonLoading || initializing}
                       className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1 h-10 transition-colors ${
-                        autoButtonLoading
+                        autoButtonLoading || initializing
                           ? "bg-blue-300 text-blue-700 cursor-wait"
                           : "bg-blue-100 text-blue-700 hover:bg-blue-200"
                       }`}
@@ -685,7 +715,15 @@ console.log("checking initial data**********", initialData);
                     </button>
                   )}
                 </div>
-                {checkingSequence && (
+
+                {initializing && !isEditMode && (
+                  <div className="text-xs text-blue-500 mt-1 flex items-center gap-1">
+                    <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    Loading existing sequences...
+                  </div>
+                )}
+
+                {checkingSequence && !initializing && (
                   <div className="text-xs text-blue-500 mt-1 flex items-center gap-1">
                     <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                     <span>Checking sequence availability...</span>
@@ -704,7 +742,7 @@ console.log("checking initial data**********", initialData);
                 )}
 
                 {/* Show different messages for edit vs create mode */}
-                {sequenceValid && !checkingSequence && (
+                {sequenceValid && !checkingSequence && !initializing && (
                   <div className="text-xs text-green-500 mt-1 flex items-center gap-1">
                     <svg
                       className="w-3 h-3"
@@ -987,6 +1025,7 @@ console.log("checking initial data**********", initialData);
                   disabled={
                     loading ||
                     checkingSequence ||
+                    initializing ||
                     (!isEditMode && !sequenceValid)
                   }
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 flex items-center gap-2"
