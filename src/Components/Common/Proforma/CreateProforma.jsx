@@ -13,6 +13,7 @@ import {
   FormTextarea,
 } from "../../BaseComponet/CustomeFormComponents";
 import CustomeImageUploader from "../../BaseComponet/CustomeImageUploader";
+import { PaymentModeMultiSelectWithExclusion } from "../../BaseComponet/CustomerFormInputs";
 
 function CreateProforma() {
   const navigate = useNavigate();
@@ -56,6 +57,7 @@ function CreateProforma() {
     termsAndConditions: "",
     companySignature: "",
     companyStamp: "",
+    paymentProfileIds: [],
   });
 
   const [isSameAsBilling, setIsSameAsBilling] = useState(true);
@@ -93,6 +95,16 @@ function CreateProforma() {
   const [itemOptions, setItemOptions] = useState([]);
   const [isItemLoading, setIsItemLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+
+  const [paymentProfileOptions, setPaymentProfileOptions] = useState([]);
+  const [isPaymentProfileLoading, setIsPaymentProfileLoading] = useState(false);
+  const [primaryPaymentModes, setPrimaryPaymentModes] = useState([]);
+  const [secondaryPaymentModes, setSecondaryPaymentModes] = useState([]);
+
+  // Add to your existing useState hooks:
+  const [paymentModeOptions, setPaymentModeOptions] = useState([]);
+  const [isPaymentModeLoading, setIsPaymentModeLoading] = useState(false);
+  const [selectedPaymentModes, setSelectedPaymentModes] = useState([]);
 
   const relatedOptions = [
     { value: "lead", label: "Lead" },
@@ -1081,6 +1093,133 @@ function CreateProforma() {
     }
   };
 
+  // =====================Payment MODE DROPDOWN CODE=====================
+
+
+  // Load payment mode options from API
+const loadPaymentModeOptions = async () => {
+  if (isPaymentModeLoading || paymentModeOptions.length > 0) return;
+  
+  setIsPaymentModeLoading(true);
+  try {
+    const response = await axiosInstance.get("getPaymentModesForInvoice");
+    const mappedOptions = response.data.map((profile) => ({
+      label: `${profile.profileName} (${profile.type})`,
+      value: profile.paymentProfileId,
+      profileName: profile.profileName,
+      type: profile.type,
+      isDefault: profile.default
+    }));
+    setPaymentModeOptions(mappedOptions);
+  } catch (error) {
+    console.error("Failed to load payment modes:", error);
+    toast.error("Failed to load payment modes.");
+  } finally {
+    setIsPaymentModeLoading(false);
+  }
+};
+
+// Handle payment mode selection change
+const handlePaymentModesChange = (selectedOptions) => {
+  const selected = selectedOptions || [];
+  setSelectedPaymentModes(selected);
+  
+  // Update the proformaInfo with paymentProfileIds
+  const paymentProfileIds = selected.map(option => option.value);
+  setProformaInfo(prev => ({
+    ...prev,
+    paymentProfileIds
+  }));
+};
+
+// Format selected payment modes for display
+const formatSelectedPaymentModes = () => {
+  if (selectedPaymentModes.length === 0) {
+    return "No payment modes selected";
+  }
+  
+  return selectedPaymentModes
+    .map(mode => `${mode.profileName} (${mode.type})`)
+    .join(", ");
+};
+
+// Get display value for the input field (shows names, not just count)
+const getPaymentModeDisplayValue = () => {
+  if (selectedPaymentModes.length === 0) {
+    return "";
+  }
+  
+  // Show names in the input field
+  return selectedPaymentModes
+    .map(mode => mode.profileName)
+    .join(", ");
+};
+
+  // Load payment profile options
+  const loadPaymentProfileOptions = async () => {
+    if (isPaymentProfileLoading || paymentProfileOptions.length > 0) return;
+
+    setIsPaymentProfileLoading(true);
+    try {
+      const response = await axiosInstance.get(
+        "getPaymentProfileListWithNameAndId"
+      );
+      const mappedOptions = response.data.map((profile) => ({
+        label: profile.paymentMode,
+        value: profile.paymentProfileId,
+        ...profile,
+      }));
+      setPaymentProfileOptions(mappedOptions);
+    } catch (error) {
+      console.error("Failed to load payment profiles:", error);
+      toast.error("Failed to load payment profiles.");
+    } finally {
+      setIsPaymentProfileLoading(false);
+    }
+  };
+
+  // Handle primary payment mode change
+  const handlePrimaryPaymentModesChange = (selectedOptions) => {
+    const selectedIds = selectedOptions
+      ? selectedOptions.map((opt) => opt.value)
+      : [];
+    setPrimaryPaymentModes(selectedOptions || []);
+
+    // Combine both primary and secondary for the API
+    const allPaymentProfileIds = [
+      ...selectedIds,
+      ...secondaryPaymentModes.map((p) => p.value),
+    ];
+    setProformaInfo((prev) => ({
+      ...prev,
+      paymentProfileIds: allPaymentProfileIds,
+    }));
+  };
+
+  // Handle secondary payment mode change
+  const handleSecondaryPaymentModesChange = (selectedOptions) => {
+    const selectedIds = selectedOptions
+      ? selectedOptions.map((opt) => opt.value)
+      : [];
+    setSecondaryPaymentModes(selectedOptions || []);
+
+    // Combine both primary and secondary for the API
+    const allPaymentProfileIds = [
+      ...primaryPaymentModes.map((p) => p.value),
+      ...selectedIds,
+    ];
+    setProformaInfo((prev) => ({
+      ...prev,
+      paymentProfileIds: allPaymentProfileIds,
+    }));
+  };
+
+  // Get selected payment mode labels for display
+  const getSelectedPaymentModeLabels = () => {
+    const allModes = [...primaryPaymentModes, ...secondaryPaymentModes];
+    return allModes.map((mode) => mode.label).join(", ");
+  };
+  // ============================
   return (
     <LayoutComponent>
       <div className="p-4 bg-gray-50 h-[90vh] overflow-y-auto">
@@ -1199,6 +1338,67 @@ function CreateProforma() {
                       isLoading={isAssignToLoading}
                       // className="md:col-span-2"
                     />
+
+                    {/* Payment Modes Dropdown */}
+                    <div className="md:col-span-2">
+                      <div className="relative">
+                        {/* Floating label with asterisk */}
+                        <label
+                          className="absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 
+        peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
+        peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none text-gray-700"
+                        >
+                          Payment Modes 
+                        </label>
+                        <Select
+                          value={selectedPaymentModes}
+                          onChange={handlePaymentModesChange}
+                          options={paymentModeOptions}
+                          onMenuOpen={loadPaymentModeOptions}
+                          isLoading={isPaymentModeLoading}
+                          isMulti
+                          isClearable
+                          placeholder="Select payment modes..."
+                          className="react-select-container peer"
+                          classNamePrefix="react-select"
+                          noOptionsMessage={({ inputValue }) =>
+                            inputValue
+                              ? "No payment modes found"
+                              : "Start typing to search..."
+                          }
+                          classNames={{
+                            control: (state) =>
+                              `border border-gray-300 rounded-md shadow-sm sm:text-sm pt-1
+           ${state.isFocused ? "border-blue-500 ring-1 ring-blue-500" : ""}
+           bg-white`,
+                            placeholder: () => "text-gray-400",
+                            multiValue: () => "bg-blue-100 rounded-full",
+                            multiValueLabel: () => "text-blue-800 text-sm",
+                            multiValueRemove: () =>
+                              "text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full",
+                          }}
+                          styles={{
+                            control: (base) => ({
+                              ...base,
+                              minHeight: "44px",
+                              fontSize: "0.875rem",
+                              padding: "0 4px",
+                            }),
+                            valueContainer: (base) => ({
+                              ...base,
+                              padding: "6px 8px 0 8px", // Added top padding for floating label
+                            }),
+                            multiValue: (base) => ({
+                              ...base,
+                              margin: "2px 4px 2px 0",
+                            }),
+                          }}
+                        />
+                      </div>
+                    
+                    </div>
+
+                  
                   </div>
                 </div>
 
