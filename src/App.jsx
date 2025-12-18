@@ -55,6 +55,7 @@ import { TaskTimerProvider } from "./Components/BaseComponet/TaskTimerContext.js
 
 import AmcList from "./Components/Common/AMC/AmcList.jsx";
 import PaymentModeList from "./Components/Common/Settings/Finance/PaymentMode/PaymentModeList.jsx";
+import VendorContactList from "./Components/Common/Vendor/VendorContact/VendorContactList.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -394,6 +395,15 @@ function App() {
                 </RoleBasedRoute>
               }
             />
+            <Route
+              path="/Admin/VendorContactList/:vendorId"
+              element={
+                <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                  <VendorContactList />
+                </RoleBasedRoute>
+              }
+            />
+
             {/* Employee Routes - Individual routes with layout */}
             <Route
               path="/Employee/LeadList"

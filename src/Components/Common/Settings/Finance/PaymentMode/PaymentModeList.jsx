@@ -4,6 +4,7 @@ import UpdatePaymentProfileModal from "./UpdatePaymentProfileModal";
 import axiosInstance from "../../../../BaseComponet/axiosInstance";
 import { showDeleteConfirmation } from "../../../../BaseComponet/alertUtils";
 import toast from "react-hot-toast";
+import { act } from "react";
 
 const PaymentModeList = () => {
   const [profiles, setProfiles] = useState([]);
@@ -71,7 +72,7 @@ const PaymentModeList = () => {
       setProfiles((prevProfiles) =>
         prevProfiles.map((profile) =>
           profile.paymentProfileId === id
-            ? { ...profile, isActive: newStatus }
+            ? { ...profile, active: newStatus }
             : profile
         )
       );
@@ -263,11 +264,11 @@ const PaymentModeList = () => {
                         <input
                           type="checkbox"
                           className="sr-only peer"
-                          checked={profile.active} // Using isActive based on entity
+                          checked={profile.active}
                           onChange={() =>
                             handleStatusToggle(
                               profile.paymentProfileId,
-                              profile.isActive
+                              profile.active
                             )
                           }
                         />
