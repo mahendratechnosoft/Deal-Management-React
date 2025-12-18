@@ -56,6 +56,7 @@ import { TaskTimerProvider } from "./Components/BaseComponet/TaskTimerContext.js
 import AmcList from "./Components/Common/AMC/AmcList.jsx";
 import PaymentModeList from "./Components/Common/Settings/Finance/PaymentMode/PaymentModeList.jsx";
 import VendorContactList from "./Components/Common/Vendor/VendorContact/VendorContactList.jsx";
+import VendorList from "./Components/Common/Vendor/VendorList.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -102,7 +103,6 @@ function App() {
             {/* Public Routes */}
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/register" element={<Register />} />
-
             {/* SUPER ADMIN Models */}
             <Route
               path="/SuperAdmin/AdminList"
@@ -120,7 +120,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             {/* Admin Routes - Individual routes with layout */}
             <Route
               path="/Admin/LeadList"
@@ -146,7 +145,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/EditEmployee/:employeeId"
               element={
@@ -179,7 +177,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/EditCustomer/:customerId"
               element={
@@ -188,7 +185,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/Payment"
               element={
@@ -197,7 +193,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/EditPayment/:paymentId"
               element={
@@ -206,7 +201,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/ViewPayment/:paymentId"
               element={
@@ -215,7 +209,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/DonorList"
               element={
@@ -224,7 +217,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/DonorEdit/:donorId"
               element={
@@ -233,7 +225,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/DonorList/:pageName"
               element={
@@ -242,7 +233,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/FamilyList"
               element={
@@ -251,7 +241,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/PreviewMatchingDonors/:familyId"
               element={
@@ -260,7 +249,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/EditFamily/:familyInfoId"
               element={
@@ -269,7 +257,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Proposal"
               element={
@@ -278,7 +265,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Proposal/Create"
               element={
@@ -287,7 +273,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Proposal/Edit/:proposalId"
               element={
@@ -296,7 +281,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Proposal/Preview/:proposalId"
               element={
@@ -305,7 +289,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Proforma"
               element={
@@ -314,7 +297,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Proforma/Create"
               element={
@@ -323,7 +305,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Proforma/Edit/:proformaInvoiceId"
               element={
@@ -332,7 +313,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Proforma/Preview/:proformaInvoiceId"
               element={
@@ -341,7 +321,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/TimesheetList"
               element={
@@ -350,7 +329,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/Invoice"
               element={
@@ -359,7 +337,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/ItemList"
               element={
@@ -368,7 +345,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Invoice/Preview/:proformaInvoiceId"
               element={
@@ -377,7 +353,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/TaskList"
               element={
@@ -386,7 +361,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/AMC"
               element={
@@ -400,6 +374,14 @@ function App() {
               element={
                 <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
                   <VendorContactList />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="/Admin/VendorList"
+              element={
+                <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                  <VendorList />
                 </RoleBasedRoute>
               }
             />
@@ -429,7 +411,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             {/* Common Routes */}
             {/* <Route
             path="/Employee/CreateLead"
@@ -448,7 +429,6 @@ function App() {
               </RoleBasedRoute>
             }
           /> */}
-
             <Route
               path="/Employee/CustomerList"
               element={
@@ -473,7 +453,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Employee/Payment"
               element={
@@ -482,7 +461,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Employee/EditPayment/:paymentId"
               element={
@@ -491,7 +469,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Employee/DonorList"
               element={
@@ -500,7 +477,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Employee/DonorEdit/:donorId"
               element={
@@ -509,7 +485,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Employee/DonorList/:pageName"
               element={
@@ -518,7 +493,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Employee/FamilyList"
               element={
@@ -527,7 +501,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Employee/PreviewMatchingDonors/:familyId"
               element={
@@ -536,7 +509,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Employee/EditFamily/:familyInfoId"
               element={
@@ -545,7 +517,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Proposal/Create"
               element={
@@ -554,7 +525,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Proposal/Edit/:proposalId"
               element={
@@ -563,7 +533,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Proposal/Preview/:proposalId"
               element={
@@ -572,7 +541,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Employee/Proposal"
               element={
@@ -589,7 +557,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Employee/TimesheetList"
               element={
@@ -598,7 +565,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Employee/Invoice"
               element={
@@ -607,7 +573,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Employee/ItemList"
               element={
@@ -616,7 +581,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Employee/TaskList"
               element={
@@ -625,7 +589,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Employee/AMC"
               element={
@@ -660,12 +623,10 @@ function App() {
 
               <Route path="Form" element={<DynamicFormBase />} />
             </Route>
-
             <Route
               path="/public-form/:adminId/:formId"
               element={<PublicForm />}
             />
-
             {/* Default redirect based on role */}
             <Route
               path="/"
@@ -679,7 +640,6 @@ function App() {
                 )
               }
             />
-
             {/* 404 Page */}
             <Route path="*" element={<PageNotFound />} />
           </Routes>
