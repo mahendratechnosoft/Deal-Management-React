@@ -159,6 +159,12 @@ const ProformaInvoiceDisplay = ({
                   {adminInformation.companyEmail}
                 </p>
               )}
+              {adminInformation?.website && (
+                <p className="break-all">
+                  <span className="font-bold">Website: </span>
+                  {adminInformation.website}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -249,7 +255,7 @@ const ProformaInvoiceDisplay = ({
                 <th className="px-4 py-3 w-5/12">Item</th>
                 <th className="px-4 py-3 text-right w-2/12">SAC Code</th>
                 <th className="px-4 py-3 text-right w-1/12">Qty</th>
-                <th className="px-4 py-3 text-right w-1/12">Rate</th>
+                <th className="px-4 py-3 text-right w-3/12">Rate</th>
                 <th className="px-4 py-3 text-right w-2/12">Amount</th>
               </tr>
             </thead>
