@@ -30,6 +30,11 @@ function EditProforma() {
   const [errors, setErrors] = useState({});
   const [isRecipientLoading, setIsRecipientLoading] = useState(false);
 
+  // Add to your existing useState hooks:
+  const [paymentModeOptions, setPaymentModeOptions] = useState([]);
+  const [isPaymentModeLoading, setIsPaymentModeLoading] = useState(false);
+  const [selectedPaymentModes, setSelectedPaymentModes] = useState([]);
+
   // Track items deleted during editing
   const [deletedItemIds, setDeletedItemIds] = useState([]);
 
@@ -243,6 +248,7 @@ function EditProforma() {
             allCountries
           );
         }
+        const paymentProfileIds = proformaInvoiceInfo.paymentProfileIds || [];
 
         // D. Set Dropdown Options & Selections
         setSelectedCountry(billingObj.selectedCountry);
@@ -363,6 +369,48 @@ function EditProforma() {
     };
     fetchCompanyMedia();
   }, [role]);
+
+  //  useEffect FOR getting payment details:
+  useEffect(() => {
+    const loadPaymentModesAndSetSelected = async () => {
+      if (!proformaInvoiceId || proformaInfo.paymentProfileIds?.length === 0) {
+        return;
+      }
+
+      setIsPaymentModeLoading(true);
+      try {
+        // 1. Load all payment mode options
+        const response = await axiosInstance.get("getPaymentModesForInvoice");
+        const mappedOptions = response.data.map((profile) => ({
+          label: `${profile.profileName} (${profile.type})`,
+          value: profile.paymentProfileId,
+          profileName: profile.profileName,
+          type: profile.type,
+          isDefault: profile.default,
+        }));
+        setPaymentModeOptions(mappedOptions);
+
+        // 2. Set selected payment modes based on paymentProfileIds
+        const selected = mappedOptions.filter((option) =>
+          proformaInfo.paymentProfileIds?.includes(option.value)
+        );
+        setSelectedPaymentModes(selected);
+      } catch (error) {
+        console.error("Failed to load payment modes:", error);
+        toast.error("Failed to load payment modes.");
+      } finally {
+        setIsPaymentModeLoading(false);
+      }
+    };
+
+    // Only run when we have paymentProfileIds
+    if (
+      proformaInfo.paymentProfileIds &&
+      proformaInfo.paymentProfileIds.length > 0
+    ) {
+      loadPaymentModesAndSetSelected();
+    }
+  }, [proformaInvoiceId, proformaInfo.paymentProfileIds]);
 
   // Calculations
   const { subtotal, taxAmount, total } = useMemo(() => {
@@ -1115,6 +1163,66 @@ function EditProforma() {
     }
   };
 
+  // =====================THIS is Code for select Payment mode========
+  // Add these handler functions near your other handlers:
+
+  // Load payment mode options
+  const loadPaymentModeOptions = async () => {
+    if (isPaymentModeLoading || paymentModeOptions.length > 0) return;
+
+    setIsPaymentModeLoading(true);
+    try {
+      const response = await axiosInstance.get("getPaymentModesForInvoice");
+      const mappedOptions = response.data.map((profile) => ({
+        label: `${profile.profileName} (${profile.type})`,
+        value: profile.paymentProfileId,
+        profileName: profile.profileName,
+        type: profile.type,
+        isDefault: profile.default,
+      }));
+      setPaymentModeOptions(mappedOptions);
+    } catch (error) {
+      console.error("Failed to load payment modes:", error);
+      toast.error("Failed to load payment modes.");
+    } finally {
+      setIsPaymentModeLoading(false);
+    }
+  };
+
+  // Handle payment mode selection change
+  const handlePaymentModesChange = (selectedOptions) => {
+    const selected = selectedOptions || [];
+    setSelectedPaymentModes(selected);
+
+    // Update the proformaInfo with paymentProfileIds
+    const paymentProfileIds = selected.map((option) => option.value);
+    setProformaInfo((prev) => ({
+      ...prev,
+      paymentProfileIds,
+    }));
+  };
+
+  // Format selected payment modes for display in input field
+  const getPaymentModeDisplayValue = () => {
+    if (selectedPaymentModes.length === 0) {
+      return "No payment modes selected";
+    }
+
+    // Show names in the input field
+    return selectedPaymentModes.map((mode) => mode.profileName).join(", ");
+  };
+
+  // Get full formatted display with type
+  const formatSelectedPaymentModes = () => {
+    if (selectedPaymentModes.length === 0) {
+      return "No payment modes selected";
+    }
+
+    return selectedPaymentModes
+      .map((mode) => `${mode.profileName} (${mode.type})`)
+      .join(", ");
+  };
+
   return (
     <LayoutComponent>
       <div className="p-4 bg-gray-50 h-[90vh] overflow-y-auto">
@@ -1315,6 +1423,67 @@ function EditProforma() {
                         onMenuOpen={loadAssignToOptions}
                         isLoading={isAssignToLoading}
                       />
+
+                      <div className="md:col-span-2">
+                        <div className="relative">
+                          {/* Exact match from image */}
+                          <label
+                            className="absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 
+              peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
+              peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none "
+                          >
+                            Payment Modes
+                          </label>
+                          <Select
+                            value={selectedPaymentModes}
+                            onChange={handlePaymentModesChange}
+                            options={paymentModeOptions}
+                            onMenuOpen={loadPaymentModeOptions}
+                            isLoading={isPaymentModeLoading}
+                            isMulti
+                            isClearable
+                            placeholder="Select payment modes..."
+                            className="react-select-container"
+                            classNamePrefix="react-select"
+                            noOptionsMessage={({ inputValue }) =>
+                              inputValue
+                                ? "No payment modes found"
+                                : "Start typing to search..."
+                            }
+                            isDisabled={!isFormEditable}
+                            classNames={{
+                              control: (state) =>
+                                `border border-gray-300 rounded-md shadow-sm sm:text-sm
+           ${state.isFocused ? "border-blue-500 ring-1 ring-blue-500" : ""}
+           ${!isFormEditable ? "bg-gray-50 cursor-not-allowed" : "bg-white"}`,
+                              placeholder: () => "text-gray-400",
+                              multiValue: () => "bg-blue-100 rounded-full",
+                              multiValueLabel: () => "text-blue-800 text-sm",
+                              multiValueRemove: () =>
+                                "text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full",
+                            }}
+                            styles={{
+                              control: (base) => ({
+                                ...base,
+                                minHeight: "40px",
+                                fontSize: "0.875rem",
+                                padding: "0 4px",
+                              }),
+                              valueContainer: (base) => ({
+                                ...base,
+                                padding: "2px 8px",
+                              }),
+                              multiValue: (base) => ({
+                                ...base,
+                                margin: "2px 4px 2px 0",
+                              }),
+                            }}
+                          />
+                        </div>
+                    
+                      </div>
+
+                 
                     </div>
                   </div>
 

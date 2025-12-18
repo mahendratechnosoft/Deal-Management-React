@@ -78,6 +78,7 @@ const ProformaInvoiceDisplay = ({
   const info = invoiceData.proformaInvoiceInfo;
   const items = invoiceData.proformaInvoiceContents;
   const currency = info.currencyType || "INR";
+  const paymentProfiles = invoiceData.paymentProfiles || [];
 
   return (
     // Note: We remove max-w-5xl and mx-auto so it fills the modal body
@@ -374,21 +375,137 @@ const ProformaInvoiceDisplay = ({
       <div className="p-8">
         {/* Terms */}
 
-        <div className="mb-6">
-          <p className="font-bold text-gray-900 uppercase mb-2">Bank Details</p>
-          <p className="text-xs text-gray-900 whitespace-pre-line leading-relaxed border-l-2 border-gray-200 pl-3 break-all">
-            <span className="font-bold">Bank Name: </span>
-            {adminInformation.bankName || "NA"}
-            <br />
-            <span className="font-bold">Account Number: </span>
-            {adminInformation.accountNumber || "NA"}
-            <br />
-            <span className="font-bold">Account Holder Name: </span>
-            {adminInformation.accountHolderName || "NA"}
-            <br />
-            <span className="font-bold">IFSC Code: </span>
-            {adminInformation.ifscCode || "NA"}
-          </p>
+        {/* Simple Payment Details Section - Text Only */}
+        {/* Simple Payment Details Section - Text Only */}
+        <div className="mb-8">
+          <h3 className="font-bold text-gray-800 text-lg mb-2">
+            Payment Details
+          </h3>
+
+          {paymentProfiles && paymentProfiles.length > 0 ? (
+            <div className="space-y-4">
+              <div className="border-l-2 border-gray-200 ">
+                {/* First show all BANK profiles with serial numbers */}
+                {paymentProfiles
+                  .filter((profile) => profile.type === "BANK")
+                  .map((profile, index) => (
+                    <div
+                      key={profile.paymentProfileId || index}
+                      className="text-gray-700"
+                    >
+                      <div className="text-sm space-y-1 ml-2">
+                        <div className="space-y-1 ml-3 leading-relaxed flex">
+                          <span className="font-medium mr-1 mt-1">
+                            {index + 1}.
+                          </span>
+                          <div>
+                            <p className="flex">
+                              <span className="font-medium w-40">
+                                Bank Name:
+                              </span>
+                              <span>{profile.bankName || "N/A"}</span>
+                            </p>
+                            <p className="flex">
+                              <span className="font-medium w-40">
+                                Account Number:
+                              </span>
+                              <span>{profile.accountNumber || "N/A"}</span>
+                            </p>
+                            <p className="flex">
+                              <span className="font-medium w-40">
+                                Account Holder Name:
+                              </span>
+                              <span>{profile.accountHolderName || "N/A"}</span>
+                            </p>
+                            <p className="flex">
+                              <span className="font-medium w-40">
+                                IFSC Code:
+                              </span>
+                              <span>{profile.ifscCode || "N/A"}</span>
+                            </p>
+                            <p className="flex">
+                              <span className="font-medium w-40">Branch:</span>
+                              <span>{profile.branchName || "N/A"}</span>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                {/* Then show all UPI profiles with serial numbers */}
+                {paymentProfiles
+                  .filter((profile) => profile.type === "UPI")
+                  .map((profile, index) => (
+                    <div
+                      key={profile.paymentProfileId || index}
+                      className="text-gray-700"
+                    >
+                      <div className="text-sm space-y-2 ml-2">
+                        <div className="flex items-center"></div>
+
+                        <div className="space-y-1 ml-3 flex">
+                          <span className="font-medium mr-1 mt-1">
+                            {paymentProfiles.filter((p) => p.type === "BANK")
+                              .length +
+                              index +
+                              1}
+                            .
+                          </span>
+                          <div>
+                            <p className="flex">
+                              <span className="font-medium w-40">UPI ID:</span>
+                              <span>{profile.upiId || "N/A"}</span>
+                            </p>
+                            {profile.qrCodeImage && (
+                              <div className="">
+                                <p className="font-medium mb-1">
+                                  Scan QR Code:
+                                </p>
+                                <img
+                                  src={`data:;base64,${profile.qrCodeImage}`}
+                                  alt="QR Code"
+                                  className="w-30 h-30"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                {/* Finally show CASH profiles with serial numbers */}
+                {paymentProfiles
+                  .filter((profile) => profile.type === "CASH")
+                  .map((profile, index) => (
+                    <div
+                      key={profile.paymentProfileId || index}
+                      className="text-gray-700"
+                    >
+                      <div className="text-sm ml-2">
+                        <div className="flex items-center">
+                          <span className="font-medium mr-3">
+                            {paymentProfiles.filter(
+                              (p) => p.type === "BANK" || p.type === "UPI"
+                            ).length +
+                              index +
+                              1}
+                            .
+                          </span>
+                          <span className="font-medium">Cash Payment:</span>
+                        </div>
+                        <p className="ml-6">
+                          Pay in cash to company representative
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">No payment details provided</p>
+          )}
         </div>
 
         <div className="mb-6">

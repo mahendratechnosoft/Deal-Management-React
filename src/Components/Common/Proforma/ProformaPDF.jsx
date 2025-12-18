@@ -296,6 +296,40 @@ const styles = StyleSheet.create({
     borderTopColor: "#eaeaea",
     paddingTop: 8,
   },
+
+  paymentDetails: {
+    marginBottom: 10,
+  },
+  paymentProfile: {
+    marginBottom: 8,
+  },
+  paymentProfileTitle: {
+    fontSize: 9,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  paymentProfileContent: {
+    marginLeft: 12,
+    fontSize: 9,
+    lineHeight: 1.4,
+  },
+  paymentField: {
+    flexDirection: "row",
+    marginBottom: 2,
+  },
+  paymentLabel: {
+    fontWeight: "bold",
+    width: 80,
+  },
+  qrCode: {
+    width: 80,
+    height: 80,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  ftw:{
+    fontWeight: "bold",
+  }
 });
 
 const formatDate = (dateString) => {
@@ -690,34 +724,141 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
 
         {/* Footer (Terms, Notes, Auth) */}
         <View style={styles.footerSection}>
-          <View style={{ marginBottom: 10 }}>
+          <View style={styles.paymentDetails} wrap={false}>
             <Text
               style={[
                 styles.sectionTitle,
-                { color: "#111827", fontSize: 10, fontWeight: "bold" },
+                {
+                  color: "#111827",
+                  fontSize: 10,
+                  fontWeight: "bold",
+                  marginBottom: 6,
+                },
               ]}
             >
-              Bank Details
+              Payment Details
             </Text>
-            <Text style={styles.termsText}>
-              <>
-                <Text style={{ fontWeight: "bold" }}>Bank Name:</Text>{" "}
-                {adminInformation.bankName}
-                {"\n"}
-                <Text style={{ fontWeight: "bold" }}>Account Number:</Text>{" "}
-                {adminInformation.accountNumber}
-                {"\n"}
-                <Text style={{ fontWeight: "bold" }}>
-                  Account Holder Name:
-                </Text>{" "}
-                {adminInformation.accountHolderName}
-                {"\n"}
-                <Text style={{ fontWeight: "bold" }}>IFSC Code:</Text>{" "}
-                {adminInformation.ifscCode}
-                {"\n"}
-              </>
-            </Text>
+
+            {invoiceData.paymentProfiles &&
+            invoiceData.paymentProfiles.length > 0 ? (
+              <View style={[styles.termsText, { color: "#6b7280" }]}>
+                {/* BANK Profiles */}
+                {invoiceData.paymentProfiles
+                  .filter((profile) => profile.type === "BANK")
+                  .map((profile, index) => (
+                    <View
+                      key={profile.paymentProfileId || index}
+                      style={styles.paymentProfile}
+                    >
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <View>
+                          <Text style={styles.ftw}>{index + 1}.</Text>
+                        </View>
+                        <View>
+                          <View style={styles.paymentField}>
+                            <Text style={styles.paymentLabel}>Bank Name:</Text>
+                            <Text>{profile.bankName || "N/A"}</Text>
+                          </View>
+                          <View style={styles.paymentField}>
+                            <Text style={styles.paymentLabel}>
+                              Account Number:
+                            </Text>
+                            <Text>{profile.accountNumber || "N/A"}</Text>
+                          </View>
+                          <View style={styles.paymentField}>
+                            <Text style={styles.paymentLabel}>
+                              Account Holder Name:
+                            </Text>
+                            <Text>{profile.accountHolderName || "N/A"}</Text>
+                          </View>
+                          <View style={styles.paymentField}>
+                            <Text style={styles.paymentLabel}>IFSC Code:</Text>
+                            <Text>{profile.ifscCode || "N/A"}</Text>
+                          </View>
+                          <View style={styles.paymentField}>
+                            <Text style={styles.paymentLabel}>Branch:</Text>
+                            <Text>{profile.branchName || "N/A"}</Text>
+                          </View>
+                          <View style={{ height: 8 }}></View>{" "}
+                        </View>
+                      </View>
+
+                      {/* Spacing between profiles */}
+                    </View>
+                  ))}
+
+                {/* UPI Profiles */}
+                {invoiceData.paymentProfiles
+                  .filter((profile) => profile.type === "UPI")
+                  .map((profile, index) => {
+                    const bankCount = invoiceData.paymentProfiles.filter(
+                      (p) => p.type === "BANK"
+                    ).length;
+                    return (
+                      <View
+                        key={profile.paymentProfileId || index}
+                        style={styles.paymentProfile}
+                      >
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "flex-start",
+                          }}
+                        >
+                          <View>
+                            <Text style={styles.ftw}>
+                              {" "}
+                              {bankCount + index + 1}.
+                            </Text>
+                          </View>
+                          <View>
+                            <View style={styles.paymentField}>
+                              <Text style={styles.paymentLabel}>UPI ID:</Text>
+                              <Text>{profile.upiId || "N/A"}</Text>
+                            </View>
+                            {profile.qrCodeImage && (
+                              <>
+                                <View style={styles.paymentField}>
+                                  <Text style={styles.paymentLabel}>
+                                    Scan QR Code:
+                                  </Text>
+                                  <Text></Text>
+                                </View>
+                                <View
+                                  style={{
+                                    alignItems: "flex-start",
+                                    marginTop: 2,
+                                  }}
+                                >
+                                  <Image
+                                    src={getSafeImageSrc(profile.qrCodeImage)}
+                                    style={styles.qrCode}
+                                  />
+                                </View>
+                              </>
+                            )}
+                          </View>
+                        </View>
+                        <View style={{ height: 8 }}></View>{" "}
+                        {/* Spacing between profiles */}
+                      </View>
+                    );
+                  })}
+              </View>
+            ) : (
+              <Text
+                style={{ fontSize: 9, color: "#6b7280", fontStyle: "italic" }}
+              >
+                No payment details provided
+              </Text>
+            )}
           </View>
+
           <View>
             <Text
               style={[

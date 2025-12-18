@@ -797,6 +797,48 @@ export const GlobalFormSection = ({
   );
 };
 
+/* ---------------------------------------------
+   🔹 PaymentModeMultiSelectWithExclusion
+   Wrapper that automatically handles mutual exclusion
+   between primary and secondary payment modes
+--------------------------------------------- */
+export const PaymentModeMultiSelectWithExclusion = (props) => {
+  const {
+    type, // 'primary' or 'secondary'
+    primaryPaymentModes = [],
+    secondaryPaymentModes = [],
+    onPrimaryPaymentModesChange,
+    onSecondaryPaymentModesChange,
+    ...otherProps
+  } = props;
+
+  if (type === 'primary') {
+    return (
+      <CustomMultiSelect
+        {...otherProps}
+        value={primaryPaymentModes}
+        onChange={onPrimaryPaymentModesChange}
+        excludedValues={secondaryPaymentModes}
+        placeholder="Select primary payment modes..."
+      />
+    );
+  }
+
+  if (type === 'secondary') {
+    return (
+      <CustomMultiSelect
+        {...otherProps}
+        value={secondaryPaymentModes}
+        onChange={onSecondaryPaymentModesChange}
+        excludedValues={primaryPaymentModes}
+        placeholder="Select secondary payment modes..."
+      />
+    );
+  }
+
+  return <CustomMultiSelect {...otherProps} />;
+};
+
 // Default export for backward compatibility
 function GlobalFormInputs() {
   return null;
