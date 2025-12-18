@@ -220,6 +220,12 @@ function RoleListCompo() {
     amcDelete: false,
     amcEdit: false,
     amcViewAll: false,
+
+    vendorAccess: false,
+    vendorCreate: false,
+    vendorDelete: false,
+    vendorEdit: false,
+    vendorViewAll: false,
   });
 
   // Module Access State for Update Modal
@@ -289,6 +295,12 @@ function RoleListCompo() {
     amcDelete: false,
     amcEdit: false,
     amcViewAll: false,
+
+    vendorAccess: false,
+    vendorCreate: false,
+    vendorDelete: false,
+    vendorEdit: false,
+    vendorViewAll: false,
   });
 
   useEffect(() => {
@@ -401,6 +413,12 @@ function RoleListCompo() {
       amcDelete: false,
       amcEdit: false,
       amcViewAll: false,
+
+      vendorAccess: false,
+      vendorCreate: false,
+      vendorDelete: false,
+      vendorEdit: false,
+      vendorViewAll: false,
     });
   };
 
@@ -512,6 +530,12 @@ function RoleListCompo() {
         amcCreate: role.amcCreate || false,
         amcDelete: role.amcDelete || false,
         amcEdit: role.amcEdit || false,
+
+        vendorAccess: role.vendorAccess || false,
+        vendorViewAll: role.vendorViewAll || false,
+        vendorCreate: role.vendorCreate || false,
+        vendorDelete: role.vendorDelete || false,
+        vendorEdit: role.vendorEdit || false,
       });
     }
 
@@ -1103,6 +1127,21 @@ function RoleListCompo() {
                             handleAccessChange={handleAccessChange}
                           />
                         )}
+
+                        {hasModulePermission("vendor") && (
+                          <ModuleAccessGroup
+                            title="Vendor Permissions"
+                            permissions={[
+                              { label: "Access", field: "vendorAccess" },
+                              { label: "View All", field: "vendorViewAll" },
+                              { label: "Create", field: "vendorCreate" },
+                              { label: "Edit", field: "vendorEdit" },
+                              { label: "Delete", field: "vendorDelete" },
+                            ]}
+                            getAccess={getAccess}
+                            handleAccessChange={handleAccessChange}
+                          />
+                        )}
                       </>
                     )}
                     {hasPermission("donor", "Access") && (
@@ -1414,6 +1453,21 @@ function RoleListCompo() {
                               { label: "Create", field: "amcCreate" },
                               { label: "Edit", field: "amcEdit" },
                               { label: "Delete", field: "amcDelete" },
+                            ]}
+                            getAccess={getUpdateAccess}
+                            handleAccessChange={handleUpdateAccessChange}
+                          />
+                        )}
+
+                        {hasModulePermission("vendor") && (
+                          <ModuleAccessGroup
+                            title="Vendor Permissions"
+                            permissions={[
+                              { label: "Access", field: "vendorAccess" },
+                              { label: "View All", field: "vendorViewAll" },
+                              { label: "Create", field: "vendorCreate" },
+                              { label: "Edit", field: "vendorEdit" },
+                              { label: "Delete", field: "vendorDelete" },
                             ]}
                             getAccess={getUpdateAccess}
                             handleAccessChange={handleUpdateAccessChange}

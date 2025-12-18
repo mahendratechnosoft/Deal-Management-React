@@ -597,6 +597,24 @@ function App() {
                 </RoleBasedRoute>
               }
             />
+
+            <Route
+              path="/Employee/VendorContactList/:vendorId"
+              element={
+                <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                  <VendorContactList />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="/Employee/VendorList"
+              element={
+                <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                  <VendorList />
+                </RoleBasedRoute>
+              }
+            />
+
             {/* Settings Routes */}
             <Route
               path="/Admin/Settings"

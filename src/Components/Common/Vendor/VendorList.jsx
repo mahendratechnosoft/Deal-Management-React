@@ -222,6 +222,23 @@ function VendorList() {
     );
   };
 
+  const handleViewContacts = (vendorId, vendorName) => {
+    // Determine the route based on role
+    let route = "";
+    if (role === "ROLE_ADMIN") {
+      route = `/Admin/VendorContactList/${vendorId}`;
+    } else if (role === "ROLE_EMPLOYEE") {
+      route = `/Employee/VendorContactList/${vendorId}`;
+    } else {
+      // Default fallback or handle other roles
+      route = `/Admin/VendorContactList/${vendorId}`;
+    }
+
+    navigate(route, {
+      state: { vendorName: vendorName || "Unknown Vendor" },
+    });
+  };
+
   if (error) {
     return (
       <div className="p-6 flex items-center justify-center min-h-screen">
@@ -301,25 +318,27 @@ function VendorList() {
                   className=" pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs bg-white transition-colors duration-200"
                 />
               </div>
-              <button
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-1.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-1.5 text-xs shadow-sm hover:shadow-md whitespace-nowrap"
-                onClick={handleCreateVendor}
-              >
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              {hasPermission("vendor", "Create") && (
+                <button
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-1.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-1.5 text-xs shadow-sm hover:shadow-md whitespace-nowrap"
+                  onClick={handleCreateVendor}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Add Vendor
-              </button>
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Add Vendor
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -402,6 +421,32 @@ function VendorList() {
                                     strokeLinejoin="round"
                                     strokeWidth={2}
                                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                  />
+                                </svg>
+                              </button>
+
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewContacts(
+                                    vendor.vendorId,
+                                    vendor.vendorName
+                                  );
+                                }}
+                                className="p-1 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors duration-200"
+                                title="View Contacts"
+                              >
+                                <svg
+                                  className="w-3.5 h-3.5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                                   />
                                 </svg>
                               </button>
