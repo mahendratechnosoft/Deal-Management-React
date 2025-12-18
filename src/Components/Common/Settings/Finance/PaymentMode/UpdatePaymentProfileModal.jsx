@@ -267,7 +267,7 @@ const UpdatePaymentProfileModal = ({
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
                 {[
                   { label: "Is Active", name: "active" },
-                  { label: "Set Default", name: "isDefault" },
+                  { label: "Set Default", name: "default" },
                   { label: "For Invoice", name: "forInvoice" },
                   { label: "For Expense", name: "forExpense" },
                 ].map((field) => (
