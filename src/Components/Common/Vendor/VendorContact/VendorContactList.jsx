@@ -3,6 +3,40 @@ import { useLayout } from "../../../Layout/useLayout";
 import { useEffect, useState } from "react";
 import axiosInstance from "../../../BaseComponet/axiosInstance";
 import Pagination from "../../pagination";
+import CreateContactModal from "./CreateContactModal";
+import EditContactModal from "./EditContactModal";
+import toast from "react-hot-toast";
+import { showDeleteConfirmation } from "../../../BaseComponet/alertUtils";
+
+const TableRowSkeleton = () => {
+  return (
+    <tr className="animate-pulse">
+      <td className="px-4 py-2">
+        <div className="h-4 w-6 bg-gray-200 rounded" />
+      </td>
+
+      <td className="px-2 py-2">
+        <div className="h-4 w-32 bg-gray-200 rounded" />
+      </td>
+
+      <td className="px-2 py-4">
+        <div className="h-4 w-40 bg-gray-200 rounded" />
+      </td>
+
+      <td className="px-2 py-4">
+        <div className="h-4 w-28 bg-gray-200 rounded" />
+      </td>
+
+      <td className="px-2 py-4">
+        <div className="h-4 w-24 bg-gray-200 rounded" />
+      </td>
+
+      <td className="px-2 py-4">
+        <div className="h-5 w-20 bg-gray-200 rounded-full" />
+      </td>
+    </tr>
+  );
+};
 
 const VendorContactList = () => {
   const { vendorId } = useParams();
@@ -11,18 +45,19 @@ const VendorContactList = () => {
   const vendorName = location.state?.vendorName || "Unknown Vendor";
 
   const [searchTerm, setSearchTerm] = useState("");
-  // Fixed: Initialize currentPage to 0 (API standard)
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [vendorContacts, setVendorContacts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedVendorContactId, setSelectedVendorContactId] = useState(null);
 
   const fetchVendorContacts = async () => {
     setIsLoading(true);
     try {
-      // Updated: Pass params using axios 'params' object
       const response = await axiosInstance.get(
         `getAllVendorContacts/${vendorId}`,
         {
@@ -35,12 +70,9 @@ const VendorContactList = () => {
       );
 
       setVendorContacts(response.data.content);
-      const pageable = response.data; // Depending on API structure, sometimes pageable info is at root
-
-      // Ensure we map the API response fields correctly to state
+      const pageable = response.data;
       setTotalPages(pageable.totalPages);
       setTotalItems(pageable.totalElements);
-      // Note: We don't usually setPageSize from API response unless server forces it
     } catch (error) {
       console.error("Error fetching vendor contacts:", error);
     } finally {
@@ -48,17 +80,13 @@ const VendorContactList = () => {
     }
   };
 
-  // Trigger fetch when these dependencies change
   useEffect(() => {
-    // Optional: Add a small timeout (debounce) here if search is lagging
     fetchVendorContacts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId, currentPage, pageSize, searchTerm]);
 
-  // Handlers
   const handlePageSizeChange = (newSize) => {
     setPageSize(newSize);
-    setCurrentPage(0); // Reset to first page when size changes
+    setCurrentPage(0);
   };
 
   const handlePageChange = (newPage) => {
@@ -67,7 +95,51 @@ const VendorContactList = () => {
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(0); // Reset to first page when searching
+    setCurrentPage(0);
+  };
+
+  const handleDelete = async (vendorContactId) => {
+    const result = await showDeleteConfirmation("this contact");
+    if (!result.isConfirmed) return;
+    try {
+      const response = await axiosInstance.delete(
+        `deleteVendorContact/${vendorContactId}`
+      );
+
+      if (response.status === 204) {
+        toast.success("Contact deleted successfully!");
+        setVendorContacts((prevContacts) =>
+          prevContacts.filter(
+            (contact) => contact.vendorContactId !== vendorContactId
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error deleting contact:", error);
+      toast.error("Failed to delete contact");
+    }
+  };
+
+  const handleStatusToggle = async (vendorContactId, isActive) => {
+    const newStatus = !isActive;
+    try {
+      const response = await axiosInstance.put(
+        `updateVendorContactStatus/${vendorContactId}?active=${newStatus}`
+      );
+      if (response.status == 200) {
+        toast.success("Status updated successfully!");
+        setVendorContacts((prevContacts) =>
+          prevContacts.map((contact) =>
+            contact.vendorContactId === vendorContactId
+              ? { ...contact, isActive: newStatus }
+              : contact
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error("Failed to update status");
+    }
   };
 
   return (
@@ -115,7 +187,10 @@ const VendorContactList = () => {
                 />
               </div>
 
-              <button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md w-full sm:w-auto justify-center">
+              <button
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md w-full sm:w-auto justify-center"
+                onClick={() => setIsCreateModalOpen(true)}
+              >
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -160,14 +235,15 @@ const VendorContactList = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-4">
-                    Loading contacts...
-                  </td>
-                </tr>
+                Array.from({ length: pageSize }).map((_, index) => (
+                  <TableRowSkeleton key={index} />
+                ))
               ) : vendorContacts.length > 0 ? (
                 vendorContacts.map((contact, index) => (
-                  <tr key={contact.id || index} className="hover:bg-gray-50">
+                  <tr
+                    key={contact.id || index}
+                    className="hover:bg-gray-50 transition-colors duration-150 group cursor-pointer"
+                  >
                     <td className="px-4 py-2 truncate text-sm font-medium text-gray-900">
                       {index + 1 + currentPage * pageSize}
                     </td>
@@ -176,6 +252,51 @@ const VendorContactList = () => {
                       title={contact.contactPersonName}
                     >
                       {contact.contactPersonName || "N/A"}
+                      <div className="flex items-center gap-3 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <button
+                          title="Edit"
+                          className="text-gray-500 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
+                          onClick={() => {
+                            setSelectedVendorContactId(contact.vendorContactId);
+                            setIsEditModalOpen(true);
+                          }}
+                        >
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(contact.vendorContactId)}
+                          className="text-gray-500 hover:text-red-600 transition-colors duration-200 flex items-center gap-1 text-xs font-normal"
+                          title="Delete Task"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
                     </td>
                     <td
                       className="px-2 py-4 truncate text-sm text-gray-500"
@@ -199,15 +320,20 @@ const VendorContactList = () => {
                       className="px-2 py-4 truncate text-sm"
                       title={contact.isActive ? "Active" : "Inactive"}
                     >
-                      <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          contact.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {contact.status || "Active"}
-                      </span>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={contact.isActive}
+                          onChange={() =>
+                            handleStatusToggle(
+                              contact.vendorContactId,
+                              contact.isActive
+                            )
+                          }
+                        />
+                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
                     </td>
                   </tr>
                 ))
@@ -231,6 +357,22 @@ const VendorContactList = () => {
           itemsName={`${vendorName} Contacts`}
         />
       </div>
+
+      {isCreateModalOpen && (
+        <CreateContactModal
+          onClose={() => setIsCreateModalOpen(false)}
+          onSuccess={fetchVendorContacts}
+          vendorId={vendorId}
+        />
+      )}
+
+      {isEditModalOpen && (
+        <EditContactModal
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={fetchVendorContacts}
+          vendorContactId={selectedVendorContactId}
+        />
+      )}
     </LayoutComponent>
   );
 };
