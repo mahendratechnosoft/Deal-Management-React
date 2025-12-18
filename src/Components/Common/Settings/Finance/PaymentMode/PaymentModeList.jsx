@@ -263,7 +263,7 @@ const PaymentModeList = () => {
                         <input
                           type="checkbox"
                           className="sr-only peer"
-                          checked={profile.isActive} // Using isActive based on entity
+                          checked={profile.active} // Using isActive based on entity
                           onChange={() =>
                             handleStatusToggle(
                               profile.paymentProfileId,

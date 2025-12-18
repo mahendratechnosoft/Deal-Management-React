@@ -494,6 +494,10 @@ const ProposalPDF = ({ data }) => {
               <Text style={styles.label}>GST: </Text>
               {adminInformation?.gstNumber || ""}
             </Text>
+            <Text>
+              <Text style={styles.label}>Website : </Text>
+              {adminInformation?.website || ""}
+            </Text>
           </View>
           <View style={styles.addressBlock}>
             <Text style={styles.subHeader}>To:</Text>

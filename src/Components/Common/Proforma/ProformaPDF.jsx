@@ -167,10 +167,10 @@ const styles = StyleSheet.create({
     fontSize: 9,
   },
   colSno: { width: "8%", textAlign: "center" },
-  colItem: { width: "42%" },
+  colItem: { width: "35%" },
   colSac: { width: "15%", textAlign: "right" },
   colQty: { width: "10%", textAlign: "right" },
-  colRate: { width: "15%", textAlign: "right" },
+  colRate: { width: "22%", textAlign: "right" },
   colAmount: { width: "20%", textAlign: "right", fontWeight: "bold" },
   itemDescription: {
     fontSize: 8,
@@ -501,6 +501,13 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
                   {breakLongText(adminInformation.companyEmail, 30)}
                 </>
               )}
+              {adminInformation?.website && (
+                <>
+                  {"\n"}
+                  <Text style={{ fontWeight: "bold" }}>Website:</Text>{" "}
+                  {breakLongText(adminInformation.website, 30)}
+                </>
+              )}
             </Text>
           </View>
           <View style={styles.addressBlockRight}>
@@ -611,7 +618,7 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
               </Text>
               <Text style={[styles.td, styles.colQty]}>{item.quantity}</Text>
               <Text style={[styles.td, styles.colRate]}>
-                {breakLongText(formatCurrency(item.rate, currency), 10)}
+                {breakLongText(formatCurrency(item.rate, currency), 14)}
               </Text>
               <Text style={[styles.td, styles.colAmount]}>
                 {breakLongText(

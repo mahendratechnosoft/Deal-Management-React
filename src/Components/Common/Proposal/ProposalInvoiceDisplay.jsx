@@ -338,7 +338,7 @@ const ProposalInvoiceDisplay = ({
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-2/12">
                   Rate
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-2/12">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-4/12">
                   Amount
                 </th>
               </tr>
@@ -489,6 +489,12 @@ const ProposalInvoiceDisplay = ({
                     <IconMail className="w-4 h-4 shrink-0" />
                     <span className="break-words min-w-0">
                       Email: {adminInformation.companyEmail}
+                    </span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <IconMail className="w-4 h-4 shrink-0" />
+                    <span className="break-words min-w-0">
+                      Website: {adminInformation.website}
                     </span>
                   </p>
                 </div>
