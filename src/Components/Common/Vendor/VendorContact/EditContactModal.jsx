@@ -5,6 +5,7 @@ import {
 } from "../../../BaseComponet/CustomerFormInputs";
 import toast from "react-hot-toast";
 import axiosInstance from "../../../BaseComponet/axiosInstance";
+import { hasPermission } from "../../../BaseComponet/permissions";
 
 const VendorContactFormSkeleton = () => {
   return (
@@ -26,6 +27,7 @@ function EditContactModal({ onClose, onSuccess, ...props }) {
   const [contact, setContact] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const canEdit = hasPermission("vendor", "Edit");
 
   useEffect(() => {
     fetchContact();
@@ -75,10 +77,16 @@ function EditContactModal({ onClose, onSuccess, ...props }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!canEdit) {
+      toast.error("You don't have permission to edit contacts.");
+      return;
+    }
+
     if (!validateForm()) {
       toast.error("Please fix the errors in the form.");
       return;
     }
+
     try {
       const response = await axiosInstance.put("updateVendorContact", contact);
       if (response.status === 200) {
@@ -114,9 +122,9 @@ function EditContactModal({ onClose, onSuccess, ...props }) {
                 </svg>
               </div>
               <div>
-                <h2 className="text-lg font-bold">Create Contact</h2>
+                <h2 className="text-lg font-bold">Update Contact</h2>
                 <p className="text-blue-100 text-xs">
-                  Fill the form below to create a new contact
+                  Fill the form below to update contact
                 </p>
               </div>
             </div>
@@ -154,6 +162,7 @@ function EditContactModal({ onClose, onSuccess, ...props }) {
                   error={errors.contactPersonName}
                   placeholder="Enter name"
                   className="text-sm"
+                  disabled={!canEdit} // Disable input fields if no edit permission
                 />
                 <GlobalInputField
                   label="Email"
@@ -161,8 +170,9 @@ function EditContactModal({ onClose, onSuccess, ...props }) {
                   value={contact.emailAddress}
                   onChange={handleChange}
                   error={errors.emailAddress}
-                  placeholder="Enter name"
+                  placeholder="Enter email"
                   className="text-sm"
+                  disabled={!canEdit} // Disable input fields if no edit permission
                 />
                 <GlobalPhoneInputField
                   label="Phone Number"
@@ -170,14 +180,16 @@ function EditContactModal({ onClose, onSuccess, ...props }) {
                   value={contact.phone}
                   onChange={handleChange}
                   error={errors.phone}
+                  disabled={!canEdit} // Disable input fields if no edit permission
                 />
                 <GlobalInputField
                   label="Position"
                   name="position"
                   value={contact.position}
                   onChange={handleChange}
-                  placeholder="Enter name"
+                  placeholder="Enter position"
                   className="text-sm"
+                  disabled={!canEdit} // Disable input fields if no edit permission
                 />
               </div>
             </form>
@@ -187,22 +199,51 @@ function EditContactModal({ onClose, onSuccess, ...props }) {
         )}
 
         <div className="border-t border-gray-200 bg-gray-50 p-3">
-          <div className="flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-3 py-1.5 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 text-xs font-medium"
-            >
-              Close
-            </button>
+          <div className="flex items-center justify-between">
+            {/* Left side - Permission message */}
+            <div className="text-xs text-gray-500">
+              {!canEdit ? (
+                <span className="flex items-center gap-1 text-red-600">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.998-.833-2.732 0L4.246 16.5c-.77.833.192 2.5 1.732 2.5z"
+                    />
+                  </svg>
+                  You don't have edit permission
+                </span>
+              ) : null}
+            </div>
 
-            <button
-              form="createVendorContact"
-              type="submit"
-              className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Update
-            </button>
+            {/* Right side - Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3 py-1.5 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 text-xs font-medium"
+              >
+                Cancel
+              </button>
+
+              <div className="relative group">
+                <button
+                  form="createVendorContact"
+                  type="submit"
+                  disabled={!canEdit}
+                  className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Update
+                </button>
+
+              </div>
+            </div>
           </div>
         </div>
       </div>

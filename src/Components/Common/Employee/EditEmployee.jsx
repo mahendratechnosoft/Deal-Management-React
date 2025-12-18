@@ -390,6 +390,12 @@ function EditEmployee() {
         amcCreate: selectedRole.amcCreate || false,
         amcDelete: selectedRole.amcDelete || false,
         amcEdit: selectedRole.amcEdit || false,
+
+        vendorAccess: selectedRole.vendorAccess || false,
+        vendorViewAll: selectedRole.vendorViewAll || false,
+        vendorCreate: selectedRole.vendorCreate || false,
+        vendorDelete: selectedRole.vendorDelete || false,
+        vendorEdit: selectedRole.vendorEdit || false,
       });
     }
 
@@ -463,6 +469,12 @@ function EditEmployee() {
           amcDelete: false,
           amcEdit: false,
           amcViewAll: false,
+
+          vendorAccess: false,
+          vendorCreate: false,
+          vendorDelete: false,
+          vendorEdit: false,
+          vendorViewAll: false,
         };
       }
       return {
@@ -535,6 +547,12 @@ function EditEmployee() {
       amcDelete: false,
       amcEdit: false,
       amcViewAll: false,
+
+      vendorAccess: false,
+      vendorCreate: false,
+      vendorDelete: false,
+      vendorEdit: false,
+      vendorViewAll: false,
     });
     toast.success("All permissions cleared");
   };
@@ -601,6 +619,12 @@ function EditEmployee() {
       amcDelete: true,
       amcEdit: true,
       amcViewAll: true,
+
+      vendorAccess: true,
+      vendorCreate: true,
+      vendorDelete: true,
+      vendorEdit: true,
+      vendorViewAll: true,
     });
     toast.success("All permissions granted");
   };
@@ -1232,6 +1256,23 @@ function EditEmployee() {
                           handleAccessChange={handleAccessChange}
                         />
                       )}
+
+                      {hasModulePermission("vendor") && (
+                        <ModuleAccessGroup
+                          title="Vendor Permissions"
+                          permissions={[
+                            { label: "Access", field: "vendorAccess" },
+                            { label: "View All", field: "vendorViewAll" },
+                            { label: "Create", field: "vendorCreate" },
+                            { label: "Edit", field: "vendorEdit" },
+                            { label: "Delete", field: "vendorDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
+
+              
                     </>
                   )}
 
@@ -1288,7 +1329,7 @@ function EditEmployee() {
 function AccessToggle({ field, label, isChecked, onChange }) {
   const handleToggle = (e) => {
     e.preventDefault(); // Prevent default behavior
-    e.stopPropagation()
+    e.stopPropagation();
     onChange(!isChecked);
   };
 
@@ -1307,12 +1348,14 @@ function AccessToggle({ field, label, isChecked, onChange }) {
           className="sr-only"
         />
         <div
-          className={`block w-10 h-6 rounded-full transition-colors ${isChecked ? "bg-blue-600" : "bg-gray-300"
-            }`}
+          className={`block w-10 h-6 rounded-full transition-colors ${
+            isChecked ? "bg-blue-600" : "bg-gray-300"
+          }`}
         ></div>
         <div
-          className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${isChecked ? "translate-x-4" : "translate-x-0"
-            }`}
+          className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${
+            isChecked ? "translate-x-4" : "translate-x-0"
+          }`}
         ></div>
       </div>
       <span className="ml-2 text-sm text-gray-700">{label}</span>

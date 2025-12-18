@@ -9,6 +9,7 @@ import {
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { Country, State, City } from "country-state-city";
+import { hasPermission } from "../../BaseComponet/permissions";
 
 function EditVendorModal({ vendorId, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -23,6 +24,7 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedState, setSelectedState] = useState("");
 
+    const canEdit = hasPermission("vendor", "Edit");
   // Form state
   const [formData, setFormData] = useState({
     vendorId: "",
@@ -972,10 +974,29 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
         </div>
 
         {/* Modal Footer */}
+        {/* Modal Footer */}
         <div className="border-t border-gray-200 bg-gray-50 p-4">
           <div className="flex items-center justify-between">
             <div className="text-xs text-gray-500">
-              {hasChanges() ? (
+              {/* Add permission message */}
+              {!canEdit ? (
+                <span className="flex items-center gap-1 text-red-600">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.998-.833-2.732 0L4.246 16.5c-.77.833.192 2.5 1.732 2.5z"
+                    />
+                  </svg>
+                  You don't have edit permission
+                </span>
+              ) : hasChanges() ? (
                 <span className="flex items-center gap-1 text-blue-600">
                   <svg
                     className="w-3 h-3"
@@ -1028,7 +1049,12 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={loading || !hasChanges() || isVendorCodeChanged()}
+                  disabled={
+                    loading ||
+                    !hasChanges() ||
+                    isVendorCodeChanged() ||
+                    !canEdit
+                  }
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {loading ? (
