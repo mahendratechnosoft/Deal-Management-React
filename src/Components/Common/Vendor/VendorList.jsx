@@ -153,7 +153,7 @@ function VendorList() {
   const handleEditSuccess = () => {
     setShowEditModal(false);
     setSelectedVendorId(null);
-    toast.success("Vendor updated successfully!");
+    // toast.success("Vendor updated successfully!");
     fetchVendors(currentPage, searchTerm, msmeFilter);
   };
 

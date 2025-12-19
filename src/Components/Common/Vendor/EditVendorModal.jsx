@@ -455,6 +455,7 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
       const payload = {
         vendorId: formData.vendorId,
         vendorCode: formData.vendorCode || "",
+        vendorName: formData.vendorName || "",
         companyName: formData.companyName || "",
         emailAddress: formData.emailAddress || "",
         phone: formData.phone || "",
@@ -1077,9 +1078,9 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
                           d="M5 13l4 4L19 7"
                         />
                       </svg>
-                      {isVendorCodeChanged()
-                        ? "Cannot Update (Vendor Code Changed)"
-                        : "Update Vendor"}
+                 
+                       
+                        Update Vendor
                     </>
                   )}
                 </button>

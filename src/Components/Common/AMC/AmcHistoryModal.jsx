@@ -405,51 +405,62 @@ const AmcHistoryModal = ({
     }
   };
 
-  const validateForm = async () => {
-    const newErrors = {};
+const validateForm = async () => {
+  const newErrors = {};
 
-    // Required fields
-    if (!formData.amcStartDate) {
-      newErrors.amcStartDate = "AMC start date is required";
+  // Required fields
+  if (!formData.amcStartDate) {
+    newErrors.amcStartDate = "AMC start date is required";
+  }
+
+  if (!formData.amcEndDate) {
+    newErrors.amcEndDate = "AMC end date is required";
+  }
+
+  // FIXED: Check if amount is provided and valid
+  if (
+    formData.amcAmount !== undefined &&
+    formData.amcAmount !== null &&
+    formData.amcAmount !== ""
+  ) {
+    // Convert to string and check if it's valid
+    const amountStr = String(formData.amcAmount);
+    const trimmedAmount = amountStr.trim();
+
+    if (
+      trimmedAmount !== "" &&
+      (isNaN(trimmedAmount) || parseFloat(trimmedAmount) <= 0)
+    ) {
+      newErrors.amcAmount = "AMC amount must be a positive number";
     }
+  }
 
-    if (!formData.amcEndDate) {
-      newErrors.amcEndDate = "AMC end date is required";
-    }
+  if (!formData.sequence) {
+    newErrors.sequence = "Sequence number is required";
+  } else if (isNaN(formData.sequence) || parseInt(formData.sequence) <= 0) {
+    newErrors.sequence = "Sequence must be a positive number";
+  }
 
-    // Add validation for amount format only (if provided)
-    if (formData.amcAmount && formData.amcAmount.trim() !== "") {
-      if (isNaN(formData.amcAmount) || parseFloat(formData.amcAmount) <= 0) {
-        newErrors.amcAmount = "AMC amount must be a positive number";
+  setErrors(newErrors);
+
+  // Check sequence uniqueness for both create and edit modes
+  if (!newErrors.sequence) {
+    const originalSequence = isEditMode ? initialData?.sequence : null;
+    const currentSequence = parseInt(formData.sequence);
+
+    // Only check uniqueness if:
+    // 1. In create mode, OR
+    // 2. In edit mode and sequence has changed
+    if (!isEditMode || currentSequence !== originalSequence) {
+      const isUnique = await checkSequenceUnique(currentSequence);
+      if (!isUnique) {
+        return false;
       }
     }
+  }
 
-    if (!formData.sequence) {
-      newErrors.sequence = "Sequence number is required";
-    } else if (isNaN(formData.sequence) || parseInt(formData.sequence) <= 0) {
-      newErrors.sequence = "Sequence must be a positive number";
-    }
-
-    setErrors(newErrors);
-
-    // Check sequence uniqueness for both create and edit modes
-    if (!newErrors.sequence) {
-      const originalSequence = isEditMode ? initialData?.sequence : null;
-      const currentSequence = parseInt(formData.sequence);
-
-      // Only check uniqueness if:
-      // 1. In create mode, OR
-      // 2. In edit mode and sequence has changed
-      if (!isEditMode || currentSequence !== originalSequence) {
-        const isUnique = await checkSequenceUnique(currentSequence);
-        if (!isUnique) {
-          return false;
-        }
-      }
-    }
-
-    return Object.keys(newErrors).length === 0;
-  };
+  return Object.keys(newErrors).length === 0;
+};
 
   // In AmcHistoryModal.jsx - Modify the handleSubmit function:
 

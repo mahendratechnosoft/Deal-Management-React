@@ -282,11 +282,9 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
   };
 
   const handleDeleteGsuite = async (amcGsuitHistoryId, domainName) => {
-
     const result = await showDeleteConfirmation(
       `GSuite History for ${domainName}`
     );
-
 
     if (result.isConfirmed) {
       try {
@@ -326,22 +324,22 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
     setShowAmcHistoryModal(false);
   };
 
-const handleDeleteHistory = async (amcHistoryId, sequence) => {
-  const result = await showDeleteConfirmation(
-    `AMC History Record #${sequence}`
-  );
+  const handleDeleteHistory = async (amcHistoryId, sequence) => {
+    const result = await showDeleteConfirmation(
+      `AMC History Record #${sequence}`
+    );
 
-  if (result.isConfirmed) {
-    try {
-      await axiosInstance.delete(`deleteAMCHistory/${amcHistoryId}`);
-      toast.success("History record deleted successfully");
-      fetchAmcHistory();
-    } catch (error) {
-      console.error("Error deleting history:", error);
-      toast.error("Failed to delete history record");
+    if (result.isConfirmed) {
+      try {
+        await axiosInstance.delete(`deleteAMCHistory/${amcHistoryId}`);
+        toast.success("History record deleted successfully");
+        fetchAmcHistory();
+      } catch (error) {
+        console.error("Error deleting history:", error);
+        toast.error("Failed to delete history record");
+      }
     }
-  }
-};
+  };
 
   // Domain History Functions
   const handleCreateDomainHistory = () => {
@@ -823,9 +821,10 @@ const handleDeleteHistory = async (amcHistoryId, sequence) => {
                                       <td className="px-4 py-2 text-sm">
                                         <div className="flex gap-1">
                                           <button
-                                            onClick={() =>
-                                              handleEditAmcHistory(history)
-                                            }
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleEditAmcHistory(history);
+                                            }}
                                             className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                                             title="Edit"
                                           >
@@ -844,12 +843,13 @@ const handleDeleteHistory = async (amcHistoryId, sequence) => {
                                             </svg>
                                           </button>
                                           <button
-                                            onClick={() =>
+                                            onClick={(e) => {
+                                              e.stopPropagation(); // Prevent row click
                                               handleDeleteHistory(
                                                 history.acmHistoryId,
                                                 history.sequence
-                                              )
-                                            }
+                                              );
+                                            }}
                                             className="p-1 text-red-600 hover:bg-red-50 rounded"
                                             title="Delete"
                                           >
@@ -1015,9 +1015,10 @@ const handleDeleteHistory = async (amcHistoryId, sequence) => {
                                       <td className="px-4 py-2 text-sm">
                                         <div className="flex gap-1">
                                           <button
-                                            onClick={() =>
-                                              handleEditDomainHistory(domain)
-                                            }
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleEditDomainHistory(domain);
+                                            }}
                                             className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                                             title="Edit"
                                           >
@@ -1036,12 +1037,13 @@ const handleDeleteHistory = async (amcHistoryId, sequence) => {
                                             </svg>
                                           </button>
                                           <button
-                                            onClick={() =>
+                                            onClick={(e) => {
+                                              e.stopPropagation(); // ADD THIS LINE
                                               handleDeleteDomain(
                                                 domain.acmDomainHistoryId,
                                                 domain.sequence
-                                              )
-                                            }
+                                              );
+                                            }}
                                             className="p-1 text-red-600 hover:bg-red-50 rounded"
                                             title="Delete"
                                           >
@@ -1269,12 +1271,13 @@ const handleDeleteHistory = async (amcHistoryId, sequence) => {
                                             </svg>
                                           </button>
                                           <button
-                                            onClick={() =>
+                                            onClick={(e) => {
+                                              e.stopPropagation();
                                               handleDeleteGsuite(
                                                 gsuite.acmGsuitHistoryId,
                                                 gsuite.domainName
-                                              )
-                                            }
+                                              );
+                                            }}
                                             className="p-1 text-red-600 hover:bg-red-50 rounded"
                                             title="Delete"
                                           >

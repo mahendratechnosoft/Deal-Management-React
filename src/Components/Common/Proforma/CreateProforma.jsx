@@ -32,6 +32,8 @@ function CreateProforma() {
     discount: 0,
     taxType: "GST",
     taxPercentage: 18,
+    cgstPercentage: 0,
+    sgstPercentage: 0,
     dueDate: "",
     invoiceDate: new Date().toISOString().split("T")[0],
     totalAmount: 0,
@@ -87,6 +89,9 @@ function CreateProforma() {
   const [selectedShippingCity, setSelectedShippingCity] = useState(null);
 
   const [taxRateInput, setTaxRateInput] = useState("18");
+  const [cgstInput, setCgstInput] = useState("9");
+  const [sgstInput, setSgstInput] = useState("9");
+
   const [assignToOptions, setAssignToOptions] = useState([]);
   const [isAssignToLoading, setIsAssignToLoading] = useState(false);
   const [relatedIdOptions, setRelatedIdOptions] = useState([]);
@@ -114,6 +119,7 @@ function CreateProforma() {
     { value: "No Tax", label: "No Tax", defaultRate: 0 },
     { value: "SGST", label: "SGST", defaultRate: 9 },
     { value: "CGST", label: "CGST", defaultRate: 9 },
+    { value: "CGST+SGST", label: "CGST + SGST", defaultRate: "" },
     { value: "GST", label: "GST", defaultRate: 18 },
     { value: "IGST", label: "IGST", defaultRate: 18 },
     { value: "Custom", label: "Custom", defaultRate: "" },
@@ -400,6 +406,7 @@ function CreateProforma() {
       }))
     );
     getNextProformaNumber();
+    loadPaymentModeOptions();
   }, []);
 
   // Kept: Load company signature/stamp
@@ -470,14 +477,30 @@ function CreateProforma() {
 
     const discountAmount = (sub * (Number(proformaInfo.discount) || 0)) / 100;
     const taxableAmount = sub - discountAmount;
-    const taxRate = (Number(taxRateInput) || 0) / 100;
+    let tax = 0;
 
-    const tax = taxableAmount * taxRate;
+    if (proformaInfo.taxType === "CGST+SGST") {
+      // Use values from proformaInfo, not from separate state
+      const cgstRate = Number(proformaInfo.cgstPercentage) || 0;
+      const sgstRate = Number(proformaInfo.sgstPercentage) || 0;
+      const combinedRate = (cgstRate + sgstRate) / 100;
+      tax = taxableAmount * combinedRate;
+    } else {
+      const taxRate = (Number(proformaInfo.taxPercentage) || 0) / 100;
+      tax = taxableAmount * taxRate;
+    }
+
     const grandTotal = taxableAmount + tax;
 
     return { subtotal: sub, taxAmount: tax, total: grandTotal };
-  }, [proformaContent, proformaInfo.discount, taxRateInput]);
-
+  }, [
+    proformaContent,
+    proformaInfo.discount,
+    proformaInfo.taxPercentage,
+    proformaInfo.cgstPercentage,
+    proformaInfo.sgstPercentage, // Add this
+    proformaInfo.taxType,
+  ]);
   // Kept: Get currency symbol
   const currencySymbol = useMemo(() => {
     switch (proformaInfo.currencyType) {
@@ -832,6 +855,65 @@ function CreateProforma() {
     reader.readAsDataURL(file);
   };
 
+  // ===========CGST and SGST otpion logic
+
+  // Add this function near your other handlers
+  const handleTaxTypeChange = (opt) => {
+    if (opt) {
+      handleSelectChange("taxType", opt);
+
+      if (opt.value === "CGST+SGST") {
+        // Set defaults for CGST+SGST
+        setProformaInfo((prev) => ({
+          ...prev,
+          taxPercentage: 0,
+          cgstPercentage: 9,
+          sgstPercentage: 9,
+        }));
+        // Also update UI states
+        setCgstInput("9");
+        setSgstInput("9");
+      } else {
+        // Set default for single tax
+        const defaultRate = Number(opt.defaultRate) || 0;
+        setProformaInfo((prev) => ({
+          ...prev,
+          taxPercentage: defaultRate,
+          cgstPercentage: 0,
+          sgstPercentage: 0,
+        }));
+        // Update UI state
+        setTaxRateInput(defaultRate.toString());
+      }
+    }
+  };
+  const handleCgstChange = (e) => {
+    const value = e.target.value;
+    setCgstInput(value);
+    setProformaInfo((prev) => ({
+      ...prev,
+      cgstPercentage: Number(value) || 0,
+    }));
+  };
+
+  const handleSgstChange = (e) => {
+    const value = e.target.value;
+    setSgstInput(value);
+    setProformaInfo((prev) => ({
+      ...prev,
+      sgstPercentage: Number(value) || 0,
+    }));
+  };
+
+  const handleTaxRateChange = (e) => {
+    const value = e.target.value;
+    setTaxRateInput(value);
+    setProformaInfo((prev) => ({
+      ...prev,
+      taxPercentage: Number(value) || 0,
+    }));
+  };
+
   // --- Async/Submit Handlers ---
 
   const loadAssignToOptions = async () => {
@@ -1063,6 +1145,18 @@ function CreateProforma() {
         totalAmount: Number(total),
         proformaInvoiceDate: formattedInvoiceDate,
         dueDate: formattedDueDate,
+        taxPercentage:
+          proformaInfo.taxType === "CGST+SGST"
+            ? 0
+            : Number(proformaInfo.taxPercentage),
+        cgstPercentage:
+          proformaInfo.taxType === "CGST+SGST"
+            ? Number(proformaInfo.cgstPercentage)
+            : 0,
+        sgstPercentage:
+          proformaInfo.taxType === "CGST+SGST"
+            ? Number(proformaInfo.sgstPercentage)
+            : 0,
       },
       proformaInvoiceContents: proformaContent.map((item) => ({
         ...item,
@@ -1095,65 +1189,78 @@ function CreateProforma() {
 
   // =====================Payment MODE DROPDOWN CODE=====================
 
-
   // Load payment mode options from API
-const loadPaymentModeOptions = async () => {
-  if (isPaymentModeLoading || paymentModeOptions.length > 0) return;
-  
-  setIsPaymentModeLoading(true);
-  try {
-    const response = await axiosInstance.get("getPaymentModesForInvoice");
-    const mappedOptions = response.data.map((profile) => ({
-      label: `${profile.profileName} (${profile.type})`,
-      value: profile.paymentProfileId,
-      profileName: profile.profileName,
-      type: profile.type,
-      isDefault: profile.default
+  const loadPaymentModeOptions = async () => {
+    if (isPaymentModeLoading || paymentModeOptions.length > 0) return;
+
+    setIsPaymentModeLoading(true);
+    try {
+      const response = await axiosInstance.get("getPaymentModesForInvoice");
+      const mappedOptions = response.data.map((profile) => ({
+        label: `${profile.profileName} (${profile.type})`,
+        value: profile.paymentProfileId,
+        profileName: profile.profileName,
+        type: profile.type,
+        isDefault: profile.default,
+      }));
+
+      setPaymentModeOptions(mappedOptions);
+
+      // Auto-select default payment modes
+      const defaultPaymentModes = mappedOptions.filter(
+        (profile) => profile.isDefault
+      );
+      setSelectedPaymentModes(defaultPaymentModes);
+
+      // Update the proformaInfo with default paymentProfileIds
+      const defaultPaymentProfileIds = defaultPaymentModes.map(
+        (option) => option.value
+      );
+      setProformaInfo((prev) => ({
+        ...prev,
+        paymentProfileIds: defaultPaymentProfileIds,
+      }));
+    } catch (error) {
+      console.error("Failed to load payment modes:", error);
+      toast.error("Failed to load payment modes.");
+    } finally {
+      setIsPaymentModeLoading(false);
+    }
+  };
+
+  // Handle payment mode selection change
+  const handlePaymentModesChange = (selectedOptions) => {
+    const selected = selectedOptions || [];
+    setSelectedPaymentModes(selected);
+
+    // Update the proformaInfo with paymentProfileIds
+    const paymentProfileIds = selected.map((option) => option.value);
+    setProformaInfo((prev) => ({
+      ...prev,
+      paymentProfileIds,
     }));
-    setPaymentModeOptions(mappedOptions);
-  } catch (error) {
-    console.error("Failed to load payment modes:", error);
-    toast.error("Failed to load payment modes.");
-  } finally {
-    setIsPaymentModeLoading(false);
-  }
-};
+  };
 
-// Handle payment mode selection change
-const handlePaymentModesChange = (selectedOptions) => {
-  const selected = selectedOptions || [];
-  setSelectedPaymentModes(selected);
-  
-  // Update the proformaInfo with paymentProfileIds
-  const paymentProfileIds = selected.map(option => option.value);
-  setProformaInfo(prev => ({
-    ...prev,
-    paymentProfileIds
-  }));
-};
+  // Format selected payment modes for display
+  const formatSelectedPaymentModes = () => {
+    if (selectedPaymentModes.length === 0) {
+      return "No payment modes selected";
+    }
 
-// Format selected payment modes for display
-const formatSelectedPaymentModes = () => {
-  if (selectedPaymentModes.length === 0) {
-    return "No payment modes selected";
-  }
-  
-  return selectedPaymentModes
-    .map(mode => `${mode.profileName} (${mode.type})`)
-    .join(", ");
-};
+    return selectedPaymentModes
+      .map((mode) => `${mode.profileName} (${mode.type})`)
+      .join(", ");
+  };
 
-// Get display value for the input field (shows names, not just count)
-const getPaymentModeDisplayValue = () => {
-  if (selectedPaymentModes.length === 0) {
-    return "";
-  }
-  
-  // Show names in the input field
-  return selectedPaymentModes
-    .map(mode => mode.profileName)
-    .join(", ");
-};
+  // Get display value for the input field (shows names, not just count)
+  const getPaymentModeDisplayValue = () => {
+    if (selectedPaymentModes.length === 0) {
+      return "";
+    }
+
+    // Show names in the input field
+    return selectedPaymentModes.map((mode) => mode.profileName).join(", ");
+  };
 
   // Load payment profile options
   const loadPaymentProfileOptions = async () => {
@@ -1348,7 +1455,7 @@ const getPaymentModeDisplayValue = () => {
         peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
         peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none text-gray-700"
                         >
-                          Payment Modes 
+                          Payment Modes
                         </label>
                         <Select
                           value={selectedPaymentModes}
@@ -1395,10 +1502,7 @@ const getPaymentModeDisplayValue = () => {
                           }}
                         />
                       </div>
-                    
                     </div>
-
-                  
                   </div>
                 </div>
 
@@ -1870,44 +1974,44 @@ const getPaymentModeDisplayValue = () => {
                         value={taxOptions.find(
                           (o) => o.value === proformaInfo.taxType
                         )}
-                        onChange={(opt) => {
-                          if (opt) {
-                            handleSelectChange("taxType", opt);
-                            setTaxRateInput(opt.defaultRate);
-                            setProformaInfo((prev) => ({
-                              ...prev,
-                              taxPercentage: Number(opt.defaultRate) || 0,
-                            }));
-                          } else {
-                            handleSelectChange("taxType", null);
-                            setTaxRateInput("");
-                            setProformaInfo((prev) => ({
-                              ...prev,
-                              taxPercentage: 0,
-                            }));
-                          }
-                        }}
+                        onChange={handleTaxTypeChange} // Changed to new handler
                         options={taxOptions}
                         className="w-full"
                         classNamePrefix="select"
                         menuPlacement="auto"
                       />
-                      <FormInput
-                        label="Tax %"
-                        name="taxRateInput"
-                        type="number"
-                        value={taxRateInput}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setTaxRateInput(value);
-                          setProformaInfo((prev) => ({
-                            ...prev,
-                            taxPercentage: Number(value) || 0,
-                          }));
-                        }}
-                        disabled={proformaInfo.taxType === "No Tax"}
-                        className="w-full"
-                      />
+
+                      {/* Conditional Input Rendering */}
+                      <div className="w-full">
+                        {proformaInfo.taxType === "CGST+SGST" ? (
+                          <div className="flex gap-2">
+                            <FormInput
+                              label="CGST %"
+                              name="cgstPercentage"
+                              type="number"
+                              value={proformaInfo.cgstPercentage}
+                              onChange={handleCgstChange}
+                            />
+                            <FormInput
+                              label="SGST %"
+                              name="sgstPercentage"
+                              type="number"
+                              value={proformaInfo.sgstPercentage}
+                              onChange={handleSgstChange}
+                            />
+                          </div>
+                        ) : (
+                          <FormInput
+                            label="Tax %"
+                            name="taxPercentage"
+                            type="number"
+                            value={proformaInfo.taxPercentage}
+                            onChange={handleTaxRateChange}
+                            disabled={proformaInfo.taxType === "No Tax"}
+                            className="w-full"
+                          />
+                        )}
+                      </div>
                     </div>
                     <div className="flex justify-between text-gray-600">
                       <span>Tax Amount:</span>

@@ -386,6 +386,46 @@ function PreviewTaskModal({
     }
   };
 
+  // Add status change handler for modal
+  const handleStatusChangeInModal = async (newStatus) => {
+    if (!taskId || !task || task.status === newStatus) {
+      return;
+    }
+
+    const oldStatus = task.status;
+
+    try {
+      setStatusLoading(true);
+
+      // Optimistic update: Update local task state immediately
+      setTask((prev) => ({
+        ...prev,
+        status: newStatus,
+      }));
+
+      // Call API to update status
+      await axiosInstance.put(`updateTaskStatus/${taskId}/${newStatus}`);
+
+      // Notify parent component about the status change
+      if (onStatusUpdate) {
+        onStatusUpdate(taskId, newStatus);
+      }
+
+      showAutoCloseSuccess("Task status updated successfully!");
+    } catch (error) {
+      console.error("Error updating status:", error);
+      showErrorAlert("Failed to update status");
+
+      // Revert optimistic update on error
+      setTask((prev) => ({
+        ...prev,
+        status: oldStatus,
+      }));
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
   const handleStopTimer = async () => {
     if (!taskId || !activeTimerLog) {
       showErrorAlert("No active timer to stop");
@@ -441,8 +481,8 @@ function PreviewTaskModal({
                 <span class="text-sm font-medium text-blue-800">Session Duration</span>
               </div>
               <div class="text-2xl font-bold text-blue-900 font-mono text-center">${formatTime(
-          timerSeconds
-        )}</div>
+                timerSeconds
+              )}</div>
             </div>
           </div>
         </div>
@@ -642,10 +682,12 @@ function PreviewTaskModal({
 
   // Add this function after other handler functions
   const handleStatusChange = async (taskId, newStatus) => {
-    console.log(`handleStatusChange called: taskId=${taskId}, newStatus=${newStatus}`);
+    console.log(
+      `handleStatusChange called: taskId=${taskId}, newStatus=${newStatus}`
+    );
 
     try {
-      const task = tasks.find(t => t.taskId === taskId);
+      const task = tasks.find((t) => t.taskId === taskId);
       const oldStatus = task?.status;
 
       // Only proceed if status actually changed
@@ -654,15 +696,15 @@ function PreviewTaskModal({
       }
 
       // Update the tasks state (optimistic update for table view)
-      setTasks(prevTasks =>
-        prevTasks.map(task =>
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
           task.taskId === taskId ? { ...task, status: newStatus } : task
         )
       );
 
       // Update task counts
       if (oldStatus && oldStatus !== newStatus) {
-        setTaskCounts(prevCounts => {
+        setTaskCounts((prevCounts) => {
           const newCounts = { ...prevCounts };
           newCounts[oldStatus] = Math.max(0, (prevCounts[oldStatus] || 0) - 1);
           newCounts[newStatus] = (prevCounts[newStatus] || 0) + 1;
@@ -674,13 +716,16 @@ function PreviewTaskModal({
       forceKanbanRefresh();
 
       // If task is in current filtered view and status changed, remove it
-      if (viewMode === "table" && statusFilter !== "all" && newStatus !== statusFilter) {
-        setTasks(prevTasks => prevTasks.filter(t => t.taskId !== taskId));
+      if (
+        viewMode === "table" &&
+        statusFilter !== "all" &&
+        newStatus !== statusFilter
+      ) {
+        setTasks((prevTasks) => prevTasks.filter((t) => t.taskId !== taskId));
       }
 
       // Don't show toast for timer-triggered changes (optional)
       // toast.success("Task status updated!");
-
     } catch (error) {
       console.error("Error updating status:", error);
 
@@ -876,12 +921,15 @@ function PreviewTaskModal({
                       <div className="relative">
                         <select
                           value={task.status || "NOT_STARTED"}
-                          onChange={(e) => handleStatusChange(e.target.value)}
+                          onChange={(e) =>
+                            handleStatusChangeInModal(e.target.value)
+                          } // Change this line
                           disabled={statusLoading}
                           className={`px-2 py-1 rounded text-xs font-medium appearance-none pr-6 cursor-pointer ${getStatusColor(
                             task.status
-                          )} ${statusLoading ? "opacity-50 cursor-not-allowed" : ""
-                            }`}
+                          )} ${
+                            statusLoading ? "opacity-50 cursor-not-allowed" : ""
+                          }`}
                         >
                           <option value="NOT_STARTED">Not Started</option>
                           <option value="IN_PROGRESS">In Progress</option>
@@ -962,9 +1010,10 @@ function PreviewTaskModal({
                         disabled={!canStartTimer}
                         className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 
                           text-white
-                          ${canStartTimer
-                            ? "bg-blue-600 hover:bg-blue-700"
-                            : "bg-gray-400 cursor-not-allowed"
+                          ${
+                            canStartTimer
+                              ? "bg-blue-600 hover:bg-blue-700"
+                              : "bg-gray-400 cursor-not-allowed"
                           }`}
                         title={
                           canStartTimer
@@ -1029,37 +1078,41 @@ function PreviewTaskModal({
                     <nav className="flex">
                       <button
                         onClick={() => setActiveTab("timelogs")}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "timelogs"
-                          ? "border-b-2 border-blue-600 text-blue-600"
-                          : "text-gray-500 hover:text-gray-700"
-                          }`}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${
+                          activeTab === "timelogs"
+                            ? "border-b-2 border-blue-600 text-blue-600"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
                       >
                         Time Logs
                       </button>
                       <button
                         onClick={() => setActiveTab("statistics")}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "statistics"
-                          ? "border-b-2 border-blue-600 text-blue-600"
-                          : "text-gray-500 hover:text-gray-700"
-                          }`}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${
+                          activeTab === "statistics"
+                            ? "border-b-2 border-blue-600 text-blue-600"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
                       >
                         Statistics
                       </button>
                       <button
                         onClick={() => setActiveTab("comments")}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "comments"
-                          ? "border-b-2 border-blue-600 text-blue-600"
-                          : "text-gray-500 hover:text-gray-700"
-                          }`}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${
+                          activeTab === "comments"
+                            ? "border-b-2 border-blue-600 text-blue-600"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
                       >
                         Comments
                       </button>
                       <button
                         onClick={() => setActiveTab("attachments")}
-                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${activeTab === "attachments"
-                          ? "border-b-2 border-blue-600 text-blue-600"
-                          : "text-gray-500 hover:text-gray-700"
-                          }`}
+                        className={`flex-1 px-2 py-1.5 text-xs font-medium text-center ${
+                          activeTab === "attachments"
+                            ? "border-b-2 border-blue-600 text-blue-600"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
                       >
                         Attachments
                       </button>
@@ -1123,8 +1176,8 @@ function PreviewTaskModal({
                                         !log.endTime
                                           ? "In Progress"
                                           : formatDuration(
-                                            log.durationInMinutes
-                                          ) /* For completed logs */
+                                              log.durationInMinutes
+                                            ) /* For completed logs */
                                       }
                                     </div>
                                   </td>
