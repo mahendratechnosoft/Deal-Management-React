@@ -387,139 +387,147 @@ const DomainHistoryModal = ({
     }
   };
 
-  const validateForm = async () => {
-    const newErrors = {};
+const validateForm = async () => {
+  const newErrors = {};
 
-    if (!formData.domainStartDate) {
-      newErrors.domainStartDate = "Domain start date is required";
+  // DOMAIN fields (not AMC)
+  if (!formData.domainStartDate) {
+    newErrors.domainStartDate = "Domain start date is required";
+  }
+
+  if (!formData.domainRenewalDate) {
+    newErrors.domainRenewalDate = "Domain renewal date is required";
+  }
+
+  // Domain amount validation (optional)
+  if (
+    formData.domainAmount !== undefined &&
+    formData.domainAmount !== null &&
+    formData.domainAmount !== ""
+  ) {
+    // Convert to string first for trim
+    const amountValue = String(formData.domainAmount).trim();
+    if (
+      amountValue === "" ||
+      isNaN(amountValue) ||
+      parseFloat(amountValue) < 0
+    ) {
+      newErrors.domainAmount = "Domain amount must be a positive number";
     }
+  }
 
-    if (!formData.domainRenewalDate) {
-      newErrors.domainRenewalDate = "Domain renewal date is required";
-    }
+  if (!formData.sequence) {
+    newErrors.sequence = "Sequence number is required";
+  } else if (isNaN(formData.sequence) || parseInt(formData.sequence) <= 0) {
+    newErrors.sequence = "Sequence must be a positive number";
+  }
 
-    // REMOVED: Domain Amount validation (no longer required)
-    // if (!formData.domainAmount) {
-    //   newErrors.domainAmount = "Domain amount is required";
-    // } else if (
-    //   isNaN(formData.domainAmount) ||
-    //   parseFloat(formData.domainAmount) <= 0
-    // ) {
-    //   newErrors.domainAmount = "Domain amount must be a positive number";
-    // }
+  setErrors(newErrors);
 
-    // Add validation for amount format only (if provided)
-    if (formData.domainAmount && formData.domainAmount.trim() !== "") {
-      if (
-        isNaN(formData.domainAmount) ||
-        parseFloat(formData.domainAmount) < 0
-      ) {
-        newErrors.domainAmount = "Domain amount must be a positive number";
+  // Check sequence uniqueness for both create and edit modes
+  if (!newErrors.sequence) {
+    const originalSequence = isEditMode ? initialData?.sequence : null;
+    const currentSequence = parseInt(formData.sequence);
+
+    // Only check uniqueness if:
+    // 1. In create mode, OR
+    // 2. In edit mode and sequence has changed
+    if (!isEditMode || currentSequence !== originalSequence) {
+      const isUnique = await checkSequenceUnique(currentSequence);
+      if (!isUnique) {
+        return false;
       }
     }
+  }
 
-    if (!formData.sequence) {
-      newErrors.sequence = "Sequence number is required";
-    } else if (isNaN(formData.sequence) || parseInt(formData.sequence) <= 0) {
-      newErrors.sequence = "Sequence must be a positive number";
-    }
+  return Object.keys(newErrors).length === 0;
+};
 
-    setErrors(newErrors);
+ const handleSubmit = async (e) => {
+   e.preventDefault();
 
-    // Check sequence uniqueness for both create and edit modes
-    if (!newErrors.sequence) {
-      const originalSequence = isEditMode ? initialData?.sequence : null;
-      const currentSequence = parseInt(formData.sequence);
+   const isValid = await validateForm();
+   if (!isValid) {
+     toast.error("Please fix the form errors before submitting.");
+     return;
+   }
 
-      // Only check uniqueness if:
-      // 1. In create mode, OR
-      // 2. In edit mode and sequence has changed
-      if (!isEditMode || currentSequence !== originalSequence) {
-        const isUnique = await checkSequenceUnique(currentSequence);
-        if (!isUnique) {
-          return false;
-        }
-      }
-    }
+   // Final sequence check for create mode
+   if (!isEditMode && !sequenceValid) {
+     toast.error("Please ensure sequence number is valid and unique");
+     return;
+   }
 
-    return Object.keys(newErrors).length === 0;
-  };
+   setLoading(true);
+   try {
+     // DOMAIN payload (not AMC)
+     const payload = {
+       amcId,
+       domainStartDate: formData.domainStartDate,
+       domainRenewalDate: formData.domainRenewalDate,
+       domainAmount: formData.domainAmount
+         ? parseFloat(formData.domainAmount)
+         : 0,
+       domainRenewalCycle: formData.domainRenewalCycle || "1 Year",
+       sequence: parseInt(formData.sequence),
+       paid: formData.paid,
+     };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+     // Add domain ID for update
+     if (isEditMode && initialData?.acmDomainHistoryId) {
+       payload.acmDomainHistoryId = initialData.acmDomainHistoryId;
+     }
 
-    const isValid = await validateForm();
-    if (!isValid) {
-      toast.error("Please fix the form errors before submitting.");
-      return;
-    }
+     console.log("Submitting Domain payload:", payload); // Debug log
 
-    // Final sequence check for create mode
-    if (!isEditMode && !sequenceValid) {
-      toast.error("Please ensure sequence number is valid and unique");
-      return;
-    }
+     // Use the correct DOMAIN endpoint
+     const response = await axiosInstance.put("updateAMCDomainHistoy", payload);
 
-    setLoading(true);
-    try {
-      const payload = {
-        amcId,
-        domainStartDate: formData.domainStartDate,
-        domainRenewalDate: formData.domainRenewalDate,
-        domainAmount: formData.domainAmount
-          ? parseFloat(formData.domainAmount)
-          : 0, // Default to 0 if not provided
-        domainRenewalCycle: formData.domainRenewalCycle || "1 Year",
-        sequence: parseInt(formData.sequence),
-        paid: formData.paid,
-      };
+     console.log("Domain API Response:", response.data); // Debug log
 
-      // Add acmDomainHistoryId for update
-      if (isEditMode && initialData?.acmDomainHistoryId) {
-        payload.acmDomainHistoryId = initialData.acmDomainHistoryId;
-      }
+     if (response.data) {
+       toast.success(
+         isEditMode
+           ? "Domain History updated successfully"
+           : "Domain History created successfully"
+       );
 
-      const response = isEditMode
-        ? await axiosInstance.put("updateAMCDomainHistoy", payload)
-        : await axiosInstance.put("updateAMCDomainHistoy", payload);
+       if (onSuccess) {
+         onSuccess({
+           ...(response.data || payload),
+           refreshParentList: true,
+         });
+       }
 
-      if (response.data) {
-        toast.success(
-          isEditMode
-            ? "Domain History updated successfully"
-            : "Domain History created successfully"
-        );
-        if (onSuccess) {
-          onSuccess({
-            ...(response.data || payload),
-            refreshParentList: true,
-          });
-        }
+       onClose();
+     }
+   } catch (error) {
+     console.error("Error saving domain history:", error);
+     console.error("Error response:", error.response?.data);
 
-        onClose();
-      }
-    } catch (error) {
-      console.error("Error saving domain history:", error);
-
-      if (error.response?.status === 409) {
-        toast.error(
-          "Sequence number already exists. Please choose a different sequence."
-        );
-      } else if (error.response?.status === 400) {
-        toast.error(
-          error.response.data?.message ||
-            "Invalid data. Please check all fields."
-        );
-      } else {
-        toast.error(
-          error.response?.data?.message || "Failed to save domain history"
-        );
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
+     if (error.response?.status === 409) {
+       toast.error(
+         "Sequence number already exists. Please choose a different sequence."
+       );
+     } else if (error.response?.status === 400) {
+       toast.error(
+         error.response.data?.message ||
+           error.response.data?.error ||
+           "Invalid data. Please check all fields."
+       );
+     } else if (error.response?.status === 404) {
+       toast.error("API endpoint not found. Please check the URL.");
+     } else {
+       toast.error(
+         error.response?.data?.message ||
+           error.response?.data?.error ||
+           "Failed to save domain history"
+       );
+     }
+   } finally {
+     setLoading(false);
+   }
+ };
   if (!isOpen) return null;
 
   return (

@@ -5,6 +5,8 @@ import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import Select from "react-select";
 import { City, Country, State } from "country-state-city";
+
+
 import {
   FormFileAttachment,
   FormInput,
@@ -22,6 +24,11 @@ function CreateProposal() {
   const { LayoutComponent, role } = useLayout();
   const [errors, setErrors] = useState({});
   const [companyMediaLoading, setCompanyMediaLoading] = useState(true);
+
+  // Add these to your existing useState declarations:
+  const [paymentModeOptions, setPaymentModeOptions] = useState([]);
+  const [isPaymentModeLoading, setIsPaymentModeLoading] = useState(false);
+  const [selectedPaymentModes, setSelectedPaymentModes] = useState([]);
 
   const [proposalInfo, setProposalInfo] = useState({
     employeeId: null,
@@ -55,6 +62,7 @@ function CreateProposal() {
     attachmentFile: "", // Base64 string
     attachmentFileName: "", // Name of file
     attachmentFileType: "", // Mime type
+    paymentProfileIds: [],
   });
 
   const [proposalContent, setProposalContent] = useState([
@@ -117,6 +125,7 @@ function CreateProposal() {
       }))
     );
     getNextProposalNumber();
+    loadPaymentModeOptions();
   }, []);
 
   useEffect(() => {
@@ -309,6 +318,58 @@ function CreateProposal() {
 
     fetchCompanyMedia();
   }, [role]);
+
+  //  load payment Options
+  const loadPaymentModeOptions = async () => {
+    if (isPaymentModeLoading || paymentModeOptions.length > 0) return;
+
+    setIsPaymentModeLoading(true);
+    try {
+      const response = await axiosInstance.get("getPaymentModesForInvoice");
+      const mappedOptions = response.data.map((profile) => ({
+        label: `${profile.profileName} (${profile.type})`,
+        value: profile.paymentProfileId,
+        profileName: profile.profileName,
+        type: profile.type,
+        isDefault: profile.default,
+      }));
+
+      setPaymentModeOptions(mappedOptions);
+
+      // Auto-select default payment modes
+      const defaultPaymentModes = mappedOptions.filter(
+        (profile) => profile.isDefault
+      );
+      setSelectedPaymentModes(defaultPaymentModes);
+
+      // Update the proposalInfo with default paymentProfileIds
+      const defaultPaymentProfileIds = defaultPaymentModes.map(
+        (option) => option.value
+      );
+      setProposalInfo((prev) => ({
+        ...prev,
+        paymentProfileIds: defaultPaymentProfileIds,
+      }));
+    } catch (error) {
+      console.error("Failed to load payment modes:", error);
+      toast.error("Failed to load payment modes.");
+    } finally {
+      setIsPaymentModeLoading(false);
+    }
+  };
+
+  // Add this function after handleImageUpload
+  const handlePaymentModesChange = (selectedOptions) => {
+    const selected = selectedOptions || [];
+    setSelectedPaymentModes(selected);
+
+    // Update the proposalInfo with paymentProfileIds
+    const paymentProfileIds = selected.map((option) => option.value);
+    setProposalInfo((prev) => ({
+      ...prev,
+      paymentProfileIds,
+    }));
+  };
 
   const getNextProposalNumber = async () => {
     try {
@@ -817,6 +878,7 @@ function CreateProposal() {
           proposalInfo.taxType === "CGST+SGST"
             ? Number(proposalInfo.sgstPercentage)
             : 0,
+        paymentProfileIds: proposalInfo.paymentProfileIds,
       },
       proposalContent: proposalContent.map((item) => ({
         ...item,
@@ -1009,6 +1071,64 @@ function CreateProposal() {
                       background="white"
                       className="md:col-span-1"
                     />
+
+             
+                    {/* Add this after the FormFileAttachment component */}
+                    <div className="md:col-span-2">
+                      <div className="relative">
+                        <label
+                          className="absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 
+        peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
+        peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none text-gray-700"
+                        >
+                          Payment Modes
+                        </label>
+                        <Select
+                          value={selectedPaymentModes}
+                          onChange={handlePaymentModesChange}
+                          options={paymentModeOptions}
+                          onMenuOpen={loadPaymentModeOptions}
+                          isLoading={isPaymentModeLoading}
+                          isMulti
+                          isClearable
+                          placeholder="Select payment modes..."
+                          className="react-select-container peer"
+                          classNamePrefix="react-select"
+                          noOptionsMessage={({ inputValue }) =>
+                            inputValue
+                              ? "No payment modes found"
+                              : "Start typing to search..."
+                          }
+                          classNames={{
+                            control: (state) =>
+                              `border border-gray-300 rounded-md shadow-sm sm:text-sm pt-1
+           ${state.isFocused ? "border-blue-500 ring-1 ring-blue-500" : ""}
+           bg-white`,
+                            placeholder: () => "text-gray-400",
+                            multiValue: () => "bg-blue-100 rounded-full",
+                            multiValueLabel: () => "text-blue-800 text-sm",
+                            multiValueRemove: () =>
+                              "text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full",
+                          }}
+                          styles={{
+                            control: (base) => ({
+                              ...base,
+                              minHeight: "44px",
+                              fontSize: "0.875rem",
+                              padding: "0 4px",
+                            }),
+                            valueContainer: (base) => ({
+                              ...base,
+                              padding: "6px 8px 0 8px", // Added top padding for floating label
+                            }),
+                            multiValue: (base) => ({
+                              ...base,
+                              margin: "2px 4px 2px 0",
+                            }),
+                          }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 

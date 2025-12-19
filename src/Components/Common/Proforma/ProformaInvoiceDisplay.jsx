@@ -65,6 +65,54 @@ export const formatProformaNumber = (number) => {
   return `P_INV-${numberString.padStart(6, "0")}`;
 };
 
+const TaxDisplayRows = ({ invoiceInfo, taxableAmount, currency }) => {
+  const { taxType, taxPercentage, cgstPercentage, sgstPercentage } =
+    invoiceInfo;
+
+  // If it's CGST+SGST, split the tax
+  if (taxType === "CGST+SGST") {
+    const cgst = cgstPercentage || 0;
+    const sgst = sgstPercentage || 0;
+
+    const cgstAmount = taxableAmount * (cgst / 100);
+    const sgstAmount = taxableAmount * (sgst / 100);
+
+    return (
+      <>
+        <div className="flex justify-between text-sm text-gray-600">
+          <span>CGST ({cgst.toFixed(2)}%)</span>
+          <span className="font-medium">
+            {formatCurrency(cgstAmount, currency)}
+          </span>
+        </div>
+        <div className="flex justify-between text-sm text-gray-600">
+          <span>SGST ({sgst.toFixed(2)}%)</span>
+          <span className="font-medium">
+            {formatCurrency(sgstAmount, currency)}
+          </span>
+        </div>
+      </>
+    );
+  }
+
+  // For other tax types
+  if (taxType !== "No Tax" && taxPercentage > 0) {
+    const totalTax = taxableAmount * (taxPercentage / 100);
+    return (
+      <div className="flex justify-between text-sm text-gray-600">
+        <span>
+          {taxType} ({taxPercentage}%)
+        </span>
+        <span className="font-medium">
+          {formatCurrency(totalTax, currency)}
+        </span>
+      </div>
+    );
+  }
+
+  return null;
+};
+
 const ProformaInvoiceDisplay = ({
   invoiceData,
   adminInformation,
@@ -79,6 +127,59 @@ const ProformaInvoiceDisplay = ({
   const items = invoiceData.proformaInvoiceContents;
   const currency = info.currencyType || "INR";
   const paymentProfiles = invoiceData.paymentProfiles || [];
+
+  // Add this calculation block - it's the same logic as ProposalInvoiceDisplay
+  const {
+    subtotal,
+    discountAmount,
+    taxableAmount,
+    total,
+    taxAmount,
+    cgstPercentage,
+    sgstPercentage,
+  } = useMemo(() => {
+    const info = invoiceData.proformaInvoiceInfo;
+    const items = invoiceData.proformaInvoiceContents;
+    const cType = info.currencyType || "INR";
+
+    const sub = items.reduce(
+      (acc, item) =>
+        acc + (Number(item.quantity) || 0) * (Number(item.rate) || 0),
+      0
+    );
+    const discount = Number(info.discount) || 0;
+    const dAmount = (sub * discount) / 100;
+    const tAmount = sub - dAmount;
+
+    // --- CGST+SGST Tax Logic ---
+    const tType = info.taxType || "No Tax";
+    let totalTax = 0;
+    let cgst = 0;
+    let sgst = 0;
+
+    if (tType === "CGST+SGST") {
+      cgst = Number(info.cgstPercentage) || 0;
+      sgst = Number(info.sgstPercentage) || 0;
+      const cgstAmount = tAmount * (cgst / 100);
+      const sgstAmount = tAmount * (sgst / 100);
+      totalTax = cgstAmount + sgstAmount;
+    } else {
+      const tPercentage = Number(info.taxPercentage) || 0;
+      totalTax = tAmount * (tPercentage / 100);
+    }
+
+    const grandTotal = tAmount + totalTax;
+
+    return {
+      subtotal: sub,
+      discountAmount: dAmount,
+      taxableAmount: tAmount,
+      total: grandTotal,
+      taxAmount: totalTax,
+      cgstPercentage: cgst,
+      sgstPercentage: sgst,
+    };
+  }, [invoiceData]);
 
   return (
     // Note: We remove max-w-5xl and mx-auto so it fills the modal body
@@ -328,6 +429,12 @@ const ProformaInvoiceDisplay = ({
               </div>
             )}
 
+            <TaxDisplayRows
+              invoiceInfo={info}
+              taxableAmount={taxableAmount}
+              currency={currency}
+            />
+
             {/* Taxable Amount */}
             {calculation.discount > 0 && (
               <div className="flex justify-between text-sm text-gray-600">
@@ -458,14 +565,14 @@ const ProformaInvoiceDisplay = ({
                               <span>{profile.upiId || "N/A"}</span>
                             </p>
                             {profile.qrCodeImage && (
-                              <div className="">
+                              <div className="w-36 h-36">
                                 <p className="font-medium mb-1">
                                   Scan QR Code:
                                 </p>
                                 <img
                                   src={`data:;base64,${profile.qrCodeImage}`}
                                   alt="QR Code"
-                                  className="w-30 h-30"
+                                  className="w-36 h-36"
                                 />
                               </div>
                             )}

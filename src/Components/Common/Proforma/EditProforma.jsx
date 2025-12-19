@@ -77,6 +77,8 @@ function EditProforma() {
     termsAndConditions: "",
     companySignature: "",
     companyStamp: "",
+    cgstPercentage: 0,
+    sgstPercentage: 0,
   });
 
   const hasPayments = (Number(proformaInfo.paidAmount) || 0) > 0;
@@ -106,6 +108,9 @@ function EditProforma() {
 
   // Other Select Options
   const [taxRateInput, setTaxRateInput] = useState("18");
+
+  const [cgstInput, setCgstInput] = useState("9");
+  const [sgstInput, setSgstInput] = useState("9");
   const [assignToOptions, setAssignToOptions] = useState([]);
   const [isAssignToLoading, setIsAssignToLoading] = useState(false);
   const [relatedIdOptions, setRelatedIdOptions] = useState([]);
@@ -124,6 +129,7 @@ function EditProforma() {
     { value: "SGST", label: "SGST", defaultRate: 9 },
     { value: "CGST", label: "CGST", defaultRate: 9 },
     { value: "GST", label: "GST", defaultRate: 18 },
+    { value: "CGST+SGST", label: "CGST + SGST", defaultRate: "" },
     { value: "IGST", label: "IGST", defaultRate: 18 },
     { value: "Custom", label: "Custom", defaultRate: "" },
   ];
@@ -264,7 +270,22 @@ function EditProforma() {
         setSelectedShippingCity(shippingObj.selectedCity);
 
         // E. Tax Logic
-        setTaxRateInput(String(proformaInvoiceInfo.taxPercentage || 0));
+        if (proformaInvoiceInfo.taxType === "CGST+SGST") {
+          // Set split tax values
+          const cgstValue = proformaInvoiceInfo.cgstPercentage || 0;
+          const sgstValue = proformaInvoiceInfo.sgstPercentage || 0;
+
+          setCgstInput(cgstValue.toString());
+          setSgstInput(sgstValue.toString());
+          setTaxRateInput(""); // Clear main input
+        } else {
+          // Standard single tax
+          const taxValue = proformaInvoiceInfo.taxPercentage || 0;
+          setTaxRateInput(taxValue.toString());
+          // Reset split inputs
+          setCgstInput("0");
+          setSgstInput("0");
+        }
 
         // F. Set Main State
         setProformaInfo({
@@ -272,8 +293,10 @@ function EditProforma() {
           invoiceDate:
             proformaInvoiceInfo.proformaInvoiceDate?.split("T")[0] || "",
           dueDate: proformaInvoiceInfo.dueDate?.split("T")[0] || "",
+          // Ensure CGST/SGST fields are set even if missing from API
+          cgstPercentage: proformaInvoiceInfo.cgstPercentage || 0,
+          sgstPercentage: proformaInvoiceInfo.sgstPercentage || 0,
         });
-
         // G. Set Content
         setProformaContent(proformaInvoiceContents || []);
 
@@ -419,13 +442,33 @@ function EditProforma() {
         acc + (Number(item.quantity) || 0) * (Number(item.rate) || 0),
       0
     );
+
     const discountAmount = (sub * (Number(proformaInfo.discount) || 0)) / 100;
     const taxableAmount = sub - discountAmount;
-    const taxRate = (Number(taxRateInput) || 0) / 100;
-    const tax = taxableAmount * taxRate;
+    let tax = 0;
+
+    if (proformaInfo.taxType === "CGST+SGST") {
+      // Use values from proposalInfo, not from separate state
+      const cgstRate = Number(proformaInfo.cgstPercentage) || 0;
+      const sgstRate = Number(proformaInfo.sgstPercentage) || 0;
+      const combinedRate = (cgstRate + sgstRate) / 100;
+      tax = taxableAmount * combinedRate;
+    } else {
+      const taxRate = (Number(proformaInfo.taxPercentage) || 0) / 100;
+      tax = taxableAmount * taxRate;
+    }
+
     const grandTotal = taxableAmount + tax;
+
     return { subtotal: sub, taxAmount: tax, total: grandTotal };
-  }, [proformaContent, proformaInfo.discount, taxRateInput]);
+  }, [
+    proformaContent,
+    proformaInfo.discount,
+    proformaInfo.taxPercentage,
+    proformaInfo.cgstPercentage,
+    proformaInfo.sgstPercentage,
+    proformaInfo.taxType,
+  ]);
 
   const currencySymbol = useMemo(() => {
     switch (proformaInfo.currencyType) {
@@ -901,6 +944,29 @@ function EditProforma() {
     }
   };
 
+  // Add these functions near your other handlers
+  const handleCgstChange = (e) => {
+    const value = e.target.value;
+    setCgstInput(value);
+    setProformaInfo((prev) => ({
+      ...prev,
+      cgstPercentage: Number(value) || 0,
+      // When editing CGST, ensure taxType is CGST+SGST
+      taxType: prev.taxType !== "CGST+SGST" ? "CGST+SGST" : prev.taxType,
+    }));
+  };
+
+  const handleSgstChange = (e) => {
+    const value = e.target.value;
+    setSgstInput(value);
+    setProformaInfo((prev) => ({
+      ...prev,
+      sgstPercentage: Number(value) || 0,
+      // When editing SGST, ensure taxType is CGST+SGST
+      taxType: prev.taxType !== "CGST+SGST" ? "CGST+SGST" : prev.taxType,
+    }));
+  };
+
   // --- Content Handlers ---
   const handleItemChange = (index, e) => {
     const { name, value } = e.target;
@@ -1133,6 +1199,18 @@ function EditProforma() {
           totalAmount: Number(proformaInfo.totalAmount),
           proformaInvoiceDate: formattedInvoiceDate,
           dueDate: formattedDueDate,
+          taxPercentage:
+            proformaInfo.taxType === "CGST+SGST"
+              ? 0
+              : Number(proformaInfo.taxPercentage),
+          cgstPercentage:
+            proformaInfo.taxType === "CGST+SGST"
+              ? Number(proformaInfo.cgstPercentage)
+              : 0,
+          sgstPercentage:
+            proformaInfo.taxType === "CGST+SGST"
+              ? Number(proformaInfo.sgstPercentage)
+              : 0,
         },
         proformaInvoiceContents: proformaContent.map((item) => ({
           proformaInvoiceContentId: item.proformaInvoiceContentId || null, // Null for new items
@@ -1480,10 +1558,7 @@ function EditProforma() {
                             }}
                           />
                         </div>
-                    
                       </div>
-
-                 
                     </div>
                   </div>
 
@@ -1925,30 +2000,94 @@ function EditProforma() {
                             (o) => o.value === proformaInfo.taxType
                           )}
                           onChange={(opt) => {
-                            handleSelectChange("taxType", opt);
-                            if (opt) setTaxRateInput(String(opt.defaultRate));
-                            else setTaxRateInput("0");
-                            setProformaInfo((p) => ({
-                              ...p,
-                              taxPercentage: opt ? opt.defaultRate : 0,
-                            }));
+                            if (opt) {
+                              handleSelectChange("taxType", opt);
+
+                              if (opt.value === "CGST+SGST") {
+                                // Switch to Split Mode
+                                const cgstDefault = 9;
+                                const sgstDefault = 9;
+                                setCgstInput(cgstDefault.toString());
+                                setSgstInput(sgstDefault.toString());
+                                setProformaInfo((p) => ({
+                                  ...p,
+                                  taxPercentage: 0,
+                                  cgstPercentage: cgstDefault,
+                                  sgstPercentage: sgstDefault,
+                                }));
+                              } else {
+                                // Switch to Single Mode
+                                const defaultRate =
+                                  opt.defaultRate !== undefined &&
+                                  opt.defaultRate !== ""
+                                    ? Number(opt.defaultRate) || 0
+                                    : 0;
+                                setTaxRateInput(defaultRate.toString());
+                                setProformaInfo((p) => ({
+                                  ...p,
+                                  taxPercentage: defaultRate,
+                                  cgstPercentage: 0,
+                                  sgstPercentage: 0,
+                                }));
+                                // Clear split inputs
+                                setCgstInput("0");
+                                setSgstInput("0");
+                              }
+                            } else {
+                              // Clear All
+                              handleSelectChange("taxType", null);
+                              setTaxRateInput("");
+                              setCgstInput("0");
+                              setSgstInput("0");
+                              setProformaInfo((p) => ({
+                                ...p,
+                                taxPercentage: 0,
+                                cgstPercentage: 0,
+                                sgstPercentage: 0,
+                              }));
+                            }
                           }}
                           options={taxOptions}
                         />
-                        <FormInput
-                          label="Tax %"
-                          name="taxRateInput"
-                          type="number"
-                          value={taxRateInput}
-                          onChange={(e) => {
-                            setTaxRateInput(e.target.value);
-                            setProformaInfo((p) => ({
-                              ...p,
-                              taxPercentage: Number(e.target.value) || 0,
-                            }));
-                          }}
-                          disabled={proformaInfo.taxType === "No Tax"}
-                        />
+
+                        {/* Conditional Input Rendering */}
+                        <div className="w-full">
+                          {proformaInfo.taxType === "CGST+SGST" ? (
+                            <div className="flex gap-2">
+                              <FormInput
+                                label="CGST %"
+                                name="cgstPercentage"
+                                type="number"
+                                value={proformaInfo.cgstPercentage}
+                                onChange={handleCgstChange}
+                              />
+                              <FormInput
+                                label="SGST %"
+                                name="sgstPercentage"
+                                type="number"
+                                value={proformaInfo.sgstPercentage}
+                                onChange={handleSgstChange}
+                              />
+                            </div>
+                          ) : (
+                            <FormInput
+                              label="Tax %"
+                              name="taxPercentage"
+                              type="number"
+                              value={proformaInfo.taxPercentage}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setTaxRateInput(value);
+                                setProformaInfo((prev) => ({
+                                  ...prev,
+                                  taxPercentage: Number(value) || 0,
+                                }));
+                              }}
+                              disabled={proformaInfo.taxType === "No Tax"}
+                              className="w-full"
+                            />
+                          )}
+                        </div>
                       </div>
                       <div className="flex justify-between text-gray-600">
                         <span>Tax Amount:</span>

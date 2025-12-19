@@ -328,7 +328,6 @@ function CustomerList() {
                 </div> */}
               </div>
               {hasPermission("customer", "Create") && (
-
                 <button
                   className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-lg transition-all duration-200 font-medium flex items-center gap-2 text-sm shadow-sm hover:shadow-md"
                   onClick={handleCreateCustomer}
@@ -463,6 +462,9 @@ function CustomerList() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    SR NO
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     COMPANY NAME
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -496,6 +498,11 @@ function CustomerList() {
                       onClick={() => handleEdit(customer.customerId)}
                     >
                       {/* Company Name with Both Buttons */}
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 font-medium text-center">
+                        {currentPage * pageSize +
+                          customers.indexOf(customer) +
+                          1}
+                      </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm">
                         <div className="flex items-center justify-between min-w-[150px]">
                           <div className="flex items-center gap-2">
@@ -615,9 +622,8 @@ function CustomerList() {
                       {/* Phone */}
                       <td
                         className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 truncate max-w-[100px]"
-                        title={customer.phone}  
+                        title={customer.phone}
                       >
-
                         {customer.mobile || "N/A"}
                       </td>
 
@@ -635,7 +641,7 @@ function CustomerList() {
                           <a
                             href={
                               customer.website.startsWith("http://") ||
-                                customer.website.startsWith("https://")
+                              customer.website.startsWith("https://")
                                 ? customer.website
                                 : `https://${customer.website}`
                             }

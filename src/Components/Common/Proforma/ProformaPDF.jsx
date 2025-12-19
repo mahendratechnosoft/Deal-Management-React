@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   colItem: { width: "35%" },
   colSac: { width: "15%", textAlign: "right" },
   colQty: { width: "10%", textAlign: "right" },
-  colRate: { width: "22%", textAlign: "right" },
+  colRate: { width: "20%", textAlign: "right" },
   colAmount: { width: "20%", textAlign: "right", fontWeight: "bold" },
   itemDescription: {
     fontSize: 8,
@@ -327,9 +327,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 4,
   },
-  ftw:{
+  ftw: {
     fontWeight: "bold",
-  }
+  },
 });
 
 const formatDate = (dateString) => {
@@ -353,11 +353,7 @@ const getCurrencySymbol = (currencyType = "INR") => {
   }
 };
 
-const formatCurrency = (amount, currencyType) => {
-  const symbol = getCurrencySymbol(currencyType);
-  const formattedAmount = (Number(amount) || 0).toFixed(2);
-  return `${symbol}${formattedAmount}`;
-};
+
 
 const numberToWords = (num, currency = "INR") => {
   if (num === null || num === undefined || isNaN(num)) return "Zero";
@@ -385,46 +381,163 @@ const getSafeImageSrc = (base64String) => {
   return `data:;base64,${base64String}`;
 };
 
+
 const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
-  const calculation = useMemo(() => {
-    if (!invoiceData || !invoiceData.proformaInvoiceContents) {
-      return {
-        subTotal: 0,
-        discount: 0,
-        discountPercentage: 0,
-        taxableAmount: 0,
-        taxAmount: 0,
-        grandTotal: 0,
-        amountPaid: 0,
-        amountDue: 0,
-      };
-    }
-    const info = invoiceData.proformaInvoiceInfo;
-    const items = invoiceData.proformaInvoiceContents;
-    const subTotal = items.reduce((acc, item) => {
-      return acc + Number(item.quantity) * Number(item.rate);
-    }, 0);
-    const discountPercentage = Number(info.discount) || 0;
-    const discountAmount = Number(
-      (subTotal * (discountPercentage / 100)).toFixed(2)
-    );
-    const taxableAmount = Math.max(0, subTotal - discountAmount);
-    const taxRate = Number(info.taxPercentage) || 0;
-    const taxAmount = Number((taxableAmount * (taxRate / 100)).toFixed(2));
-    const grandTotal = taxableAmount + taxAmount;
-    const amountPaid = Number(info.paidAmount) || 0;
-    const amountDue = Math.max(0, grandTotal - amountPaid);
+  // In the calculation useMemo function, replace with this:
+
+
+const calculation = useMemo(() => {
+  if (!invoiceData || !invoiceData.proformaInvoiceContents) {
     return {
-      subTotal,
-      discount: discountAmount,
-      discountPercentage: discountPercentage,
-      taxableAmount,
-      taxAmount,
-      grandTotal,
-      amountPaid,
-      amountDue,
+      subTotal: 0,
+      discount: 0,
+      discountPercentage: 0,
+      taxableAmount: 0,
+      taxAmount: 0,
+      cgstAmount: 0,
+      sgstAmount: 0,
+      igstAmount: 0,
+      grandTotal: 0,
+      amountPaid: 0,
+      amountDue: 0,
     };
-  }, [invoiceData]);
+  }
+
+  const info = invoiceData.proformaInvoiceInfo;
+  const items = invoiceData.proformaInvoiceContents;
+
+  // Calculate subtotal
+  const subTotal = items.reduce((acc, item) => {
+    return acc + Number(item.quantity) * Number(item.rate);
+  }, 0);
+
+  // Calculate discount
+  const discountPercentage = Number(info.discount) || 0;
+  const discountAmount = Number(
+    (subTotal * (discountPercentage / 100)).toFixed(2)
+  );
+  const taxableAmount = Math.max(0, subTotal - discountAmount);
+
+  // Initialize tax amounts
+  let taxAmount = 0;
+  let cgstAmount = 0;
+  let sgstAmount = 0;
+  let igstAmount = 0;
+
+  // Handle different tax types
+  const taxType = info.taxType || "No Tax";
+
+  if (taxType === "CGST+SGST") {
+    // For CGST+SGST (intra-state)
+    const cgstPercentage = Number(info.cgstPercentage) || 0;
+    const sgstPercentage = Number(info.sgstPercentage) || 0;
+
+    cgstAmount = Number((taxableAmount * (cgstPercentage / 100)).toFixed(2));
+    sgstAmount = Number((taxableAmount * (sgstPercentage / 100)).toFixed(2));
+    taxAmount = cgstAmount + sgstAmount;
+  } else if (taxType === "IGST") {
+    // For IGST (inter-state)
+    const igstPercentage = Number(info.taxPercentage) || 0;
+    igstAmount = Number((taxableAmount * (igstPercentage / 100)).toFixed(2));
+    taxAmount = igstAmount;
+  } else if (taxType !== "No Tax") {
+    // For other tax types (GST, VAT, etc.)
+    const taxRate = Number(info.taxPercentage) || 0;
+    taxAmount = Number((taxableAmount * (taxRate / 100)).toFixed(2));
+  }
+
+  // Calculate final totals
+  const grandTotal = taxableAmount + taxAmount;
+  const amountPaid = Number(info.paidAmount) || 0;
+  const amountDue = Math.max(0, grandTotal - amountPaid);
+
+  return {
+    subTotal,
+    discount: discountAmount,
+    discountPercentage,
+    taxableAmount,
+    taxAmount,
+    cgstAmount,
+    sgstAmount,
+    igstAmount,
+    grandTotal,
+    amountPaid,
+    amountDue,
+  };
+}, [invoiceData]);
+  // Create a new TaxRows component to handle tax display:
+ const TaxRows = () => {
+   const info = invoiceData.proformaInvoiceInfo;
+   const taxType = info.taxType || "No Tax";
+
+   if (taxType === "CGST+SGST") {
+     return (
+       <>
+         <View style={styles.totalRow}>
+           <Text>CGST ({info.cgstPercentage || 0}%)</Text>
+           <Text>{formatCurrency(calculation.cgstAmount, currency)}</Text>
+         </View>
+         <View style={styles.totalRow}>
+           <Text>SGST ({info.sgstPercentage || 0}%)</Text>
+           <Text>{formatCurrency(calculation.sgstAmount, currency)}</Text>
+         </View>
+       </>
+     );
+   }
+
+   if (taxType === "IGST") {
+     return (
+       <View style={styles.totalRow}>
+         <Text>IGST ({info.taxPercentage || 0}%)</Text>
+         <Text>{formatCurrency(calculation.igstAmount, currency)}</Text>
+       </View>
+     );
+   }
+
+   if (taxType !== "No Tax") {
+     return (
+       <View style={styles.totalRow}>
+         <Text>
+           {taxType} ({info.taxPercentage || 0}%)
+         </Text>
+         <Text>{formatCurrency(calculation.taxAmount, currency)}</Text>
+       </View>
+     );
+   }
+
+   return (
+     <View style={styles.totalRow}>
+       <Text>Tax</Text>
+       <Text>{formatCurrency(0, currency)}</Text>
+     </View>
+   );
+ };
+
+
+
+  // Also update the formatCurrency function to handle different currencies properly:
+const formatCurrency = (amount, currencyType) => {
+  const symbol = getCurrencySymbol(currencyType);
+  const numAmount = Number(amount) || 0;
+  const formattedAmount = numAmount.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return `${symbol}${formattedAmount}`;
+};
+
+
+  // Optional: Add this if you want to format amounts in Indian numbering system for INR:
+  const getCurrencySymbol = (currencyType = "INR") => {
+    switch (currencyType) {
+      case "USD":
+        return "$";
+      case "EUR":
+        return "€";
+      default:
+        return "₹";
+    }
+  };
 
   if (!invoiceData || !adminInformation) {
     return (
@@ -652,12 +765,12 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
               </Text>
               <Text style={[styles.td, styles.colQty]}>{item.quantity}</Text>
               <Text style={[styles.td, styles.colRate]}>
-                {breakLongText(formatCurrency(item.rate, currency), 14)}
+                {breakLongText(formatCurrency(item.rate, currency), 16)}
               </Text>
               <Text style={[styles.td, styles.colAmount]}>
                 {breakLongText(
                   formatCurrency(item.quantity * item.rate, currency),
-                  10
+                  16
                 )}
               </Text>
             </View>
@@ -694,12 +807,7 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
                 </View>
               </>
             )}
-            <View style={styles.totalRow}>
-              <Text>
-                {info.taxType} ({info.taxPercentage}%)
-              </Text>
-              <Text>{formatCurrency(calculation.taxAmount, currency)}</Text>
-            </View>
+          <TaxRows />
             <View style={styles.divider} />
             <View style={styles.grandTotalRow}>
               <Text>Grand Total</Text>
