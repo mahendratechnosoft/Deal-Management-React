@@ -290,6 +290,7 @@ function CreateVendorModal({ onClose, onSuccess }) {
   };
 
   // Handle file upload
+  // Update handleFileUpload to create Blob immediately:
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
 
@@ -297,14 +298,18 @@ function CreateVendorModal({ onClose, onSuccess }) {
       const reader = new FileReader();
 
       reader.onloadend = () => {
-        // Store the COMPLETE data URL (not just base64)
-        const dataUrl = reader.result; // This is the full data URL
+        const base64String = reader.result.split(",")[1];
+
+        // Create Blob from the file directly (no need for base64 conversion)
+        const blob = new Blob([file], { type: file.type });
+        const url = URL.createObjectURL(blob);
 
         const newAttachment = {
           fileName: file.name,
           contentType: file.type,
-          data: dataUrl, // Store full data URL
-          file: file, // Keep file object for preview
+          data: base64String, // Base64 for API
+          blobUrl: url, // Object URL for preview
+          file: file,
           id: Date.now() + Math.random().toString(36).substr(2, 9),
         };
 
@@ -314,14 +319,58 @@ function CreateVendorModal({ onClose, onSuccess }) {
       reader.readAsDataURL(file);
     });
 
-    // Clear file input
     e.target.value = "";
   };
 
-  // Handle file removal
+  // Then use the stored blobUrl for preview:
+  const handleFilePreview = (attachment) => {
+    if (attachment.blobUrl) {
+      window.open(attachment.blobUrl, "_blank");
+    } else {
+      // Fallback to base64 conversion
+      try {
+        const byteCharacters = atob(attachment.data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: attachment.contentType });
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, "_blank");
+
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+        }, 1000);
+      } catch (error) {
+        console.error("Error previewing attachment:", error);
+        toast.error("Failed to preview file");
+      }
+    }
+  };
+
+  // Clean up blob URLs when component unmounts or when removing attachments
+  useEffect(() => {
+    return () => {
+      // Clean up all blob URLs when component unmounts
+      attachments.forEach((attachment) => {
+        if (attachment.blobUrl) {
+          URL.revokeObjectURL(attachment.blobUrl);
+        }
+      });
+    };
+  }, [attachments]);
+
+  // Also clean up when removing an attachment
   const handleRemoveAttachment = (id) => {
+    const attachment = attachments.find((att) => att.id === id);
+    if (attachment && attachment.blobUrl) {
+      URL.revokeObjectURL(attachment.blobUrl);
+    }
     setAttachments((prev) => prev.filter((attachment) => attachment.id !== id));
   };
+
+
 
   // File size validation (max 5MB)
   const validateFileSize = (file) => {
@@ -329,55 +378,7 @@ function CreateVendorModal({ onClose, onSuccess }) {
     return file.size <= maxSize;
   };
 
-  // Handle file preview - opens in new tab
-  const handleFilePreview = (attachment) => {
-    try {
-      // Convert base64 to Blob
-      const byteCharacters = atob(attachment.data);
-      const byteNumbers = new Array(byteCharacters.length);
 
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: attachment.contentType });
-
-      // Create object URL from Blob
-      const url = window.URL.createObjectURL(blob);
-
-      // Open in new tab
-      const newWindow = window.open(url, "_blank");
-
-      if (newWindow) {
-        newWindow.focus();
-
-        // Clean up the URL after the window is loaded
-        setTimeout(() => {
-          window.URL.revokeObjectURL(url);
-        }, 1000);
-      } else {
-        // If popup blocked, fall back to download
-        toast.error("Popup blocked. Please allow popups to preview files.");
-
-        // Create download link as fallback
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = attachment.fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        // Clean up
-        setTimeout(() => {
-          window.URL.revokeObjectURL(url);
-        }, 100);
-      }
-    } catch (error) {
-      console.error("Error previewing attachment:", error);
-      toast.error("Failed to preview file");
-    }
-  };
   // File type validation
   const allowedFileTypes = [
     "image/jpeg",
