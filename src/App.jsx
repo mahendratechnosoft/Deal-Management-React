@@ -57,6 +57,8 @@ import AmcList from "./Components/Common/AMC/AmcList.jsx";
 import PaymentModeList from "./Components/Common/Settings/Finance/PaymentMode/PaymentModeList.jsx";
 import VendorContactList from "./Components/Common/Vendor/VendorContact/VendorContactList.jsx";
 import VendorList from "./Components/Common/Vendor/VendorList.jsx";
+import SemenEnquiryList from "./Components/Common/Donor/SemenEnquiryList.jsx";
+import EditSemenEnquiry from "./Components/Common/Donor/EditSemenEnquiry.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -386,6 +388,24 @@ function App() {
               }
             />
 
+            <Route
+              path="/Admin/SemenEnquiryList"
+              element={
+                <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                  <SemenEnquiryList />
+                </RoleBasedRoute>
+              }
+            />
+
+            <Route
+              path="/Admin/EditSemenEnquiry/:id"
+              element={
+                <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                  <EditSemenEnquiry />
+                </RoleBasedRoute>
+              }
+            />
+
             {/* Employee Routes - Individual routes with layout */}
             <Route
               path="/Employee/LeadList"
@@ -611,6 +631,23 @@ function App() {
               element={
                 <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
                   <VendorList />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="/Employee/SemenEnquiryList"
+              element={
+                <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                  <SemenEnquiryList />
+                </RoleBasedRoute>
+              }
+            />
+
+            <Route
+              path="/Employee/EditSemenEnquiry/:id"
+              element={
+                <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                  <EditSemenEnquiry />
                 </RoleBasedRoute>
               }
             />
