@@ -766,51 +766,7 @@ function GsuiteHistoryModal({
                 )}
               </div>
 
-              {/* PAYMENT TOGGLE BUTTON */}
-              <div className="md:col-span-2">
-                <div className="flex items-center justify-content-between gap-4 p-3 bg-white rounded-lg border border-gray-200">
-                  <label className="text-sm font-medium text-gray-700 flex-shrink-0">
-                    Payment Status:
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-sm ${
-                        !formData.paid
-                          ? "font-semibold text-red-600"
-                          : "text-gray-500"
-                      }`}
-                    >
-                      Unpaid
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handlePaymentToggle}
-                      className={`
-                        relative inline-flex h-5 w-9 items-center rounded-full transition-colors
-                        ${formData.paid ? "bg-green-500" : "bg-gray-300"}
-                        focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1
-                      `}
-                    >
-                      <span
-                        className={`
-                          inline-block h-3 w-3 transform rounded-full bg-white transition-transform
-                          ${formData.paid ? "translate-x-5" : "translate-x-1"}
-                        `}
-                      />
-                    </button>
-                    <span
-                      className={`text-sm ${
-                        formData.paid
-                          ? "font-semibold text-green-600"
-                          : "text-gray-500"
-                      }`}
-                    >
-                      Paid
-                    </span>
-                  </div>
-                </div>
-              </div>
-
+          
               <GlobalInputField
                 label="Domain Name"
                 name="domainName"

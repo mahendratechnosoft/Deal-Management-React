@@ -726,7 +726,7 @@ function EditAdmin() {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <ModuleAccessToggle
-                      title="Amc"
+                      title="Vendor"
                       field="vendorAccess"
                       isChecked={getAccess("vendorAccess")}
                       onChange={(isChecked) =>

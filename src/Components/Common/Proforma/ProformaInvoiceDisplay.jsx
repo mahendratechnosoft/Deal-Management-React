@@ -415,55 +415,84 @@ const ProformaInvoiceDisplay = ({
             <div className="flex justify-between text-sm text-gray-600">
               <span>Sub Total</span>
               <span className="font-medium">
-                {formatCurrency(calculation.subTotal, currency)}
+                {formatCurrency(subtotal, currency)}
               </span>
             </div>
 
             {/* Discount */}
-            {calculation.discount > 0 && (
+            {info.discount > 0 && (
               <div className="flex justify-between text-sm text-gray-600">
-                <span>Discount ({calculation.discountPercentage}%)</span>
+                <span>Discount ({info.discount}%)</span>
                 <span className="font-medium">
-                  - {formatCurrency(calculation.discount, currency)}
+                  - {formatCurrency(discountAmount, currency)}
                 </span>
               </div>
             )}
 
-            <TaxDisplayRows
-              invoiceInfo={info}
-              taxableAmount={taxableAmount}
-              currency={currency}
-            />
+            {/* Show CGST and SGST separately using TaxDisplayRows */}
+            {info.taxType === "CGST+SGST" && (
+              <>
+                {info.cgstPercentage > 0 && (
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>CGST ({info.cgstPercentage.toFixed(2)}%)</span>
+                    <span className="font-medium">
+                      {formatCurrency(
+                        taxableAmount * (info.cgstPercentage / 100),
+                        currency
+                      )}
+                    </span>
+                  </div>
+                )}
+                {info.sgstPercentage > 0 && (
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>SGST ({info.sgstPercentage.toFixed(2)}%)</span>
+                    <span className="font-medium">
+                      {formatCurrency(
+                        taxableAmount * (info.sgstPercentage / 100),
+                        currency
+                      )}
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
 
-            {/* Taxable Amount */}
-            {calculation.discount > 0 && (
+            {/* For other tax types */}
+            {info.taxType !== "CGST+SGST" &&
+              info.taxType !== "No Tax" &&
+              info.taxPercentage > 0 && (
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>
+                    {info.taxType} ({info.taxPercentage}%)
+                  </span>
+                  <span className="font-medium">
+                    {formatCurrency(
+                      taxableAmount * (info.taxPercentage / 100),
+                      currency
+                    )}
+                  </span>
+                </div>
+              )}
+
+            {/* Taxable Amount - Only show if there's a discount */}
+            {info.discount > 0 && (
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Taxable Amount</span>
                 <span className="font-medium">
-                  {formatCurrency(calculation.taxableAmount, currency)}
+                  {formatCurrency(taxableAmount, currency)}
                 </span>
               </div>
             )}
-
-            {/* Tax */}
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>
-                {info.taxType} ({info.taxPercentage}%)
-              </span>
-              <span className="font-medium">
-                {formatCurrency(calculation.taxAmount, currency)}
-              </span>
-            </div>
 
             <div className="h-px bg-gray-200 my-2"></div>
 
             {/* Grand Total */}
             <div className="flex justify-between text-base font-bold text-gray-900">
               <span>Grand Total</span>
-              <span>{formatCurrency(calculation.grandTotal, currency)}</span>
+              <span>{formatCurrency(total, currency)}</span>
             </div>
 
-            {/* Amount Paid */}
+            {/* Amount Paid - Use calculation.amountPaid from props */}
             {calculation.amountPaid > 0 && (
               <div className="flex justify-between text-sm text-green-600 font-medium pt-2">
                 <span>Amount Paid</span>
@@ -471,7 +500,7 @@ const ProformaInvoiceDisplay = ({
               </div>
             )}
 
-            {/* Amount Due */}
+            {/* Amount Due - Use calculation.amountDue from props */}
             <div className="flex justify-between text-sm text-red-600 font-medium pt-2">
               <span>Amount Due</span>
               <span>{formatCurrency(calculation.amountDue, currency)}</span>
@@ -485,20 +514,20 @@ const ProformaInvoiceDisplay = ({
         {/* Simple Payment Details Section - Text Only */}
         {/* Simple Payment Details Section - Text Only */}
         <div className="mb-8">
-          <h3 className="font-bold text-gray-800 text-lg mb-2">
+          <h3 className="font-bold text-black-800 text-lg mb-2">
             Payment Details
           </h3>
 
           {paymentProfiles && paymentProfiles.length > 0 ? (
             <div className="space-y-4">
-              <div className="border-l-2 border-gray-200 ">
+              <div className="border-l-2 border-black-200 ">
                 {/* First show all BANK profiles with serial numbers */}
                 {paymentProfiles
                   .filter((profile) => profile.type === "BANK")
                   .map((profile, index) => (
                     <div
                       key={profile.paymentProfileId || index}
-                      className="text-gray-700"
+                      className="text-black-700"
                     >
                       <div className="text-sm space-y-1 ml-2">
                         <div className="space-y-1 ml-3 leading-relaxed flex">
@@ -546,7 +575,7 @@ const ProformaInvoiceDisplay = ({
                   .map((profile, index) => (
                     <div
                       key={profile.paymentProfileId || index}
-                      className="text-gray-700"
+                      className="text-black-700"
                     >
                       <div className="text-sm space-y-2 ml-2">
                         <div className="flex items-center"></div>
@@ -588,7 +617,7 @@ const ProformaInvoiceDisplay = ({
                   .map((profile, index) => (
                     <div
                       key={profile.paymentProfileId || index}
-                      className="text-gray-700"
+                      className="text-black-700"
                     >
                       <div className="text-sm ml-2">
                         <div className="flex items-center">
@@ -611,15 +640,17 @@ const ProformaInvoiceDisplay = ({
               </div>
             </div>
           ) : (
-            <p className="text-sm text-gray-500">No payment details provided</p>
+            <p className="text-sm text-black-500">
+              No payment details provided
+            </p>
           )}
         </div>
 
         <div className="mb-6">
-          <p className="font-bold text-gray-900 uppercase mb-2">
+          <p className="font-bold text-black-900 uppercase mb-2">
             Terms & Conditions
           </p>
-          <p className="text-xs text-gray-500 whitespace-pre-line leading-relaxed border-l-2 border-gray-200 pl-3 break-all">
+          <p className="text-xs text-black-500 whitespace-pre-line leading-relaxed border-l-2 border-gray-200 pl-3 break-all">
             {info.termsAndConditions || "NA"}
           </p>
         </div>
@@ -627,8 +658,8 @@ const ProformaInvoiceDisplay = ({
         {/* Notes */}
 
         <div>
-          <p className="font-bold text-gray-900 uppercase mb-2">Notes</p>
-          <p className="text-xs text-gray-500 whitespace-pre-line break-all">
+          <p className="font-bold text-black-900 uppercase mb-2">Notes</p>
+          <p className="text-xs text-black-500 whitespace-pre-line break-all">
             {info.notes || "NA"}
           </p>
         </div>

@@ -1030,18 +1030,18 @@ function EditCustomer() {
                         label="Primary Number"
                         name="phone"
                         value={formData.mobile}
-                        onChange={(phone) => handlePhoneChange("phone", phone)}
+                        onChange={(mobile) => handlePhoneChange("mobile", mobile)}
                         required={true}
-                        error={errors.phone}
+                        error={errors.mobile}
                         background="white"
                       />
 
                       <FormPhoneInputFloating
                         label="Secondary Number"
-                        name="mobile"
+                        name="phone"
                         value={formData.phone}
-                        onChange={(phone) => handlePhoneChange("mobile", phone)}
-                        error={errors.mobile}
+                        onChange={(phone) => handlePhoneChange("phone", phone)}
+                        error={errors.phone}
                         background="white"
                       />
                     </div>

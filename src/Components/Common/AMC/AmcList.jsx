@@ -11,6 +11,7 @@ import {
   ProgressCard,
 } from "../../BaseComponet/FinancialDashboardComponents";
 import { hasPermission } from "../../BaseComponet/permissions";
+import { showDeleteConfirmation } from "../../BaseComponet/alertUtils";
 
 function AmcList() {
   const { LayoutComponent } = useLayout();
@@ -186,8 +187,12 @@ function AmcList() {
   );
 
   // Delete AMC
-  const handleDeleteAmc = async (amcId) => {
-    if (!window.confirm("Are you sure you want to delete this AMC?")) {
+  const handleDeleteAmc = async (amcId, companyName) => {
+    const result = await showDeleteConfirmation(
+      `AMC for ${companyName || "this company"}`
+    );
+
+    if (!result.isConfirmed) {
       return;
     }
 
@@ -544,7 +549,7 @@ function AmcList() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleEditAmc(amc);
+                            handleDeleteAmc(amc.amcId, amc.companyName);
                                 }}
                                 className="p-1 text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors"
                                 title="Edit AMC"
@@ -778,7 +783,6 @@ function AmcList() {
           onSuccess={(updatedAmc) => {
             // Refresh the AMC list after successful update
             fetchAMCList(currentPage);
-  
           }}
         />
       )}
