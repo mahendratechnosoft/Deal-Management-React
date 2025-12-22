@@ -387,6 +387,7 @@ function EditEmployee() {
         taskCreate: selectedRole.taskCreate || false,
         taskDelete: selectedRole.taskDelete || false,
         taskEdit: selectedRole.taskEdit || false,
+        taskLogAccess: selectedRole.taskLogAccess || false,
 
         amcAccess: selectedRole.amcAccess || false,
         amcViewAll: selectedRole.amcViewAll || false,
@@ -463,6 +464,7 @@ function EditEmployee() {
           taskAccess: false,
           taskCreate: false,
           taskDelete: false,
+          taskLogAccess: false,
           taskEdit: false,
           taskViewAll: false,
           [field]: value,
@@ -544,6 +546,7 @@ function EditEmployee() {
       taskDelete: false,
       taskEdit: false,
       taskViewAll: false,
+      taskLogAccess: false,
 
       amcAccess: false,
       amcCreate: false,
@@ -615,6 +618,7 @@ function EditEmployee() {
       taskCreate: true,
       taskDelete: true,
       taskEdit: true,
+      taskLogAccess: true,
       taskViewAll: true,
 
       amcAccess: true,
@@ -1333,6 +1337,7 @@ function EditEmployee() {
                             { label: "Access", field: "taskAccess" },
                             { label: "View All", field: "taskViewAll" },
                             { label: "Create", field: "taskCreate" },
+                            { label: "Task Log ", field: "taskLogAccess" },
                             { label: "Edit", field: "taskEdit" },
                             { label: "Delete", field: "taskDelete" },
                           ]}
