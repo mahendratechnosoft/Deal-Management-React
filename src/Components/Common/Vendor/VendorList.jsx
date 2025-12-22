@@ -343,6 +343,43 @@ function VendorList() {
           </div>
         </div>
 
+        {/* After the search section, add this stats cards section */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-4">
+          {/* Total Vendors Card */}
+          <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-gray-100">
+                <svg
+                  className="w-3 h-3 text-gray-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-500 text-[12px] font-medium truncate">
+                  Total Vendors
+                </p>
+                <p className="text-gray-900 text-sm font-bold truncate">
+                  {loading ? (
+                    <div className="h-4 bg-gray-200 rounded w-12 animate-pulse"></div>
+                  ) : (
+                    totalItems.toLocaleString()
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
         {/* Vendor Table with proper row height and layout */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
           <div className="overflow-x-auto">
