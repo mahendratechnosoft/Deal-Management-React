@@ -270,6 +270,46 @@ const styles = StyleSheet.create({
     width: "100%",
   },
 
+  // NEW STYLES for Payment Details
+  paymentDetailsSection: {
+    marginBottom: 10,
+  },
+  paymentProfile: {
+    marginBottom: 8,
+  },
+  paymentProfileTitle: {
+    fontSize: 10,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  paymentProfileContent: {
+    marginLeft: 12,
+    fontSize: 10,
+    lineHeight: 1.4,
+  },
+  paymentField: {
+    flexDirection: "row",
+    marginBottom: 2,
+  },
+  paymentLabel: {
+    fontWeight: "bold",
+    width: 100,
+  },
+  qrCode: {
+    width: 80,
+    height: 80,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  ftw: {
+    fontWeight: "bold",
+  },
+
+  leftBorder: {
+    borderLeftWidth: 2,
+    borderLeftColor: "#e5e7eb",
+    paddingLeft: 6,
+  },
   signatureStampSection: {
     pageBreakInside: "avoid",
     borderTopWidth: 1,
@@ -315,10 +355,17 @@ const styles = StyleSheet.create({
   },
 });
 
+const getSafeImageSrc = (base64String) => {
+  if (!base64String) return null;
+  if (base64String.startsWith("data:image")) return base64String;
+  return `data:;base64,${base64String}`;
+};
+
 // --- Main PDF Component ---
 const ProposalPDF = ({ data }) => {
   const { proposalInfo, proposalContent, adminInformation = {} } = data;
 
+  const paymentProfiles = data.paymentProfiles || [];
   const {
     subtotal,
     discountAmount,
@@ -610,30 +657,131 @@ const ProposalPDF = ({ data }) => {
             </Text>
           </Text>
         </View>
+
         {/* 7. Notes & Terms (NEW) */}
 
         <View style={styles.notesAndTermsSection}>
-          <View style={{ marginBottom: 10 }}>
-            <Text style={styles.subHeader}>Bank Details:</Text>
-            <Text style={styles.sectionContent}>
-              <>
-                <Text style={{ fontWeight: "bold" }}>Bank Name:</Text>{" "}
-                {adminInformation.bankName}
-                {"\n"}
-                <Text style={{ fontWeight: "bold" }}>Account Number:</Text>{" "}
-                {adminInformation.accountNumber}
-                {"\n"}
-                <Text style={{ fontWeight: "bold" }}>
-                  Account Holder Name:
-                </Text>{" "}
-                {adminInformation.accountHolderName}
-                {"\n"}
-                <Text style={{ fontWeight: "bold" }}>IFSC Code:</Text>{" "}
-                {adminInformation.ifscCode}
-                {"\n"}
-              </>
-            </Text>
-          </View>
+          {/* Payment Details Section - REPLACED Bank Details */}
+          {paymentProfiles && paymentProfiles.length > 0 ? (
+            <View style={styles.paymentDetailsSection} wrap={false}>
+              <Text style={styles.subHeader}>Payment Details:</Text>
+
+              <View style={styles.leftBorder}>
+                {/* BANK Profiles */}
+                {paymentProfiles
+                  .filter((profile) => profile.type === "BANK")
+                  .map((profile, index) => (
+                    <View
+                      key={profile.paymentProfileId || index}
+                      style={styles.paymentProfile}
+                    >
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <View>
+                          <Text style={styles.ftw}>{index + 1}.</Text>
+                        </View>
+                        <View>
+                          <View style={styles.paymentField}>
+                            <Text style={styles.paymentLabel}>Bank Name:</Text>
+                            <Text>{profile.bankName || "N/A"}</Text>
+                          </View>
+                          <View style={styles.paymentField}>
+                            <Text style={styles.paymentLabel}>
+                              Account Number:
+                            </Text>
+                            <Text>{profile.accountNumber || "N/A"}</Text>
+                          </View>
+                          <View style={styles.paymentField}>
+                            <Text style={styles.paymentLabel}>
+                              Account Holder:
+                            </Text>
+                            <Text>{profile.accountHolderName || "N/A"}</Text>
+                          </View>
+                          <View style={styles.paymentField}>
+                            <Text style={styles.paymentLabel}>IFSC Code:</Text>
+                            <Text>{profile.ifscCode || "N/A"}</Text>
+                          </View>
+                          <View style={styles.paymentField}>
+                            <Text style={styles.paymentLabel}>Branch:</Text>
+                            <Text>{profile.branchName || "N/A"}</Text>
+                          </View>
+                          <View style={{ height: 8 }}></View>
+                        </View>
+                      </View>
+                    </View>
+                  ))}
+
+                {/* UPI Profiles */}
+                {paymentProfiles
+                  .filter((profile) => profile.type === "UPI")
+                  .map((profile, index) => {
+                    const bankCount = paymentProfiles.filter(
+                      (p) => p.type === "BANK"
+                    ).length;
+                    return (
+                      <View
+                        key={profile.paymentProfileId || index}
+                        style={styles.paymentProfile}
+                      >
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "flex-start",
+                          }}
+                        >
+                          <View>
+                            <Text style={styles.ftw}>
+                              {bankCount + index + 1}.
+                            </Text>
+                          </View>
+                          <View>
+                            <View style={styles.paymentField}>
+                              <Text style={styles.paymentLabel}>UPI ID:</Text>
+                              <Text>{profile.upiId || "N/A"}</Text>
+                            </View>
+                            {profile.qrCodeImage && (
+                              <>
+                                <View style={styles.paymentField}>
+                                  <Text style={styles.paymentLabel}>
+                                    Scan QR Code:
+                                  </Text>
+                                  <Text></Text>
+                                </View>
+                                <View
+                                  style={{
+                                    alignItems: "flex-start",
+                                    marginTop: 2,
+                                  }}
+                                >
+                                  <Image
+                                    src={getSafeImageSrc(profile.qrCodeImage)}
+                                    style={styles.qrCode}
+                                  />
+                                </View>
+                              </>
+                            )}
+                          </View>
+                        </View>
+                        <View style={{ height: 8 }}></View>
+                      </View>
+                    );
+                  })}
+              </View>
+            </View>
+          ) : (
+            <View style={{ marginBottom: 10 }}>
+              <Text style={styles.subHeader}>Payment Details:</Text>
+              <Text style={styles.sectionContent}>
+                No payment details provided
+              </Text>
+            </View>
+          )}
+
+          {/* Notes Section */}
           <View style={{ marginBottom: 10 }}>
             <Text style={styles.subHeader}>Notes:</Text>
             <Text style={styles.sectionContent}>
@@ -641,8 +789,9 @@ const ProposalPDF = ({ data }) => {
             </Text>
           </View>
 
+          {/* Terms & Conditions Section */}
           <View>
-            <Text style={styles.subHeader}>Terms & Conditions:</Text> 
+            <Text style={styles.subHeader}>Terms & Conditions:</Text>
             <Text style={styles.sectionContent}>
               {breakLongText(proposalInfo.termsAndConditions || "NA", 100)}
             </Text>

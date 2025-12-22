@@ -124,6 +124,7 @@ const TaxRows = ({
   sgstPercentage, // New Prop
   taxableAmount,
   currencyType,
+  
 }) => {
   // 1. Handle Split Tax (CGST + SGST)
   if (taxType === "CGST+SGST") {
@@ -201,8 +202,10 @@ const ProposalInvoiceDisplay = ({
   proposal,
   adminInformation,
   headerActions,
+
 }) => {
-  const { proposalInfo, proposalContent } = proposal;
+    const { proposalInfo, proposalContent, paymentProfiles = [] } = proposal; 
+
   const [activeTab, setActiveTab] = useState("Summary");
 
   const handleDownload = () => {
@@ -501,26 +504,157 @@ const ProposalInvoiceDisplay = ({
               </div>
 
               {/* Bank Details */}
+              {/* Payment Details - Replaces Bank Details */}
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <h3 className="text-sm font-semibold text-gray-800 mb-3">
-                  Bank Details
+                  Payment Details
                 </h3>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <p className="flex items-center gap-2">
-                    <span>Bank Name: {adminInformation.bankName}</span>
+
+                {paymentProfiles && paymentProfiles.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="border-l-2 border-grey-100 pl-3">
+                      {/* BANK profiles */}
+                      {paymentProfiles
+                        .filter((profile) => profile.type === "BANK")
+                        .map((profile, index) => (
+                          <div
+                            key={profile.paymentProfileId || index}
+                            className="text-gray-700 mb-4 last:mb-0"
+                          >
+                            <div className="text-sm space-y-1 ml-1">
+                              <div className="space-y-1 ml-2 leading-relaxed flex">
+                                <span className="font-medium mr-2 mt-1 text-gray-600">
+                                  {index + 1}.
+                                </span>
+                                <div className="space-y-1">
+                                  <p className="flex">
+                                    <span className="font-medium w-32 text-gray-600">
+                                      Bank Name:
+                                    </span>
+                                    <span className="text-gray-800">
+                                      {profile.bankName || "N/A"}
+                                    </span>
+                                  </p>
+                                  <p className="flex">
+                                    <span className="font-medium w-32 text-gray-600">
+                                      Account Number:
+                                    </span>
+                                    <span className="text-gray-800">
+                                      {profile.accountNumber || "N/A"}
+                                    </span>
+                                  </p>
+                                  <p className="flex">
+                                    <span className="font-medium w-32 text-gray-600">
+                                      Account Holder:
+                                    </span>
+                                    <span className="text-gray-800">
+                                      {profile.accountHolderName || "N/A"}
+                                    </span>
+                                  </p>
+                                  <p className="flex">
+                                    <span className="font-medium w-32 text-gray-600">
+                                      IFSC Code:
+                                    </span>
+                                    <span className="text-gray-800">
+                                      {profile.ifscCode || "N/A"}
+                                    </span>
+                                  </p>
+                                  <p className="flex">
+                                    <span className="font-medium w-32 text-gray-600">
+                                      Branch:
+                                    </span>
+                                    <span className="text-gray-800">
+                                      {profile.branchName || "N/A"}
+                                    </span>
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+
+                      {/* UPI profiles */}
+                      {paymentProfiles
+                        .filter((profile) => profile.type === "UPI")
+                        .map((profile, index) => (
+                          <div
+                            key={profile.paymentProfileId || index}
+                            className="text-gray-700 mb-4 last:mb-0"
+                          >
+                            <div className="text-sm space-y-2 ml-1">
+                              <div className="space-y-1 ml-2 flex">
+                                <span className="font-medium mr-2 mt-1 text-black-600">
+                                  {paymentProfiles.filter(
+                                    (p) => p.type === "BANK"
+                                  ).length +
+                                    index +
+                                    1}
+                                  .
+                                </span>
+                                <div className="space-y-2">
+                                  <p className="flex">
+                                    <span className="font-medium w-32 text-gray-600">
+                                      UPI ID:
+                                    </span>
+                                    <span className="text-gray-800">
+                                      {profile.upiId || "N/A"}
+                                    </span>
+                                  </p>
+                                  {profile.qrCodeImage && (
+                                    <div>
+                                      <p className="font-medium text-sm text-gray-600 mb-1">
+                                        Scan QR Code:
+                                      </p>
+                                      <div className="flex justify-center">
+                                        <img
+                                          src={`data:image/png;base64,${profile.qrCodeImage}`}
+                                          alt="QR Code"
+                                          className="w-32 h-32 border border-gray-200 rounded"
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+
+                      {/* CASH profiles */}
+                      {paymentProfiles
+                        .filter((profile) => profile.type === "CASH")
+                        .map((profile, index) => (
+                          <div
+                            key={profile.paymentProfileId || index}
+                            className="text-gray-700 mb-4 last:mb-0"
+                          >
+                            <div className="text-sm ml-1">
+                              <div className="flex items-center ml-2">
+                                <span className="font-medium mr-2 text-black-600">
+                                  {paymentProfiles.filter(
+                                    (p) => p.type === "BANK" || p.type === "UPI"
+                                  ).length +
+                                    index +
+                                    1}
+                                  .
+                                </span>
+                                <span className="font-medium text-gray-700">
+                                  Cash Payment
+                                </span>
+                              </div>
+                              <p className="ml-8 text-gray-600 italic">
+                                Pay in cash to company representative
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">
+                    No payment details provided
                   </p>
-                  <p className="flex items-center gap-2">
-                    <span>
-                      Account Holder: {adminInformation.accountHolderName}
-                    </span>
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <span>Account No: {adminInformation.accountNumber}</span>
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <span>IFSC: {adminInformation.ifscCode}</span>
-                  </p>
-                </div>
+                )}
               </div>
 
               {/* Proposal Info */}

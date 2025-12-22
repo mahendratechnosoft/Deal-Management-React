@@ -38,6 +38,7 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
     phone: "",
     balance: 0,
     pan: "",
+    gstNumber: "",
     isMSMERegister: false,
     udyamRegistrationType: "",
     udyamRegistrationNumber: "",
@@ -51,6 +52,8 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
     state: "",
     zipCode: "",
     country: "",
+    createdAt: "", // Add this line
+    createdBy: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -80,7 +83,12 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
     {
       id: "msme",
       label: "MSME Details",
-      fields: ["pan", "udyamRegistrationType", "udyamRegistrationNumber"],
+      fields: [
+        "pan",
+        "gstNumber",
+        "udyamRegistrationType",
+        "udyamRegistrationNumber",
+      ],
     },
     {
       id: "financial",
@@ -223,6 +231,7 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
           phone: vendorData.phone || "",
           balance: vendorData.balance || 0,
           pan: vendorData.pan || "",
+          gstNumber: vendorData.gstNumber || "",
           isMSMERegister: vendorData.isMSMERegister || false,
           udyamRegistrationType: vendorData.udyamRegistrationType || "",
           udyamRegistrationNumber: vendorData.udyamRegistrationNumber || "",
@@ -236,6 +245,8 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
           state: vendorData.state || "",
           zipCode: vendorData.zipCode || "",
           country: vendorData.country || "",
+          createdAt: vendorData.createdAt || "", // Add this line
+          createdBy: vendorData.createdBy || "",
         });
       }
     } catch (error) {
@@ -443,64 +454,61 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
   };
 
   // Handle remove attachment
-const handleRemoveAttachment = async (id, fileName) => {
-  try {
+  const handleRemoveAttachment = async (id, fileName) => {
+    try {
+      // Confirm deletion
+      const result = await showDeleteConfirmation(fileName);
+      if (!result.isConfirmed) {
+        return;
+      }
 
-    // Confirm deletion
-    const result = await showDeleteConfirmation(fileName);
-    if (!result.isConfirmed) {
-   
-      return;
+      // 1. Remove from UI immediately (optimistic update)
+
+      setExistingAttachments((prev) => prev.filter((att) => att.id !== id));
+
+      // 2. Show loading
+      const loadingToast = toast.loading(`Deleting ${fileName}...`);
+
+      // 3. Call API - ADD ERROR CATCHING
+
+      const response = await axiosInstance.delete(
+        `deleteVendorAttachement/${id}`
+      );
+
+      // 4. Success - update toast
+      toast.dismiss(loadingToast);
+      toast.success(`${fileName} deleted successfully`);
+
+      // 5. Optional: Refresh after a short delay
+      setTimeout(() => {
+        fetchVendorAttachments();
+      }, 500);
+    } catch (error) {
+      // Dismiss loading toast
+      toast.dismiss();
+
+      // Detailed error analysis
+      if (error.response) {
+        // Server responded with error status
+
+        // Show specific error message
+        const errorMessage =
+          error.response.data?.message ||
+          error.response.data?.error ||
+          `Server error (${error.response.status})`;
+        toast.error(`Failed to delete: ${errorMessage}`);
+      } else if (error.request) {
+        // Request made but no response
+        toast.error("Network error - No response from server");
+      } else {
+        // Something else happened
+        toast.error(`Request failed: ${error.message}`);
+      }
+
+      // 6. On error: Refresh to get correct state from server
+      fetchVendorAttachments(); // Refresh to sync with server
     }
-
-    // 1. Remove from UI immediately (optimistic update)
- 
-    setExistingAttachments((prev) => prev.filter((att) => att.id !== id));
-
-    // 2. Show loading
-    const loadingToast = toast.loading(`Deleting ${fileName}...`);
-
-    // 3. Call API - ADD ERROR CATCHING
-
-    const response = await axiosInstance.delete(
-      `deleteVendorAttachement/${id}`
-    );
-
-    // 4. Success - update toast
-    toast.dismiss(loadingToast);
-    toast.success(`${fileName} deleted successfully`);
-
-    // 5. Optional: Refresh after a short delay
-    setTimeout(() => {
-      fetchVendorAttachments();
-    }, 500);
-  } catch (error) {
-
-    // Dismiss loading toast
-    toast.dismiss();
-
-    // Detailed error analysis
-    if (error.response) {
-      // Server responded with error status
-
-      // Show specific error message
-      const errorMessage =
-        error.response.data?.message ||
-        error.response.data?.error ||
-        `Server error (${error.response.status})`;
-      toast.error(`Failed to delete: ${errorMessage}`);
-    } else if (error.request) {
-      // Request made but no response
-      toast.error("Network error - No response from server");
-    } else {
-      // Something else happened
-      toast.error(`Request failed: ${error.message}`);
-    }
-
-    // 6. On error: Refresh to get correct state from server
-    fetchVendorAttachments(); // Refresh to sync with server
-  }
-};
+  };
 
   const handleDownloadAttachment = async (attachment) => {
     try {
@@ -639,6 +647,15 @@ const handleRemoveAttachment = async (id, fileName) => {
       newErrors["pan"] = "Invalid PAN format (e.g., ABCDE1234F)";
     }
 
+    if (
+      formData.gstNumber?.trim() &&
+      !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(
+        formData.gstNumber
+      )
+    ) {
+      newErrors["gstNumber"] = "Invalid GST format (e.g., 27ABCDE1234F1Z5)";
+    }
+
     // MSME validation (if registered and fields are provided)
     if (formData.isMSMERegister) {
       if (
@@ -708,12 +725,14 @@ const handleRemoveAttachment = async (id, fileName) => {
   };
 
   // Check if form has changes and if vendorCode is modified
+  // In hasChanges function (around line 618)
   const hasChanges = () => {
     if (!originalData) return false;
 
+    const excludedFields = ["vendorId", "createdAt", "createdBy"]; // Add createdAt and createdBy here
     const changedFields = [];
     Object.keys(formData).forEach((key) => {
-      if (key === "vendorId") return;
+      if (excludedFields.includes(key)) return; // Skip excluded fields
       if (formData[key] !== originalData[key]) {
         changedFields.push(key);
       }
@@ -736,11 +755,6 @@ const handleRemoveAttachment = async (id, fileName) => {
       return;
     }
 
-    if (!hasChanges()) {
-      toast.error("No changes made to update.");
-      return;
-    }
-
     setLoading(true);
     try {
       const payload = {
@@ -752,6 +766,7 @@ const handleRemoveAttachment = async (id, fileName) => {
         phone: formData.phone || "",
         balance: parseFloat(formData.balance) || 0,
         pan: formData.pan ? formData.pan.toUpperCase() : "",
+        gstNumber: formData.gstNumber ? formData.gstNumber.toUpperCase() : "",
         isMSMERegister: formData.isMSMERegister,
         udyamRegistrationType: formData.isMSMERegister
           ? formData.udyamRegistrationType || ""
@@ -769,6 +784,8 @@ const handleRemoveAttachment = async (id, fileName) => {
         state: formData.state || "",
         zipCode: formData.zipCode || "",
         country: formData.country || "",
+        createdAt: formData.createdAt || "", // Add this line
+        createdBy: formData.createdBy || "", // Add this line
       };
 
       console.log("Updating vendor with payload:", payload);
@@ -948,6 +965,19 @@ const handleRemoveAttachment = async (id, fileName) => {
   const renderMSMETab = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Add GST Number field here */}
+        <GlobalInputField
+          label="GST Number"
+          name="gstNumber"
+          value={formData.gstNumber}
+          onChange={(e) =>
+            handleChange("gstNumber", e.target.value.toUpperCase())
+          }
+          error={errors["gstNumber"]}
+          placeholder="27ABCDE1234F1Z5"
+          className="text-sm uppercase"
+          maxLength="15"
+        />
         <GlobalInputField
           label="PAN Number"
           name="pan"
@@ -958,22 +988,22 @@ const handleRemoveAttachment = async (id, fileName) => {
           className="text-sm uppercase"
           maxLength="10"
         />
+      </div>
 
-        <div className="flex items-center gap-2 p-4 border border-gray-200 rounded-lg">
-          <input
-            type="checkbox"
-            id="isMSMERegister"
-            checked={formData.isMSMERegister}
-            onChange={(e) => handleMSMEToggle(e.target.checked)}
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-          />
-          <label
-            htmlFor="isMSMERegister"
-            className="text-sm font-medium text-gray-700"
-          >
-            MSME Registered
-          </label>
-        </div>
+      <div className="flex items-center gap-2 p-4 border border-gray-200 rounded-lg">
+        <input
+          type="checkbox"
+          id="isMSMERegister"
+          checked={formData.isMSMERegister}
+          onChange={(e) => handleMSMEToggle(e.target.checked)}
+          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+        />
+        <label
+          htmlFor="isMSMERegister"
+          className="text-sm font-medium text-gray-700"
+        >
+          MSME Registered
+        </label>
       </div>
 
       {formData.isMSMERegister && (
@@ -1500,7 +1530,8 @@ const handleRemoveAttachment = async (id, fileName) => {
           <div className="flex items-center justify-between">
             <div className="text-xs text-gray-500">
               {/* Add permission message */}
-              {!canEdit ? (
+              {!canEdit && (
+                
                 <span className="flex items-center gap-1 text-red-600">
                   <svg
                     className="w-4 h-4"
@@ -1517,25 +1548,7 @@ const handleRemoveAttachment = async (id, fileName) => {
                   </svg>
                   You don't have edit permission
                 </span>
-              ) : hasChanges() ? (
-                <span className="flex items-center gap-1 text-blue-600">
-                  <svg
-                    className="w-3 h-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  Changes detected
-                </span>
-              ) : (
-                <span className="text-gray-400">No changes made</span>
+            
               )}
             </div>
 
@@ -1572,9 +1585,7 @@ const handleRemoveAttachment = async (id, fileName) => {
                   onClick={handleSubmit}
                   disabled={
                     loading ||
-                    !hasChanges() ||
-                    isVendorCodeChanged() ||
-                    !canEdit
+                           !canEdit
                   }
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >

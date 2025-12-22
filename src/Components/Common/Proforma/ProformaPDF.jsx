@@ -807,7 +807,7 @@ const formatCurrency = (amount, currencyType) => {
                 </View>
               </>
             )}
-          <TaxRows />
+            <TaxRows />
             <View style={styles.divider} />
             <View style={styles.grandTotalRow}>
               <Text>Grand Total</Text>
@@ -849,7 +849,7 @@ const formatCurrency = (amount, currencyType) => {
 
             {invoiceData.paymentProfiles &&
             invoiceData.paymentProfiles.length > 0 ? (
-              <View style={[styles.termsText, { color: "#6b7280" }]}>
+              <View style={[styles.termsText, { color: "black" }]}>
                 {/* BANK Profiles */}
                 {invoiceData.paymentProfiles
                   .filter((profile) => profile.type === "BANK")

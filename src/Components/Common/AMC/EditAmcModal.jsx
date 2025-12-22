@@ -864,17 +864,18 @@ const handleClientChange = async (clientId) => {
                                   const isPastDue = dueDateStatus.isPastDue;
                                   const isNearDue =
                                     dueDateStatus.status === "near-due";
+                                  const isDeleted = history.deleted; // Check if record is deleted
 
                                   return (
                                     <tr
                                       key={history.acmHistoryId}
-                                      className={`${
-                                        isPastDue
-                                          ? "border-l-4 border-l-red-500"
-                                          : isNearDue
-                                          ? "border-l-4 border-l-yellow-500"
-                                          : ""
-                                      } hover:bg-gray-50`}
+                                      className={`
+            ${isDeleted ? "bg-gray-50 border-l-4 border-l-gray-400" : ""}
+            ${!isDeleted && isPastDue ? "border-l-4 border-l-red-500" : ""}
+            ${!isDeleted && isNearDue ? "border-l-4 border-l-yellow-500" : ""}
+            hover:bg-gray-50
+            ${isDeleted ? "opacity-80" : ""}
+          `}
                                       onClick={() =>
                                         handleEditAmcHistory(history)
                                       }
@@ -883,46 +884,85 @@ const handleClientChange = async (clientId) => {
                                         {history.sequence}
                                       </td>
                                       <td className="px-4 py-2 text-sm">
-                                        {formatDate(history.amcStartDate)}
-                                      </td>
-                                      <td className="px-4 py-2 text-sm">
                                         <div
-                                          className={`${
-                                            isPastDue
-                                              ? "text-red-600 font-semibold"
-                                              : isNearDue
-                                              ? "text-yellow-600 font-semibold"
-                                              : ""
-                                          }`}
+                                          className={
+                                            isDeleted ? "text-gray-600" : ""
+                                          }
                                         >
-                                          {formatDate(history.amcEndDate)}
-                                          {dueDateStatus.message && (
-                                            <span
-                                              className={`block text-xs mt-1 ${
-                                                isPastDue
-                                                  ? "text-red-500"
-                                                  : isNearDue
-                                                  ? "text-yellow-500"
-                                                  : ""
-                                              }`}
-                                            >
-                                              {dueDateStatus.message}
-                                            </span>
-                                          )}
+                                          {formatDate(history.amcStartDate)}
                                         </div>
                                       </td>
                                       <td className="px-4 py-2 text-sm">
-                                        {history.amcAmount?.toLocaleString()}
+                                        <div
+                                          className={`
+                ${isDeleted ? "text-gray-600" : ""}
+                ${!isDeleted && isPastDue ? "text-red-600 font-semibold" : ""}
+                ${
+                  !isDeleted && isNearDue ? "text-yellow-600 font-semibold" : ""
+                }
+              `}
+                                        >
+                                          {formatDate(history.amcEndDate)}
+                                          {!isDeleted &&
+                                            dueDateStatus.message && (
+                                              <span
+                                                className={`block text-xs mt-1 ${
+                                                  isPastDue
+                                                    ? "text-red-500"
+                                                    : isNearDue
+                                                    ? "text-yellow-500"
+                                                    : ""
+                                                }`}
+                                              >
+                                                {dueDateStatus.message}
+                                              </span>
+                                            )}
+                                        </div>
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        <div
+                                          className={
+                                            isDeleted ? "text-gray-600" : ""
+                                          }
+                                        >
+                                          {history.amcAmount?.toLocaleString()}
+                                        </div>
                                       </td>
                                       <td className="px-4 py-2 text-sm">
                                         <span
-                                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                            history.paid
-                                              ? "bg-green-100 text-green-800"
-                                              : "bg-red-100 text-red-800"
-                                          }`}
+                                          className={`
+                inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                ${isDeleted ? "bg-gray-200 text-gray-700" : ""}
+                ${
+                  !isDeleted && history.paid
+                    ? "bg-green-100 text-green-800"
+                    : ""
+                }
+                ${!isDeleted && !history.paid ? "bg-red-100 text-red-800" : ""}
+              `}
                                         >
-                                          {history.paid ? "Paid" : "Unpaid"}
+                                          {isDeleted ? (
+                                            <>
+                                              <svg
+                                                className="w-3 h-3 mr-1"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                />
+                                              </svg>
+                                              {history.paid ? "Paid" : "Unpaid"}
+                                            </>
+                                          ) : history.paid ? (
+                                            "Paid"
+                                          ) : (
+                                            "Unpaid"
+                                          )}
                                         </span>
                                       </td>
                                       <td className="px-4 py-2 text-sm">
@@ -932,8 +972,16 @@ const handleClientChange = async (clientId) => {
                                               e.stopPropagation();
                                               handleEditAmcHistory(history);
                                             }}
-                                            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                                            title="Edit"
+                                            className={`p-1 rounded ${
+                                              isDeleted
+                                                ? "text-gray-500 hover:bg-gray-100"
+                                                : "text-blue-600 hover:bg-blue-50"
+                                            }`}
+                                            title={
+                                              isDeleted
+                                                ? "Edit (Deleted Record)"
+                                                : "Edit"
+                                            }
                                           >
                                             <svg
                                               className="w-3 h-3"
@@ -951,14 +999,22 @@ const handleClientChange = async (clientId) => {
                                           </button>
                                           <button
                                             onClick={(e) => {
-                                              e.stopPropagation(); // Prevent row click
+                                              e.stopPropagation();
                                               handleDeleteHistory(
                                                 history.acmHistoryId,
                                                 history.sequence
                                               );
                                             }}
-                                            className="p-1 text-red-600 hover:bg-red-50 rounded"
-                                            title="Delete"
+                                            className={`p-1 rounded ${
+                                              isDeleted
+                                                ? "text-gray-500 hover:bg-gray-100"
+                                                : "text-red-600 hover:bg-red-50"
+                                            }`}
+                                            title={
+                                              isDeleted
+                                                ? "Delete (Already Deleted)"
+                                                : "Delete"
+                                            }
                                           >
                                             <svg
                                               className="w-3 h-3"
@@ -1058,17 +1114,18 @@ const handleClientChange = async (clientId) => {
                                   const isPastDue = dueDateStatus.isPastDue;
                                   const isNearDue =
                                     dueDateStatus.status === "near-due";
+                                  const isDeleted = domain.deleted; // Assuming API has 'deleted' field
 
                                   return (
                                     <tr
                                       key={domain.acmDomainHistoryId}
-                                      className={`${
-                                        isPastDue
-                                          ? "border-l-4 border-l-red-500"
-                                          : isNearDue
-                                          ? "border-l-4 border-l-yellow-500"
-                                          : ""
-                                      } hover:bg-gray-50`}
+                                      className={`
+            ${isDeleted ? "bg-gray-50 border-l-4 border-l-gray-400" : ""}
+            ${!isDeleted && isPastDue ? "border-l-4 border-l-red-500" : ""}
+            ${!isDeleted && isNearDue ? "border-l-4 border-l-yellow-500" : ""}
+            hover:bg-gray-50
+            ${isDeleted ? "opacity-80" : ""}
+          `}
                                       onClick={() =>
                                         handleEditDomainHistory(domain)
                                       }
@@ -1077,46 +1134,83 @@ const handleClientChange = async (clientId) => {
                                         {domain.sequence}
                                       </td>
                                       <td className="px-4 py-2 text-sm">
-                                        {formatDate(domain.domainStartDate)}
-                                      </td>
-                                      <td className="px-4 py-2 text-sm">
                                         <div
-                                          className={`${
-                                            isPastDue
-                                              ? "text-red-600 font-semibold"
-                                              : isNearDue
-                                              ? "text-yellow-600 font-semibold"
-                                              : ""
-                                          }`}
+                                          className={
+                                            isDeleted ? "text-gray-600" : ""
+                                          }
                                         >
-                                          {formatDate(domain.domainRenewalDate)}
-                                          {dueDateStatus.message && (
-                                            <span
-                                              className={`block text-xs mt-1 ${
-                                                isPastDue
-                                                  ? "text-red-500"
-                                                  : isNearDue
-                                                  ? "text-yellow-500"
-                                                  : ""
-                                              }`}
-                                            >
-                                              {dueDateStatus.message}
-                                            </span>
-                                          )}
+                                          {formatDate(domain.domainStartDate)}
                                         </div>
                                       </td>
                                       <td className="px-4 py-2 text-sm">
-                                        {domain.domainAmount}
+                                        <div
+                                          className={`
+                ${isDeleted ? "text-gray-600" : ""}
+                ${!isDeleted && isPastDue ? "text-red-600 font-semibold" : ""}
+                ${
+                  !isDeleted && isNearDue ? "text-yellow-600 font-semibold" : ""
+                }
+              `}
+                                        >
+                                          {formatDate(domain.domainRenewalDate)}
+                                          {!isDeleted &&
+                                            dueDateStatus.message && (
+                                              <span
+                                                className={`block text-xs mt-1 ${
+                                                  isPastDue
+                                                    ? "text-red-500"
+                                                    : isNearDue
+                                                    ? "text-yellow-500"
+                                                    : ""
+                                                }`}
+                                              >
+                                                {dueDateStatus.message}
+                                              </span>
+                                            )}
+                                        </div>
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        <div
+                                          className={
+                                            isDeleted ? "text-gray-600" : ""
+                                          }
+                                        >
+                                          {domain.domainAmount}
+                                        </div>
                                       </td>
                                       <td className="px-4 py-2 text-sm">
                                         <span
-                                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                            domain.paid
-                                              ? "bg-green-100 text-green-800"
-                                              : "bg-red-100 text-red-800"
-                                          }`}
+                                          className={`
+                inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                ${isDeleted ? "bg-gray-200 text-gray-700" : ""}
+                ${
+                  !isDeleted && domain.paid ? "bg-green-100 text-green-800" : ""
+                }
+                ${!isDeleted && !domain.paid ? "bg-red-100 text-red-800" : ""}
+              `}
                                         >
-                                          {domain.paid ? "Paid" : "Unpaid"}
+                                          {isDeleted ? (
+                                            <>
+                                              <svg
+                                                className="w-3 h-3 mr-1"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                />
+                                              </svg>
+                                              {domain.paid ? "Paid" : "Unpaid"}
+                                            </>
+                                          ) : domain.paid ? (
+                                            "Paid"
+                                          ) : (
+                                            "Unpaid"
+                                          )}
                                         </span>
                                       </td>
                                       <td className="px-4 py-2 text-sm">
@@ -1126,8 +1220,16 @@ const handleClientChange = async (clientId) => {
                                               e.stopPropagation();
                                               handleEditDomainHistory(domain);
                                             }}
-                                            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                                            title="Edit"
+                                            className={`p-1 rounded ${
+                                              isDeleted
+                                                ? "text-gray-500 hover:bg-gray-100"
+                                                : "text-blue-600 hover:bg-blue-50"
+                                            }`}
+                                            title={
+                                              isDeleted
+                                                ? "Edit (Deleted Record)"
+                                                : "Edit"
+                                            }
                                           >
                                             <svg
                                               className="w-3 h-3"
@@ -1145,14 +1247,22 @@ const handleClientChange = async (clientId) => {
                                           </button>
                                           <button
                                             onClick={(e) => {
-                                              e.stopPropagation(); // ADD THIS LINE
+                                              e.stopPropagation();
                                               handleDeleteDomain(
                                                 domain.acmDomainHistoryId,
                                                 domain.sequence
                                               );
                                             }}
-                                            className="p-1 text-red-600 hover:bg-red-50 rounded"
-                                            title="Delete"
+                                            className={`p-1 rounded ${
+                                              isDeleted
+                                                ? "text-gray-500 hover:bg-gray-100"
+                                                : "text-red-600 hover:bg-red-50"
+                                            }`}
+                                            title={
+                                              isDeleted
+                                                ? "Delete (Already Deleted)"
+                                                : "Delete"
+                                            }
                                           >
                                             <svg
                                               className="w-3 h-3"
@@ -1264,17 +1374,18 @@ const handleClientChange = async (clientId) => {
                                   const isPastDue = dueDateStatus.isPastDue;
                                   const isNearDue =
                                     dueDateStatus.status === "near-due";
+                                  const isDeleted = gsuite.deleted; // Assuming API has 'deleted' field
 
                                   return (
                                     <tr
                                       key={gsuite.acmGsuitHistoryId}
-                                      className={`${
-                                        isPastDue
-                                          ? "border-l-4 border-l-red-500"
-                                          : isNearDue
-                                          ? "border-l-4 border-l-yellow-500"
-                                          : ""
-                                      } hover:bg-gray-50`}
+                                      className={`
+            ${isDeleted ? "bg-gray-50 border-l-4 border-l-gray-400" : ""}
+            ${!isDeleted && isPastDue ? "border-l-4 border-l-red-500" : ""}
+            ${!isDeleted && isNearDue ? "border-l-4 border-l-yellow-500" : ""}
+            hover:bg-gray-50
+            ${isDeleted ? "opacity-80" : ""}
+          `}
                                       onClick={() =>
                                         handleEditGsuiteHistory(gsuite)
                                       }
@@ -1283,85 +1394,187 @@ const handleClientChange = async (clientId) => {
                                         {gsuite.sequence}
                                       </td>
                                       <td className="px-4 py-2 text-sm">
-                                        <div className="font-medium">
+                                        <div
+                                          className={`font-medium truncate max-w-[100px] ${
+                                            isDeleted ? "text-gray-600" : ""
+                                          }`}
+                                          title={gsuite.domainName}
+                                        >
                                           {gsuite.domainName}
                                         </div>
                                         {gsuite.adminEmail && (
-                                          <div className="text-xs text-gray-500">
+                                          <div
+                                            className={`text-xs truncate max-w-[100px] ${
+                                              isDeleted
+                                                ? "text-gray-500"
+                                                : "text-gray-500"
+                                            }`}
+                                            title={gsuite.adminEmail}
+                                          >
                                             {gsuite.adminEmail}
                                           </div>
                                         )}
                                       </td>
                                       <td className="px-4 py-2 text-sm">
-                                        {gsuite.platform}
-                                      </td>
-                                      <td className="px-4 py-2 text-sm">
-                                        {formatDate(gsuite.gsuitStartDate)}
-                                      </td>
-                                      <td className="px-4 py-2 text-sm">
                                         <div
-                                          className={`${
-                                            isPastDue
-                                              ? "text-red-600 font-semibold"
-                                              : isNearDue
-                                              ? "text-yellow-600 font-semibold"
-                                              : ""
-                                          }`}
+                                          className={
+                                            isDeleted ? "text-gray-600" : ""
+                                          }
                                         >
-                                          {formatDate(gsuite.gsuitRenewalDate)}
-                                          {dueDateStatus.message && (
-                                            <span
-                                              className={`block text-xs mt-1 ${
-                                                isPastDue
-                                                  ? "text-red-500"
-                                                  : isNearDue
-                                                  ? "text-yellow-500"
-                                                  : ""
-                                              }`}
-                                            >
-                                              {dueDateStatus.message}
-                                            </span>
-                                          )}
+                                          {gsuite.platform}
                                         </div>
                                       </td>
                                       <td className="px-4 py-2 text-sm">
-                                        {gsuite.totalLicenses}
+                                        <div
+                                          className={
+                                            isDeleted ? "text-gray-600" : ""
+                                          }
+                                        >
+                                          {formatDate(gsuite.gsuitStartDate)}
+                                        </div>
                                       </td>
                                       <td className="px-4 py-2 text-sm">
-                                        {gsuite.gsuitAmount}
+                                        <div
+                                          className={`
+                ${isDeleted ? "text-gray-600" : ""}
+                ${!isDeleted && isPastDue ? "text-red-600 font-semibold" : ""}
+                ${
+                  !isDeleted && isNearDue ? "text-yellow-600 font-semibold" : ""
+                }
+              `}
+                                        >
+                                          {formatDate(gsuite.gsuitRenewalDate)}
+                                          {!isDeleted &&
+                                            dueDateStatus.message && (
+                                              <span
+                                                className={`block text-xs mt-1 ${
+                                                  isPastDue
+                                                    ? "text-red-500"
+                                                    : isNearDue
+                                                    ? "text-yellow-500"
+                                                    : ""
+                                                }`}
+                                              >
+                                                {dueDateStatus.message}
+                                              </span>
+                                            )}
+                                        </div>
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        <div
+                                          className={
+                                            isDeleted ? "text-gray-600" : ""
+                                          }
+                                        >
+                                          {gsuite.totalLicenses}
+                                        </div>
+                                      </td>
+                                      <td className="px-4 py-2 text-sm">
+                                        <div
+                                          className={
+                                            isDeleted ? "text-gray-600" : ""
+                                          }
+                                        >
+                                          {gsuite.gsuitAmount}
+                                        </div>
                                       </td>
                                       <td className="px-4 py-2 text-sm">
                                         <span
-                                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                            gsuite.paidBy === "ADMIN"
-                                              ? "bg-purple-100 text-purple-800"
-                                              : "bg-blue-100 text-blue-800"
-                                          }`}
+                                          className={`
+                inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                ${isDeleted ? "bg-gray-200 text-gray-700" : ""}
+                ${
+                  !isDeleted && gsuite.paidBy === "ADMIN"
+                    ? "bg-purple-100 text-purple-800"
+                    : ""
+                }
+                ${
+                  !isDeleted && gsuite.paidBy !== "ADMIN"
+                    ? "bg-blue-100 text-blue-800"
+                    : ""
+                }
+              `}
                                         >
-                                          {gsuite.paidBy === "ADMIN"
-                                            ? "Admin"
-                                            : "Client"}
+                                          {isDeleted ? (
+                                            <>
+                                              <svg
+                                                className="w-3 h-3 mr-1"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                />
+                                              </svg>
+                                              {gsuite.paidBy === "ADMIN"
+                                                ? "Admin"
+                                                : "Client"}
+                                            </>
+                                          ) : gsuite.paidBy === "ADMIN" ? (
+                                            "Admin"
+                                          ) : (
+                                            "Client"
+                                          )}
                                         </span>
                                       </td>
                                       <td className="px-4 py-2 text-sm">
                                         <span
-                                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                            gsuite.paid
-                                              ? "bg-green-100 text-green-800"
-                                              : "bg-red-100 text-red-800"
-                                          }`}
+                                          className={`
+                inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                ${isDeleted ? "bg-gray-200 text-gray-700" : ""}
+                ${
+                  !isDeleted && gsuite.paid ? "bg-green-100 text-green-800" : ""
+                }
+                ${!isDeleted && !gsuite.paid ? "bg-red-100 text-red-800" : ""}
+              `}
                                         >
-                                          {gsuite.paid ? "Paid" : "Unpaid"}
+                                          {isDeleted ? (
+                                            <>
+                                              <svg
+                                                className="w-3 h-3 mr-1"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                />
+                                              </svg>
+                                              {gsuite.paid
+                                                ? "Paid"
+                                                : "Unpaid"}
+                                            </>
+                                          ) : gsuite.paid ? (
+                                            "Paid"
+                                          ) : (
+                                            "Unpaid"
+                                          )}
                                         </span>
                                       </td>
                                       <td className="px-4 py-2 text-sm">
                                         <div className="flex gap-1">
                                           <button
-                                            onClick={() =>
-                                              handleEditGsuiteHistory(gsuite)
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleEditGsuiteHistory(gsuite);
+                                            }}
+                                            className={`p-1 rounded ${
+                                              isDeleted
+                                                ? "text-gray-500 hover:bg-gray-100"
+                                                : "text-blue-600 hover:bg-blue-50"
+                                            }`}
+                                            title={
+                                              isDeleted
+                                                ? "Edit (Deleted Record)"
+                                                : "Edit"
                                             }
-                                            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                                            title="Edit"
                                           >
                                             <svg
                                               className="w-3 h-3"
@@ -1385,8 +1598,16 @@ const handleClientChange = async (clientId) => {
                                                 gsuite.domainName
                                               );
                                             }}
-                                            className="p-1 text-red-600 hover:bg-red-50 rounded"
-                                            title="Delete"
+                                            className={`p-1 rounded ${
+                                              isDeleted
+                                                ? "text-gray-500 hover:bg-gray-100"
+                                                : "text-red-600 hover:bg-red-50"
+                                            }`}
+                                            title={
+                                              isDeleted
+                                                ? "Delete (Already Deleted)"
+                                                : "Delete"
+                                            }
                                           >
                                             <svg
                                               className="w-3 h-3"

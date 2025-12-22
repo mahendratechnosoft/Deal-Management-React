@@ -36,6 +36,7 @@ function CreateVendorModal({ onClose, onSuccess }) {
     phone: "",
     balance: 0,
     pan: "",
+    gstNumber: "",
     isMSMERegister: false,
     udyamRegistrationType: "",
     udyamRegistrationNumber: "",
@@ -78,7 +79,12 @@ function CreateVendorModal({ onClose, onSuccess }) {
     {
       id: "msme",
       label: "MSME Details",
-      fields: ["pan", "udyamRegistrationType", "udyamRegistrationNumber"],
+      fields: [
+        "pan",
+        "gstNumber",
+        "udyamRegistrationType",
+        "udyamRegistrationNumber",
+      ],
     },
     {
       id: "financial",
@@ -420,6 +426,16 @@ function CreateVendorModal({ onClose, onSuccess }) {
       newErrors["pan"] = "Invalid PAN format (e.g., ABCDE1234F)";
     }
 
+    // GST validation (only if GST is provided)
+    if (
+      formData.gstNumber?.trim() &&
+      !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(
+        formData.gstNumber
+      )
+    ) {
+      newErrors["gstNumber"] = "Invalid GST format (e.g., 27ABCDE1234F1Z5)";
+    }
+
     // MSME validation (if registered and fields are provided)
     if (formData.isMSMERegister) {
       if (
@@ -517,6 +533,7 @@ function CreateVendorModal({ onClose, onSuccess }) {
         phone: formData.phone || "",
         balance: parseFloat(formData.balance) || 0,
         pan: formData.pan ? formData.pan.toUpperCase() : "",
+        gstNumber: formData.gstNumber ? formData.gstNumber.toUpperCase() : "",
         isMSMERegister: formData.isMSMERegister,
         udyamRegistrationType: formData.isMSMERegister
           ? formData.udyamRegistrationType || ""
@@ -748,6 +765,19 @@ function CreateVendorModal({ onClose, onSuccess }) {
   const renderMSMETab = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <GlobalInputField
+          label="GST Number"
+          name="gstNumber"
+          value={formData.gstNumber}
+          onChange={(e) =>
+            handleChange("gstNumber", e.target.value.toUpperCase())
+          }
+          error={errors["gstNumber"]}
+          placeholder="27ABCDE1234F1Z5"
+          className="text-sm uppercase"
+          maxLength="15"
+          ref={(el) => (errorFieldRefs.current["gstNumber"] = el)}
+        />
         <GlobalInputField
           label="PAN Number"
           name="pan"
