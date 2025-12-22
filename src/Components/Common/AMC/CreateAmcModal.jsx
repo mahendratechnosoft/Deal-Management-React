@@ -19,6 +19,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
   const [selectedClientId, setSelectedClientId] = useState(""); // Track selected client ID
   const [tabErrors, setTabErrors] = useState({}); // Track which tabs have errors
   const [showAdminPassword, setShowAdminPassword] = useState(false);
+  
   // Refs for focusing on error fields
   const errorFieldRefs = useRef({});
 
@@ -721,6 +722,7 @@ function CreateAmcModal({ onClose, onSuccess }) {
          hostingProvider: formData.amcInfo.hostingProvider || "",
          domainProvider: formData.amcInfo.domainProvider || "",
          assingedTo: formData.amcInfo.assingedTo || "",
+         customerId: selectedClientId,
        },
      };
 
