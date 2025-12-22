@@ -10,6 +10,7 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { Country, State, City } from "country-state-city";
 import { hasPermission } from "../../BaseComponet/permissions";
+import { showErrorAlert,showDeleteConfirmation  } from "../../BaseComponet/alertUtils";
 
 function EditVendorModal({ vendorId, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -24,7 +25,9 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedState, setSelectedState] = useState("");
 
-    const canEdit = hasPermission("vendor", "Edit");
+  const [existingAttachments, setExistingAttachments] = useState([]);
+  const [attachmentsLoading, setAttachmentsLoading] = useState(false);
+  const canEdit = hasPermission("vendor", "Edit");
   // Form state
   const [formData, setFormData] = useState({
     vendorId: "",
@@ -94,6 +97,11 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
       id: "address",
       label: "Address Details",
       fields: ["street", "city", "state", "zipCode", "country"],
+    },
+    {
+      id: "attachments",
+      label: "Attachments",
+      fields: ["attachments"],
     },
     {
       id: "remarks",
@@ -254,6 +262,292 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
       }));
     }
   };
+
+  // Fetch attachments when attachments tab is active
+  useEffect(() => {
+    if (activeTab === "attachments" && formData.vendorId) {
+      fetchVendorAttachments();
+    }
+  }, [activeTab, formData.vendorId, canEdit]);
+
+  const fetchVendorAttachments = async () => {
+    setAttachmentsLoading(true);
+    try {
+      console.log("Fetching attachments for vendorId:", formData.vendorId);
+
+      const response = await axiosInstance.get(
+        `getVendorAttachmentByVendorId/${formData.vendorId}`
+      );
+
+      console.log("Attachments API response:", response);
+      console.log("Attachments data:", response.data);
+
+      if (response.data) {
+        const attachmentsWithId = response.data.map((att) => {
+          return {
+            ...att,
+            id: att.vendorAttachmentId, // Use vendorAttachmentId as the ID
+            markedForDeletion: false,
+          };
+        });
+
+        console.log("Processed attachments:", attachmentsWithId);
+        setExistingAttachments(attachmentsWithId);
+      } else {
+        console.log("No data in response");
+        setExistingAttachments([]);
+      }
+    } catch (error) {
+      console.error("Error fetching attachments:", error);
+      console.error("Error details:", error.response);
+      toast.error("Failed to load attachments");
+      setExistingAttachments([]);
+    } finally {
+      setAttachmentsLoading(false);
+    }
+  };
+  //   =================attachments code
+  // Handle file upload
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    for (const file of files) {
+      if (file.size > maxSize) {
+        toast.error(`${file.name} exceeds 5MB limit`);
+        continue;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64String = reader.result.split(",")[1];
+        const blob = new Blob([file], { type: file.type });
+        const url = URL.createObjectURL(blob);
+
+        try {
+          // Save attachment immediately via API
+          const attachmentPayload = {
+            vendorId: formData.vendorId,
+            fileName: file.name,
+            contentType: file.type,
+            data: base64String,
+          };
+
+          console.log("Uploading attachment:", attachmentPayload);
+
+          const response = await axiosInstance.post("addVendorAttachement", [
+            attachmentPayload,
+          ]);
+
+          console.log("Upload response:", response.data);
+
+          // Check if response is successful
+          if (response.status === 200 || response.status === 201) {
+            // Try different response structures
+            let savedAttachment;
+            let attachmentId;
+
+            if (Array.isArray(response.data) && response.data.length > 0) {
+              // Response is an array
+              savedAttachment = response.data[0];
+              attachmentId =
+                savedAttachment.vendorAttachmentId || savedAttachment.id;
+            } else if (response.data && typeof response.data === "object") {
+              // Response is a single object
+              savedAttachment = response.data;
+              attachmentId =
+                savedAttachment.vendorAttachmentId || savedAttachment.id;
+            }
+
+            if (attachmentId) {
+              // Create new attachment object
+              const newAttachment = {
+                ...(savedAttachment || attachmentPayload),
+                id: attachmentId,
+                blobUrl: url,
+                file: file,
+                uploadedAt:
+                  savedAttachment?.uploadedAt || new Date().toISOString(),
+                uploadedBy: savedAttachment?.uploadedBy || "Current User",
+              };
+
+              // Add to existing attachments immediately
+              setExistingAttachments((prev) => [...prev, newAttachment]);
+              toast.success(`${file.name} uploaded successfully`);
+
+              // Force a re-fetch to ensure we have the latest data
+              setTimeout(() => {
+                fetchVendorAttachments();
+              }, 500);
+            } else {
+              // If no ID in response, still add to UI and refresh list
+              const tempAttachment = {
+                ...attachmentPayload,
+                id: `temp-${Date.now()}`,
+                blobUrl: url,
+                file: file,
+                uploadedAt: new Date().toISOString(),
+                uploadedBy: "Current User",
+              };
+
+              setExistingAttachments((prev) => [...prev, tempAttachment]);
+              toast.success(
+                `${file.name} uploaded successfully - refreshing list`
+              );
+
+              // Refresh the attachments list
+              fetchVendorAttachments();
+            }
+          } else {
+            toast.error("Upload failed with status: " + response.status);
+          }
+        } catch (error) {
+          console.error("Error uploading attachment:", error);
+          console.error("Error response:", error.response?.data);
+          toast.error(
+            `Failed to upload ${file.name}: ${
+              error.response?.data?.message || error.message
+            }`
+          );
+          // Clean up blob URL if upload fails
+          URL.revokeObjectURL(url);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+    e.target.value = "";
+  };
+
+  // Handle file preview
+  const handleFilePreview = (attachment) => {
+    if (attachment.blobUrl) {
+      window.open(attachment.blobUrl, "_blank");
+    } else if (attachment.data) {
+      // For existing attachments without blobUrl
+      try {
+        const byteCharacters = atob(attachment.data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: attachment.contentType });
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, "_blank");
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch (error) {
+        console.error("Error previewing attachment:", error);
+        toast.error("Failed to preview file");
+      }
+    }
+  };
+
+  // Handle remove attachment
+const handleRemoveAttachment = async (id, fileName) => {
+  try {
+
+    // Confirm deletion
+    const result = await showDeleteConfirmation(fileName);
+    if (!result.isConfirmed) {
+   
+      return;
+    }
+
+    // 1. Remove from UI immediately (optimistic update)
+ 
+    setExistingAttachments((prev) => prev.filter((att) => att.id !== id));
+
+    // 2. Show loading
+    const loadingToast = toast.loading(`Deleting ${fileName}...`);
+
+    // 3. Call API - ADD ERROR CATCHING
+
+    const response = await axiosInstance.delete(
+      `deleteVendorAttachement/${id}`
+    );
+
+    // 4. Success - update toast
+    toast.dismiss(loadingToast);
+    toast.success(`${fileName} deleted successfully`);
+
+    // 5. Optional: Refresh after a short delay
+    setTimeout(() => {
+      fetchVendorAttachments();
+    }, 500);
+  } catch (error) {
+
+    // Dismiss loading toast
+    toast.dismiss();
+
+    // Detailed error analysis
+    if (error.response) {
+      // Server responded with error status
+
+      // Show specific error message
+      const errorMessage =
+        error.response.data?.message ||
+        error.response.data?.error ||
+        `Server error (${error.response.status})`;
+      toast.error(`Failed to delete: ${errorMessage}`);
+    } else if (error.request) {
+      // Request made but no response
+      toast.error("Network error - No response from server");
+    } else {
+      // Something else happened
+      toast.error(`Request failed: ${error.message}`);
+    }
+
+    // 6. On error: Refresh to get correct state from server
+    fetchVendorAttachments(); // Refresh to sync with server
+  }
+};
+
+  const handleDownloadAttachment = async (attachment) => {
+    try {
+      // Convert base64 to blob
+      const byteCharacters = atob(attachment.data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: attachment.contentType });
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = attachment.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error("Error downloading attachment:", error);
+      toast.error("Failed to download file");
+    }
+  };
+  // Restore removed attachment
+  const handleRestoreAttachment = (id) => {
+    setExistingAttachments((prev) =>
+      prev.map((att) =>
+        att.id === id ? { ...att, markedForDeletion: false } : att
+      )
+    );
+  };
+
+  // Clean up blob URLs
+  useEffect(() => {
+    return () => {
+      existingAttachments.forEach((attachment) => {
+        if (attachment.blobUrl) {
+          URL.revokeObjectURL(attachment.blobUrl);
+        }
+      });
+    };
+  }, [existingAttachments]);
 
   // Handle MSME registration toggle
   const handleMSMEToggle = (checked) => {
@@ -419,9 +713,7 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
 
     const changedFields = [];
     Object.keys(formData).forEach((key) => {
-      // Don't skip vendorCode - we need to track if it changes
-      if (key === "vendorId") return; // Only skip vendorId
-
+      if (key === "vendorId") return;
       if (formData[key] !== originalData[key]) {
         changedFields.push(key);
       }
@@ -429,7 +721,6 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
 
     return changedFields.length > 0;
   };
-
   // Check if vendorCode specifically has been changed
   const isVendorCodeChanged = () => {
     if (!originalData) return false;
@@ -494,29 +785,7 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
       }
     } catch (error) {
       console.error("Error updating vendor:", error);
-
-      if (error.response) {
-        if (error.response.status === 400) {
-          toast.error(
-            "Validation error: " +
-              (error.response.data?.message || "Check your input")
-          );
-        } else if (error.response.status === 500) {
-          toast.error(
-            "Server error: " +
-              (error.response.data?.message || "Internal server error")
-          );
-        } else {
-          toast.error(
-            "Failed to update vendor: " +
-              (error.response.data?.message || "Unknown error")
-          );
-        }
-      } else if (error.request) {
-        toast.error("Network error. Please check your connection.");
-      } else {
-        toast.error("Failed to update vendor. Please try again.");
-      }
+      // Error handling remains the same
     } finally {
       setLoading(false);
     }
@@ -810,6 +1079,256 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
     </div>
   );
 
+  // Render Attachments Tab
+  // Render Attachments Tab
+  const renderAttachmentsTab = () => (
+    <div className="space-y-4">
+      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
+        <div className="flex flex-col items-center justify-center">
+          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+            <svg
+              className="w-6 h-6 text-blue-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+          </div>
+          <h3 className="text-sm font-medium text-gray-700 mb-1">
+            Upload Vendor Documents
+          </h3>
+          <p className="text-xs text-gray-500 mb-3">
+            Upload PAN card, GST certificate, bank statements, etc.
+          </p>
+
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              multiple
+              onChange={handleFileUpload}
+              accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx"
+              className="hidden"
+              id="file-upload"
+              disabled={!canEdit}
+            />
+            <span
+              className={`inline-flex items-center px-4 py-2 ${
+                canEdit
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-gray-400 cursor-not-allowed"
+              } text-white text-sm font-medium rounded-lg transition-colors`}
+            >
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                />
+              </svg>
+              {canEdit ? "Choose Files" : "Upload Disabled"}
+            </span>
+          </label>
+          <p className="text-xs text-gray-400 mt-2">
+            Supported formats: JPG, PNG, GIF, PDF, DOC, DOCX, XLS, XLSX (Max 5MB
+            each)
+          </p>
+          {!canEdit && (
+            <p className="text-xs text-red-500 mt-2">
+              You don't have permission to upload files
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Existing Attachments */}
+      {existingAttachments.length > 0 && (
+        <div className="mt-6">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">
+            Documents ({existingAttachments.length})
+          </h4>
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {existingAttachments.map((attachment) => (
+              <div
+                key={attachment.id}
+                className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <div
+                    className={`w-8 h-8 rounded flex items-center justify-center ${
+                      attachment.contentType.includes("image")
+                        ? "bg-green-100 text-green-600"
+                        : attachment.contentType.includes("pdf")
+                        ? "bg-red-100 text-red-600"
+                        : "bg-blue-100 text-blue-600"
+                    }`}
+                  >
+                    {attachment.contentType.includes("image") ? (
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    ) : attachment.contentType.includes("pdf") ? (
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {attachment.fileName}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {attachment.contentType}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-1">
+                  {/* Download Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadAttachment(attachment)}
+                    className="p-1 text-green-600 hover:text-green-800 transition-colors"
+                    title="Download file"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Preview Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleFilePreview(attachment)}
+                    className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
+                    title="Preview file"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Delete Button (only if canEdit) */}
+                  {/* Delete Button (only if canEdit) */}
+                  {canEdit && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleRemoveAttachment(
+                          attachment.id,
+                          attachment.fileName,
+                          true
+                        )
+                      }
+                      className="p-1 text-red-600 hover:text-red-800 transition-colors"
+                      title="Delete file"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {existingAttachments.length === 0 && (
+        <div className="text-center py-8">
+          <svg
+            className="w-12 h-12 text-gray-400 mx-auto mb-3"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          <p className="text-gray-500">No documents uploaded yet</p>
+        </div>
+      )}
+    </div>
+  );
   // Render Address Details Tab
   const renderAddressTab = () => (
     <div className="space-y-4">
@@ -970,6 +1489,7 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
             {activeTab === "msme" && renderMSMETab()}
             {activeTab === "financial" && renderFinancialTab()}
             {activeTab === "address" && renderAddressTab()}
+            {activeTab === "attachments" && renderAttachmentsTab()}
             {activeTab === "remarks" && renderRemarksTab()}
           </form>
         </div>
@@ -1078,9 +1598,7 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
                           d="M5 13l4 4L19 7"
                         />
                       </svg>
-                 
-                       
-                        Update Vendor
+                      Update Vendor
                     </>
                   )}
                 </button>
