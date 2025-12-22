@@ -29,6 +29,11 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
   const [showGsuiteHistoryModal, setShowGsuiteHistoryModal] = useState(false);
   const [editingGsuite, setEditingGsuite] = useState(null);
 
+  // Add to your existing state declarations
+  const [clients, setClients] = useState([]);
+  const [loadingClients, setLoadingClients] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState("");
+
   const canEdit = hasPermission("amc", "Edit");
   // Tab 1: Basic AMC Info - Match API field names exactly
   const [basicInfo, setBasicInfo] = useState({
@@ -158,6 +163,7 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
   // Fetch data
   useEffect(() => {
     if (amc?.amcId) {
+      fetchClients();
       fetchBasicInfo();
     }
   }, [amc]);
@@ -174,6 +180,21 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
       }
     }
   }, [activeTab, amc]);
+
+  const fetchClients = async () => {
+    setLoadingClients(true);
+    try {
+      const response = await axiosInstance.get("getCustomerListWithNameAndId");
+      if (response.data && Array.isArray(response.data)) {
+        setClients(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+      toast.error("Failed to load clients");
+    } finally {
+      setLoadingClients(false);
+    }
+  };
 
   const fetchGsuiteHistory = async () => {
     try {
@@ -209,6 +230,9 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
           assingedTo: response.data.assingedTo || "",
           clientName: response.data.clientName || "",
         });
+        if (response.data.customerId) {
+          setSelectedClientId(response.data.customerId);
+        }
       }
     } catch (error) {
       console.error("Error fetching AMC info:", error);
@@ -249,6 +273,68 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
       setLoadingData(false);
     }
   };
+
+  // Add this function to fetch detailed customer info
+  const fetchCustomerDetails = async (customerId) => {
+    try {
+      const response = await axiosInstance.get(`getCustomerById/${customerId}`);
+      if (response.data) {
+        const customer = response.data;
+        return {
+          contactPersonName: customer.contactPersonName || "",
+          email: customer.email || "",
+          phoneNumber: customer.mobile || customer.phone || "",
+          websiteURL: customer.website || "",
+          companyName: customer.companyName || "",
+        };
+      }
+    } catch (error) {
+      console.error("Error fetching customer details:", error);
+    }
+    return null;
+  };
+
+const handleClientChange = async (clientId) => {
+  setSelectedClientId(clientId);
+
+  if (!clientId) {
+    // Clear client-specific fields if no client selected
+    setBasicInfo((prev) => ({
+      ...prev,
+      companyName: "",
+      contactPersonName: "",
+      email: "",
+      phoneNumber: "",
+      websiteURL: "",
+      clientName: "",
+    }));
+    return;
+  }
+
+  try {
+  
+
+    // OPTION 2: Fetch detailed customer info from API
+    // Uncomment this if you need complete customer details
+
+    const customerDetails = await fetchCustomerDetails(clientId);
+    if (customerDetails) {
+      setBasicInfo((prev) => ({
+        ...prev,
+        companyName: customerDetails.companyName || "",
+        contactPersonName: customerDetails.contactPersonName || "",
+        email: customerDetails.email || "",
+        phoneNumber: customerDetails.phoneNumber || "",
+        websiteURL: customerDetails.websiteURL || "",
+        clientName: customerDetails.companyName || "",
+      }));
+    }
+    
+  } catch (error) {
+    console.error("Error handling client change:", error);
+    toast.error("Failed to load client details");
+  }
+};
 
   const handleBasicInfoChange = (field, value) => {
     setBasicInfo((prev) => ({
@@ -397,6 +483,7 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
         clientName: basicInfo.clientName || null,
         domainProvider: basicInfo.domainProvider || "",
         employeeId: "", // Set to empty string instead of null
+        customerId: selectedClientId || null,
       };
 
       console.log("Update payload:", updatePayload);
@@ -502,6 +589,26 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                 {activeTab === "basic" && (
                   <form onSubmit={handleSubmitBasicInfo} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Add this as the first field in your grid */}
+                      <div className="md:col-span-2">
+                        <GlobalSelectField
+                          label="Select Client"
+                          name="client"
+                          value={selectedClientId}
+                          onChange={(e) => handleClientChange(e.target.value)}
+                          options={[
+                            { value: "", label: "Select a client" },
+                            ...clients.map((client) => ({
+                              value: client.id,
+                              label: `${
+                                client.companyName || client.name || "Client"
+                              } - ${client.email || ""}`,
+                            })),
+                          ]}
+                          loading={loadingClients}
+                          className="text-sm"
+                        />
+                      </div>
                       <GlobalInputField
                         label="Company Name"
                         name="companyName"
