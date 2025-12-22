@@ -257,8 +257,9 @@ const SettingsLayout = () => {
                       <div className="flex flex-col space-y-1">
                         {MENU_ITEMS.map((item, index) => {
                           if (
-                            item.title === "Dynamic Form" &&
-                            hasPermission("donor", "Access")
+                            item.title === "Dynamic Form" ||
+                            (item.title === "Finance" &&
+                              hasPermission("donor", "Access"))
                           )
                             return null;
 
