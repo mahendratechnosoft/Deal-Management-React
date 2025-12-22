@@ -25,6 +25,8 @@ function CreateVendorModal({ onClose, onSuccess }) {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedState, setSelectedState] = useState("");
 
+  const [attachments, setAttachments] = useState([]);
+
   // Form state matching API structure
   const [formData, setFormData] = useState({
     vendorCode: "",
@@ -47,6 +49,7 @@ function CreateVendorModal({ onClose, onSuccess }) {
     state: "",
     zipCode: "",
     country: "",
+    attachments: [],
   });
 
   const [errors, setErrors] = useState({});
@@ -93,6 +96,12 @@ function CreateVendorModal({ onClose, onSuccess }) {
       label: "Address Details",
       fields: ["street", "city", "state", "zipCode", "country"],
     },
+    {
+      id: "attachments",
+      label: "Attachments",
+      fields: ["attachments"],
+    },
+
     {
       id: "remarks",
       label: "Additional Info",
@@ -255,8 +264,6 @@ function CreateVendorModal({ onClose, onSuccess }) {
     return requiredFields[field];
   };
 
-
-
   // Focus on the first error field
   const focusOnFirstError = (newErrors) => {
     const firstErrorKey = Object.keys(newErrors)[0];
@@ -281,6 +288,106 @@ function CreateVendorModal({ onClose, onSuccess }) {
       }, 100);
     }
   };
+
+  // Handle file upload
+  // Update handleFileUpload to create Blob immediately:
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files);
+
+    files.forEach((file) => {
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        const base64String = reader.result.split(",")[1];
+
+        // Create Blob from the file directly (no need for base64 conversion)
+        const blob = new Blob([file], { type: file.type });
+        const url = URL.createObjectURL(blob);
+
+        const newAttachment = {
+          fileName: file.name,
+          contentType: file.type,
+          data: base64String, // Base64 for API
+          blobUrl: url, // Object URL for preview
+          file: file,
+          id: Date.now() + Math.random().toString(36).substr(2, 9),
+        };
+
+        setAttachments((prev) => [...prev, newAttachment]);
+      };
+
+      reader.readAsDataURL(file);
+    });
+
+    e.target.value = "";
+  };
+
+  // Then use the stored blobUrl for preview:
+  const handleFilePreview = (attachment) => {
+    if (attachment.blobUrl) {
+      window.open(attachment.blobUrl, "_blank");
+    } else {
+      // Fallback to base64 conversion
+      try {
+        const byteCharacters = atob(attachment.data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: attachment.contentType });
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, "_blank");
+
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+        }, 1000);
+      } catch (error) {
+        console.error("Error previewing attachment:", error);
+        toast.error("Failed to preview file");
+      }
+    }
+  };
+
+  // Clean up blob URLs when component unmounts or when removing attachments
+  useEffect(() => {
+    return () => {
+      // Clean up all blob URLs when component unmounts
+      attachments.forEach((attachment) => {
+        if (attachment.blobUrl) {
+          URL.revokeObjectURL(attachment.blobUrl);
+        }
+      });
+    };
+  }, [attachments]);
+
+  // Also clean up when removing an attachment
+  const handleRemoveAttachment = (id) => {
+    const attachment = attachments.find((att) => att.id === id);
+    if (attachment && attachment.blobUrl) {
+      URL.revokeObjectURL(attachment.blobUrl);
+    }
+    setAttachments((prev) => prev.filter((attachment) => attachment.id !== id));
+  };
+
+  // File size validation (max 5MB)
+  const validateFileSize = (file) => {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    return file.size <= maxSize;
+  };
+
+  // File type validation
+  const allowedFileTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ];
 
   // Validate form - ONLY validate vendorName as required
   const validateForm = () => {
@@ -401,8 +508,8 @@ function CreateVendorModal({ onClose, onSuccess }) {
 
     setLoading(true);
     try {
-      // Prepare payload
-      const payload = {
+      // Prepare vendor payload
+      const vendorPayload = {
         vendorCode: formData.vendorCode.trim().toUpperCase(),
         vendorName: formData.vendorName,
         companyName: formData.companyName || "",
@@ -429,9 +536,26 @@ function CreateVendorModal({ onClose, onSuccess }) {
         country: formData.country || "",
       };
 
-      console.log("Creating vendor with payload:", payload);
+      // Prepare attachments payload
+      const vendorAttachmentsPayload =
+        attachments.length > 0
+          ? attachments.map((attachment) => ({
+              fileName: attachment.fileName,
+              contentType: attachment.contentType,
+              data: attachment.data,
+            }))
+          : null; // Send null if no attachments
 
-      const response = await axiosInstance.post("createVendor", payload);
+      // Prepare final payload matching API structure
+      const finalPayload = {
+        vendor: vendorPayload,
+        vendorAttachments: vendorAttachmentsPayload,
+      };
+
+      console.log("Creating vendor with payload:", finalPayload);
+
+      // Note: Update API endpoint if needed
+      const response = await axiosInstance.post("createVendor", finalPayload);
 
       if (response.data) {
         console.log("Vendor created successfully:", response.data);
@@ -444,12 +568,17 @@ function CreateVendorModal({ onClose, onSuccess }) {
     } catch (error) {
       console.error("Error creating vendor:", error);
 
+      // Enhanced error handling
       if (error.response) {
         if (error.response.status === 400) {
           toast.error(
             "Validation error: " +
               (error.response.data?.message || "Check your input")
           );
+        } else if (error.response.status === 413) {
+          toast.error("File size too large. Maximum 5MB per file.");
+        } else if (error.response.status === 415) {
+          toast.error("Unsupported file type. Please upload valid documents.");
         } else if (error.response.status === 500) {
           toast.error(
             "Server error: " +
@@ -498,122 +627,122 @@ function CreateVendorModal({ onClose, onSuccess }) {
   };
 
   // Render Basic Information Tab - Removed asterisks from all except vendorName
-const renderBasicTab = () => (
-  <div className="space-y-4">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* Vendor Code Field - REQUIRED */}
-      <GlobalInputField
-        label={
-          <>
-            Vendor Code
-            <span className="text-red-500 ml-1">*</span>
-          </>
-        }
-        name="vendorCode"
-        value={formData.vendorCode}
-        onChange={(e) =>
-          handleChange("vendorCode", e.target.value.toUpperCase())
-        }
-        error={errors["vendorCode"]}
-        placeholder="Enter unique vendor code"
-        className="text-sm uppercase"
-        ref={(el) => (errorFieldRefs.current["vendorCode"] = el)}
-      />
+  const renderBasicTab = () => (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Vendor Code Field - REQUIRED */}
+        <GlobalInputField
+          label={
+            <>
+              Vendor Code
+              <span className="text-red-500 ml-1">*</span>
+            </>
+          }
+          name="vendorCode"
+          value={formData.vendorCode}
+          onChange={(e) =>
+            handleChange("vendorCode", e.target.value.toUpperCase())
+          }
+          error={errors["vendorCode"]}
+          placeholder="Enter unique vendor code"
+          className="text-sm uppercase"
+          ref={(el) => (errorFieldRefs.current["vendorCode"] = el)}
+        />
 
-      {/* Vendor Name Field */}
-      <GlobalInputField
-        label={
-          <>
-            Vendor Name
-            <span className="text-red-500 ml-1">*</span>
-          </>
-        }
-        name="vendorName"
-        value={formData.vendorName}
-        onChange={(e) => handleChange("vendorName", e.target.value)}
-        error={errors["vendorName"]}
-        placeholder="Enter vendor name"
-        className="text-sm"
-        ref={(el) => (errorFieldRefs.current["vendorName"] = el)}
-      />
+        {/* Vendor Name Field */}
+        <GlobalInputField
+          label={
+            <>
+              Vendor Name
+              <span className="text-red-500 ml-1">*</span>
+            </>
+          }
+          name="vendorName"
+          value={formData.vendorName}
+          onChange={(e) => handleChange("vendorName", e.target.value)}
+          error={errors["vendorName"]}
+          placeholder="Enter vendor name"
+          className="text-sm"
+          ref={(el) => (errorFieldRefs.current["vendorName"] = el)}
+        />
 
-      {/* Rest of the fields remain the same */}
-      <GlobalInputField
-        label="Company Name"
-        name="companyName"
-        value={formData.companyName}
-        onChange={(e) => handleChange("companyName", e.target.value)}
-        error={errors["companyName"]}
-        placeholder="Enter company name"
-        className="text-sm"
-        ref={(el) => (errorFieldRefs.current["companyName"] = el)}
-      />
-      <GlobalInputField
-        label="Email Address"
-        name="emailAddress"
-        type="email"
-        value={formData.emailAddress}
-        onChange={(e) => handleChange("emailAddress", e.target.value)}
-        error={errors["emailAddress"]}
-        placeholder="vendor@company.com"
-        className="text-sm"
-        ref={(el) => (errorFieldRefs.current["emailAddress"] = el)}
-      />
+        {/* Rest of the fields remain the same */}
+        <GlobalInputField
+          label="Company Name"
+          name="companyName"
+          value={formData.companyName}
+          onChange={(e) => handleChange("companyName", e.target.value)}
+          error={errors["companyName"]}
+          placeholder="Enter company name"
+          className="text-sm"
+          ref={(el) => (errorFieldRefs.current["companyName"] = el)}
+        />
+        <GlobalInputField
+          label="Email Address"
+          name="emailAddress"
+          type="email"
+          value={formData.emailAddress}
+          onChange={(e) => handleChange("emailAddress", e.target.value)}
+          error={errors["emailAddress"]}
+          placeholder="vendor@company.com"
+          className="text-sm"
+          ref={(el) => (errorFieldRefs.current["emailAddress"] = el)}
+        />
 
-      <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-          <span>Phone Number</span>
-        </label>
-        <div
-          className={`phone-input-wrapper ${
-            errors["phone"] ? "border-red-500 rounded-lg" : ""
-          }`}
-        >
-          <PhoneInput
-            country={"in"}
-            value={formData.phone || ""}
-            onChange={handlePhoneChange}
-            enableSearch={true}
-            placeholder="Enter phone number"
-            inputClass="w-full h-10 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            buttonClass="!border-r-0 !rounded-l"
-            inputStyle={{
-              width: "100%",
-              height: "40px",
-              borderLeft: "none",
-              borderTopLeftRadius: "0",
-              borderBottomLeftRadius: "0",
-            }}
-            buttonStyle={{
-              borderRight: "none",
-              borderTopRightRadius: "0",
-              borderBottomRightRadius: "0",
-              height: "40px",
-            }}
-          />
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+            <span>Phone Number</span>
+          </label>
+          <div
+            className={`phone-input-wrapper ${
+              errors["phone"] ? "border-red-500 rounded-lg" : ""
+            }`}
+          >
+            <PhoneInput
+              country={"in"}
+              value={formData.phone || ""}
+              onChange={handlePhoneChange}
+              enableSearch={true}
+              placeholder="Enter phone number"
+              inputClass="w-full h-10 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              buttonClass="!border-r-0 !rounded-l"
+              inputStyle={{
+                width: "100%",
+                height: "40px",
+                borderLeft: "none",
+                borderTopLeftRadius: "0",
+                borderBottomLeftRadius: "0",
+              }}
+              buttonStyle={{
+                borderRight: "none",
+                borderTopRightRadius: "0",
+                borderBottomRightRadius: "0",
+                height: "40px",
+              }}
+            />
+          </div>
+          {errors["phone"] && (
+            <p className="text-red-500 text-xs flex items-center gap-1">
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              {errors["phone"]}
+            </p>
+          )}
         </div>
-        {errors["phone"] && (
-          <p className="text-red-500 text-xs flex items-center gap-1">
-            <svg
-              className="w-3 h-3"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            {errors["phone"]}
-          </p>
-        )}
       </div>
     </div>
-  </div>
-);
+  );
 
   // Render MSME Details Tab - Removed asterisks
   const renderMSMETab = () => (
@@ -765,6 +894,187 @@ const renderBasicTab = () => (
           </p>
         </div>
       </div>
+    </div>
+  );
+
+  // Render Attachments Tab
+  const renderAttachmentsTab = () => (
+    <div className="space-y-4">
+      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
+        <div className="flex flex-col items-center justify-center">
+          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+            <svg
+              className="w-6 h-6 text-blue-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+          </div>
+          <h3 className="text-sm font-medium text-gray-700 mb-1">
+            Upload Vendor Documents
+          </h3>
+          <p className="text-xs text-gray-500 mb-3">
+            Upload PAN card, GST certificate, bank statements, etc.
+          </p>
+
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              multiple
+              onChange={handleFileUpload}
+              accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx"
+              className="hidden"
+              id="file-upload"
+            />
+            <span className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                />
+              </svg>
+              Choose Files
+            </span>
+          </label>
+
+          <p className="text-xs text-gray-400 mt-2">
+            Supported formats: JPG, PNG, GIF, PDF, DOC, DOCX, XLS, XLSX (Max 5MB
+            each)
+          </p>
+        </div>
+      </div>
+
+      {/* File list */}
+      {attachments.length > 0 && (
+        <div className="mt-6">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">
+            Uploaded Documents ({attachments.length})
+          </h4>
+
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {attachments.map((attachment) => (
+              <div
+                key={attachment.id}
+                className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  {/* File icon based on type */}
+                  <div
+                    className={`w-8 h-8 rounded flex items-center justify-center ${
+                      attachment.contentType.includes("image")
+                        ? "bg-green-100 text-green-600"
+                        : attachment.contentType.includes("pdf")
+                        ? "bg-red-100 text-red-600"
+                        : attachment.contentType.includes("word")
+                        ? "bg-blue-100 text-blue-600"
+                        : attachment.contentType.includes("excel")
+                        ? "bg-green-100 text-green-600"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {attachment.contentType.includes("image") ? (
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    ) : attachment.contentType.includes("pdf") ? (
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => handleFilePreview(attachment)}
+                      className="text-left hover:text-blue-600 transition-colors focus:outline-none"
+                      title="Click to preview in new tab"
+                    >
+                      <p className="text-sm font-medium text-gray-900 truncate hover:text-blue-600">
+                        {attachment.fileName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {attachment.contentType} •{" "}
+                        {(attachment.file.size / 1024).toFixed(1)} KB
+                      </p>
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleRemoveAttachment(attachment.id)}
+                  className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                  title="Remove file"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs text-blue-800">
+              <strong>Note:</strong> Upload relevant documents for vendor
+              verification. These will be stored securely and associated with
+              this vendor record.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -937,6 +1247,7 @@ const renderBasicTab = () => (
             {activeTab === "msme" && renderMSMETab()}
             {activeTab === "financial" && renderFinancialTab()}
             {activeTab === "address" && renderAddressTab()}
+            {activeTab === "attachments" && renderAttachmentsTab()}
             {activeTab === "remarks" && renderRemarksTab()}
           </form>
         </div>
