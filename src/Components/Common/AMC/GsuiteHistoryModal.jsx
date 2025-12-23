@@ -32,6 +32,7 @@ function GsuiteHistoryModal({
     gsuitRenewalCycle: "YEARLY",
     sequence: 1,
     paid: false,
+    proformaInvoiceId: "",
   });
 
   const [showAdminPassword, setShowAdminPassword] = useState(false);
@@ -85,6 +86,7 @@ function GsuiteHistoryModal({
         gsuitRenewalCycle: "YEARLY",
         sequence: 1,
         paid: false,
+        proformaInvoiceId: "",
       });
       setErrors({});
       setSequenceError("");
@@ -134,6 +136,7 @@ function GsuiteHistoryModal({
             gsuitRenewalCycle: initialData.gsuitRenewalCycle || "YEARLY",
             sequence: initialData.sequence || 1,
             paid: initialData.paid || false,
+            proformaInvoiceId: initialData.proformaInvoiceId || "",
           });
 
           // Trigger sequence validation after a short delay
@@ -172,6 +175,7 @@ function GsuiteHistoryModal({
               gsuitRenewalCycle: "YEARLY",
               sequence: nextSequence,
               paid: false,
+              proformaInvoiceId: "",
             });
 
             // Check uniqueness
@@ -535,6 +539,7 @@ function GsuiteHistoryModal({
         sequence: parseInt(formData.sequence),
         paid: formData.paid,
         amcId,
+        proformaInvoiceId: formData.proformaInvoiceId || null,
       };
 
       // Add amcGsuitHistoryId for update
