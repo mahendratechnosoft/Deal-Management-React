@@ -549,7 +549,7 @@ function AmcList() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                            handleDeleteAmc(amc.amcId, amc.companyName);
+                                  handleEditAmc(amc);
                                 }}
                                 className="p-1 text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors"
                                 title="Edit AMC"
