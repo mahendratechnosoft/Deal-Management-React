@@ -24,6 +24,7 @@ const DomainHistoryModal = ({
     domainRenewalCycle: "1 Year",
     sequence: 1,
     paid: false,
+    proformaInvoiceId: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -54,6 +55,7 @@ const DomainHistoryModal = ({
         domainRenewalCycle: "1 Year",
         sequence: 1,
         paid: false,
+        proformaInvoiceId: "",
       });
       setErrors({});
       setSequenceError("");
@@ -89,6 +91,7 @@ const DomainHistoryModal = ({
           domainRenewalCycle: initialData.domainRenewalCycle || "1 Year",
           sequence: initialData.sequence || 1,
           paid: initialData.paid || false,
+          proformaInvoiceId: initialData.proformaInvoiceId || "",
         });
 
         // Trigger sequence validation after a short delay
@@ -107,6 +110,7 @@ const DomainHistoryModal = ({
             domainRenewalCycle: "1 Year",
             sequence: 1, // Default to 1
             paid: false,
+            proformaInvoiceId: "",
           };
 
           // If we have existing sequences, calculate next sequence
@@ -470,7 +474,7 @@ const validateForm = async () => {
          : 0,
        domainRenewalCycle: formData.domainRenewalCycle || "1 Year",
        sequence: parseInt(formData.sequence),
-
+       proformaInvoiceId: formData.proformaInvoiceId || null,
      };
 
      // Add domain ID for update

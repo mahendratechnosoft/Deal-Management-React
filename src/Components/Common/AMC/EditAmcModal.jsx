@@ -13,12 +13,18 @@ import { hasPermission } from "../../BaseComponet/permissions";
 // Add this import at the top
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
+import { useNavigate } from "react-router-dom";
+import ProformaInfoModal from "../Proforma/ProformaInfoModal";
+import ProformaPDF from "../Proforma/ProformaPDF";
+import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
+import { useLayout } from "../../Layout/useLayout";
 
 function EditAmcModal({ amc, onClose, onSuccess }) {
   const [activeTab, setActiveTab] = useState("basic");
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
-
+  const navigate = useNavigate();
+    const { LayoutComponent,role } = useLayout();
   // Modal states
   const [showAmcHistoryModal, setShowAmcHistoryModal] = useState(false);
   const [showDomainHistoryModal, setShowDomainHistoryModal] = useState(false);
@@ -33,6 +39,17 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
   const [clients, setClients] = useState([]);
   const [loadingClients, setLoadingClients] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState("");
+
+  // Add to your existing state declarations
+  const [showProformaInfoModal, setShowProformaInfoModal] = useState(false);
+  const [selectedProforma, setSelectedProforma] = useState(null);
+
+  const [selectedProformaData, setSelectedProformaData] = useState(null);
+  const [adminInformation, setAdminInformation] = useState(null);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [selectedProformaForInfo, setSelectedProformaForInfo] = useState(null);
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
   const canEdit = hasPermission("amc", "Edit");
   // Tab 1: Basic AMC Info - Match API field names exactly
@@ -294,47 +311,44 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
     return null;
   };
 
-const handleClientChange = async (clientId) => {
-  setSelectedClientId(clientId);
+  const handleClientChange = async (clientId) => {
+    setSelectedClientId(clientId);
 
-  if (!clientId) {
-    // Clear client-specific fields if no client selected
-    setBasicInfo((prev) => ({
-      ...prev,
-      companyName: "",
-      contactPersonName: "",
-      email: "",
-      phoneNumber: "",
-      websiteURL: "",
-      clientName: "",
-    }));
-    return;
-  }
-
-  try {
-  
-
-    // OPTION 2: Fetch detailed customer info from API
-    // Uncomment this if you need complete customer details
-
-    const customerDetails = await fetchCustomerDetails(clientId);
-    if (customerDetails) {
+    if (!clientId) {
+      // Clear client-specific fields if no client selected
       setBasicInfo((prev) => ({
         ...prev,
-        companyName: customerDetails.companyName || "",
-        contactPersonName: customerDetails.contactPersonName || "",
-        email: customerDetails.email || "",
-        phoneNumber: customerDetails.phoneNumber || "",
-        websiteURL: customerDetails.websiteURL || "",
-        clientName: customerDetails.companyName || "",
+        companyName: "",
+        contactPersonName: "",
+        email: "",
+        phoneNumber: "",
+        websiteURL: "",
+        clientName: "",
       }));
+      return;
     }
-    
-  } catch (error) {
-    console.error("Error handling client change:", error);
-    toast.error("Failed to load client details");
-  }
-};
+
+    try {
+      // OPTION 2: Fetch detailed customer info from API
+      // Uncomment this if you need complete customer details
+
+      const customerDetails = await fetchCustomerDetails(clientId);
+      if (customerDetails) {
+        setBasicInfo((prev) => ({
+          ...prev,
+          companyName: customerDetails.companyName || "",
+          contactPersonName: customerDetails.contactPersonName || "",
+          email: customerDetails.email || "",
+          phoneNumber: customerDetails.phoneNumber || "",
+          websiteURL: customerDetails.websiteURL || "",
+          clientName: customerDetails.companyName || "",
+        }));
+      }
+    } catch (error) {
+      console.error("Error handling client change:", error);
+      toast.error("Failed to load client details");
+    }
+  };
 
   const handleBasicInfoChange = (field, value) => {
     setBasicInfo((prev) => ({
@@ -506,6 +520,62 @@ const handleClientChange = async (clientId) => {
       setLoading(false);
     }
   };
+
+  const handleOpenPdfPreview = async (proformaInvoiceId) => {
+    setIsPdfLoading(true);
+    setIsPdfModalOpen(true);
+    setSelectedProformaData(null);
+
+    try {
+      // You need to get the role from somewhere - adjust this based on your auth system
+
+
+      let adminInformation = null;
+      if (role === "ROLE_ADMIN") {
+        const adminResponse = await axiosInstance.get(`/admin/getAdminInfo`);
+        adminInformation = adminResponse.data;
+      } else if (role === "ROLE_EMPLOYEE") {
+        const employeeResponse = await axiosInstance.get(
+          `/employee/getEmployeeInfo`
+          `/employee/getEmployeeInfo`
+        );
+        adminInformation = employeeResponse.data.admin;
+      }
+
+      setAdminInformation(adminInformation);
+      const response = await axiosInstance.get(
+        `getProformaInvoiceById/${proformaInvoiceId}`
+      );
+      if (response.data) {
+        setSelectedProformaData(response.data);
+      }
+    } catch (error) {
+      console.error("Error loading proforma PDF:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to load proforma PDF"
+      );
+      setIsPdfModalOpen(false);
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+
+  const handleOpenInfoModal = async (proforma) => {
+    setSelectedProformaForInfo(proforma);
+    setIsInfoModalOpen(true);
+  };
+
+  const handleInfoModalClose = () => {
+    setIsInfoModalOpen(false);
+    setSelectedProformaForInfo(null);
+    // If you need to fetch anything after closing, add it here
+  };
+  // Add this function before your component or inside it
+  const formatProformaNumber = (number) => {
+    if (!number) return "PROFORMA-000000";
+    return `PROFORMA-${String(number).padStart(6, "0")}`;
+  };
+
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-3 z-50">
@@ -967,6 +1037,114 @@ const handleClientChange = async (clientId) => {
                                       </td>
                                       <td className="px-4 py-2 text-sm">
                                         <div className="flex gap-1">
+                                          {history.proformaInvoiceId ? (
+                                            // Preview button for existing proforma
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (!isDeleted) {
+                                                  setSelectedProforma({
+                                                    proformaInvoiceId:
+                                                      history.proformaInvoiceId,
+                                                    proformaInvoiceNumber:
+                                                      history.sequence,
+                                                    currencyType: "INR",
+                                                  });
+                                                  setShowProformaInfoModal(
+                                                    true
+                                                  );
+                                                }
+                                              }}
+                                              className={`
+                    flex items-center gap-1 px-3 py-1 text-xs rounded-md transition-colors
+                    ${
+                      isDeleted
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-blue-100 text-blue-700 hover:bg-blue-200 hover:text-blue-800"
+                    }
+                  `}
+                                              disabled={isDeleted}
+                                              title={
+                                                isDeleted
+                                                  ? "Preview (Record is deleted)"
+                                                  : "Preview Proforma"
+                                              }
+                                            >
+                                              <svg
+                                                className="w-3 h-3"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                                />
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                                />
+                                              </svg>
+                                              Preview
+                                            </button>
+                                          ) : (
+                                            // Create Proforma button for new records
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (!isDeleted) {
+                                                  navigate("/Proforma/Create", {
+                                                    state: {
+                                                      source: "AMC",
+                                                      amcId: amc.amcId,
+                                                      customerId:
+                                                        selectedClientId,
+                                                      amcHistoryId:
+                                                        history.acmHistoryId,
+                                                      domainHistoryId: null,
+                                                      gsuiteHistoryId: null,
+                                                      dueDate:
+                                                        history.amcStartDate,
+                                                    },
+                                                  });
+                                                }
+                                              }}
+                                              className={`
+                    flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors 
+                    ${
+                      isDeleted
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-800"
+                    }
+                  `}
+                                              disabled={isDeleted}
+                                              title={
+                                                isDeleted
+                                                  ? "Create Proforma (Record is deleted)"
+                                                  : "Create Proforma"
+                                              }
+                                            >
+                                              <svg
+                                                className="w-3 h-3"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M12 4v16m8-8H4"
+                                                />
+                                              </svg>
+                                              Proforma
+                                            </button>
+                                          )}
+
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
@@ -1215,6 +1393,114 @@ const handleClientChange = async (clientId) => {
                                       </td>
                                       <td className="px-4 py-2 text-sm">
                                         <div className="flex gap-1">
+                                          {domain.proformaInvoiceId ? (
+                                            // Preview button for existing proforma
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (!isDeleted) {
+                                                  setSelectedProforma({
+                                                    proformaInvoiceId:
+                                                      domain.proformaInvoiceId,
+                                                    proformaInvoiceNumber:
+                                                      domain.sequence,
+                                                    currencyType: "INR",
+                                                  });
+                                                  setShowProformaInfoModal(
+                                                    true
+                                                  );
+                                                }
+                                              }}
+                                              className={`
+                    flex items-center gap-1 px-3 py-1 text-xs rounded-md transition-colors
+                    ${
+                      isDeleted
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-blue-100 text-blue-700 hover:bg-blue-200 hover:text-blue-800"
+                    }
+                  `}
+                                              disabled={isDeleted}
+                                              title={
+                                                isDeleted
+                                                  ? "Preview (Record is deleted)"
+                                                  : "Preview Proforma"
+                                              }
+                                            >
+                                              <svg
+                                                className="w-3 h-3"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                                />
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                                />
+                                              </svg>
+                                              Preview
+                                            </button>
+                                          ) : (
+                                            // Create Proforma button for new records
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (!isDeleted) {
+                                                  navigate("/Proforma/Create", {
+                                                    state: {
+                                                      source: "DOMAIN",
+                                                      amcId: amc.amcId,
+                                                      customerId:
+                                                        selectedClientId,
+                                                      amcHistoryId: null,
+                                                      domainHistoryId:
+                                                        domain.acmDomainHistoryId,
+                                                      gsuiteHistoryId: null,
+                                                      dueDate:
+                                                        domain.domainStartDate,
+                                                    },
+                                                  });
+                                                }
+                                              }}
+                                              className={`
+                    flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors 
+                    ${
+                      isDeleted
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-800"
+                    }
+                  `}
+                                              disabled={isDeleted}
+                                              title={
+                                                isDeleted
+                                                  ? "Create Proforma (Record is deleted)"
+                                                  : "Create Proforma"
+                                              }
+                                            >
+                                              <svg
+                                                className="w-3 h-3"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M12 4v16m8-8H4"
+                                                />
+                                              </svg>
+                                              Proforma
+                                            </button>
+                                          )}
+
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
@@ -1292,7 +1578,6 @@ const handleClientChange = async (clientId) => {
                   </div>
                 )}
 
-                {/* Tab 4: GSuite History */}
                 {/* Tab 4: GSuite History */}
                 {activeTab === "gsuite" && (
                   <div className="space-y-4">
@@ -1374,8 +1659,11 @@ const handleClientChange = async (clientId) => {
                                   const isPastDue = dueDateStatus.isPastDue;
                                   const isNearDue =
                                     dueDateStatus.status === "near-due";
-                                  const isDeleted = gsuite.deleted; // Assuming API has 'deleted' field
-
+                                        const isDeleted = gsuite.deleted;
+                                  const isPaidByCustomer =
+                                    gsuite.paidBy !== "ADMIN"; // Check if paid by customer
+                                  const showProformaBtn =
+                                    !isDeleted && !isPaidByCustomer; 
                                   return (
                                     <tr
                                       key={gsuite.acmGsuitHistoryId}
@@ -1547,9 +1835,7 @@ const handleClientChange = async (clientId) => {
                                                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                                 />
                                               </svg>
-                                              {gsuite.paid
-                                                ? "Paid"
-                                                : "Unpaid"}
+                                              {gsuite.paid ? "Paid" : "Unpaid"}
                                             </>
                                           ) : gsuite.paid ? (
                                             "Paid"
@@ -1560,6 +1846,93 @@ const handleClientChange = async (clientId) => {
                                       </td>
                                       <td className="px-4 py-2 text-sm">
                                         <div className="flex gap-1">
+                                          {showProformaBtn &&
+                                            (gsuite.proformaInvoiceId ? (
+                                              // Preview button for existing proforma
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setSelectedProforma({
+                                                    proformaInvoiceId:
+                                                      gsuite.proformaInvoiceId,
+                                                    proformaInvoiceNumber:
+                                                      gsuite.sequence,
+                                                    currencyType: "INR",
+                                                  });
+                                                  setShowProformaInfoModal(
+                                                    true
+                                                  );
+                                                }}
+                                                className={`
+                    flex items-center gap-1 px-3 py-1 text-xs rounded-md transition-colors
+                    bg-blue-100 text-blue-700 hover:bg-blue-200 hover:text-blue-800
+                  `}
+                                                title="Preview Proforma"
+                                              >
+                                                <svg
+                                                  className="w-3 h-3"
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  viewBox="0 0 24 24"
+                                                >
+                                                  <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                                  />
+                                                  <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                                  />
+                                                </svg>
+                                                Preview
+                                              </button>
+                                            ) : (
+                                              // Create Proforma button for new records
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  navigate("/Proforma/Create", {
+                                                    state: {
+                                                      source: "GSUITE",
+                                                      amcId: amc.amcId,
+                                                      customerId:
+                                                        selectedClientId,
+                                                      amcHistoryId: null,
+                                                      domainHistoryId: null,
+                                                      gsuiteHistoryId:
+                                                        gsuite.acmGsuitHistoryId,
+                                                      dueDate:
+                                                        gsuite.gsuitStartDate,
+                                                    },
+                                                  });
+                                                }}
+                                                className={`
+                    flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors 
+                    bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-800
+                  `}
+                                                title="Create Proforma"
+                                              >
+                                                <svg
+                                                  className="w-3 h-3"
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  viewBox="0 0 24 24"
+                                                >
+                                                  <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M12 4v16m8-8H4"
+                                                  />
+                                                </svg>
+                                                Proforma
+                                              </button>
+                                            ))}
+
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
@@ -1680,6 +2053,115 @@ const handleClientChange = async (clientId) => {
         isEditMode={!!editingGsuite}
         initialData={editingGsuite}
       />
+
+      {/* Proforma Info Modal */}
+      {showProformaInfoModal && selectedProforma && (
+        <ProformaInfoModal
+          isOpen={showProformaInfoModal}
+          onClose={() => {
+            setShowProformaInfoModal(false);
+            setSelectedProforma(null);
+          }}
+          proforma={selectedProforma}
+          onOpenPdf={(proformaInvoiceId) => {
+            handleInfoModalClose();
+            handleOpenPdfPreview(proformaInvoiceId);
+          }}
+        />
+      )}
+
+      {/* PDF Modal */}
+      {isPdfModalOpen && (
+        <div className="proposal-pdf-modal-backdrop">
+          <div className="proposal-pdf-modal-content">
+            <div className="proposal-pdf-modal-header">
+              <h3>
+                {selectedProformaData
+                  ? formatProformaNumber(
+                      selectedProformaData.proformaInvoiceInfo
+                        .proformaInvoiceNumber
+                    )
+                  : "Loading..."}
+              </h3>
+              <div style={{ display: "flex", gap: "10px" }}>
+                {!isPdfLoading && selectedProformaData && (
+                  <PDFDownloadLink
+                    document={
+                      <ProformaPDF
+                        invoiceData={selectedProformaData}
+                        adminInformation={adminInformation}
+                      />
+                    }
+                    fileName={`${formatProformaNumber(
+                      selectedProformaData.proformaInvoiceInfo
+                        .proformaInvoiceNumber
+                    )}.pdf`}
+                    className="download-button-icon-wrapper"
+                    style={{
+                      padding: "0.25rem",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                      background: "#f9f9f9",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {({ loading }) =>
+                      loading ? (
+                        "..."
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="1.5"
+                          stroke="currentColor"
+                          style={{ width: "20px", height: "16px" }}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                          />
+                        </svg>
+                      )
+                    }
+                  </PDFDownloadLink>
+                )}
+                <button
+                  onClick={() => setIsPdfModalOpen(false)}
+                  style={{
+                    padding: "0.25rem 0.75rem",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    background: "#f9f9f9",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            <div className="proposal-pdf-viewer-container">
+              {isPdfLoading || !selectedProformaData ? (
+                <div style={{ padding: "2rem", textAlign: "center" }}>
+                  Loading PDF...
+                </div>
+              ) : (
+                <PDFViewer width="100%" height="100%">
+                  <ProformaPDF
+                    invoiceData={selectedProformaData}
+                    adminInformation={adminInformation}
+                  />
+                </PDFViewer>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useLayout } from "../../Layout/useLayout";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
@@ -23,6 +23,9 @@ function CreateProforma() {
   const [stampUrl, setStampUrl] = useState(null);
   const [companyMediaLoading, setCompanyMediaLoading] = useState(true);
   const [errors, setErrors] = useState({});
+
+  const location = useLocation();
+  const prefill = location.state;
 
   const [proformaInfo, setProformaInfo] = useState({
     employeeId: "",
@@ -192,6 +195,40 @@ function CreateProforma() {
     return address;
   };
 
+  useEffect(() => {
+    if (!prefill?.customerId) return;
+
+    // Ensure relatedTo is customer
+    setProformaInfo((prev) => ({
+      ...prev,
+      relatedTo: "customer",
+    }));
+
+    // Load customer dropdown options
+    loadRelatedIdOptions();
+  }, [prefill]);
+
+  useEffect(() => {
+    if (!prefill?.customerId) return;
+    if (relatedIdOptions.length === 0) return;
+
+    const selectedCustomer = relatedIdOptions.find(
+      (opt) => opt.value === prefill.customerId
+    );
+
+    if (selectedCustomer) {
+      // Set selected customer
+      setProformaInfo((prev) => ({
+        ...prev,
+        relatedId: selectedCustomer.value,
+      }));
+
+      // Auto-fill other fields
+      fetchAndPopulateRecipientData(selectedCustomer.value);
+    }
+  }, [relatedIdOptions, prefill]);
+
+  
   // Helper function to reset all recipient fields
   const resetRecipientFields = () => {
     setProformaInfo((prev) => ({
@@ -394,6 +431,16 @@ function CreateProforma() {
       setIsRecipientLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (prefill?.dueDate) {
+      setProformaInfo((prev) => ({
+        ...prev,
+        dueDate: prefill.dueDate,
+      }));
+    }
+  }, [prefill]);
+
 
   // --- useEffect Hooks ---
   // Kept: Load countries on mount
@@ -1157,6 +1204,10 @@ function CreateProforma() {
           proformaInfo.taxType === "CGST+SGST"
             ? Number(proformaInfo.sgstPercentage)
             : 0,
+
+        amcHistoryId: prefill?.amcHistoryId || null,
+        amcDomainHistoryId: prefill?.domainHistoryId || null,
+        amcGsuitHistoryId: prefill?.gsuiteHistoryId || null,
       },
       proformaInvoiceContents: proformaContent.map((item) => ({
         ...item,

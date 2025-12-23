@@ -954,17 +954,26 @@ function EditCustomer() {
                           { value: "Manufacturing", label: "Manufacturing" },
                           { value: "Healthcare", label: "Healthcare" },
                           { value: "Finance", label: "Finance" },
+                          { value: "Education", label: "Education" }, // Added
+                          { value: "Retail", label: "Retail" }, // Added
+                          { value: "Real Estate", label: "Real Estate" }, // Added
+                          { value: "Other", label: "Other" }, // Added
                         ].find((opt) => opt.value === formData.industry)}
                         onChange={(selectedOption) =>
                           handleSelectChange(selectedOption, {
                             name: "industry",
                           })
                         }
+                        // In EditCustomer.js, replace the options array for the industry FormSelect
                         options={[
                           { value: "Software Development", label: "Software" },
                           { value: "Manufacturing", label: "Manufacturing" },
                           { value: "Healthcare", label: "Healthcare" },
                           { value: "Finance", label: "Finance" },
+                          { value: "Education", label: "Education" }, // Added
+                          { value: "Retail", label: "Retail" }, // Added
+                          { value: "Real Estate", label: "Real Estate" }, // Added
+                          { value: "Other", label: "Other" }, // Added
                         ]}
                         error={errors.industry}
                       />
@@ -1030,7 +1039,9 @@ function EditCustomer() {
                         label="Primary Number"
                         name="phone"
                         value={formData.mobile}
-                        onChange={(mobile) => handlePhoneChange("mobile", mobile)}
+                        onChange={(mobile) =>
+                          handlePhoneChange("mobile", mobile)
+                        }
                         required={true}
                         error={errors.mobile}
                         background="white"

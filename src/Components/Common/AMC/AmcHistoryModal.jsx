@@ -26,6 +26,7 @@ const AmcHistoryModal = ({
     amcRecycleType: "Yearly",
     sequence: 1,
     paid: false, // Added paid field
+    proformaInvoiceId: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -56,6 +57,7 @@ const AmcHistoryModal = ({
         amcRecycleType: "Yearly",
         sequence: 1,
         paid: false, // Reset paid field
+        proformaInvoiceId: "",
       });
       setErrors({});
       setSequenceError("");
@@ -88,6 +90,7 @@ const AmcHistoryModal = ({
         amcRecycleType: "Yearly",
         sequence: 1,
         paid: false,
+        proformaInvoiceId: "",
       });
 
       setErrors({});
@@ -106,6 +109,7 @@ const AmcHistoryModal = ({
             amcRecycleType: initialData.amcRecycleType || "Yearly",
             sequence: initialData.sequence || 1,
             paid: initialData.paid || false,
+            proformaInvoiceId: initialData.proformaInvoiceId || "",
           });
 
           // Trigger sequence validation after a short delay
@@ -489,7 +493,7 @@ const validateForm = async () => {
         amcScope: formData.amcScope || "", // Allow empty scope
         amcRecycleType: formData.amcRecycleType || "Yearly",
         sequence: parseInt(formData.sequence),
-        
+        proformaInvoiceId: formData.proformaInvoiceId || null,
       };
 
       // Add acmHistoryId for update
