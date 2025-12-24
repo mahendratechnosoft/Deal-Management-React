@@ -219,6 +219,26 @@ function EditSemenEnquiry() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleConvertToProspect = async () => {
+    setLoading(true);
+    try {
+      const response = await axiosInstance.get(
+        `convertSemenEnquiryToDonor/${id}`
+      );
+      if (response.status === 204) {
+        toast.success("Successfully moved to Prospect!");
+        navigate(-1);
+      }
+    } catch (error) {
+      console.error("Conversion failed:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to convert to prospect."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -459,6 +479,14 @@ function EditSemenEnquiry() {
                 disabled={loading}
               >
                 Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConvertToProspect}
+                className="px-6 py-2.5 bg-purple-600 text-white font-medium rounded-lg shadow-sm hover:bg-purple-700 disabled:bg-purple-300 transition-all"
+                disabled={loading}
+              >
+                Move to Prospect
               </button>
               <button
                 type="submit"
