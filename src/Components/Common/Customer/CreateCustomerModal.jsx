@@ -1387,11 +1387,11 @@ function CreateCustomerModal({ onClose, onSuccess }) {
               </div>
             </div>
           )}
-          <p className="text-xs text-gray-500 mt-2">
+          {/* <p className="text-xs text-gray-500 mt-2">
             {enableCustomerLogin
               ? "Customer will receive login credentials to access their portal."
               : "Enable to create login credentials for customer portal access."}
-          </p>
+          </p> */}
         </div>
       )}
     </div>

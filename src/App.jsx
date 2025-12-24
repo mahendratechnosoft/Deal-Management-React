@@ -60,6 +60,8 @@ import VendorList from "./Components/Common/Vendor/VendorList.jsx";
 import SemenEnquiryList from "./Components/Common/Donor/SemenEnquiryList.jsx";
 import EditSemenEnquiry from "./Components/Common/Donor/EditSemenEnquiry.jsx";
 import Customerdash from "./Components/Common/CustomerPannel/customerdash.jsx";
+import ContactDash from "./Components/Common/ContactPannel/ContactDash.jsx";
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -388,7 +390,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/SemenEnquiryList"
               element={
@@ -397,7 +398,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Admin/EditSemenEnquiry/:id"
               element={
@@ -406,7 +406,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             {/* Employee Routes - Individual routes with layout */}
             <Route
               path="/Employee/LeadList"
@@ -618,7 +617,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Employee/VendorContactList/:vendorId"
               element={
@@ -643,7 +641,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Employee/EditSemenEnquiry/:id"
               element={
@@ -652,12 +649,19 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-
             <Route
               path="/Customer/dash"
               element={
                 <RoleBasedRoute allowedRoles={["ROLE_CUSTOMER"]}>
                   <Customerdash />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="/Contact/ContactDash"
+              element={
+                <RoleBasedRoute allowedRoles={["ROLE_CONTACT"]}>
+                  <ContactDash />
                 </RoleBasedRoute>
               }
             />
@@ -700,8 +704,10 @@ function App() {
                   <Navigate to="/Admin/LeadList" replace />
                 ) : userRole === "ROLE_EMPLOYEE" ? (
                   <Navigate to="/Employee/LeadList" replace />
-                ) : userRole === "ROLE_EMPLOYEE" ? (
-                  <Navigate to="/Employee/LeadList" replace />
+                ) : userRole === "ROLE_CUSTOMER" ? (
+                  <Navigate to="/Customer/dash" replace />
+                ) : userRole === "ROLE_CONTACT" ? (
+                  <Navigate to="/Contact/ContactDash" replace />
                 ) : (
                   <Navigate to="/login" replace />
                 )

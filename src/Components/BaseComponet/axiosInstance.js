@@ -13,6 +13,7 @@ axiosInstance.interceptors.request.use(
     const userData = localStorage.getItem("userData");
     const superAdminData = localStorage.getItem("superAdminData");
     const customerData = localStorage.getItem("customerData");
+    const contactData = localStorage.getItem("contactData");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -34,6 +35,9 @@ axiosInstance.interceptors.request.use(
         } else if (customerData) {
           user = JSON.parse(customerData);
           role = "ROLE_CUSTOMER";
+        } else if (contactData) {
+          user = JSON.parse(contactData);
+          role = "ROLE_CONTACT";
         }
 
         const url = config.url.toLowerCase();
@@ -60,6 +64,18 @@ axiosInstance.interceptors.request.use(
           );
         }
 
+        // if (
+        //   (role === "ROLE_CONTACT" &&
+        //     (url.includes("admin/") ||
+        //       url.includes("employee/") ||
+        //       url.includes("super/"))) ||
+        //   url.includes("customer/")
+        // ) {
+        //   throw new Error(
+        //     "Access denied: Customers cannot access admin endpoints"
+        //   );
+        // }
+
         // Auto-prefix based on role for non-prefixed endpoints
         // Updated axios interceptor logic
         if (
@@ -67,7 +83,8 @@ axiosInstance.interceptors.request.use(
           !url.startsWith("admin/") &&
           !url.startsWith("employee/") &&
           !url.startsWith("super/") &&
-          !url.startsWith("customer/")
+          !url.startsWith("customer/") &&
+          !url.startsWith("contacts/")
         ) {
           if (role === "ROLE_SUPERADMIN") {
             config.url = `super/${config.url}`;
@@ -77,6 +94,8 @@ axiosInstance.interceptors.request.use(
             config.url = `employee/${config.url}`;
           } else if (role === "ROLE_CUSTOMER") {
             config.url = `customer/${config.url}`;
+          } else if (role === "ROLE_CONTACT") {
+            config.url = `contacts/${config.url}`;
           }
         }
 
@@ -117,6 +136,7 @@ axiosInstance.interceptors.response.use(
       localStorage.removeItem("userData");
       localStorage.removeItem("superAdminData");
       localStorage.removeItem("customerData");
+      localStorage.removeItem("contactData");
       localStorage.removeItem("role");
 
       // Redirect to appropriate login page
