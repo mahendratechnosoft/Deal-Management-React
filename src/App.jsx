@@ -59,7 +59,7 @@ import VendorContactList from "./Components/Common/Vendor/VendorContact/VendorCo
 import VendorList from "./Components/Common/Vendor/VendorList.jsx";
 import SemenEnquiryList from "./Components/Common/Donor/SemenEnquiryList.jsx";
 import EditSemenEnquiry from "./Components/Common/Donor/EditSemenEnquiry.jsx";
-import Customerdash from "./Components/Common/CustomerPannel/customerdash.jsx";
+import Customerdash from "../src/Components/Common/CustomerPannel/Customerdash.jsx";
 import ContactDash from "./Components/Common/ContactPannel/ContactDash.jsx";
 
 function App() {
