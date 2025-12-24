@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import AdminLayout from "./AdminLayout";
 import EmployeeLayout from "./EmployeeLayout";
 import SuperAdminLayout from "./SuperAdminLayout";
+import CustomerLayout from "./CustomerLayout";
 
 export const useLayout = () => {
   const getRole = () => {
@@ -26,9 +27,10 @@ export const useLayout = () => {
       return ({ children }) => <AdminLayout>{children}</AdminLayout>;
     } else if (role === "ROLE_EMPLOYEE") {
       return ({ children }) => <EmployeeLayout>{children}</EmployeeLayout>;
-    }
-    else if(role === "ROLE_SUPERADMIN"){
+    } else if (role === "ROLE_SUPERADMIN") {
       return ({ children }) => <SuperAdminLayout>{children}</SuperAdminLayout>;
+    } else if (role === "ROLE_CUSTOMER") {
+      return ({ children }) => <CustomerLayout>{children}</CustomerLayout>;
     }
     return ({ children }) => <>{children}</>;
   }, [role]);

@@ -23,6 +23,13 @@ function EditCustomer() {
   const { LayoutComponent, role } = useLayout();
   const canEdit = hasPermission("customer", "Edit");
   const [originalCompanyName, setOriginalCompanyName] = useState("");
+
+  // Add with other state declarations
+  const [canCustomerLogin, setCanCustomerLogin] = useState(false);
+  const [enableCustomerLogin, setEnableCustomerLogin] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+  const [originalLoginEmail, setOriginalLoginEmail] = useState("");
   const [formData, setFormData] = useState({
     companyName: "",
     phone: "",
@@ -45,6 +52,9 @@ function EditCustomer() {
     shippingZipCode: "",
     description: "",
     employeeId: "",
+
+    loginEmail: "",
+    loginPassword: "",
   });
 
   const [sameAsBilling, setSameAsBilling] = useState(false);
@@ -72,6 +82,34 @@ function EditCustomer() {
       countries,
     }));
   }, []);
+
+  useEffect(() => {
+    // Get moduleAccess from localStorage or context
+    const moduleAccess = localStorage.getItem("moduleAccess");
+    if (moduleAccess) {
+      try {
+        const parsed = JSON.parse(moduleAccess);
+        setCanCustomerLogin(parsed.canCustomerLogin === true);
+      } catch (error) {
+        console.error("Error parsing moduleAccess:", error);
+      }
+    }
+  }, []);
+
+  // Add this useEffect to clear password when toggle is turned off
+  useEffect(() => {
+    if (!enableCustomerLogin) {
+      setFormData((prev) => ({
+        ...prev,
+        loginPassword: "",
+      }));
+      setErrors((prev) => ({
+        ...prev,
+        loginEmail: "",
+        loginPassword: "",
+      }));
+    }
+  }, [enableCustomerLogin]);
 
   // Add this useEffect to handle initial data setup after customer fetch
   useEffect(() => {
@@ -205,7 +243,7 @@ function EditCustomer() {
         );
         const customer = response.data;
         setOriginalCompanyName(customer.companyName || "");
-
+        setOriginalLoginEmail(customer.loginEmail || "");
         // Set form data with customer information (keep country/state as names initially)
         setFormData({
           companyName: customer.companyName || "",
@@ -229,6 +267,10 @@ function EditCustomer() {
           shippingZipCode: customer.shippingZipCode || "",
           description: customer.description || "",
           employeeId: customer.employeeId || "",
+
+          loginEmail: customer.loginEmail || "",
+          loginPassword: "",
+          userId: customer.userId || "",
         });
 
         // Check if shipping address is same as billing
@@ -240,6 +282,10 @@ function EditCustomer() {
           customer.shippingZipCode === customer.billingZipCode;
 
         setSameAsBilling(isSameAddress);
+
+        if (customer.userId) {
+          setEnableCustomerLogin(true);
+        }
       } catch (error) {
         console.error("Error fetching customer:", error);
         toast.error("Failed to load customer data");
@@ -257,6 +303,15 @@ function EditCustomer() {
       fetchCustomer();
     }
   }, [customerId, navigate, role]);
+
+  // Add this useEffect to handle initial toggle state based on fetched data
+  useEffect(() => {
+    // If customer has userId and canCustomerLogin is true, enable the toggle
+    if (formData.loginEmail && canCustomerLogin) {
+      setEnableCustomerLogin(true);
+    }
+  }, [formData.loginEmail, canCustomerLogin]);
+
   // Handle billing country change
   useEffect(() => {
     if (formData.billingCountry) {
@@ -373,7 +428,29 @@ function EditCustomer() {
       }
     }
 
-    if (errors[name] && name !== "email") {
+    // Check email availability when loginEmail changes
+    if (name === "loginEmail" && value.trim()) {
+      // Clear previous error first
+      setErrors((prev) => ({ ...prev, loginEmail: "" }));
+
+      // Validate email format
+      if (!/\S+@\S+\.\S+/.test(value)) {
+        setErrors((prev) => ({
+          ...prev,
+          loginEmail: "Email address is invalid",
+        }));
+      } else {
+        // Check availability after a short delay
+        const timer = setTimeout(() => {
+          checkEmailAvailability(value);
+        }, 500); // 500ms debounce delay
+
+        // Clear timeout on next change
+        return () => clearTimeout(timer);
+      }
+    }
+
+    if (errors[name] && name !== "email" && name !== "loginEmail") {
       setErrors((prev) => ({
         ...prev,
         [name]: "",
@@ -595,12 +672,32 @@ function EditCustomer() {
     if (formData.website && !/^(https?:\/\/)?.+\..+/.test(formData.website)) {
       newErrors.website = "Please enter a valid website URL";
     }
+
+    // Validate login credentials if canCustomerLogin is true and toggle is enabled
+    if (canCustomerLogin && enableCustomerLogin) {
+      if (!formData.loginEmail?.trim()) {
+        newErrors.loginEmail = "Login email is required";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.loginEmail)) {
+        newErrors.loginEmail = "Please enter a valid email address";
+      }
+
+      // Only validate password if user has entered something (for change)
+      if (formData.loginPassword && formData.loginPassword.length < 6) {
+        newErrors.loginPassword = "Password must be at least 6 characters";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+      if (errors.loginEmail) {
+        toast.error("Please fix the email error before submitting");
+        return;
+      }
+  
     if (!validateForm()) return;
 
     const companyNameError = await validateCompanyName(formData.companyName);
@@ -654,6 +751,10 @@ function EditCustomer() {
         shippingZipCode: formData.shippingZipCode || null,
         description: formData.description || null,
         employeeId: formData.employeeId || null,
+
+        loginEmail: formData.loginEmail || null,
+        password: formData.loginPassword || null,
+        userId: formData.userId || null,
       };
 
       await axiosInstance.put("updateCustomer", submitData);
@@ -706,6 +807,52 @@ function EditCustomer() {
       zIndex: 50,
     }),
   };
+
+const checkEmailAvailability = async (email) => {
+  if (!/\S+@\S+\.\S+/.test(email)) {
+    setErrors((prev) => ({
+      ...prev,
+      loginEmail: "Email address is invalid",
+    }));
+    return;
+  }
+
+  // If the email hasn't changed from original, don't check availability
+  if (email === originalLoginEmail) {
+    setErrors((prev) => ({
+      ...prev,
+      loginEmail: "",
+    }));
+    return;
+  }
+
+  setIsVerifyingEmail(true);
+  setErrors((prev) => ({ ...prev, loginEmail: "" }));
+
+  try {
+    const response = await axiosInstance.get(`/checkEmail/${email}`);
+    // If email exists and it's not the current customer's email
+    if (response.data === true) {
+      setErrors((prev) => ({
+        ...prev,
+        loginEmail: "This email is already in use.",
+      }));
+    } else {
+      setErrors((prev) => ({
+        ...prev,
+        loginEmail: "",
+      }));
+    }
+  } catch (error) {
+    console.error("Error checking email:", error);
+    setErrors((prev) => ({
+      ...prev,
+      loginEmail: "Could not verify email. Please try again.",
+    }));
+  } finally {
+    setIsVerifyingEmail(false);
+  }
+};
 
   if (fetchLoading) {
     return (
@@ -1067,6 +1214,281 @@ function EditCustomer() {
                       className="mb-4"
                       background="white"
                     />
+
+                    {/* Customer Login Section - Only show if canCustomerLogin is true */}
+                    {canCustomerLogin && (
+                      <div className="border-t border-gray-200 pt-4 mt-4">
+                        {/* Toggle Button */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
+                              <svg
+                                className="w-4 h-4 text-blue-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                />
+                              </svg>
+                            </div>
+                            <h3 className="text-sm font-semibold text-gray-900">
+                              Customer Login Credentials
+                            </h3>
+                          </div>
+
+                          {/* Toggle Switch */}
+                          {/* Toggle Switch */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-600">
+                              {enableCustomerLogin ? "Enabled" : "Disabled"}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEnableCustomerLogin(!enableCustomerLogin)
+                              }
+                              disabled={
+                                !canCustomerLogin ||
+                                (formData.loginEmail && !canCustomerLogin)
+                              }
+                              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
+                                enableCustomerLogin
+                                  ? "bg-blue-600"
+                                  : "bg-gray-300"
+                              } ${
+                                !canCustomerLogin ||
+                                (formData.loginEmail && !canCustomerLogin)
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : ""
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                                  enableCustomerLogin
+                                    ? "translate-x-5"
+                                    : "translate-x-1"
+                                }`}
+                              />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Login Credentials Form - Only show when toggle is enabled */}
+                        {enableCustomerLogin && (
+                          <div className="grid grid-cols-1 gap-3 bg-blue-50 p-3 rounded">
+                            {/* Login Email */}
+                            <div className="space-y-1">
+                              <label className="flex items-center gap-1 text-xs font-semibold text-gray-700">
+                                <span>Login Email</span>
+                                <span className="text-red-500">*</span>
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type="email"
+                                  name="loginEmail"
+                                  value={formData.loginEmail}
+                                  onChange={handleChange}
+                                  autoComplete="new-email"
+                                  className={`w-full px-3 py-1.5 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all pr-10 ${
+                                    errors.loginEmail
+                                      ? "border-red-500"
+                                      : formData.loginEmail &&
+                                        !errors.loginEmail
+                                      ? "border-green-500"
+                                      : "border-gray-300"
+                                  }`}
+                                  placeholder="Enter login email"
+                                />
+                                {isVerifyingEmail && (
+                                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                    <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                  </div>
+                                )}
+                                {!isVerifyingEmail &&
+                                  formData.loginEmail &&
+                                  !errors.loginEmail &&
+                                  /\S+@\S+\.\S+/.test(formData.loginEmail) && (
+                                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-green-500">
+                                      <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M5 13l4 4L19 7"
+                                        />
+                                      </svg>
+                                    </div>
+                                  )}
+                              </div>
+                              {errors.loginEmail ? (
+                                <p className="text-red-500 text-xs flex items-center gap-1">
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                  </svg>
+                                  {errors.loginEmail}
+                                </p>
+                              ) : (
+                                formData.loginEmail &&
+                                /\S+@\S+\.\S+/.test(formData.loginEmail) && (
+                                  <p className="text-green-500 text-xs flex items-center gap-1">
+                                    <svg
+                                      className="w-3 h-3"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                    Email format is valid
+                                  </p>
+                                )
+                              )}
+                            </div>
+
+                            {/* Login Password - Always empty for edit */}
+                            <div className="space-y-1">
+                              <label className="flex items-center gap-1 text-xs font-semibold text-gray-700">
+                                <span>New Password</span>
+                                <span className="text-xs text-gray-500">
+                                  (leave blank to keep current)
+                                </span>
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type={showPassword ? "text" : "password"}
+                                  name="loginPassword"
+                                  value={formData.loginPassword}
+                                  onChange={handleChange}
+                                  autoComplete="new-password"
+                                  className={`w-full px-3 py-1.5 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all pr-10 ${
+                                    errors.loginPassword
+                                      ? "border-red-500"
+                                      : "border-gray-300"
+                                  }`}
+                                  placeholder="Enter new password (min 6 characters)"
+                                  minLength={6}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                >
+                                  {showPassword ? (
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.59 6.59m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                                      />
+                                    </svg>
+                                  ) : (
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                      />
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                      />
+                                    </svg>
+                                  )}
+                                </button>
+                              </div>
+                              {errors.loginPassword && (
+                                <p className="text-red-500 text-xs flex items-center gap-1">
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                  </svg>
+                                  {errors.loginPassword}
+                                </p>
+                              )}
+                              {!errors.loginPassword &&
+                                formData.loginPassword && (
+                                  <p
+                                    className={`text-xs flex items-center gap-1 ${
+                                      formData.loginPassword.length >= 6
+                                        ? "text-green-500"
+                                        : "text-yellow-500"
+                                    }`}
+                                  >
+                                    <svg
+                                      className="w-3 h-3"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                    Password strength (
+                                    {formData.loginPassword.length}/6)
+                                  </p>
+                                )}
+                              <p className="text-xs text-gray-500">
+                                {formData.loginEmail
+                                  ? "Customer currently has login access. Leave password blank to keep current password."
+                                  : "Enable customer login access with email and optional password."}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 

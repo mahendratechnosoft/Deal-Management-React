@@ -59,6 +59,7 @@ import VendorContactList from "./Components/Common/Vendor/VendorContact/VendorCo
 import VendorList from "./Components/Common/Vendor/VendorList.jsx";
 import SemenEnquiryList from "./Components/Common/Donor/SemenEnquiryList.jsx";
 import EditSemenEnquiry from "./Components/Common/Donor/EditSemenEnquiry.jsx";
+import Customerdash from "./Components/Common/CustomerPannel/customerdash.jsx";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -652,6 +653,15 @@ function App() {
               }
             />
 
+            <Route
+              path="/Customer/dash"
+              element={
+                <RoleBasedRoute allowedRoles={["ROLE_CUSTOMER"]}>
+                  <Customerdash />
+                </RoleBasedRoute>
+              }
+            />
+
             {/* Settings Routes */}
             <Route
               path="/Admin/Settings"
@@ -688,6 +698,8 @@ function App() {
               element={
                 userRole === "ROLE_ADMIN" ? (
                   <Navigate to="/Admin/LeadList" replace />
+                ) : userRole === "ROLE_EMPLOYEE" ? (
+                  <Navigate to="/Employee/LeadList" replace />
                 ) : userRole === "ROLE_EMPLOYEE" ? (
                   <Navigate to="/Employee/LeadList" replace />
                 ) : (
