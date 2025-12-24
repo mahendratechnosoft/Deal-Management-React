@@ -177,7 +177,10 @@ function Login({ onSwitchToRegister, onLogin }) {
           }
         } else if (data.role === "ROLE_SUPERADMIN") {
           navigate("/SuperAdmin/AdminList");
+        } else if (data.role === "ROLE_CUSTOMER") {
+          navigate("/Customer/dash");
         } else {
+          ``;
           // Default fallback route
           navigate("/");
         }

@@ -106,6 +106,14 @@ function EditAdmin() {
     vendorDelete: false,
     vendorEdit: false,
     vendorViewAll: false,
+
+    canCustomerLogin: false,
+    canContactPersonLogin: false,
+    customerComplianceAccess: false,
+    customerComplianceViewAll: false,
+    customerComplianceCreate: false,
+    customerComplianceDelete: false,
+    customerComplianceEdit: false,
   });
 
   const [errors, setErrors] = useState({});
@@ -157,6 +165,18 @@ function EditAdmin() {
             employeeAccess: accessData.employeeAccess || false,
             settingAccess: accessData.settingAccess || false,
             itemAccess: accessData.itemAccess || false,
+
+            canCustomerLogin: accessData.canCustomerLogin || false,
+            canContactPersonLogin: accessData.canContactPersonLogin || false,
+            customerComplianceAccess:
+              accessData.customerComplianceAccess || false,
+            customerComplianceViewAll:
+              accessData.customerComplianceViewAll || false,
+            customerComplianceCreate:
+              accessData.customerComplianceCreate || false,
+            customerComplianceDelete:
+              accessData.customerComplianceDelete || false,
+            customerComplianceEdit: accessData.customerComplianceEdit || false,
           });
         }
       } catch (error) {
@@ -186,12 +206,26 @@ function EditAdmin() {
     }
   };
 
-  const handleAccessChange = (field, value) => {
-    setModuleAccess((prev) => ({
+const handleAccessChange = (field, value) => {
+  setModuleAccess((prev) => {
+    const updated = {
       ...prev,
       [field]: value,
-    }));
-  };
+    };
+
+    // If "canCustomerLogin" is turned OFF, set all related permissions to false
+    if (field === "canCustomerLogin" && !value) {
+      updated.canContactPersonLogin = false;
+      updated.customerComplianceAccess = false;
+      updated.customerComplianceViewAll = false;
+      updated.customerComplianceCreate = false;
+      updated.customerComplianceDelete = false;
+      updated.customerComplianceEdit = false;
+    }
+
+    return updated;
+  });
+};
 
   const handleClearAllAccess = () => {
     setModuleAccess((prev) => ({
@@ -211,6 +245,14 @@ function EditAdmin() {
       employeeAccess: false,
       settingAccess: false,
       itemAccess: false,
+
+      canCustomerLogin: false,
+      canContactPersonLogin: false,
+      customerComplianceAccess: false,
+      customerComplianceViewAll: false,
+      customerComplianceCreate: false,
+      customerComplianceDelete: false,
+      customerComplianceEdit: false,
     }));
     toast.success("All permissions cleared");
   };
@@ -233,6 +275,14 @@ function EditAdmin() {
       amcAccess: true,
 
       vendorAccess: true,
+
+      canCustomerLogin: true,
+      canContactPersonLogin: true,
+      customerComplianceAccess: true,
+      customerComplianceViewAll: true,
+      customerComplianceCreate: true,
+      customerComplianceDelete: true,
+      customerComplianceEdit: true,
     }));
     toast.success("All permissions granted");
   };
@@ -334,6 +384,8 @@ function EditAdmin() {
           vendorDelete: true,
           vendorEdit: true,
           vendorViewAll: true,
+
+   
         },
       };
 
@@ -552,6 +604,153 @@ function EditAdmin() {
                       rows={2}
                       background="white"
                     />
+
+                    <div className="md:col-span-2">
+                      <div className="flex items-center justify-between p-3 border border-gray-200 rounded bg-gray-50 hover:bg-gray-100 transition-colors mb-2 mt-2">
+                        <div className="flex items-center gap-2">
+                          <svg
+                            className="w-4 h-4 text-gray-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                            />
+                          </svg>
+                          <span className="text-sm font-medium text-gray-800">
+                            Set Customer Login
+                          </span>
+                        </div>
+                        <label className="flex items-center cursor-pointer">
+                          <div className="relative">
+                            <input
+                              type="checkbox"
+                              checked={getAccess("canCustomerLogin")}
+                              onChange={(e) =>
+                                handleAccessChange(
+                                  "canCustomerLogin",
+                                  e.target.checked
+                                )
+                              }
+                              className="sr-only"
+                            />
+                            <div
+                              className={`block w-10 h-5 rounded-full transition-colors ${
+                                getAccess("canCustomerLogin")
+                                  ? "bg-blue-600"
+                                  : "bg-gray-300"
+                              }`}
+                            ></div>
+                            <div
+                              className={`absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition-transform transform ${
+                                getAccess("canCustomerLogin")
+                                  ? "translate-x-5"
+                                  : "translate-x-0"
+                              }`}
+                            ></div>
+                          </div>
+                        </label>
+                      </div>
+
+                      {/* Customer Login Sub-permissions - Conditionally shown */}
+                      {getAccess("canCustomerLogin") && (
+                        <div className="mt-3 p-4 border border-gray-200 rounded bg-blue-50">
+                          <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                            <svg
+                              className="w-4 h-4 text-blue-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                              />
+                            </svg>
+                            Customer Login Permissions
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <ModuleAccessToggle
+                              title="Contact Person Login"
+                              field="canContactPersonLogin"
+                              isChecked={getAccess("canContactPersonLogin")}
+                              onChange={(isChecked) =>
+                                handleAccessChange(
+                                  "canContactPersonLogin",
+                                  isChecked
+                                )
+                              }
+                            />
+
+                            <ModuleAccessToggle
+                              title="Compliance Access"
+                              field="customerComplianceAccess"
+                              isChecked={getAccess("customerComplianceAccess")}
+                              onChange={(isChecked) =>
+                                handleAccessChange(
+                                  "customerComplianceAccess",
+                                  isChecked
+                                )
+                              }
+                            />
+
+                            <ModuleAccessToggle
+                              title="View All Compliance"
+                              field="customerComplianceViewAll"
+                              isChecked={getAccess("customerComplianceViewAll")}
+                              onChange={(isChecked) =>
+                                handleAccessChange(
+                                  "customerComplianceViewAll",
+                                  isChecked
+                                )
+                              }
+                            />
+
+                            <ModuleAccessToggle
+                              title="Create Compliance"
+                              field="customerComplianceCreate"
+                              isChecked={getAccess("customerComplianceCreate")}
+                              onChange={(isChecked) =>
+                                handleAccessChange(
+                                  "customerComplianceCreate",
+                                  isChecked
+                                )
+                              }
+                            />
+
+                            <ModuleAccessToggle
+                              title="Delete Compliance"
+                              field="customerComplianceDelete"
+                              isChecked={getAccess("customerComplianceDelete")}
+                              onChange={(isChecked) =>
+                                handleAccessChange(
+                                  "customerComplianceDelete",
+                                  isChecked
+                                )
+                              }
+                            />
+
+                            <ModuleAccessToggle
+                              title="Edit Compliance"
+                              field="customerComplianceEdit"
+                              isChecked={getAccess("customerComplianceEdit")}
+                              onChange={(isChecked) =>
+                                handleAccessChange(
+                                  "customerComplianceEdit",
+                                  isChecked
+                                )
+                              }
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

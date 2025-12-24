@@ -12,13 +12,14 @@ axiosInstance.interceptors.request.use(
     const token = localStorage.getItem("authToken");
     const userData = localStorage.getItem("userData");
     const superAdminData = localStorage.getItem("superAdminData");
+    const customerData = localStorage.getItem("customerData");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
     // Add role validation for sensitive endpoints
-    if (userData || superAdminData) {
+    if (userData || superAdminData || customerData) {
       try {
         let user = null;
         let role = "";
@@ -30,6 +31,9 @@ axiosInstance.interceptors.request.use(
         } else if (userData) {
           user = JSON.parse(userData);
           role = user.role;
+        } else if (customerData) {
+          user = JSON.parse(customerData);
+          role = "ROLE_CUSTOMER";
         }
 
         const url = config.url.toLowerCase();
@@ -44,13 +48,26 @@ axiosInstance.interceptors.request.use(
           throw new Error("Access denied: Super Admin privileges required");
         }
 
+        // Prevent customer from accessing admin/employee endpoints
+        if (
+          role === "ROLE_CUSTOMER" &&
+          (url.includes("admin/") ||
+            url.includes("employee/") ||
+            url.includes("super/"))
+        ) {
+          throw new Error(
+            "Access denied: Customers cannot access admin endpoints"
+          );
+        }
+
         // Auto-prefix based on role for non-prefixed endpoints
         // Updated axios interceptor logic
         if (
           !url.startsWith("/") &&
           !url.startsWith("admin/") &&
           !url.startsWith("employee/") &&
-          !url.startsWith("super/")
+          !url.startsWith("super/") &&
+          !url.startsWith("customer/")
         ) {
           if (role === "ROLE_SUPERADMIN") {
             config.url = `super/${config.url}`;
@@ -58,6 +75,8 @@ axiosInstance.interceptors.request.use(
             config.url = `admin/${config.url}`;
           } else if (role === "ROLE_EMPLOYEE") {
             config.url = `employee/${config.url}`;
+          } else if (role === "ROLE_CUSTOMER") {
+            config.url = `customer/${config.url}`;
           }
         }
 
@@ -65,7 +84,6 @@ axiosInstance.interceptors.request.use(
         if (role) {
           config.headers["X-User-Role"] = role;
         }
-
       } catch (error) {
         console.error("Role validation error:", error);
         return Promise.reject(error);
@@ -98,6 +116,7 @@ axiosInstance.interceptors.response.use(
       localStorage.removeItem("authToken");
       localStorage.removeItem("userData");
       localStorage.removeItem("superAdminData");
+      localStorage.removeItem("customerData");
       localStorage.removeItem("role");
 
       // Redirect to appropriate login page
