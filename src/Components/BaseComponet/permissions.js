@@ -25,6 +25,7 @@ export const hasPermission = (module, action) => {
   // ADMIN has full access
   // if (role === "ROLE_ADMIN") return true;
   if (role === "ROLE_SUPERADMIN") return true;
+  if(role === "ROLE_CONTACT")return true;
   // Public modules - always accessible regardless of permission settings
   if (PUBLIC_MODULES.includes(module)) {
     return true;

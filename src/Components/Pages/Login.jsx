@@ -85,108 +85,112 @@ function Login({ onSwitchToRegister, onLogin }) {
       const data = await response.data;
 
       // Store the token and user data
-      if (data.jwtToken) {
-        localStorage.setItem("authToken", data.jwtToken);
-        localStorage.setItem(
-          "userData",
-          JSON.stringify({
+    if (data.jwtToken) {
+      localStorage.setItem("authToken", data.jwtToken);
+
+      // Store ALL user data in userData for consistency
+      localStorage.setItem(
+        "userData",
+        JSON.stringify({
+          userId: data.userId,
+          loginEmail: data.loginEmail,
+          role: data.role,
+          expiryDate: data.expiryDate,
+          loginUserName: data.loginUserName,
+          employeeId: data.employeeId,
+          adminId: data.adminId,
+          customerId: data.customerId, // Add this
+          logo: data.logo,
+          moduleAccess: data.moduleAccess,
+        })
+      );
+
+      // Store role separately for easy access
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("moduleAccess", JSON.stringify(data.moduleAccess));
+
+      // Store loginUserName separately for easy access
+      if (data.loginUserName) {
+        localStorage.setItem("loginUserName", data.loginUserName);
+      }
+
+      if (rememberMe) {
+        localStorage.setItem("rememberMe", "true");
+      }
+
+      //  CRITICAL: Create new session key and clear old ones
+      const sessionId = `session_${data.userId}_${Date.now()}`;
+
+      // Clear ALL old session-related keys
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.includes("session_") || key.includes("_modal_shown")) {
+          keysToRemove.push(key);
+        }
+      }
+
+      keysToRemove.forEach((key) => {
+        localStorage.removeItem(key);
+      });
+
+      // Store new session
+      localStorage.setItem("currentSessionKey", sessionId);
+
+      // Fetch moduleAccess if employee
+      // if (data.role === "ROLE_EMPLOYEE") {
+      //   try {
+      //     const empResponse = await axiosInstance.get("getEmployeeInfo");
+      //     const empInfo = empResponse.data;
+
+      //     if (empInfo?.moduleAccess) {
+      //       localStorage.setItem("moduleAccess", JSON.stringify(empInfo.moduleAccess));
+      //     }
+      //   } catch (err) {
+      //     console.error("Failed to fetch employee info:", err);
+      //   }
+      // }
+
+      // Call onLogin with the correct data structure
+      if (onLogin) {
+        onLogin({
+          user: {
             userId: data.userId,
-            loginEmail: data.loginEmail,
+            email: data.loginEmail,
             role: data.role,
             expiryDate: data.expiryDate,
             loginUserName: data.loginUserName,
-            employeeId: data.employeeId,
-            adminId: data.adminId,
-          })
-        );
-
-        // Store role separately for easy access
-        localStorage.setItem("role", data.role);
-        localStorage.setItem("moduleAccess", JSON.stringify(data.moduleAccess));
-
-        // Store loginUserName separately for easy access
-        if (data.loginUserName) {
-          localStorage.setItem("loginUserName", data.loginUserName);
-        }
-
-        if (rememberMe) {
-          localStorage.setItem("rememberMe", "true");
-        }
-
-
-        //  CRITICAL: Create new session key and clear old ones
-        const sessionId = `session_${data.userId}_${Date.now()}`;
-
-
-        // Clear ALL old session-related keys
-        const keysToRemove = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key.includes('session_') || key.includes('_modal_shown')) {
-            keysToRemove.push(key);
-          }
-        }
-
-        keysToRemove.forEach(key => {
-
-          localStorage.removeItem(key);
+          },
         });
-
-        // Store new session
-        localStorage.setItem('currentSessionKey', sessionId);
-
-        // Fetch moduleAccess if employee
-        // if (data.role === "ROLE_EMPLOYEE") {
-        //   try {
-        //     const empResponse = await axiosInstance.get("getEmployeeInfo");
-        //     const empInfo = empResponse.data;
-
-        //     if (empInfo?.moduleAccess) {
-        //       localStorage.setItem("moduleAccess", JSON.stringify(empInfo.moduleAccess));
-        //     }
-        //   } catch (err) {
-        //     console.error("Failed to fetch employee info:", err);
-        //   }
-        // }
-
-        // Call onLogin with the correct data structure
-        if (onLogin) {
-          onLogin({
-            user: {
-              userId: data.userId,
-              email: data.loginEmail,
-              role: data.role,
-              expiryDate: data.expiryDate,
-              loginUserName: data.loginUserName,
-            },
-          });
-        }
-
-        // Navigate based on the role from API response (not from localStorage)
-        if (data.role === "ROLE_ADMIN") {
-          if (data.moduleAccess.donorAccess === true) {
-            navigate("/Admin/donorList");
-          } else {
-            navigate("/Admin/LeadList");
-          }
-        } else if (data.role === "ROLE_EMPLOYEE") {
-          if (data.moduleAccess.donorAccess === true) {
-            navigate("/Employee/DonorList/UnderScreeningDonorList");
-          } else {
-            navigate("/Employee/LeadList");
-          }
-        } else if (data.role === "ROLE_SUPERADMIN") {
-          navigate("/SuperAdmin/AdminList");
-        } else if (data.role === "ROLE_CUSTOMER") {
-          navigate("/Customer/dash");
-        } else {
-          ``;
-          // Default fallback route
-          navigate("/");
-        }
-      } else {
-        throw new Error("No authentication token received");
       }
+
+      // Navigate based on the role from API response (not from localStorage)
+      if (data.role === "ROLE_ADMIN") {
+        if (data.moduleAccess.donorAccess === true) {
+          navigate("/Admin/donorList");
+        } else {
+          navigate("/Admin/LeadList");
+        }
+      } else if (data.role === "ROLE_EMPLOYEE") {
+        if (data.moduleAccess.donorAccess === true) {
+          navigate("/Employee/DonorList/UnderScreeningDonorList");
+        } else {
+          navigate("/Employee/LeadList");
+        }
+      } else if (data.role === "ROLE_SUPERADMIN") {
+        navigate("/SuperAdmin/AdminList");
+      } else if (data.role === "ROLE_CUSTOMER") {
+        navigate("/Customer/dash");
+      } else if (data.role === "ROLE_CONTACT") {
+        navigate("/Contact/ContactDash");
+      } else {
+        ``;
+        // Default fallback route
+        navigate("/");
+      }
+    } else {
+      throw new Error("No authentication token received");
+    }
     } catch (error) {
       console.error("Sign in error:", error);
 
