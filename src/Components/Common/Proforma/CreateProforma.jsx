@@ -63,6 +63,8 @@ function CreateProforma() {
     companySignature: "",
     companyStamp: "",
     paymentProfileIds: [],
+    paidPaymentProfileIds: "",
+    proformaType: "INVOICE"
   });
 
   const [isSameAsBilling, setIsSameAsBilling] = useState(true);
@@ -113,6 +115,7 @@ function CreateProforma() {
   const [paymentModeOptions, setPaymentModeOptions] = useState([]);
   const [isPaymentModeLoading, setIsPaymentModeLoading] = useState(false);
   const [selectedPaymentModes, setSelectedPaymentModes] = useState([]);
+  const [selectedPaymentModesPaid, setSelectedPaymentModesPaid] = useState([]);
 
   const relatedOptions = [
     { value: "lead", label: "Lead" },
@@ -135,7 +138,13 @@ function CreateProforma() {
   const currencyOptions = [
     { value: "INR", label: "INR" },
     { value: "USD", label: "USD" },
-    { value: "EUR", label: "EUR" },
+
+  ];
+
+  const proformaTypeOptions = [
+    { value: "INVOICE", label: "INVOICE" },
+    { value: "REIMBURSEMENT", label: "REIMBURSEMENT" },
+
   ];
 
   // Helper function to find country/state/city objects from strings
@@ -228,7 +237,7 @@ function CreateProforma() {
     }
   }, [relatedIdOptions, prefill]);
 
-  
+
   // Helper function to reset all recipient fields
   const resetRecipientFields = () => {
     setProformaInfo((prev) => ({
@@ -1232,7 +1241,7 @@ function CreateProforma() {
       console.error("Failed to create proforma invoice:", error);
       toast.error(
         error.response?.data?.message ||
-          "Failed to create proforma invoice. Please check the form."
+        "Failed to create proforma invoice. Please check the form."
       );
       setLoading(false);
     }
@@ -1292,26 +1301,39 @@ function CreateProforma() {
     }));
   };
 
-  // Format selected payment modes for display
-  const formatSelectedPaymentModes = () => {
-    if (selectedPaymentModes.length === 0) {
-      return "No payment modes selected";
-    }
+    // Handle payment mode selection change
+  const handlePaymentModesChange2 = (selectedOptions) => {
+  const selected = selectedOptions || [];
+  setSelectedPaymentModesPaid(selected);
 
-    return selectedPaymentModes
-      .map((mode) => `${mode.profileName} (${mode.type})`)
-      .join(", ");
-  };
+  const paidPaymentProfileIds = selected.map((o) => o.value);
+
+  setProformaInfo((prev) => ({
+    ...prev,
+    paidPaymentProfileIds: paidPaymentProfileIds.join(","),   // 👈 convert to CSV
+  }));
+};
+
+  // // Format selected payment modes for display
+  // const formatSelectedPaymentModes = () => {
+  //   if (selectedPaymentModes.length === 0) {
+  //     return "No payment modes selected";
+  //   }
+
+  //   return selectedPaymentModes
+  //     .map((mode) => `${mode.profileName} (${mode.type})`)
+  //     .join(", ");
+  // };
 
   // Get display value for the input field (shows names, not just count)
-  const getPaymentModeDisplayValue = () => {
-    if (selectedPaymentModes.length === 0) {
-      return "";
-    }
+  // const getPaymentModeDisplayValue = () => {
+  //   if (selectedPaymentModes.length === 0) {
+  //     return "";
+  //   }
 
-    // Show names in the input field
-    return selectedPaymentModes.map((mode) => mode.profileName).join(", ");
-  };
+  //   // Show names in the input field
+  //   return selectedPaymentModes.map((mode) => mode.profileName).join(", ");
+  // };
 
   // Load payment profile options
   const loadPaymentProfileOptions = async () => {
@@ -1336,47 +1358,63 @@ function CreateProforma() {
     }
   };
 
-  // Handle primary payment mode change
-  const handlePrimaryPaymentModesChange = (selectedOptions) => {
-    const selectedIds = selectedOptions
-      ? selectedOptions.map((opt) => opt.value)
-      : [];
-    setPrimaryPaymentModes(selectedOptions || []);
+  // // Handle primary payment mode change
+  // const handlePrimaryPaymentModesChange = (selectedOptions) => {
+  //   const selectedIds = selectedOptions
+  //     ? selectedOptions.map((opt) => opt.value)
+  //     : [];
+  //   setPrimaryPaymentModes(selectedOptions || []);
 
-    // Combine both primary and secondary for the API
-    const allPaymentProfileIds = [
-      ...selectedIds,
-      ...secondaryPaymentModes.map((p) => p.value),
-    ];
-    setProformaInfo((prev) => ({
-      ...prev,
-      paymentProfileIds: allPaymentProfileIds,
-    }));
-  };
+  //   // Combine both primary and secondary for the API
+  //   const allPaymentProfileIds = [
+  //     ...selectedIds,
+  //     ...secondaryPaymentModes.map((p) => p.value),
+  //   ];
+  //   setProformaInfo((prev) => ({
+  //     ...prev,
+  //     paymentProfileIds: allPaymentProfileIds,
+  //   }));
+  // };
 
-  // Handle secondary payment mode change
-  const handleSecondaryPaymentModesChange = (selectedOptions) => {
-    const selectedIds = selectedOptions
-      ? selectedOptions.map((opt) => opt.value)
-      : [];
-    setSecondaryPaymentModes(selectedOptions || []);
+  // // Handle secondary payment mode change
+  // const handleSecondaryPaymentModesChange = (selectedOptions) => {
+  //   const selectedIds = selectedOptions
+  //     ? selectedOptions.map((opt) => opt.value)
+  //     : [];
+  //   setSecondaryPaymentModes(selectedOptions || []);
 
-    // Combine both primary and secondary for the API
-    const allPaymentProfileIds = [
-      ...primaryPaymentModes.map((p) => p.value),
-      ...selectedIds,
-    ];
-    setProformaInfo((prev) => ({
-      ...prev,
-      paymentProfileIds: allPaymentProfileIds,
-    }));
-  };
+  //   // Combine both primary and secondary for the API
+  //   const allPaymentProfileIds = [
+  //     ...primaryPaymentModes.map((p) => p.value),
+  //     ...selectedIds,
+  //   ];
+  //   setProformaInfo((prev) => ({
+  //     ...prev,
+  //     paymentProfileIds: allPaymentProfileIds,
+  //   }));
+  // };
 
-  // Get selected payment mode labels for display
-  const getSelectedPaymentModeLabels = () => {
-    const allModes = [...primaryPaymentModes, ...secondaryPaymentModes];
-    return allModes.map((mode) => mode.label).join(", ");
-  };
+  // // Get selected payment mode labels for display
+  // const getSelectedPaymentModeLabels = () => {
+  //   const allModes = [...primaryPaymentModes, ...secondaryPaymentModes];
+  //   return allModes.map((mode) => mode.label).join(", ");
+  // };
+
+const handleProformaTypeChange = (name, option) => {
+  const value = option?.value?.toUpperCase() || "";
+
+  setProformaInfo({
+    ...proformaInfo,
+    [name]: value,
+  });
+
+  // 👇 Automatically apply "No Tax" on REIMBURSEMENT
+  if (value === "REIMBURSEMENT") {
+    handleTaxTypeChange(
+      taxOptions.find(o => o.value === "No Tax")
+    );
+  }
+};
   // ============================
   return (
     <LayoutComponent>
@@ -1494,7 +1532,7 @@ function CreateProforma() {
                       options={assignToOptions}
                       onMenuOpen={loadAssignToOptions}
                       isLoading={isAssignToLoading}
-                      // className="md:col-span-2"
+                    // className="md:col-span-2"
                     />
 
                     {/* Payment Modes Dropdown */}
@@ -1506,7 +1544,7 @@ function CreateProforma() {
         peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
         peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none text-gray-700"
                         >
-                          Payment Modes
+                          Payment Modes (Receive)
                         </label>
                         <Select
                           value={selectedPaymentModes}
@@ -1554,6 +1592,45 @@ function CreateProforma() {
                         />
                       </div>
                     </div>
+
+
+                    <FormSelect
+                      label="Proforma Type"
+                      name="proformaType"
+                      value={proformaTypeOptions.find(
+                        (o) => o.value === proformaInfo.proformaType
+                      )}
+                      onChange={(opt) => handleProformaTypeChange("proformaType", opt)}
+                      options={proformaTypeOptions}
+                      className="w-48"
+                    />
+
+                    {/* profroma type */}
+                    {proformaInfo.proformaType === "REIMBURSEMENT" && (
+                      <div className="md:col-span-2">
+                        <div className="relative">
+                          <label className="absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 
+                          peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
+                          peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none text-gray-700">
+                            Payment Modes (Paid)
+                          </label>
+
+                          <Select
+                            value={selectedPaymentModesPaid}
+                            onChange={handlePaymentModesChange2}
+                            options={paymentModeOptions}
+                            onMenuOpen={loadPaymentModeOptions}
+                            isLoading={isPaymentModeLoading}
+                            isMulti
+                            isClearable
+                            placeholder="Select payment modes..."
+                            className="react-select-container peer"
+                            classNamePrefix="react-select"
+                          />
+                        </div>  
+                      </div>
+                    )}
+
                   </div>
                 </div>
 
@@ -1582,7 +1659,7 @@ function CreateProforma() {
                       options={relatedIdOptions}
                       onMenuOpen={loadRelatedIdOptions}
                       isLoading={isRelatedIdLoading}
-                      // isDisabled={!proformaInfo.relatedTo}
+                    // isDisabled={!proformaInfo.relatedTo}
                     />
                     <FormInput
                       label="Company Name"
@@ -1909,9 +1986,8 @@ function CreateProforma() {
                           <td className="px-4 py-2 whitespace-nowrap text-center align-top">
                             <button
                               className={`text-red-600 hover:text-red-900 font-medium transition-colors 
-                                duration-200 flex items-center gap-1 text-xs ${
-                                  proformaContent.length <= 1 &&
-                                  "pointer-events-none opacity-50"
+                                duration-200 flex items-center gap-1 text-xs ${proformaContent.length <= 1 &&
+                                "pointer-events-none opacity-50"
                                 }`}
                               onClick={() => handleRemoveItem(index)}
                               title="Remove Item"

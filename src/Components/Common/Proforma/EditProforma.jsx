@@ -34,7 +34,7 @@ function EditProforma() {
   const [paymentModeOptions, setPaymentModeOptions] = useState([]);
   const [isPaymentModeLoading, setIsPaymentModeLoading] = useState(false);
   const [selectedPaymentModes, setSelectedPaymentModes] = useState([]);
-
+  const [selectedPaymentModesPaid, setSelectedPaymentModesPaid] = useState([]);
   // Track items deleted during editing
   const [deletedItemIds, setDeletedItemIds] = useState([]);
 
@@ -79,6 +79,7 @@ function EditProforma() {
     companyStamp: "",
     cgstPercentage: 0,
     sgstPercentage: 0,
+    proformaType: "INVOICE"
   });
 
   const hasPayments = (Number(proformaInfo.paidAmount) || 0) > 0;
@@ -138,7 +139,11 @@ function EditProforma() {
     { value: "USD", label: "USD" },
     { value: "EUR", label: "EUR" },
   ];
+  const proformaTypeOptions = [
+    { value: "INVOICE", label: "INVOICE" },
+    { value: "REIMBURSEMENT", label: "REIMBURSEMENT" },
 
+  ];
   //Helper: Find Address Objects
   const findAddressObjects = (
     countryStr,
@@ -231,15 +236,15 @@ function EditProforma() {
         // Determine if Shipping is same as Billing
         const isAddressSame =
           proformaInvoiceInfo.shippingStreet ===
-            proformaInvoiceInfo.billingStreet &&
+          proformaInvoiceInfo.billingStreet &&
           proformaInvoiceInfo.shippingCountry ===
-            proformaInvoiceInfo.billingCountry &&
+          proformaInvoiceInfo.billingCountry &&
           proformaInvoiceInfo.shippingState ===
-            proformaInvoiceInfo.billingState &&
+          proformaInvoiceInfo.billingState &&
           proformaInvoiceInfo.shippingCity ===
-            proformaInvoiceInfo.billingCity &&
+          proformaInvoiceInfo.billingCity &&
           proformaInvoiceInfo.shippingZipCode ===
-            proformaInvoiceInfo.billingZipCode;
+          proformaInvoiceInfo.billingZipCode;
 
         setIsSameAsBilling(isAddressSame);
 
@@ -364,14 +369,14 @@ function EditProforma() {
           role === "ROLE_ADMIN"
             ? data.companySignature
             : data.admin
-            ? data.admin.companySignature
-            : null;
+              ? data.admin.companySignature
+              : null;
         let stampData =
           role === "ROLE_ADMIN"
             ? data.companyStamp
             : data.admin
-            ? data.admin.companyStamp
-            : null;
+              ? data.admin.companyStamp
+              : null;
 
         if (sigData) setSignatureUrl(`data:;base64,${sigData}`);
         if (stampData) setStampUrl(`data:;base64,${stampData}`);
@@ -418,6 +423,17 @@ function EditProforma() {
           proformaInfo.paymentProfileIds?.includes(option.value)
         );
         setSelectedPaymentModes(selected);
+        // 2. Set selected paid payment modes based on paymentProfileIds
+        const selectedPaid = mappedOptions.filter((option) => {
+          const paidIds = proformaInfo.paidPaymentProfileIds
+            ? proformaInfo.paidPaymentProfileIds.split(",")
+            : [];
+
+          return paidIds.includes(option.value);
+        });
+
+        setSelectedPaymentModesPaid(selectedPaid);
+
       } catch (error) {
         console.error("Failed to load payment modes:", error);
         toast.error("Failed to load payment modes.");
@@ -820,10 +836,10 @@ function EditProforma() {
 
     let newStates = opt
       ? State.getStatesOfCountry(opt.value).map((s) => ({
-          value: s.isoCode,
-          label: s.name,
-          ...s,
-        }))
+        value: s.isoCode,
+        label: s.name,
+        ...s,
+      }))
       : [];
     setStates(newStates);
 
@@ -855,10 +871,10 @@ function EditProforma() {
     let newCities =
       opt && selectedCountry
         ? City.getCitiesOfState(selectedCountry.value, opt.value).map((c) => ({
-            value: c.name,
-            label: c.name,
-            ...c,
-          }))
+          value: c.name,
+          label: c.name,
+          ...c,
+        }))
         : [];
     setCities(newCities);
 
@@ -1301,6 +1317,25 @@ function EditProforma() {
       .join(", ");
   };
 
+  const handleProformaTypeChange = (name, option) => {
+    setProformaInfo({
+      ...proformaInfo,
+      [name]: option?.value?.toUpperCase() || ""
+    });
+  };
+
+  // Handle payment mode selection change
+  const handlePaymentModesChange2 = (selectedOptions) => {
+    const selected = selectedOptions || [];
+    setSelectedPaymentModesPaid(selected);
+
+    const paidPaymentProfileIds = selected.map((o) => o.value);
+
+    setProformaInfo((prev) => ({
+      ...prev,
+      paidPaymentProfileIds: paidPaymentProfileIds.join(","),   // 👈 convert to CSV
+    }));
+  };
   return (
     <LayoutComponent>
       <div className="p-4 bg-gray-50 h-[90vh] overflow-y-auto">
@@ -1391,11 +1426,10 @@ function EditProforma() {
 
         {/* --- Form --- */}
         <div
-          className={`h-[72vh] overflow-hidden ${
-            !isFormEditable
-              ? "disabled-form pointer-events-none opacity-60"
-              : ""
-          }`}
+          className={`h-[72vh] overflow-hidden ${!isFormEditable
+            ? "disabled-form pointer-events-none opacity-60"
+            : ""
+            }`}
         >
           {isFetching ? (
             <div className="mt-4 h-full overflow-hidden animate-pulse bg-white p-6 rounded-lg border border-gray-200 space-y-8">
@@ -1470,7 +1504,7 @@ function EditProforma() {
                         name="proformaInvoiceNumber"
                         prefix="P_INV-"
                         value={proformaInfo.proformaInvoiceNumber}
-                        onChange={() => {}}
+                        onChange={() => { }}
                         disabled={true}
                         className="cursor-not-allowed"
                       />
@@ -1510,7 +1544,7 @@ function EditProforma() {
               peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
               peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none "
                           >
-                            Payment Modes
+                            Payment Modes (Receive)
                           </label>
                           <Select
                             value={selectedPaymentModes}
@@ -1555,10 +1589,52 @@ function EditProforma() {
                                 ...base,
                                 margin: "2px 4px 2px 0",
                               }),
+                              menu: base => ({
+                                ...base,
+                                zIndex: 9999,
+                              }),
                             }}
                           />
                         </div>
                       </div>
+
+                      {/* proforma payment mode paid */}
+                      <FormSelect
+                        label="Proforma Type"
+                        name="proformaType"
+                        value={proformaTypeOptions.find(
+                          (o) => o.value === proformaInfo.proformaType
+                        )}
+                        onChange={(opt) => handleProformaTypeChange("proformaType", opt)}
+                        options={proformaTypeOptions}
+                        className="w-48"
+                      />
+
+                      {/* profroma type */}
+                      {proformaInfo.proformaType === "REIMBURSEMENT" && (
+                        <div className="md:col-span-2">
+                          <div className="relative">
+                            <label className="absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 
+                                                peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
+                                                peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none text-gray-700">
+                              Payment Modes (Paid)
+                            </label>
+
+                            <Select
+                              value={selectedPaymentModesPaid}
+                              onChange={handlePaymentModesChange2}
+                              options={paymentModeOptions}
+                              onMenuOpen={loadPaymentModeOptions}
+                              isLoading={isPaymentModeLoading}
+                              isMulti
+                              isClearable
+                              placeholder="Select payment modes..."
+                              className="react-select-container peer"
+                              classNamePrefix="react-select"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1567,13 +1643,12 @@ function EditProforma() {
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">
                       Recipient Information
                       <span
-                        className={`ml-2 inline-block px-3 py-1 rounded text-xs font-semibold uppercase tracking-wide ${
-                          proformaInfo.status === "Paid"
-                            ? "bg-green-100 text-green-600"
-                            : proformaInfo.status === "Partially Paid"
+                        className={`ml-2 inline-block px-3 py-1 rounded text-xs font-semibold uppercase tracking-wide ${proformaInfo.status === "Paid"
+                          ? "bg-green-100 text-green-600"
+                          : proformaInfo.status === "Partially Paid"
                             ? "bg-yellow-100 text-yellow-600"
                             : "bg-red-100 text-red-600"
-                        }`}
+                          }`}
                       >
                         {proformaInfo.status?.toUpperCase()}
                       </span>
@@ -1899,15 +1974,13 @@ function EditProforma() {
                             </td>
                             <td className="px-4 py-2 whitespace-nowrap text-center align-top">
                               <button
-                                className={`${
-                                  canDelete ? "allow-click" : ""
-                                } text-red-600 hover:text-red-900 font-medium transition-colors 
+                                className={`${canDelete ? "allow-click" : ""
+                                  } text-red-600 hover:text-red-900 font-medium transition-colors 
       duration-200 flex items-center gap-1 text-xs
-      ${
-        proformaContent.length === 1 || !canDelete
-          ? "pointer-events-none opacity-50"
-          : ""
-      }`}
+      ${proformaContent.length === 1 || !canDelete
+                                    ? "pointer-events-none opacity-50"
+                                    : ""
+                                  }`}
                                 onClick={() => handleRemoveItem(index)}
                                 title="Remove Item"
                                 type="button"
@@ -2019,7 +2092,7 @@ function EditProforma() {
                                 // Switch to Single Mode
                                 const defaultRate =
                                   opt.defaultRate !== undefined &&
-                                  opt.defaultRate !== ""
+                                    opt.defaultRate !== ""
                                     ? Number(opt.defaultRate) || 0
                                     : 0;
                                 setTaxRateInput(defaultRate.toString());

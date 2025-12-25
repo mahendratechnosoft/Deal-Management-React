@@ -22,6 +22,7 @@ const UpdatePaymentProfileModal = ({
   const paymentTypeOptions = [
     { value: "BANK", label: "Bank Transfer" },
     { value: "UPI", label: "UPI" },
+    { value: "CARD", label: "CARD" },
   ];
 
   // Fetch Data
@@ -258,6 +259,47 @@ const UpdatePaymentProfileModal = ({
                       accept="image/*"
                       background="white"
                       onPreview={() => previewFile(formData.qrCodeImage)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {formData.type === "CARD" && (
+
+                <div className="bg-purple-50/50 p-4 rounded-xl border border-purple-100 space-y-4">
+                  <h4 className="text-sm font-semibold text-purple-800 mb-1">
+                    Card Details
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <FormInput
+                      label="Card Type"
+                      name="cardType"
+                      value={formData.cardType}
+                      onChange={handleChange}
+                      background="white"
+                    />
+
+                    <FormInput
+                      label=" Card Number"
+                      name="cardNumber"
+                      value={formData.cardNumber}
+                      onChange={handleChange}
+                      background="white"
+                    />
+                    <FormInput
+                      label="Holder Name"
+                      name="cardHolderName"
+                      value={formData.cardHolderName}
+                      onChange={handleChange}
+                      background="white"
+                    />
+
+                    <FormInput
+                      label="BankName"
+                      name="cardBankName"
+                      value={formData.cardBankName}
+                      onChange={handleChange}
+                      background="white"
                     />
                   </div>
                 </div>
