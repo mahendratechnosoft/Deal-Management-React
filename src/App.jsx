@@ -61,6 +61,10 @@ import SemenEnquiryList from "./Components/Common/Donor/SemenEnquiryList.jsx";
 import EditSemenEnquiry from "./Components/Common/Donor/EditSemenEnquiry.jsx";
 import Customerdash from "../src/Components/Common/CustomerPannel/Customerdash.jsx";
 import ContactDash from "./Components/Common/ContactPannel/ContactDash.jsx";
+import VendorSetting from "./Components/Common/Settings/Finance/VendorSetting.jsx";
+import ProposalSetting from "./Components/Common/Settings/Finance/ProposalSetting.jsx";
+import ProformaSetting from "./Components/Common/Settings/Finance/ProformaSetting.jsx";
+import InvoiceSetting from "./Components/Common/Settings/Finance/InvoiceSetting.jsx";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -686,7 +690,10 @@ function App() {
               {/* --- FINANCE SECTION --- */}
               <Route path="Finance">
                 <Route path="PaymentMode" element={<PaymentModeList />} />
-                {/* <Route path="TaxRate" element={<TaxRate />} /> */}
+                <Route path="Proposal" element={<ProposalSetting />} />
+                <Route path="Proforma" element={<ProformaSetting />} />
+                <Route path="Invoice" element={<InvoiceSetting />} />
+                <Route path="Vendor" element={<VendorSetting />} />
               </Route>
               {/* --------------------------- */}
 
