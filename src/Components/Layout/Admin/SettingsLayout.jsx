@@ -151,8 +151,11 @@ const SettingsLayout = () => {
       id: "finance",
       icon: <FinanceIcon />,
       submenu: [
+        { title: "Proposal", path: "/Admin/Settings/Finance/Proposal" },
+        { title: "Proforma", path: "/Admin/Settings/Finance/Proforma" },
+        { title: "Invoice", path: "/Admin/Settings/Finance/Invoice" },
+        { title: "Vendor", path: "/Admin/Settings/Finance/Vendor" },
         { title: "Payment Mode", path: "/Admin/Settings/Finance/PaymentMode" },
-        // { title: "Tax Rate", path: "/Admin/Settings/Finance/TaxRate" },
       ],
     },
     {
@@ -257,9 +260,9 @@ const SettingsLayout = () => {
                       <div className="flex flex-col space-y-1">
                         {MENU_ITEMS.map((item, index) => {
                           if (
-                            item.title === "Dynamic Form" ||
-                            (item.title === "Finance" &&
-                              hasPermission("donor", "Access"))
+                            hasPermission("donor", "Access") &&
+                            (item.title === "Dynamic Form" ||
+                              item.title === "Finance")
                           )
                             return null;
 
