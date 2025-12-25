@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
@@ -40,8 +39,7 @@ function SidebarContact({ isOpen, toggleSidebar }) {
         </svg>
       ),
       color: "from-blue-500 to-cyan-500",
-    }
-
+    },
   ];
 
   const isActive = (path) => {
@@ -88,13 +86,15 @@ function SidebarContact({ isOpen, toggleSidebar }) {
               <div className="flex items-center justify-center">
                 <div className="flex items-center space-x-3">
                   {/* Logo with proper background */}
-                  <div className="flex items-center justify-center bg-white rounded-lg p-2 shadow-lg">
-                    <img
-                      src={Mtech_logo}
-                      alt="Mtech Logo"
-                      className="w-15 h-10 object-contain"
-                    />
-                  </div>
+                  {userData?.logo && (
+                    <div className="flex items-center justify-center bg-white rounded-lg p-2 shadow-lg">
+                      <img
+                        src={`data:image/png;base64,${userData?.logo}`}
+                        alt="Mtech Logo"
+                        className="w-15 h-10 object-contain"
+                      />
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={toggleSidebar}
@@ -120,14 +120,15 @@ function SidebarContact({ isOpen, toggleSidebar }) {
                 onClick={toggleSidebar}
                 className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-700 transition-colors duration-300 group w-full flex justify-center"
               >
-                {/* Mini logo for collapsed state */}
-                <div className="flex items-center justify-center bg-white rounded-lg p-1 shadow">
-                  <img
-                    src={Mtech_logoOnly}
-                    alt="Mtech Logo"
-                    className="w-6 h-6 object-contain"
-                  />
-                </div>
+                {userData?.logo && (
+                  <div className="flex items-center justify-center bg-white rounded-lg p-1 shadow">
+                    <img
+                      src={`data:;base64,${userData?.logo}`}
+                      alt="Mtech Logo"
+                      className="w-6 h-6 object-contain"
+                    />
+                  </div>
+                )}
               </button>
             )}
           </div>

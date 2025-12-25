@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
 
@@ -7,6 +7,19 @@ import { hasPermission } from "../../BaseComponet/permissions";
 function Sidebar({ isOpen, toggleSidebar }) {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    const storedUserData = localStorage.getItem("userData");
+    if (storedUserData) {
+      try {
+        setUserData(JSON.parse(storedUserData));
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
 
   // Module key mapping for permission checks
   const moduleKeyMap = {
@@ -573,13 +586,16 @@ function Sidebar({ isOpen, toggleSidebar }) {
               <div className="flex items-center justify-center">
                 <div className="flex items-center space-x-3">
                   {/* Logo with proper background */}
-                  <div className="flex items-center justify-center bg-white rounded-lg p-2 shadow-lg">
-                    <img
-                      src={Mtech_logo}
-                      alt="Mtech Logo"
-                      className="w-15 h-10 object-contain"
-                    />
-                  </div>
+
+                  {userData?.logo && (
+                    <div className="flex items-center justify-center bg-white rounded-lg p-2 shadow-lg">
+                      <img
+                        src={`data:image/png;base64,${userData?.logo}`}
+                        alt="Mtech Logo"
+                        className="w-15 h-10 object-contain"
+                      />
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={toggleSidebar}
@@ -606,13 +622,15 @@ function Sidebar({ isOpen, toggleSidebar }) {
                 className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-700 transition-colors duration-300 group w-full flex justify-center"
               >
                 {/* Mini logo for collapsed state */}
-                <div className="flex items-center justify-center bg-white rounded-lg p-1 shadow">
-                  <img
-                    src={Mtech_logoOnly}
-                    alt="Mtech Logo"
-                    className="w-6 h-6 object-contain"
-                  />
-                </div>
+                {userData?.logo && (
+                  <div className="flex items-center justify-center bg-white rounded-lg p-1 shadow">
+                    <img
+                      src={`data:;base64,${userData?.logo}`}
+                      alt="Mtech Logo"
+                      className="w-6 h-6 object-contain"
+                    />
+                  </div>
+                )}
               </button>
             )}
           </div>
