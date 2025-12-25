@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
 import { hasPermission } from "../../BaseComponet/permissions";
@@ -6,6 +6,18 @@ import Mtech_logoOnly from "../../../../public/Images/Mtech_OnlyLogo.jpg";
 function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    const storedUserData = localStorage.getItem("userData");
+    if (storedUserData) {
+      try {
+        setUserData(JSON.parse(storedUserData));
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
   const moduleKeyMap = {
     Lead: "lead",
     Customer: "customer",
@@ -516,11 +528,15 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
                 <div className="flex items-center space-x-3">
                   {/* Logo with proper background */}
                   <div className="flex items-center justify-center bg-white rounded-lg p-2 shadow-lg">
-                    <img
-                      src={Mtech_logo}
-                      alt="Mtech Logo"
-                      className="w-15 h-10 object-contain"
-                    />
+                    {userData?.logo && (
+                      <div className="flex items-center justify-center bg-white rounded-lg p-2 shadow-lg">
+                        <img
+                          src={`data:image/png;base64,${userData?.logo}`}
+                          alt="Mtech Logo"
+                          className="w-15 h-10 object-contain"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <button
@@ -547,13 +563,15 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
                 onClick={toggleSidebar}
                 className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-700 transition-colors duration-300 group"
               >
-                <div className="flex items-center justify-center bg-white rounded-lg p-1 shadow">
-                  <img
-                    src={Mtech_logoOnly}
-                    alt="Mtech Logo"
-                    className="w-6 h-6 object-contain"
-                  />
-                </div>
+                {userData?.logo && (
+                  <div className="flex items-center justify-center bg-white rounded-lg p-1 shadow">
+                    <img
+                      src={`data:;base64,${userData?.logo}`}
+                      alt="Mtech Logo"
+                      className="w-6 h-6 object-contain"
+                    />
+                  </div>
+                )}
               </button>
             )}
           </div>
