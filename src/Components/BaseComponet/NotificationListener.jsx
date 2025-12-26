@@ -14,7 +14,7 @@ function NotificationListener() {
         const adminId = user?.adminId;
 
         const client = new Client({
-            webSocketFactory: () => new SockJS("http://91.203.133.210:9091/ws"),
+            webSocketFactory: () => new SockJS("https://api.mtechnosoft.xpertbizsolutions.com/ws"),
             reconnectDelay: 5000,
 
             onConnect: () => {
