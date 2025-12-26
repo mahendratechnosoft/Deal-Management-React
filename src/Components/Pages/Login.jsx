@@ -100,6 +100,7 @@ function Login({ onSwitchToRegister, onLogin }) {
           employeeId: data.employeeId,
           adminId: data.adminId,
           customerId: data.customerId, // Add this
+          contactId: data.contactId,
           logo: data.logo,
           moduleAccess: data.moduleAccess,
         })
@@ -182,7 +183,7 @@ function Login({ onSwitchToRegister, onLogin }) {
       } else if (data.role === "ROLE_CUSTOMER") {
         navigate("/Customer/dash");
       } else if (data.role === "ROLE_CONTACT") {
-        navigate("/Contact/ContactDash");
+        navigate("/Contact/ComplianceList");
       } else {
         ``;
         // Default fallback route
