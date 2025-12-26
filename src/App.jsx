@@ -669,6 +669,14 @@ function App() {
                 </RoleBasedRoute>
               }
             />
+            <Route
+              path="/Contact/ComplianceList"
+              element={
+                <RoleBasedRoute allowedRoles={["ROLE_CONTACT"]}>
+                  <ComplianceList />
+                </RoleBasedRoute>
+              }
+            />
 
             {/* Settings Routes */}
             <Route
@@ -703,6 +711,17 @@ function App() {
               path="/public-form/:adminId/:formId"
               element={<PublicForm />}
             />
+
+            <Route
+              path="/public-pf-form/:contactId/:formId"
+              element={<PublicPFForm />}
+            />
+
+            <Route
+              path="/public-esic-form/:contactId/:formId"
+              element={<PublicEsicForm />}
+            />
+
             {/* Default redirect based on role */}
             <Route
               path="/"
@@ -714,7 +733,7 @@ function App() {
                 ) : userRole === "ROLE_CUSTOMER" ? (
                   <Navigate to="/Customer/dash" replace />
                 ) : userRole === "ROLE_CONTACT" ? (
-                  <Navigate to="/Contact/ContactDash" replace />
+                  <Navigate to="/Contact/ComplianceList" replace />
                 ) : (
                   <Navigate to="/login" replace />
                 )

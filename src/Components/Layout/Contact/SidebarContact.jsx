@@ -21,8 +21,8 @@ function SidebarContact({ isOpen, toggleSidebar }) {
 
   const navigationItems = [
     {
-      name: "Dashboard",
-      path: "/Customer/dash",
+      name: "Compliance",
+      path: "/Contact/ComplianceList",
       icon: (
         <svg
           className="w-5 h-5"
