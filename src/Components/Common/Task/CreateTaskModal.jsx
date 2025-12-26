@@ -263,9 +263,7 @@ function CreateTaskModal({ onClose, onSuccess }) {
             case "proforma":
               return {
                 id: item.proformaInvoiceId || item.id,
-                name:
-                  formatProformaNumber(item.proformaInvoiceNumber) ||
-                  `Proforma #${item.proformaInvoiceId || item.id}`,
+                name: item.formatedProformaInvoiceNumber,
                 originalData: item,
               };
 

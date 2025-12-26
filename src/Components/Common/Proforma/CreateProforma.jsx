@@ -23,6 +23,7 @@ function CreateProforma() {
   const [stampUrl, setStampUrl] = useState(null);
   const [companyMediaLoading, setCompanyMediaLoading] = useState(true);
   const [errors, setErrors] = useState({});
+  const [proformaSettings, setProformaSettings] = useState({});
 
   const location = useLocation();
   const prefill = location.state;
@@ -64,7 +65,7 @@ function CreateProforma() {
     companyStamp: "",
     paymentProfileIds: [],
     paidPaymentProfileIds: "",
-    proformaType: "INVOICE"
+    proformaType: "INVOICE",
   });
 
   const [isSameAsBilling, setIsSameAsBilling] = useState(true);
@@ -138,13 +139,11 @@ function CreateProforma() {
   const currencyOptions = [
     { value: "INR", label: "INR" },
     { value: "USD", label: "USD" },
-
   ];
 
   const proformaTypeOptions = [
     { value: "INVOICE", label: "INVOICE" },
     { value: "REIMBURSEMENT", label: "REIMBURSEMENT" },
-
   ];
 
   // Helper function to find country/state/city objects from strings
@@ -236,7 +235,6 @@ function CreateProforma() {
       fetchAndPopulateRecipientData(selectedCustomer.value);
     }
   }, [relatedIdOptions, prefill]);
-
 
   // Helper function to reset all recipient fields
   const resetRecipientFields = () => {
@@ -450,7 +448,6 @@ function CreateProforma() {
     }
   }, [prefill]);
 
-
   // --- useEffect Hooks ---
   // Kept: Load countries on mount
   useEffect(() => {
@@ -463,6 +460,7 @@ function CreateProforma() {
     );
     getNextProformaNumber();
     loadPaymentModeOptions();
+    getProposalSettings();
   }, []);
 
   // Kept: Load company signature/stamp
@@ -587,6 +585,46 @@ function CreateProforma() {
       toast.error("Failed to fetch max proposal number.");
     }
   };
+
+  const getProposalSettings = async () => {
+    try {
+      const response = await axiosInstance.get(
+        "getFinanceSettingByType/PROFORMA"
+      );
+      const data = response.data;
+      setProformaSettings(data);
+      setProformaInfo((prev) => {
+        const invoiceDate = new Date(prev.invoiceDate);
+        const dueDate = new Date(invoiceDate);
+        dueDate.setDate(invoiceDate.getDate() + (data.dueDays || 0));
+
+        return {
+          ...prev,
+          notes: data.notes,
+          termsAndConditions: data.termsAndConditions,
+          dueDate: dueDate.toISOString().split("T")[0],
+        };
+      });
+    } catch (error) {
+      console.error("Failed to fetch proposal settings:", error);
+      toast.error("Failed to fetch proposal settings.");
+    }
+  };
+
+  const dynamicPrefix = useMemo(() => {
+    if (!proformaSettings || !proformaSettings.prefix) return "";
+
+    let prefix = `${proformaSettings.prefix}-`;
+    if (proformaSettings.numberFormat === "YEAR") {
+      const dateObj = proformaInfo.invoiceDate
+        ? new Date(proformaInfo.invoiceDate)
+        : new Date();
+      const year = dateObj.getFullYear();
+      prefix = `${prefix}${year}/`;
+    }
+
+    return prefix;
+  }, [proformaSettings, proformaInfo.invoiceDate]);
 
   // --- Event Handlers ---
 
@@ -1189,6 +1227,12 @@ function CreateProforma() {
 
     setLoading(true);
 
+    const sequenceString = String(proformaInfo.proformaInvoiceNumber).padStart(
+      6,
+      "0"
+    );
+    const finalFormattedString = `${dynamicPrefix}${sequenceString}`;
+
     const formattedDueDate = proformaInfo.dueDate
       ? `${proformaInfo.dueDate}T00:00:00`
       : null;
@@ -1200,6 +1244,7 @@ function CreateProforma() {
         discount: Number(proformaInfo.discount),
         totalAmount: Number(total),
         proformaInvoiceDate: formattedInvoiceDate,
+        formatedProformaInvoiceNumber: finalFormattedString,
         dueDate: formattedDueDate,
         taxPercentage:
           proformaInfo.taxType === "CGST+SGST"
@@ -1241,7 +1286,7 @@ function CreateProforma() {
       console.error("Failed to create proforma invoice:", error);
       toast.error(
         error.response?.data?.message ||
-        "Failed to create proforma invoice. Please check the form."
+          "Failed to create proforma invoice. Please check the form."
       );
       setLoading(false);
     }
@@ -1301,18 +1346,18 @@ function CreateProforma() {
     }));
   };
 
-    // Handle payment mode selection change
+  // Handle payment mode selection change
   const handlePaymentModesChange2 = (selectedOptions) => {
-  const selected = selectedOptions || [];
-  setSelectedPaymentModesPaid(selected);
+    const selected = selectedOptions || [];
+    setSelectedPaymentModesPaid(selected);
 
-  const paidPaymentProfileIds = selected.map((o) => o.value);
+    const paidPaymentProfileIds = selected.map((o) => o.value);
 
-  setProformaInfo((prev) => ({
-    ...prev,
-    paidPaymentProfileIds: paidPaymentProfileIds.join(","),   // 👈 convert to CSV
-  }));
-};
+    setProformaInfo((prev) => ({
+      ...prev,
+      paidPaymentProfileIds: paidPaymentProfileIds.join(","), // 👈 convert to CSV
+    }));
+  };
 
   // // Format selected payment modes for display
   // const formatSelectedPaymentModes = () => {
@@ -1400,21 +1445,19 @@ function CreateProforma() {
   //   return allModes.map((mode) => mode.label).join(", ");
   // };
 
-const handleProformaTypeChange = (name, option) => {
-  const value = option?.value?.toUpperCase() || "";
+  const handleProformaTypeChange = (name, option) => {
+    const value = option?.value?.toUpperCase() || "";
 
-  setProformaInfo({
-    ...proformaInfo,
-    [name]: value,
-  });
+    setProformaInfo({
+      ...proformaInfo,
+      [name]: value,
+    });
 
-  // 👇 Automatically apply "No Tax" on REIMBURSEMENT
-  if (value === "REIMBURSEMENT") {
-    handleTaxTypeChange(
-      taxOptions.find(o => o.value === "No Tax")
-    );
-  }
-};
+    // 👇 Automatically apply "No Tax" on REIMBURSEMENT
+    if (value === "REIMBURSEMENT") {
+      handleTaxTypeChange(taxOptions.find((o) => o.value === "No Tax"));
+    }
+  };
   // ============================
   return (
     <LayoutComponent>
@@ -1490,7 +1533,7 @@ const handleProformaTypeChange = (name, option) => {
                     <FormNumberInputWithPrefix
                       label="Proforma Number"
                       name="proformaInvoiceNumber"
-                      prefix="P_INV-"
+                      prefix={dynamicPrefix}
                       value={proformaInfo.proformaInvoiceNumber}
                       onChange={handleInfoChange}
                       required
@@ -1532,7 +1575,7 @@ const handleProformaTypeChange = (name, option) => {
                       options={assignToOptions}
                       onMenuOpen={loadAssignToOptions}
                       isLoading={isAssignToLoading}
-                    // className="md:col-span-2"
+                      // className="md:col-span-2"
                     />
 
                     {/* Payment Modes Dropdown */}
@@ -1593,14 +1636,15 @@ const handleProformaTypeChange = (name, option) => {
                       </div>
                     </div>
 
-
                     <FormSelect
                       label="Proforma Type"
                       name="proformaType"
                       value={proformaTypeOptions.find(
                         (o) => o.value === proformaInfo.proformaType
                       )}
-                      onChange={(opt) => handleProformaTypeChange("proformaType", opt)}
+                      onChange={(opt) =>
+                        handleProformaTypeChange("proformaType", opt)
+                      }
                       options={proformaTypeOptions}
                       className="w-48"
                     />
@@ -1609,9 +1653,11 @@ const handleProformaTypeChange = (name, option) => {
                     {proformaInfo.proformaType === "REIMBURSEMENT" && (
                       <div className="md:col-span-2">
                         <div className="relative">
-                          <label className="absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 
+                          <label
+                            className="absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 
                           peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
-                          peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none text-gray-700">
+                          peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none text-gray-700"
+                          >
                             Payment Modes (Paid)
                           </label>
 
@@ -1627,10 +1673,9 @@ const handleProformaTypeChange = (name, option) => {
                             className="react-select-container peer"
                             classNamePrefix="react-select"
                           />
-                        </div>  
+                        </div>
                       </div>
                     )}
-
                   </div>
                 </div>
 
@@ -1659,7 +1704,7 @@ const handleProformaTypeChange = (name, option) => {
                       options={relatedIdOptions}
                       onMenuOpen={loadRelatedIdOptions}
                       isLoading={isRelatedIdLoading}
-                    // isDisabled={!proformaInfo.relatedTo}
+                      // isDisabled={!proformaInfo.relatedTo}
                     />
                     <FormInput
                       label="Company Name"
@@ -1986,8 +2031,9 @@ const handleProformaTypeChange = (name, option) => {
                           <td className="px-4 py-2 whitespace-nowrap text-center align-top">
                             <button
                               className={`text-red-600 hover:text-red-900 font-medium transition-colors 
-                                duration-200 flex items-center gap-1 text-xs ${proformaContent.length <= 1 &&
-                                "pointer-events-none opacity-50"
+                                duration-200 flex items-center gap-1 text-xs ${
+                                  proformaContent.length <= 1 &&
+                                  "pointer-events-none opacity-50"
                                 }`}
                               onClick={() => handleRemoveItem(index)}
                               title="Remove Item"
