@@ -8,4 +8,8 @@ export default defineConfig({
     port: 5174, // 👈 change the port number here
     open: true, // optional – auto open browser
   },
+    define: {
+    global: "window",
+
+  },
 })
