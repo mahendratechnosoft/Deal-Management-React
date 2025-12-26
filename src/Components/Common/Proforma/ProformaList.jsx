@@ -240,7 +240,7 @@ function ProformaList() {
       >
         <option value="all">All</option>
         <option value="REIMBURSEMENT">Reimbursement</option>
-   
+
         {/* Add other proforma types as needed */}
       </select>
       <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
@@ -518,7 +518,7 @@ function ProformaList() {
                       onClick={() => handleOpenInfoModal(proforma)}
                     >
                       <td className="px-4 py-1 truncate text-sm text-gray-900 font-bold relative">
-                        {formatProformaNumber(proforma.proformaInvoiceNumber)}
+                        {proforma.formatedProformaInvoiceNumber}
                         <div className="flex items-center gap-3 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                           <button
                             title="Edit"
@@ -694,10 +694,8 @@ function ProformaList() {
             <div className="proposal-pdf-modal-header">
               <h3>
                 {selectedProformaData
-                  ? formatProformaNumber(
-                      selectedProformaData.proformaInvoiceInfo
-                        .proformaInvoiceNumber
-                    )
+                  ? selectedProformaData.proformaInvoiceInfo
+                      .formatedProformaInvoiceNumber
                   : "Loading..."}
               </h3>
               <div style={{ display: "flex", gap: "10px" }}>
@@ -709,10 +707,7 @@ function ProformaList() {
                         adminInformation={adminInformation}
                       />
                     }
-                    fileName={`${formatProformaNumber(
-                      selectedProformaData.proformaInvoiceInfo
-                        .proformaInvoiceNumber
-                    )}.pdf`}
+                    fileName={`${selectedProformaData.proformaInvoiceInfo.formatedProformaInvoiceNumber}.pdf`}
                     className="download-button-icon-wrapper"
                     style={{
                       padding: "0.25rem",

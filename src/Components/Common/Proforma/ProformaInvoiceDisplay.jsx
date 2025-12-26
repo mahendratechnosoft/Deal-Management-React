@@ -208,7 +208,7 @@ const ProformaInvoiceDisplay = ({
             <div className="font-semibold text-gray-700">
               {isInvoice
                 ? formatInvoiceNumber(info.proformaInvoiceNumber)
-                : formatProformaNumber(info.proformaInvoiceNumber)}
+                : info.formatedProformaInvoiceNumber}
             </div>
             <span
               className={`inline-block px-3 py-1 rounded text-xs font-semibold uppercase tracking-wide ${

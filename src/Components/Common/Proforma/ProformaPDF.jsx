@@ -353,8 +353,6 @@ const getCurrencySymbol = (currencyType = "INR") => {
   }
 };
 
-
-
 const numberToWords = (num, currency = "INR") => {
   if (num === null || num === undefined || isNaN(num)) return "Zero";
   let options = { currency: true };
@@ -381,151 +379,146 @@ const getSafeImageSrc = (base64String) => {
   return `data:;base64,${base64String}`;
 };
 
-
 const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
   // In the calculation useMemo function, replace with this:
 
+  const calculation = useMemo(() => {
+    if (!invoiceData || !invoiceData.proformaInvoiceContents) {
+      return {
+        subTotal: 0,
+        discount: 0,
+        discountPercentage: 0,
+        taxableAmount: 0,
+        taxAmount: 0,
+        cgstAmount: 0,
+        sgstAmount: 0,
+        igstAmount: 0,
+        grandTotal: 0,
+        amountPaid: 0,
+        amountDue: 0,
+      };
+    }
 
-const calculation = useMemo(() => {
-  if (!invoiceData || !invoiceData.proformaInvoiceContents) {
+    const info = invoiceData.proformaInvoiceInfo;
+    const items = invoiceData.proformaInvoiceContents;
+
+    // Calculate subtotal
+    const subTotal = items.reduce((acc, item) => {
+      return acc + Number(item.quantity) * Number(item.rate);
+    }, 0);
+
+    // Calculate discount
+    const discountPercentage = Number(info.discount) || 0;
+    const discountAmount = Number(
+      (subTotal * (discountPercentage / 100)).toFixed(2)
+    );
+    const taxableAmount = Math.max(0, subTotal - discountAmount);
+
+    // Initialize tax amounts
+    let taxAmount = 0;
+    let cgstAmount = 0;
+    let sgstAmount = 0;
+    let igstAmount = 0;
+
+    // Handle different tax types
+    const taxType = info.taxType || "No Tax";
+
+    if (taxType === "CGST+SGST") {
+      // For CGST+SGST (intra-state)
+      const cgstPercentage = Number(info.cgstPercentage) || 0;
+      const sgstPercentage = Number(info.sgstPercentage) || 0;
+
+      cgstAmount = Number((taxableAmount * (cgstPercentage / 100)).toFixed(2));
+      sgstAmount = Number((taxableAmount * (sgstPercentage / 100)).toFixed(2));
+      taxAmount = cgstAmount + sgstAmount;
+    } else if (taxType === "IGST") {
+      // For IGST (inter-state)
+      const igstPercentage = Number(info.taxPercentage) || 0;
+      igstAmount = Number((taxableAmount * (igstPercentage / 100)).toFixed(2));
+      taxAmount = igstAmount;
+    } else if (taxType !== "No Tax") {
+      // For other tax types (GST, VAT, etc.)
+      const taxRate = Number(info.taxPercentage) || 0;
+      taxAmount = Number((taxableAmount * (taxRate / 100)).toFixed(2));
+    }
+
+    // Calculate final totals
+    const grandTotal = taxableAmount + taxAmount;
+    const amountPaid = Number(info.paidAmount) || 0;
+    const amountDue = Math.max(0, grandTotal - amountPaid);
+
     return {
-      subTotal: 0,
-      discount: 0,
-      discountPercentage: 0,
-      taxableAmount: 0,
-      taxAmount: 0,
-      cgstAmount: 0,
-      sgstAmount: 0,
-      igstAmount: 0,
-      grandTotal: 0,
-      amountPaid: 0,
-      amountDue: 0,
+      subTotal,
+      discount: discountAmount,
+      discountPercentage,
+      taxableAmount,
+      taxAmount,
+      cgstAmount,
+      sgstAmount,
+      igstAmount,
+      grandTotal,
+      amountPaid,
+      amountDue,
     };
-  }
-
-  const info = invoiceData.proformaInvoiceInfo;
-  const items = invoiceData.proformaInvoiceContents;
-
-  // Calculate subtotal
-  const subTotal = items.reduce((acc, item) => {
-    return acc + Number(item.quantity) * Number(item.rate);
-  }, 0);
-
-  // Calculate discount
-  const discountPercentage = Number(info.discount) || 0;
-  const discountAmount = Number(
-    (subTotal * (discountPercentage / 100)).toFixed(2)
-  );
-  const taxableAmount = Math.max(0, subTotal - discountAmount);
-
-  // Initialize tax amounts
-  let taxAmount = 0;
-  let cgstAmount = 0;
-  let sgstAmount = 0;
-  let igstAmount = 0;
-
-  // Handle different tax types
-  const taxType = info.taxType || "No Tax";
-
-  if (taxType === "CGST+SGST") {
-    // For CGST+SGST (intra-state)
-    const cgstPercentage = Number(info.cgstPercentage) || 0;
-    const sgstPercentage = Number(info.sgstPercentage) || 0;
-
-    cgstAmount = Number((taxableAmount * (cgstPercentage / 100)).toFixed(2));
-    sgstAmount = Number((taxableAmount * (sgstPercentage / 100)).toFixed(2));
-    taxAmount = cgstAmount + sgstAmount;
-  } else if (taxType === "IGST") {
-    // For IGST (inter-state)
-    const igstPercentage = Number(info.taxPercentage) || 0;
-    igstAmount = Number((taxableAmount * (igstPercentage / 100)).toFixed(2));
-    taxAmount = igstAmount;
-  } else if (taxType !== "No Tax") {
-    // For other tax types (GST, VAT, etc.)
-    const taxRate = Number(info.taxPercentage) || 0;
-    taxAmount = Number((taxableAmount * (taxRate / 100)).toFixed(2));
-  }
-
-  // Calculate final totals
-  const grandTotal = taxableAmount + taxAmount;
-  const amountPaid = Number(info.paidAmount) || 0;
-  const amountDue = Math.max(0, grandTotal - amountPaid);
-
-  return {
-    subTotal,
-    discount: discountAmount,
-    discountPercentage,
-    taxableAmount,
-    taxAmount,
-    cgstAmount,
-    sgstAmount,
-    igstAmount,
-    grandTotal,
-    amountPaid,
-    amountDue,
-  };
-}, [invoiceData]);
+  }, [invoiceData]);
   // Create a new TaxRows component to handle tax display:
- const TaxRows = () => {
-   const info = invoiceData.proformaInvoiceInfo;
-   const taxType = info.taxType || "No Tax";
+  const TaxRows = () => {
+    const info = invoiceData.proformaInvoiceInfo;
+    const taxType = info.taxType || "No Tax";
 
-   if (taxType === "CGST+SGST") {
-     return (
-       <>
-         <View style={styles.totalRow}>
-           <Text>CGST ({info.cgstPercentage || 0}%)</Text>
-           <Text>{formatCurrency(calculation.cgstAmount, currency)}</Text>
-         </View>
-         <View style={styles.totalRow}>
-           <Text>SGST ({info.sgstPercentage || 0}%)</Text>
-           <Text>{formatCurrency(calculation.sgstAmount, currency)}</Text>
-         </View>
-       </>
-     );
-   }
+    if (taxType === "CGST+SGST") {
+      return (
+        <>
+          <View style={styles.totalRow}>
+            <Text>CGST ({info.cgstPercentage || 0}%)</Text>
+            <Text>{formatCurrency(calculation.cgstAmount, currency)}</Text>
+          </View>
+          <View style={styles.totalRow}>
+            <Text>SGST ({info.sgstPercentage || 0}%)</Text>
+            <Text>{formatCurrency(calculation.sgstAmount, currency)}</Text>
+          </View>
+        </>
+      );
+    }
 
-   if (taxType === "IGST") {
-     return (
-       <View style={styles.totalRow}>
-         <Text>IGST ({info.taxPercentage || 0}%)</Text>
-         <Text>{formatCurrency(calculation.igstAmount, currency)}</Text>
-       </View>
-     );
-   }
+    if (taxType === "IGST") {
+      return (
+        <View style={styles.totalRow}>
+          <Text>IGST ({info.taxPercentage || 0}%)</Text>
+          <Text>{formatCurrency(calculation.igstAmount, currency)}</Text>
+        </View>
+      );
+    }
 
-   if (taxType !== "No Tax") {
-     return (
-       <View style={styles.totalRow}>
-         <Text>
-           {taxType} ({info.taxPercentage || 0}%)
-         </Text>
-         <Text>{formatCurrency(calculation.taxAmount, currency)}</Text>
-       </View>
-     );
-   }
+    if (taxType !== "No Tax") {
+      return (
+        <View style={styles.totalRow}>
+          <Text>
+            {taxType} ({info.taxPercentage || 0}%)
+          </Text>
+          <Text>{formatCurrency(calculation.taxAmount, currency)}</Text>
+        </View>
+      );
+    }
 
-   return (
-     <View style={styles.totalRow}>
-       <Text>Tax</Text>
-       <Text>{formatCurrency(0, currency)}</Text>
-     </View>
-   );
- };
-
-
+    return (
+      <View style={styles.totalRow}>
+        <Text>Tax</Text>
+        <Text>{formatCurrency(0, currency)}</Text>
+      </View>
+    );
+  };
 
   // Also update the formatCurrency function to handle different currencies properly:
-const formatCurrency = (amount, currencyType) => {
-  const symbol = getCurrencySymbol(currencyType);
-  const numAmount = Number(amount) || 0;
-  const formattedAmount = numAmount.toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return `${symbol}${formattedAmount}`;
-};
-
+  const formatCurrency = (amount, currencyType) => {
+    const symbol = getCurrencySymbol(currencyType);
+    const numAmount = Number(amount) || 0;
+    const formattedAmount = numAmount.toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    return `${symbol}${formattedAmount}`;
+  };
 
   // Optional: Add this if you want to format amounts in Indian numbering system for INR:
   const getCurrencySymbol = (currencyType = "INR") => {
@@ -577,7 +570,7 @@ const formatCurrency = (amount, currencyType) => {
       title={
         isInvoice
           ? formatInvoiceNumber(info.invoiceNumber)
-          : formatProformaNumber(info.proformaInvoiceNumber)
+          : info.formatedProformaInvoiceNumber
       }
     >
       <Page size="A4" style={styles.page}>
@@ -604,7 +597,7 @@ const formatCurrency = (amount, currencyType) => {
             <Text style={styles.proformaNumber}>
               {isInvoice
                 ? formatInvoiceNumber(info.invoiceNumber)
-                : formatProformaNumber(info.proformaInvoiceNumber)}
+                : info.formatedProformaInvoiceNumber}
             </Text>
             <Text style={getStatusStyles(info.status)}>
               {info.status?.toUpperCase()}
