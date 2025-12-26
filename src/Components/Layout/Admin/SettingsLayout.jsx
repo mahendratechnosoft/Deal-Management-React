@@ -264,7 +264,7 @@ const SettingsLayout = () => {
                             (item.title === "Dynamic Form" ||
                               item.title === "Finance")
                           )
-                            // return null;
+                            return null;
 
                           if (item.submenu) {
                             const isOpen = openMenus[item.id];
