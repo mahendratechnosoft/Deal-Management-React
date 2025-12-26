@@ -8,6 +8,7 @@ function SidebarCustomer({ isOpen, toggleSidebar }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+    const userData = JSON.parse(localStorage.getItem("userData")) || {};
   // Module key mapping for permission checks
   const moduleKeyMap = {
     Dashboard: "dashboard",
