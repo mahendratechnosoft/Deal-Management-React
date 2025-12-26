@@ -396,7 +396,7 @@ function CreateProposal() {
       setProposalInfo((prev) => {
         const proposalDate = new Date(prev.proposalDate);
         const dueDate = new Date(proposalDate);
-        dueDate.setDate(proposalDate.getDate() + data.dueDays);
+        dueDate.setDate(proposalDate.getDate() + (data.dueDays || 0));
 
         return {
           ...prev,
