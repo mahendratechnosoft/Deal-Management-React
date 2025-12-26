@@ -272,9 +272,7 @@ function CreateTaskModal({ onClose, onSuccess }) {
             case "proposal":
               return {
                 id: item.proposalId || item.id,
-                name:
-                  formatProposalNumber(item.proposalNumber) ||
-                  `Proposal #${item.proposalId || item.id}`,
+                name: item.formatedProposalNumber,
                 originalData: item,
               };
 

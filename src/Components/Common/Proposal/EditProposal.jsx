@@ -200,6 +200,8 @@ function EditProposal() {
     { value: "EUR", label: "EUR" },
   ];
 
+  const [dynamicPrefix, setDynamicPrefix] = useState("");
+
   useEffect(() => {
     const fetchProposalData = async () => {
       if (!proposalId) {
@@ -214,28 +216,35 @@ function EditProposal() {
         const { proposalInfo: fetchedInfo, proposalContent: fetchedContent } =
           response.data;
 
+        const fullString = fetchedInfo.formatedProposalNumber || "";
+        if (fullString && fullString.length > 6) {
+          const extractedPrefix = fullString.slice(0, -6);
+          setDynamicPrefix(extractedPrefix);
+        } else {
+          setDynamicPrefix("PROP-");
+        }
 
-  if (fetchedInfo.paymentProfileIds?.length > 0) {
-    // Load payment mode options
-    const paymentModesResponse = await axiosInstance.get(
-      "getPaymentModesForInvoice"
-    );
-    const mappedOptions = paymentModesResponse.data.map((profile) => ({
-      label: `${profile.profileName} (${profile.type})`,
-      value: profile.paymentProfileId,
-      profileName: profile.profileName,
-      type: profile.type,
-      isDefault: profile.default,
-    }));
+        if (fetchedInfo.paymentProfileIds?.length > 0) {
+          // Load payment mode options
+          const paymentModesResponse = await axiosInstance.get(
+            "getPaymentModesForInvoice"
+          );
+          const mappedOptions = paymentModesResponse.data.map((profile) => ({
+            label: `${profile.profileName} (${profile.type})`,
+            value: profile.paymentProfileId,
+            profileName: profile.profileName,
+            type: profile.type,
+            isDefault: profile.default,
+          }));
 
-    setPaymentModeOptions(mappedOptions);
+          setPaymentModeOptions(mappedOptions);
 
-    // Set selected payment modes based on paymentProfileIds
-    const selected = mappedOptions.filter((option) =>
-      fetchedInfo.paymentProfileIds.includes(option.value)
-    );
-    setSelectedPaymentModes(selected);
-  }
+          // Set selected payment modes based on paymentProfileIds
+          const selected = mappedOptions.filter((option) =>
+            fetchedInfo.paymentProfileIds.includes(option.value)
+          );
+          setSelectedPaymentModes(selected);
+        }
 
         if (fetchedInfo.taxType === "CGST+SGST") {
           // Case 1: Saved as Split Tax
@@ -1174,7 +1183,7 @@ function EditProposal() {
                       <FormInputWithPrefix
                         label="Proposal Number"
                         name="proposalNumber"
-                        prefix="PROP-"
+                        prefix={dynamicPrefix}
                         value={proposalInfo.proposalNumber}
                         onChange={handleInfoChange}
                         required

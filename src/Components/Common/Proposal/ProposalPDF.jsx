@@ -488,7 +488,7 @@ const ProposalPDF = ({ data }) => {
   };
 
   return (
-    <Document title={formatProposalNumber(proposalInfo.proposalNumber)}>
+    <Document title={proposalInfo.formatedProposalNumber}>
       <Page size="A4" style={styles.page}>
         {/* 1. Header (No Changes) */}
         <View style={styles.header}>
@@ -510,7 +510,7 @@ const ProposalPDF = ({ data }) => {
             <Text style={styles.title}>PROPOSAL</Text>
             <View style={styles.proposalNumber}>
               <Text style={styles.headerText}>
-                # {formatProposalNumber(proposalInfo.proposalNumber)}
+                # {proposalInfo.formatedProposalNumber}
               </Text>
               <Text style={styles.headerText}>
                 Date: {formatDate(proposalInfo.proposalDate)}

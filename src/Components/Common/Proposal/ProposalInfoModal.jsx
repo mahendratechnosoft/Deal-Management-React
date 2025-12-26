@@ -202,7 +202,7 @@ const ProposalInfoModal = ({ isOpen, onClose, proposal, onOpenPdf }) => {
           {/* --- Modal Header --- */}
           <div className="info-modal-header">
             <h3 className="info-modal-title">
-              {formatProposalNumber(proposal.proposalNumber)}
+              {proposal.formatedProposalNumber}
             </h3>
 
             <div className="info-modal-actions">

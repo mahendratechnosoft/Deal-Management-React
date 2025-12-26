@@ -5,14 +5,14 @@ import {
   GlobalInputField,
   GlobalTextAreaField,
   GlobalSelectField,
-  CustomMultiSelectWithExclusion
+  CustomMultiSelectWithExclusion,
 } from "../../BaseComponet/CustomerFormInputs";
 import {
   formatInvoiceNumber,
   formatProposalNumber,
   formatDate,
   formatCurrency,
-  formatProformaNumber
+  formatProformaNumber,
 } from "../../BaseComponet/UtilFunctions";
 
 function EditTaskModal({ taskId, onClose, onSuccess }) {
@@ -50,10 +50,10 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
   const [errors, setErrors] = useState({});
 
   const priorityOptions = [
-    { value: 'low', label: 'Low' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'high', label: 'High' },
-    { value: 'urgent', label: 'Urgent' }
+    { value: "low", label: "Low" },
+    { value: "medium", label: "Medium" },
+    { value: "high", label: "High" },
+    { value: "urgent", label: "Urgent" },
   ];
 
   const statusOptions = [
@@ -61,7 +61,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
     { value: "IN_PROGRESS", label: " In Progress" },
     { value: "TESTING", label: " Testing" },
     { value: "AWAITING_FEEDBACK", label: " Awaiting Feedback" },
-    { value: "COMPLETE", label: " Complete" }
+    { value: "COMPLETE", label: " Complete" },
   ];
 
   const relatedToOptions = [
@@ -70,7 +70,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
     { value: "customer", label: "Customer" },
     { value: "proposal", label: "Proposal" },
     { value: "proforma", label: "Proforma" },
-    { value: "invoice", label: "Invoice" }
+    { value: "invoice", label: "Invoice" },
   ];
 
   useEffect(() => {
@@ -154,46 +154,51 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
               return {
                 id: item.leadId || item.id,
                 name: item.clientName || `Lead #${item.leadId || item.id}`,
-                originalData: item
+                originalData: item,
               };
 
             case "customer":
               return {
                 id: item.id,
-                name: `${item.companyName || 'Customer'} (${item.email || 'No email'})`,
-                originalData: item
+                name: `${item.companyName || "Customer"} (${
+                  item.email || "No email"
+                })`,
+                originalData: item,
               };
 
             case "proforma":
               return {
                 id: item.proformaInvoiceId || item.id,
-                name: formatProformaNumber(item.proformaInvoiceNumber) ||
+                name:
+                  formatProformaNumber(item.proformaInvoiceNumber) ||
                   `Proforma #${item.proformaInvoiceId || item.id}`,
-                originalData: item
+                originalData: item,
               };
 
             case "proposal":
               return {
                 id: item.proposalId || item.id,
-                name: formatProposalNumber(item.proposalNumber) ||
-                  `Proposal #${item.proposalId || item.id}`,
-                originalData: item
+                name: item.formatedProposalNumber,
+                originalData: item,
               };
 
             case "invoice":
               return {
                 id: item.invoiceId || item.id,
-                name: formatInvoiceNumber(item.invoiceNumber) ||
+                name:
+                  formatInvoiceNumber(item.invoiceNumber) ||
                   `Invoice #${item.invoiceId || item.id}`,
-                amount: item.totalAmount ? formatCurrency(item.totalAmount, item.currency) : '',
-                originalData: item
+                amount: item.totalAmount
+                  ? formatCurrency(item.totalAmount, item.currency)
+                  : "",
+                originalData: item,
               };
 
             default:
               return {
                 id: item.id,
                 name: String(item.name || item.title || `Item #${item.id}`),
-                originalData: item
+                originalData: item,
               };
           }
         });
@@ -219,7 +224,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
 
       if (response.data) {
         const taskData = response.data.task;
-        
+
         // Set canEdit from API response
         if (response.data.canEdit !== undefined) {
           setCanEdit(response.data.canEdit);
@@ -294,7 +299,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
     let processedValue = value;
 
     switch (name) {
-      case 'subject':
+      case "subject":
         if (value.length <= 150) {
           processedValue = value;
         } else {
@@ -302,7 +307,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
         }
         break;
 
-      case 'description':
+      case "description":
         if (value.length <= 500) {
           processedValue = value;
         } else {
@@ -310,9 +315,9 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
         }
         break;
 
-      case 'hourlyRate':
-      case 'estimateHours':
-        if (value === '') {
+      case "hourlyRate":
+      case "estimateHours":
+        if (value === "") {
           processedValue = value;
         } else {
           const numValue = parseFloat(value);
@@ -397,7 +402,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
       const hourlyRateNum = parseFloat(formData.hourlyRate);
       if (hourlyRateNum < 0) {
         newErrors.hourlyRate = "Hourly rate cannot be negative";
-      } else if (hourlyRateNum.toString().split('.')[0].length > 4) {
+      } else if (hourlyRateNum.toString().split(".")[0].length > 4) {
         newErrors.hourlyRate = "Hourly rate cannot exceed 4 digits";
       }
     }
@@ -406,7 +411,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
       const estimateHoursNum = parseFloat(formData.estimateHours);
       if (estimateHoursNum < 0) {
         newErrors.estimateHours = "Estimate hours cannot be negative";
-      } else if (estimateHoursNum.toString().split('.')[0].length > 4) {
+      } else if (estimateHoursNum.toString().split(".")[0].length > 4) {
         newErrors.estimateHours = "Estimate hours cannot exceed 4 digits";
       }
     }
@@ -439,13 +444,17 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
 
     setLoading(true);
     try {
-      const assigneeNames = formData.assignees.map(employeeId => {
-        const employee = teamMembers.find(member => member.value === employeeId);
+      const assigneeNames = formData.assignees.map((employeeId) => {
+        const employee = teamMembers.find(
+          (member) => member.value === employeeId
+        );
         return employee ? employee.label : `Employee ${employeeId}`;
       });
 
-      const followerNames = formData.followers.map(employeeId => {
-        const employee = teamMembers.find(member => member.value === employeeId);
+      const followerNames = formData.followers.map((employeeId) => {
+        const employee = teamMembers.find(
+          (member) => member.value === employeeId
+        );
         return employee ? employee.label : `Employee ${employeeId}`;
       });
 
@@ -462,21 +471,23 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
         relatedToId: formData.relatedId || null,
         relatedToName: formData.relatedName || null,
         hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : 0,
-        estimatedHours: formData.estimateHours ? parseFloat(formData.estimateHours) : 0,
+        estimatedHours: formData.estimateHours
+          ? parseFloat(formData.estimateHours)
+          : 0,
         status: formData.status,
         assignedEmployees: formData.assignees.map((employeeId, index) => ({
           employeeId: employeeId,
-          name: assigneeNames[index] || `Employee ${employeeId}`
+          name: assigneeNames[index] || `Employee ${employeeId}`,
         })),
         followersEmployees: formData.followers.map((employeeId, index) => ({
           employeeId: employeeId,
-          name: followerNames[index] || `Employee ${employeeId}`
+          name: followerNames[index] || `Employee ${employeeId}`,
         })),
         createdAt: formData.createdAt,
         createdBy: formData.createdBy,
       };
 
-      console.log('Sending update payload:', JSON.stringify(payload, null, 2));
+      console.log("Sending update payload:", JSON.stringify(payload, null, 2));
 
       const response = await axiosInstance.put("updateTask", payload);
 
@@ -493,7 +504,9 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
           startDate: formData.startDate,
           dueDate: formData.dueDate || null,
           hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : 0,
-          estimateHours: formData.estimateHours ? parseFloat(formData.estimateHours) : 0,
+          estimateHours: formData.estimateHours
+            ? parseFloat(formData.estimateHours)
+            : 0,
           relatedTo: formData.relatedTo || "",
           relatedToId: formData.relatedId || "",
           relatedToName: formData.relatedName || "",
@@ -508,7 +521,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
           onClose();
         }
       } else {
-        console.warn('API returned non-success status:', response.status);
+        console.warn("API returned non-success status:", response.status);
         toast.success("Task updated successfully!");
 
         if (onSuccess) {
@@ -530,20 +543,23 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
       console.error("Error updating task:", error);
 
       if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
+        console.error("Response status:", error.response.status);
+        console.error("Response data:", error.response.data);
 
         if (error.response.status === 500) {
-          console.error('Server error details:', error.response.data);
+          console.error("Server error details:", error.response.data);
           toast.success("Task status updated!");
         } else {
-          toast.error('Failed to update task: ' + (error.response.data?.message || 'Unknown error'));
+          toast.error(
+            "Failed to update task: " +
+              (error.response.data?.message || "Unknown error")
+          );
         }
       } else if (error.request) {
-        console.error('Network error - no response received:', error.request);
-        toast.error('Network error. Please check your connection.');
+        console.error("Network error - no response received:", error.request);
+        toast.error("Network error. Please check your connection.");
       } else {
-        console.error('Other error:', error.message);
+        console.error("Other error:", error.message);
         toast.success("Task updated successfully!");
 
         if (onSuccess) {
@@ -573,7 +589,11 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
     label: item.name,
   }));
 
-  if (formData.relatedId && formData.relatedName && !relatedOptions.some((opt) => opt.value === formData.relatedId)) {
+  if (
+    formData.relatedId &&
+    formData.relatedName &&
+    !relatedOptions.some((opt) => opt.value === formData.relatedId)
+  ) {
     relatedOptions.unshift({
       value: formData.relatedId,
       label: formData.relatedName,
@@ -613,10 +633,20 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-3 z-50">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-hidden border border-gray-200 flex flex-col">
         {/* Modal Header */}
-        <div className={`p-3 ${canEdit ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white' : 'bg-gray-500 text-white'}`}>
+        <div
+          className={`p-3 ${
+            canEdit
+              ? "bg-gradient-to-br from-blue-600 to-indigo-700 text-white"
+              : "bg-gray-500 text-white"
+          }`}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded flex items-center justify-center ${canEdit ? 'bg-white bg-opacity-20' : 'bg-gray-400'}`}>
+              <div
+                className={`w-8 h-8 rounded flex items-center justify-center ${
+                  canEdit ? "bg-white bg-opacity-20" : "bg-gray-400"
+                }`}
+              >
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -635,12 +665,18 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
                 <h2 className="text-lg font-bold">
                   {canEdit ? "Edit Task" : "View Task"}
                 </h2>
-                <p className={`text-xs ${canEdit ? 'text-blue-100' : 'text-gray-200'}`}>
-                  {canEdit ? "Update task information" : "You have view-only access"}
+                <p
+                  className={`text-xs ${
+                    canEdit ? "text-blue-100" : "text-gray-200"
+                  }`}
+                >
+                  {canEdit
+                    ? "Update task information"
+                    : "You have view-only access"}
                 </p>
               </div>
             </div>
-       
+
             <button
               onClick={onClose}
               className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded transition"
@@ -666,15 +702,24 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
         {!canEdit && (
           <div className="bg-red-50 border-l-4 border-red-400 p-3 mx-3 mt-3">
             <div className="flex items-start">
-              <svg className="w-5 h-5 text-red-400 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              <svg
+                className="w-5 h-5 text-red-400 mr-2 mt-0.5"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
               </svg>
               <div>
                 <p className="text-sm text-red-700 font-medium">
                   Access Restricted
                 </p>
                 <p className="text-xs text-red-600 mt-0.5">
-                  You do not have permission to update this task. You can only view the information.
+                  You do not have permission to update this task. You can only
+                  view the information.
                 </p>
               </div>
             </div>
@@ -682,7 +727,11 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
         )}
 
         {/* Modal Body */}
-        <div className={`flex-1 overflow-y-auto p-3 ${!canEdit ? 'opacity-75' : ''}`}>
+        <div
+          className={`flex-1 overflow-y-auto p-3 ${
+            !canEdit ? "opacity-75" : ""
+          }`}
+        >
           <form onSubmit={handleSubmit}>
             {/* Form Grid - Top Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -716,11 +765,17 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
                     value={formData.status || "NOT_STARTED"}
                     onChange={handleChange}
                     name="status"
-                    className={`w-full px-3 py-2 border rounded text-xs ${!canEdit ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                    className={`w-full px-3 py-2 border rounded text-xs ${
+                      !canEdit ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                     disabled={!canEdit}
                   >
                     {statusOptions.map((option) => (
-                      <option key={option.value} value={option.value} className="text-gray-900">
+                      <option
+                        key={option.value}
+                        value={option.value}
+                        className="text-gray-900"
+                      >
                         {option.label}
                       </option>
                     ))}
@@ -789,12 +844,17 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
               {formData.relatedTo && (
                 <GlobalSelectField
                   key={`related-${formData.relatedTo}-${formData.relatedId}`}
-                  label={`Select ${formData.relatedTo.charAt(0).toUpperCase() + formData.relatedTo.slice(1)}`}
+                  label={`Select ${
+                    formData.relatedTo.charAt(0).toUpperCase() +
+                    formData.relatedTo.slice(1)
+                  }`}
                   name="relatedId"
-                  value={formData.relatedId || ''}
+                  value={formData.relatedId || ""}
                   onChange={(e) => {
                     if (!canEdit) return;
-                    const selected = relatedData.find((item) => item.id === e.target.value);
+                    const selected = relatedData.find(
+                      (item) => item.id === e.target.value
+                    );
                     setFormData((prev) => ({
                       ...prev,
                       relatedId: e.target.value,
@@ -852,7 +912,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
                 className="text-sm"
                 disabled={!canEdit}
               />
-              
+
               {/* Priority */}
               <GlobalSelectField
                 label="Priority"
@@ -891,9 +951,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
         {/* Modal Footer */}
         <div className="border-t border-gray-200 bg-gray-50 p-3">
           <div className="flex items-center justify-between">
-            <div className="text-xs text-gray-500">
-          
-            </div>
+            <div className="text-xs text-gray-500"></div>
             <div className="flex items-center justify-end gap-2">
               <button
                 type="button"
@@ -916,7 +974,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
                       Updating...
                     </>
                   ) : (
-                    'Update Task'
+                    "Update Task"
                   )}
                 </button>
               )}

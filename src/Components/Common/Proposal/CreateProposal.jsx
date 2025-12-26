@@ -6,7 +6,6 @@ import toast from "react-hot-toast";
 import Select from "react-select";
 import { City, Country, State } from "country-state-city";
 
-
 import {
   FormFileAttachment,
   FormInput,
@@ -29,6 +28,7 @@ function CreateProposal() {
   const [paymentModeOptions, setPaymentModeOptions] = useState([]);
   const [isPaymentModeLoading, setIsPaymentModeLoading] = useState(false);
   const [selectedPaymentModes, setSelectedPaymentModes] = useState([]);
+  const [proposalSettings, setProposalSettings] = useState({});
 
   const [proposalInfo, setProposalInfo] = useState({
     employeeId: null,
@@ -126,6 +126,7 @@ function CreateProposal() {
     );
     getNextProposalNumber();
     loadPaymentModeOptions();
+    getProposalSettings();
   }, []);
 
   useEffect(() => {
@@ -384,6 +385,46 @@ function CreateProposal() {
       toast.error("Failed to fetch max proposal number.");
     }
   };
+
+  const getProposalSettings = async () => {
+    try {
+      const response = await axiosInstance.get(
+        "getFinanceSettingByType/PROPOSAL"
+      );
+      const data = response.data;
+      setProposalSettings(data);
+      setProposalInfo((prev) => {
+        const proposalDate = new Date(prev.proposalDate);
+        const dueDate = new Date(proposalDate);
+        dueDate.setDate(proposalDate.getDate() + data.dueDays);
+
+        return {
+          ...prev,
+          notes: data.notes,
+          termsAndConditions: data.termsAndConditions,
+          dueDate: dueDate.toISOString().split("T")[0], // optional: if using yyyy-mm-dd
+        };
+      });
+    } catch (error) {
+      console.error("Failed to fetch proposal settings:", error);
+      toast.error("Failed to fetch proposal settings.");
+    }
+  };
+
+  const dynamicPrefix = useMemo(() => {
+    if (!proposalSettings || !proposalSettings.prefix) return "";
+
+    let prefix = `${proposalSettings.prefix}-`;
+    if (proposalSettings.numberFormat === "YEAR") {
+      const dateObj = proposalInfo.proposalDate
+        ? new Date(proposalInfo.proposalDate)
+        : new Date();
+      const year = dateObj.getFullYear();
+      prefix = `${prefix}${year}/`;
+    }
+
+    return prefix;
+  }, [proposalSettings, proposalInfo.proposalDate]);
 
   const handleCancel = () => {
     if (role === "ROLE_ADMIN") {
@@ -858,12 +899,17 @@ function CreateProposal() {
       return;
     }
     setErrors({});
+
+    const sequenceString = String(proposalInfo.proposalNumber).padStart(6, "0");
+    const finalFormattedString = `${dynamicPrefix}${sequenceString}`;
+
     setLoading(true);
 
     const payload = {
       proposalInfo: {
         ...proposalInfo,
         proposalNumber: parseInt(proposalInfo.proposalNumber),
+        formatedProposalNumber: finalFormattedString,
         discount: Number(proposalInfo.discount),
         totalAmmount: Number(proposalInfo.totalAmmount),
         taxPercentage:
@@ -1002,7 +1048,7 @@ function CreateProposal() {
                     <FormNumberInputWithPrefix
                       label="Proposal Number"
                       name="proposalNumber"
-                      prefix="PROP-"
+                      prefix={dynamicPrefix}
                       value={proposalInfo.proposalNumber}
                       onChange={handleInfoChange}
                       required
@@ -1072,7 +1118,6 @@ function CreateProposal() {
                       className="md:col-span-1"
                     />
 
-             
                     {/* Add this after the FormFileAttachment component */}
                     <div className="md:col-span-2">
                       <div className="relative">
