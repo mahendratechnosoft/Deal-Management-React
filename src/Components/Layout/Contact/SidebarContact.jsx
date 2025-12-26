@@ -8,6 +8,9 @@ function SidebarContact({ isOpen, toggleSidebar }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Get userData from localStorage
+  const userData = JSON.parse(localStorage.getItem("userData")) || {};
+  
   // Module key mapping for permission checks
   const moduleKeyMap = {
     Dashboard: "dashboard",
