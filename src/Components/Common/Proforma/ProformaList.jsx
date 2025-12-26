@@ -105,13 +105,16 @@ function ProformaList() {
   const [showDashboard, setShowDashboard] = useState(false);
   const [dashboardData, setDashboardData] = useState(null);
   const [dashboardLoading, setDashboardLoading] = useState(false);
+
+  const [proformaTypeFilter, setProformaTypeFilter] = useState("all");
+
   const [dashboardDateRange, setDashboardDateRange] = useState(
     getIndianFinancialYear()
   );
 
   useEffect(() => {
-    fetchProformaList(0, searchTerm);
-  }, [pageSize, searchTerm]);
+    fetchProformaList(0, searchTerm, proformaTypeFilter);
+  }, [pageSize, searchTerm, proformaTypeFilter]);
 
   useEffect(() => {
     if (showDashboard) {
@@ -136,13 +139,29 @@ function ProformaList() {
     }
   };
 
-  async function fetchProformaList(page = 0, search = "") {
+  async function fetchProformaList(
+    page = 0,
+    search = "",
+    proformaType = proformaTypeFilter
+  ) {
     setListLoading(true);
     try {
       let url = `getAllProformaInvoice/${page}/${pageSize}`;
+      const params = new URLSearchParams();
+
       if (search.trim()) {
-        url += `?search=${encodeURIComponent(search)}`;
+        params.append("search", search);
       }
+
+      if (proformaType && proformaType !== "all") {
+        params.append("proformaType", proformaType);
+      }
+
+      const queryString = params.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+
       const response = await axiosInstance.get(url);
       const data = response.data;
       setProformaInvoices(data.ProformaInvoiceList || []);
@@ -160,7 +179,8 @@ function ProformaList() {
   const handleCreateProforma = () => navigate("/Proforma/Create");
   const handleEdit = (proformaId) => navigate(`/Proforma/Edit/${proformaId}`);
   const handlePageSizeChange = (newSize) => setPageSize(newSize);
-  const handlePageChange = (newPage) => fetchProformaList(newPage, searchTerm);
+  const handlePageChange = (newPage) =>
+    fetchProformaList(newPage, searchTerm, proformaTypeFilter);
 
   const handleOpenPdfPreview = async (proformaInvoiceId) => {
     setIsPdfLoading(true);
@@ -211,6 +231,35 @@ function ProformaList() {
       dashboardData.overdueCount
     : 0;
 
+  const renderFilterDropdown = () => (
+    <div className="relative">
+      <select
+        value={proformaTypeFilter}
+        onChange={(e) => setProformaTypeFilter(e.target.value)}
+        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white appearance-none pr-10"
+      >
+        <option value="all">All</option>
+        <option value="REIMBURSEMENT">Reimbursement</option>
+   
+        {/* Add other proforma types as needed */}
+      </select>
+      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+        <svg
+          className="w-4 h-4 text-gray-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </div>
+    </div>
+  );
   return (
     <LayoutComponent>
       <div className="p-6 pb-0 overflow-x-auto h-[90vh] overflow-y-auto CRM-scroll-width-none">
@@ -350,6 +399,9 @@ function ProformaList() {
 
             <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto items-center">
               {/* Search */}
+
+              <div className="w-full sm:w-48">{renderFilterDropdown()}</div>
+
               <div className="relative flex-1 sm:max-w-64 w-full">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg
