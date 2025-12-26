@@ -14,8 +14,7 @@ function NotificationListener() {
         const adminId = user?.adminId;
 
         const client = new Client({
-            const WS_BASE =import.meta.env.VITE_API_URL   
-            webSocketFactory: () => new SockJS(`${WS_BASE}/ws`);
+            webSocketFactory: () => new SockJS("http://91.203.133.210:9091/ws"),
             reconnectDelay: 5000,
 
             onConnect: () => {
