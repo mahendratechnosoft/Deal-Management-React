@@ -271,9 +271,9 @@ function ProposalList() {
                     >
                       <td
                         className="px-4 py-1 truncate text-sm text-gray-900 font-bold relative"
-                        title={formatProposalNumber(proposal.proposalNumber)}
+                        title={proposal.formatedProposalNumber}
                       >
-                        {formatProposalNumber(proposal.proposalNumber)}
+                        {proposal.formatedProposalNumber}
 
                         <div className="flex items-center gap-3 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                           {/* Edit Button */}
@@ -474,9 +474,7 @@ function ProposalList() {
             <div className="proposal-pdf-modal-header">
               <h3>
                 {selectedProposalData
-                  ? formatProposalNumber(
-                      selectedProposalData.proposalInfo.proposalNumber
-                    )
+                  ? selectedProposalData.proposalInfo.formatedProposalNumber
                   : "Loading..."}
               </h3>
               <div style={{ display: "flex", gap: "10px" }}>
@@ -485,7 +483,7 @@ function ProposalList() {
                   <PDFDownloadLink
                     document={<ProposalPDF data={selectedProposalData} />}
                     fileName={
-                      `Proposal-${selectedProposalData.proposalInfo.proposalNumber}-${selectedProposalData.proposalInfo.companyName}.pdf` ||
+                      `${selectedProposalData.proposalInfo.formatedProposalNumber}-${selectedProposalData.proposalInfo.companyName}.pdf` ||
                       "proposal.pdf"
                     }
                     title="Download PDF"

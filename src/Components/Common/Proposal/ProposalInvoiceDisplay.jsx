@@ -124,7 +124,6 @@ const TaxRows = ({
   sgstPercentage, // New Prop
   taxableAmount,
   currencyType,
-  
 }) => {
   // 1. Handle Split Tax (CGST + SGST)
   if (taxType === "CGST+SGST") {
@@ -202,9 +201,8 @@ const ProposalInvoiceDisplay = ({
   proposal,
   adminInformation,
   headerActions,
-
 }) => {
-    const { proposalInfo, proposalContent, paymentProfiles = [] } = proposal; 
+  const { proposalInfo, proposalContent, paymentProfiles = [] } = proposal;
 
   const [activeTab, setActiveTab] = useState("Summary");
 
@@ -309,7 +307,7 @@ const ProposalInvoiceDisplay = ({
           )}
           <div>
             <h1 className="text-2xl font-bold text-gray-800">
-              {formatProposalNumber(proposalInfo.proposalNumber)}
+              {proposalInfo.formatedProposalNumber}
             </h1>
             <p className="text-gray-600">{proposalInfo.subject}</p>
           </div>
