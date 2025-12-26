@@ -69,6 +69,8 @@ import ComplianceList from "./Components/Common/ContactPannel/Compliance/Complia
 import PublicPFForm from "./Components/Common/ContactPannel/Compliance/PublicPFForm.jsx";
 import PublicEsicForm from "./Components/Common/ContactPannel/Compliance/Esic/PublicEsicForm.jsx";
 
+import NotificationListener from "./Components/BaseComponet/NotificationListener.jsx";
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
@@ -109,6 +111,7 @@ function App() {
 
   return (
     <>
+    <NotificationListener/>
       <Router>
         <TaskTimerProvider>
           <Routes>
