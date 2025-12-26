@@ -65,6 +65,9 @@ import VendorSetting from "./Components/Common/Settings/Finance/VendorSetting.js
 import ProposalSetting from "./Components/Common/Settings/Finance/ProposalSetting.jsx";
 import ProformaSetting from "./Components/Common/Settings/Finance/ProformaSetting.jsx";
 import InvoiceSetting from "./Components/Common/Settings/Finance/InvoiceSetting.jsx";
+import ComplianceList from "./Components/Common/ContactPannel/Compliance/ComplianceList.jsx";
+import PublicPFForm from "./Components/Common/ContactPannel/Compliance/PublicPFForm.jsx";
+import PublicEsicForm from "./Components/Common/ContactPannel/Compliance/Esic/PublicEsicForm.jsx";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -714,7 +717,7 @@ function App() {
 
             <Route
               path="/public-pf-form/:contactId/:formId"
-              element={<PublicPFForm />}
+              element={<PublicPFForm/>}
             />
 
             <Route
