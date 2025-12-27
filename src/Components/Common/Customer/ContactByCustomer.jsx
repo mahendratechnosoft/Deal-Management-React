@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
@@ -21,12 +20,10 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
 
   const emailCheckTimeout = useRef(null); // Add this
 
-const [deleteModal, setDeleteModal] = useState({
-  show: false,
-  contact: null,
-});
-
-
+  const [deleteModal, setDeleteModal] = useState({
+    show: false,
+    contact: null,
+  });
 
   const [formData, setFormData] = useState({
     name: "",
@@ -306,14 +303,6 @@ const [deleteModal, setDeleteModal] = useState({
     }
   };
 
-  // Add this function with other handler functions
-  const handleStatusToggle = () => {
-    setFormData((prev) => ({
-      ...prev,
-      status: !prev.status,
-    }));
-  };
-
   // Create contact
   const handleCreateContact = async (e) => {
     e.preventDefault();
@@ -433,6 +422,7 @@ const [deleteModal, setDeleteModal] = useState({
         loginEmail: formData.loginEmail || null,
         password: formData.loginPassword || null,
         userId: formData.userId || null, // Send userId only in update
+        active: enableCustomerLogin,
       };
 
       const response = await axiosInstance.put("updateContact", updateData);
@@ -501,105 +491,95 @@ const [deleteModal, setDeleteModal] = useState({
     setDeleteModal({ show: false, contact: null });
   };
 
-const handleEdit = async (contact) => {
-  try {
-    setLoading(true); // Show loading while fetching contact data
+  const handleEdit = async (contact) => {
+    try {
+      setLoading(true); // Show loading while fetching contact data
 
-    // Call the API to get contact details by ID
-    const response = await axiosInstance.get(`getContactById/${contact.id}`);
-    const contactData = response.data;
+      // Call the API to get contact details by ID
+      const response = await axiosInstance.get(`getContactById/${contact.id}`);
+      const contactData = response.data;
 
-    setEditingContact(contactData);
+      setEditingContact(contactData);
 
-    setFormData({
-      name: contactData.name,
-      email: contactData.email,
-      phone: contactData.phone,
-      position: contactData.position || "",
-      status: contactData.status !== false,
-      loginEmail: contactData.loginEmail || "",
-      loginPassword: "",
-      userId: contactData.userId || "",
-    });
+      setFormData({
+        name: contactData.name,
+        email: contactData.email,
+        phone: contactData.phone,
+        position: contactData.position || "",
+        status: contactData.status !== false,
+        loginEmail: contactData.loginEmail || "",
+        loginPassword: "",
+        userId: contactData.userId || "",
+        active: contactData.active,
+      });
 
-    setOriginalLoginEmail(contactData.loginEmail || "");
+      setOriginalLoginEmail(contactData.loginEmail || "");
+      setEnableCustomerLogin(contactData.active);
 
-    if (contactData.userId && contactData.userId.trim() !== "") {
-      setEnableCustomerLogin(true);
-    } else {
-      setEnableCustomerLogin(false);
+      // Reset touched state
+      setTouched({
+        name: false,
+        email: false,
+        phone: false,
+        loginEmail: false,
+        loginPassword: false,
+      });
+
+      // Clear any existing errors
+      setFormErrors({
+        name: "",
+        email: "",
+        phone: "",
+        loginEmail: "",
+        loginPassword: "",
+      });
+
+      setShowCreateForm(true);
+    } catch (error) {
+      console.error("Error fetching contact details:", error);
+      toast.error("Failed to load contact details for editing");
+
+      // Fallback to current table data if API fails
+      setEditingContact(contact);
+
+      setFormData({
+        name: contact.name,
+        email: contact.email,
+        phone: contact.phone,
+        position: contact.position || "",
+        status: contact.status !== false,
+        loginEmail: contact.loginEmail || "",
+        loginPassword: "",
+        userId: contact.userId || "",
+      });
+
+      setOriginalLoginEmail(contact.loginEmail || "");
+
+      setEnableCustomerLogin(contact.active);
+
+      // Reset touched state
+      setTouched({
+        name: false,
+        email: false,
+        phone: false,
+        loginEmail: false,
+        loginPassword: false,
+      });
+
+      // Clear any existing errors
+      setFormErrors({
+        name: "",
+        email: "",
+        phone: "",
+        loginEmail: "",
+        loginPassword: "",
+      });
+
+      setShowCreateForm(true);
+    } finally {
+      setLoading(false);
     }
-
-    // Reset touched state
-    setTouched({
-      name: false,
-      email: false,
-      phone: false,
-      loginEmail: false,
-      loginPassword: false,
-    });
-
-    // Clear any existing errors
-    setFormErrors({
-      name: "",
-      email: "",
-      phone: "",
-      loginEmail: "",
-      loginPassword: "",
-    });
-
-    setShowCreateForm(true);
-  } catch (error) {
-    console.error("Error fetching contact details:", error);
-    toast.error("Failed to load contact details for editing");
-
-    // Fallback to current table data if API fails
-    setEditingContact(contact);
-
-    setFormData({
-      name: contact.name,
-      email: contact.email,
-      phone: contact.phone,
-      position: contact.position || "",
-      status: contact.status !== false,
-      loginEmail: contact.loginEmail || "",
-      loginPassword: "",
-      userId: contact.userId || "",
-    });
-
-    setOriginalLoginEmail(contact.loginEmail || "");
-
-    // Auto-enable toggle if contact has login credentials
-  if (contact.userId && contact.userId.trim() !== "") {
-    setEnableCustomerLogin(true);
-  } else {
-    setEnableCustomerLogin(false);
-  }
-
-
-    // Reset touched state
-    setTouched({
-      name: false,
-      email: false,
-      phone: false,
-      loginEmail: false,
-      loginPassword: false,
-    });
-
-    // Clear any existing errors
-    setFormErrors({
-      name: "",
-      email: "",
-      phone: "",
-      loginEmail: "",
-      loginPassword: "",
-    });
-
-    setShowCreateForm(true);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const getInitials = (name) => {
     if (!name) return "??";
@@ -908,7 +888,7 @@ const handleEdit = async (contact) => {
               </div>
 
               {/* Status Toggle Button */}
-              <div className="md:col-span-2">
+              {/* <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Status
                 </label>
@@ -934,7 +914,7 @@ const handleEdit = async (contact) => {
                     {formData.status ? "Active" : "Inactive"}
                   </span>
                 </div>
-              </div>
+              </div> */}
 
               {/* Customer Login Section - Only show if canCustomerLogin is true */}
             </div>
@@ -1324,9 +1304,9 @@ const handleEdit = async (contact) => {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     POSITION
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {/* <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     STATUS
-                  </th>
+                  </th> */}
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     ACTIONS
                   </th>
@@ -1359,7 +1339,7 @@ const handleEdit = async (contact) => {
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                       {contact.position || "-"}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
+                    {/* <td className="px-4 py-3 whitespace-nowrap">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                           contact.status === false
@@ -1369,7 +1349,7 @@ const handleEdit = async (contact) => {
                       >
                         {contact.status === false ? "Inactive" : "Active"}
                       </span>
-                    </td>
+                    </td> */}
                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-2">
                         <button
@@ -1420,7 +1400,6 @@ const handleEdit = async (contact) => {
                           </svg>
                           Delete
                         </button>
-                        
                       </div>
                     </td>
                   </tr>

@@ -55,6 +55,7 @@ function EditCustomer() {
 
     loginEmail: "",
     loginPassword: "",
+    active: false,
   });
 
   const [sameAsBilling, setSameAsBilling] = useState(false);
@@ -271,7 +272,10 @@ function EditCustomer() {
           loginEmail: customer.loginEmail || "",
           loginPassword: "",
           userId: customer.userId || "",
+          active: customer.active || false,
         });
+
+        setEnableCustomerLogin(customer.active);
 
         // Check if shipping address is same as billing
         const isSameAddress =
@@ -282,10 +286,6 @@ function EditCustomer() {
           customer.shippingZipCode === customer.billingZipCode;
 
         setSameAsBilling(isSameAddress);
-
-        if (customer.userId) {
-          setEnableCustomerLogin(true);
-        }
       } catch (error) {
         console.error("Error fetching customer:", error);
         toast.error("Failed to load customer data");
@@ -303,14 +303,6 @@ function EditCustomer() {
       fetchCustomer();
     }
   }, [customerId, navigate, role]);
-
-  // Add this useEffect to handle initial toggle state based on fetched data
-  useEffect(() => {
-    // If customer has userId and canCustomerLogin is true, enable the toggle
-    if (formData.loginEmail && canCustomerLogin) {
-      setEnableCustomerLogin(true);
-    }
-  }, [formData.loginEmail, canCustomerLogin]);
 
   // Handle billing country change
   useEffect(() => {
@@ -693,11 +685,11 @@ function EditCustomer() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-      if (errors.loginEmail) {
-        toast.error("Please fix the email error before submitting");
-        return;
-      }
-  
+    if (errors.loginEmail) {
+      toast.error("Please fix the email error before submitting");
+      return;
+    }
+
     if (!validateForm()) return;
 
     const companyNameError = await validateCompanyName(formData.companyName);
@@ -755,6 +747,7 @@ function EditCustomer() {
         loginEmail: formData.loginEmail || null,
         password: formData.loginPassword || null,
         userId: formData.userId || null,
+        active: enableCustomerLogin,
       };
 
       await axiosInstance.put("updateCustomer", submitData);
@@ -808,51 +801,51 @@ function EditCustomer() {
     }),
   };
 
-const checkEmailAvailability = async (email) => {
-  if (!/\S+@\S+\.\S+/.test(email)) {
-    setErrors((prev) => ({
-      ...prev,
-      loginEmail: "Email address is invalid",
-    }));
-    return;
-  }
-
-  // If the email hasn't changed from original, don't check availability
-  if (email === originalLoginEmail) {
-    setErrors((prev) => ({
-      ...prev,
-      loginEmail: "",
-    }));
-    return;
-  }
-
-  setIsVerifyingEmail(true);
-  setErrors((prev) => ({ ...prev, loginEmail: "" }));
-
-  try {
-    const response = await axiosInstance.get(`/checkEmail/${email}`);
-    // If email exists and it's not the current customer's email
-    if (response.data === true) {
+  const checkEmailAvailability = async (email) => {
+    if (!/\S+@\S+\.\S+/.test(email)) {
       setErrors((prev) => ({
         ...prev,
-        loginEmail: "This email is already in use.",
+        loginEmail: "Email address is invalid",
       }));
-    } else {
+      return;
+    }
+
+    // If the email hasn't changed from original, don't check availability
+    if (email === originalLoginEmail) {
       setErrors((prev) => ({
         ...prev,
         loginEmail: "",
       }));
+      return;
     }
-  } catch (error) {
-    console.error("Error checking email:", error);
-    setErrors((prev) => ({
-      ...prev,
-      loginEmail: "Could not verify email. Please try again.",
-    }));
-  } finally {
-    setIsVerifyingEmail(false);
-  }
-};
+
+    setIsVerifyingEmail(true);
+    setErrors((prev) => ({ ...prev, loginEmail: "" }));
+
+    try {
+      const response = await axiosInstance.get(`/checkEmail/${email}`);
+      // If email exists and it's not the current customer's email
+      if (response.data === true) {
+        setErrors((prev) => ({
+          ...prev,
+          loginEmail: "This email is already in use.",
+        }));
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          loginEmail: "",
+        }));
+      }
+    } catch (error) {
+      console.error("Error checking email:", error);
+      setErrors((prev) => ({
+        ...prev,
+        loginEmail: "Could not verify email. Please try again.",
+      }));
+    } finally {
+      setIsVerifyingEmail(false);
+    }
+  };
 
   if (fetchLoading) {
     return (
