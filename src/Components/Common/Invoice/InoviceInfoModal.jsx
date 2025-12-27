@@ -134,7 +134,7 @@ const InvoiceInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
         >
           <div className="info-modal-header">
             <h3 className="info-modal-title">
-              {formatInvoiceNumber(proforma.invoiceNumber)}
+              {proforma.formatedInvoiceNumber}
             </h3>
             <div className="info-modal-actions">
               <button

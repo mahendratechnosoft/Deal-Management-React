@@ -124,7 +124,7 @@ const VendorSetting = () => {
       </div>
       <hr />
       <div className="p-4 h-[70vh] overflow-hidden">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
           <FormInput
             label="Vendor Prifix"
             name="prefix"
@@ -133,6 +133,42 @@ const VendorSetting = () => {
             type="text"
             error={errors.prefix}
           />
+          <div className="flex flex-col gap-2 mb-2">
+            <label className="text-sm font-medium text-gray-700">
+              Number Format
+            </label>
+            <div className="flex flex-wrap gap-6">
+              {/* Option 1: Number Based */}
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input
+                  type="radio"
+                  name="numberFormat"
+                  value="NUMBER"
+                  checked={financeSettings.numberFormat === "NUMBER"}
+                  onChange={handleInfoChange}
+                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                />
+                <span className="text-sm text-gray-700 group-hover:text-gray-900">
+                  Number Based (000001)
+                </span>
+              </label>
+
+              {/* Option 2: Year Based */}
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input
+                  type="radio"
+                  name="numberFormat"
+                  value="YEAR"
+                  checked={financeSettings.numberFormat === "YEAR"}
+                  onChange={handleInfoChange}
+                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                />
+                <span className="text-sm text-gray-700 group-hover:text-gray-900">
+                  Year Based (YYYY/000001)
+                </span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
     </>

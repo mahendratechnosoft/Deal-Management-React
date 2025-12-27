@@ -383,9 +383,9 @@ function InvoiceList() {
                     >
                       <td
                         className="px-4 py-1 truncate text-sm text-gray-900 font-bold relative"
-                        title={formatInvoiceNumber(proforma.invoiceNumber)}
+                        title={proforma.formatedInvoiceNumber}
                       >
-                        {formatInvoiceNumber(proforma.invoiceNumber)}
+                        {proforma.formatedInvoiceNumber}
                         <div className="flex items-center gap-3 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                           {/* Preview Button */}
                           <button
@@ -555,9 +555,7 @@ function InvoiceList() {
             <div className="proposal-pdf-modal-header">
               <h3>
                 {invoiceData
-                  ? formatInvoiceNumber(
-                      invoiceData.proformaInvoiceInfo.proformaInvoiceNumber
-                    )
+                  ? invoiceData.proformaInvoiceInfo.formatedInvoiceNumber
                   : "Loading..."}
               </h3>
               <div style={{ display: "flex", gap: "10px" }}>
@@ -572,10 +570,8 @@ function InvoiceList() {
                       />
                     }
                     fileName={
-                      `${formatInvoiceNumber(
-                        invoiceData.proformaInvoiceInfo.proformaInvoiceNumber
-                      )}-${invoiceData.proformaInvoiceInfo.companyName}.pdf` ||
-                      "proforma.pdf"
+                      `${invoiceData.proformaInvoiceInfo.formatedInvoiceNumber}-${invoiceData.proformaInvoiceInfo.companyName}.pdf` ||
+                      "Invoice.pdf"
                     }
                     title="Download PDF"
                     className="download-button-icon-wrapper"

@@ -569,7 +569,7 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
     <Document
       title={
         isInvoice
-          ? formatInvoiceNumber(info.invoiceNumber)
+          ? info.formatedInvoiceNumber
           : info.formatedProformaInvoiceNumber
       }
     >
@@ -596,7 +596,7 @@ const ProformaPDF = ({ invoiceData, adminInformation, isInvoice = false }) => {
             </Text>
             <Text style={styles.proformaNumber}>
               {isInvoice
-                ? formatInvoiceNumber(info.invoiceNumber)
+                ? info.formatedInvoiceNumber
                 : info.formatedProformaInvoiceNumber}
             </Text>
             <Text style={getStatusStyles(info.status)}>

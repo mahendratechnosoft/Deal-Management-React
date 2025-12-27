@@ -207,7 +207,7 @@ const ProformaInvoiceDisplay = ({
             </h1>
             <div className="font-semibold text-gray-700">
               {isInvoice
-                ? formatInvoiceNumber(info.proformaInvoiceNumber)
+                ? info.formatedInvoiceNumber
                 : info.formatedProformaInvoiceNumber}
             </div>
             <span

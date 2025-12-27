@@ -177,21 +177,6 @@ const InvoiceSetting = () => {
               </label>
             </div>
           </div>
-
-          <FormTextarea
-            label="Predefined Notes"
-            name="notes"
-            value={financeSettings.notes}
-            onChange={handleInfoChange}
-            rows={5}
-          />
-          <FormTextarea
-            label="Predefined Terms & Conditions"
-            name="termsAndConditions"
-            value={financeSettings.termsAndConditions}
-            onChange={handleInfoChange}
-            rows={5}
-          />
         </div>
       </div>
     </>

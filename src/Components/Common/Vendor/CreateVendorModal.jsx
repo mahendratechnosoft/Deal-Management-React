@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import {
@@ -26,6 +26,7 @@ function CreateVendorModal({ onClose, onSuccess }) {
   const [selectedState, setSelectedState] = useState("");
 
   const [attachments, setAttachments] = useState([]);
+  const [vendorSettings, setVendorSettings] = useState({});
 
   // Form state matching API structure
   const [formData, setFormData] = useState({
@@ -51,6 +52,7 @@ function CreateVendorModal({ onClose, onSuccess }) {
     zipCode: "",
     country: "",
     attachments: [],
+    vendorCodeNumber: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -145,6 +147,8 @@ function CreateVendorModal({ onClose, onSuccess }) {
       phoneCode: country.phonecode,
     }));
     setCountries(countryList);
+    getVendorSettings();
+    getNextVendorNumber();
   }, []);
 
   // Load states when country changes
@@ -395,7 +399,45 @@ function CreateVendorModal({ onClose, onSuccess }) {
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   ];
 
-  // Validate form - ONLY validate vendorName as required
+  const getNextVendorNumber = async () => {
+    try {
+      const responce = await axiosInstance.get("getNextVendorNumber");
+      setFormData((prev) => ({
+        ...prev,
+        vendorCodeNumber: responce.data,
+      }));
+    } catch (error) {
+      console.error("Failed to fetch max proposal number:", error);
+      toast.error("Failed to fetch max proposal number.");
+    }
+  };
+
+  const getVendorSettings = async () => {
+    try {
+      const response = await axiosInstance.get(
+        "getFinanceSettingByType/VENDOR"
+      );
+      const data = response.data;
+      setVendorSettings(data);
+    } catch (error) {
+      console.error("Failed to fetch proposal settings:", error);
+      toast.error("Failed to fetch proposal settings.");
+    }
+  };
+
+  const dynamicPrefix = useMemo(() => {
+    if (!vendorSettings || !vendorSettings.prefix) return "";
+
+    let prefix = `${vendorSettings.prefix}-`;
+    if (vendorSettings.numberFormat === "YEAR") {
+      const dateObj = new Date();
+      const year = dateObj.getFullYear();
+      prefix = `${prefix}${year}/`;
+    }
+
+    return prefix;
+  }, [vendorSettings]);
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -504,16 +546,6 @@ function CreateVendorModal({ onClose, onSuccess }) {
     return true;
   };
 
-  // Generate vendor code (you can customize this)
-  const generateVendorCode = () => {
-    const year = new Date().getFullYear();
-    const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
-    const random = Math.floor(Math.random() * 1000)
-      .toString()
-      .padStart(3, "0");
-    return `V-${year}-${month}-${random}`;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -521,12 +553,15 @@ function CreateVendorModal({ onClose, onSuccess }) {
       toast.error("Please fix the form errors before submitting.");
       return;
     }
+    const sequenceString = String(formData.vendorCodeNumber).padStart(6, "0");
+    const finalFormattedString = `${dynamicPrefix}${sequenceString}`;
 
     setLoading(true);
     try {
       // Prepare vendor payload
       const vendorPayload = {
-        vendorCode: formData.vendorCode.trim().toUpperCase(),
+        vendorCode: finalFormattedString,
+        vendorCodeNumber: formData.vendorCodeNumber,
         vendorName: formData.vendorName,
         companyName: formData.companyName || "",
         emailAddress: formData.emailAddress || "",
@@ -648,23 +683,49 @@ function CreateVendorModal({ onClose, onSuccess }) {
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Vendor Code Field - REQUIRED */}
-        <GlobalInputField
-          label={
-            <>
-              Vendor Code
-              <span className="text-red-500 ml-1">*</span>
-            </>
-          }
-          name="vendorCode"
-          value={formData.vendorCode}
-          onChange={(e) =>
-            handleChange("vendorCode", e.target.value.toUpperCase())
-          }
-          error={errors["vendorCode"]}
-          placeholder="Enter unique vendor code"
-          className="text-sm uppercase"
-          ref={(el) => (errorFieldRefs.current["vendorCode"] = el)}
-        />
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-gray-700">
+            Vendor Code <span className="text-red-500">*</span>
+          </label>
+
+          <div
+            className={`flex items-center border rounded-lg overflow-hidden bg-white transition-colors ${
+              errors["vendorCode"]
+                ? "border-red-500 ring-1 ring-red-500"
+                : "border-gray-300 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500"
+            }`}
+          >
+            {/* The Static Prefix */}
+            <div className="bg-gray-50 px-3 py-2 border-r border-gray-200 text-gray-500 font-medium text-sm select-none">
+              {dynamicPrefix}
+            </div>
+
+            {/* The Input Field (User types only the number/suffix here) */}
+            <input
+              type="text"
+              name="vendorCodeNumber"
+              value={
+                formData.vendorCodeNumber
+                  ? formData.vendorCodeNumber.toString().padStart(6, "0")
+                  : "000000"
+              }
+              onChange={(e) => {
+                const rawValue = e.target.value.replace(/\D/g, "");
+                const numericValue = rawValue.slice(-6);
+
+                handleChange("vendorCodeNumber", numericValue);
+              }}
+              placeholder="000001"
+              className="flex-1 px-3 py-2 text-sm outline-none text-gray-700 placeholder-gray-400"
+              ref={(el) => (errorFieldRefs.current["vendorCode"] = el)}
+            />
+          </div>
+
+          {/* Error Message */}
+          {errors["vendorCode"] && (
+            <p className="text-red-500 text-xs mt-1">{errors["vendorCode"]}</p>
+          )}
+        </div>
 
         {/* Vendor Name Field */}
         <GlobalInputField
