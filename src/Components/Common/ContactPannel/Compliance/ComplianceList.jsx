@@ -227,12 +227,12 @@ function ComplianceList() {
 
     const timer = setTimeout(() => {
       // Allow initial load & "All Customers"
-      if (role !== "ROLE_CONTACT") {
+      // if (role !== "ROLE_CONTACT") {
         if (activeTab === "pf") {
           fetchPfData(0, searchTerm);
         } else {
           fetchEsicData(0, searchTerm);
-        }
+        // }
       }
     }, 300);
 
@@ -1101,6 +1101,7 @@ function ComplianceList() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Created Date
                       </th>
+                      
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Customer
                       </th>
@@ -1303,11 +1304,11 @@ function ComplianceList() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               {formatDate(item.createdAt)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              N/A
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                              {item.customerName || "N/A"}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              N/A
+                              {item.createdBy || "N/A"}
                             </td>
                           </>
                         ) : (
@@ -1429,11 +1430,11 @@ function ComplianceList() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               {formatDate(item.createdAt)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              N/A
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                              {item.customerName || "N/A"}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              N/A
+                              {item.createdBy || "N/A"}
                             </td>
                           </>
                         )}
