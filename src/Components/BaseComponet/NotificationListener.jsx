@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-import axiosInstance from "./axiosInstance";
+import {FINAL_KEYWORD_URL} from "../BaseComponet/finalKeyWord"
 function NotificationListener() {
 
     useEffect(() => {
@@ -12,14 +12,15 @@ function NotificationListener() {
         const user = JSON.parse(localStorage.getItem("userData"));
         const employeeId = user?.employeeId;
         const adminId = user?.adminId;
-
+        const role=user?.role;
         const client = new Client({
-            webSocketFactory: () => new SockJS("http://91.203.133.210:9091/ws"),
+
+            webSocketFactory: () => new SockJS(`${FINAL_KEYWORD_URL}/ws`),
             reconnectDelay: 5000,
 
             onConnect: () => {
                 // 👉 EMPLOYEE notifications
-                if (employeeId) {
+                if (role=="ROLE_EMPLOYEE") {
                     client.subscribe(
                         `/topic/updateTasknotificationsToEmployee/${employeeId}`,
                         (message) => handleStatusUpdateNotification(message)
@@ -32,7 +33,7 @@ function NotificationListener() {
                 }
 
                 // 👉 ADMIN notifications
-                if (adminId) {
+                if (role=="ROLE_ADMIN") {
                     client.subscribe(
                         `/topic/updateTasknotificationsToAdmin/${adminId}`,
                         (message) => handleStatusUpdateNotification(message)
