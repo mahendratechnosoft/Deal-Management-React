@@ -11,6 +11,7 @@ import EditEsicModal from "./Esic/EditEsicModal";
 import Pagination from "../../../Common/pagination";
 import PublicEsicFormBasemodal from "./Esic/PublicEsicFormBasemodal";
 import { hasPermission } from "../../../BaseComponet/permissions";
+import { useLocation, useSearchParams } from "react-router-dom";
 
 // Table Skeleton Component
 const TableSkeleton = ({ rows = 5, columns = 8 }) => {
@@ -90,111 +91,161 @@ function ComplianceList() {
   const [showPublicEsicLinkModal, setShowPublicEsicLinkModal] = useState(false);
   const [generatedEsicLink, setGeneratedEsicLink] = useState("");
 
+  const location = useLocation();
+  // Add state to track if we're auto-filtering
+  const [autoFilterFromNav, setAutoFilterFromNav] = useState(false);
   // Search state
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Fetch customers dropdown data
-  const fetchCustomers = async () => {
+  useEffect(() => {
+    const customerIdFromUrl = searchParams.get("customerId");
+    const contactIdFromUrl = searchParams.get("contactId");
+    const tabFromUrl = searchParams.get("tab");
+
+    if (tabFromUrl === "pf" || tabFromUrl === "esic") {
+      setActiveTab(tabFromUrl);
+    }
+
+    if (customerIdFromUrl) {
+      setSelectedCustomer(customerIdFromUrl);
+      fetchCustomers(customerIdFromUrl);
+    }
+
+    if (customerIdFromUrl && contactIdFromUrl) {
+      fetchContacts(customerIdFromUrl).then(() => {
+        setSelectedContact(contactIdFromUrl);
+      });
+    }
+  }, [searchParams]);
+
+  // Simplified fetchCustomers function
+  const fetchCustomers = async (preselectedCustomerId = null) => {
     try {
-      // For ROLE_CUSTOMER, get customerId from localStorage
+      setLoadingCustomers(true);
+
+      // For ROLE_CUSTOMER, get from localStorage
       if (role === "ROLE_CUSTOMER") {
         const userDataStr = localStorage.getItem("userData");
         if (userDataStr) {
           const userData = JSON.parse(userDataStr);
           const customerId = userData.customerId;
-
           if (customerId) {
-            console.log(
-              "ROLE_CUSTOMER: Setting customer ID from localStorage:",
-              customerId
-            );
-
-            // Set the customerId from localStorage
             setSelectedCustomer(customerId);
-
-            // We don't need to fetch customer list for ROLE_CUSTOMER
-            // Set customers to empty array since we won't show the dropdown
-            setCustomers([]);
-
-            // IMPORTANT: Fetch contacts for this customer immediately
-            // Pass the customerId directly
+            setCustomers([]); // No dropdown for ROLE_CUSTOMER
             await fetchContacts(customerId);
             return;
           }
         }
       }
 
-      // For other roles, fetch customers normally
-      setLoadingCustomers(true);
+      // For other roles with navigation
       const response = await axiosInstance.get("getCustomerListWithNameAndId");
 
       if (response.status >= 200 && response.status < 300) {
         const customersData = response.data || [];
 
-        // Add "All Customers" option at the beginning
-        const customersWithAllOption = [
-          { id: "", companyName: "All Customers" },
-          ...customersData,
-        ];
-
-        setCustomers(customersWithAllOption);
-
-        // Default to "All Customers" (empty string)
-        if (!selectedCustomer) {
-          setSelectedCustomer("");
+        // Only add "All Customers" if we're not filtering from navigation
+        let customersWithOptions = [];
+        if (!preselectedCustomerId) {
+          customersWithOptions = [
+            { id: "", companyName: "All Customers" },
+            ...customersData,
+          ];
+        } else {
+          // Find and show the specific customer
+          const selectedCustomerObj = customersData.find(
+            (cust) => cust.id.toString() === preselectedCustomerId.toString()
+          );
+          customersWithOptions = selectedCustomerObj
+            ? [selectedCustomerObj]
+            : customersData;
         }
+
+        setCustomers(customersWithOptions);
       }
     } catch (error) {
       console.error("Error fetching customers:", error);
-      toast.error("Failed to load customers");
     } finally {
       setLoadingCustomers(false);
     }
   };
 
-  // Fetch contacts for selected customer
   const fetchContacts = async (customerId) => {
-    // Use the provided customerId parameter
-    const customerIdToUse = customerId || selectedCustomer;
-
-    if (!customerIdToUse) {
-      setContacts([]);
-      return;
-    }
+    if (!customerId) return;
 
     try {
       setLoadingContacts(true);
+      const response = await axiosInstance.get(`getContacts/${customerId}`);
+      const contactsData = response.data || [];
 
-      // Log for debugging
-      console.log("Fetching contacts for customer ID:", customerIdToUse);
+      setContacts(contactsData);
 
-      // Use the correct API endpoint
-      const endpoint = `getContacts/${customerIdToUse}`;
-      const response = await axiosInstance.get(endpoint);
-
-      if (response.status >= 200 && response.status < 300) {
-        const contactsData = response.data || [];
-        console.log("Contacts fetched:", contactsData);
-        setContacts(contactsData);
-
-        // Reset contact selection when customer changes
-        setSelectedContact("");
+      const contactIdFromUrl = searchParams.get("contactId");
+      if (contactIdFromUrl) {
+        const exists = contactsData.some(
+          (c) => c.id.toString() === contactIdFromUrl.toString()
+        );
+        if (exists) {
+          setSelectedContact(contactIdFromUrl);
+        }
       }
-    } catch (error) {
-      console.error("Error fetching contacts:", error);
-
-      // Handle different error cases
-      if (error.response?.status === 404) {
-        console.log("No contacts found for this customer");
-        setContacts([]);
-      } else {
-        toast.error("Failed to load contacts");
-        setContacts([]);
-      }
+    } catch (err) {
+      setContacts([]);
     } finally {
       setLoadingContacts(false);
     }
   };
+
+  // Initial data fetch - simplified
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      if (role === "ROLE_CUSTOMER") {
+        const userDataStr = localStorage.getItem("userData");
+        if (userDataStr) {
+          const userData = JSON.parse(userDataStr);
+          const customerId = userData.customerId;
+          if (customerId) {
+            setSelectedCustomer(customerId);
+            await fetchContacts(customerId);
+          }
+        }
+      } else if (role !== "ROLE_CONTACT") {
+        // Only fetch if we have no customer selected yet
+        if (!selectedCustomer) {
+          await fetchCustomers();
+        }
+      }
+    };
+
+    fetchInitialData();
+  }, [role]);
+
+  // Data fetching based on filters - debounced (UPDATED)
+  useEffect(() => {
+    if (autoFilterFromNav) return;
+
+    const timer = setTimeout(() => {
+      // Allow initial load & "All Customers"
+      if (role !== "ROLE_CONTACT") {
+        if (activeTab === "pf") {
+          fetchPfData(0, searchTerm);
+        } else {
+          fetchEsicData(0, searchTerm);
+        }
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [
+    selectedCustomer,
+    selectedContact,
+    activeTab,
+    pageSize,
+    searchTerm,
+    role,
+    autoFilterFromNav,
+  ]);
 
   const fetchPfData = async (page = 0, search = "", isSearch = false) => {
     try {
@@ -348,19 +399,14 @@ function ComplianceList() {
 
   // Handle customer change
   const handleCustomerChange = (customerId) => {
+    setAutoFilterFromNav(false);
     setSelectedCustomer(customerId);
-    setSelectedContact(""); // Reset contact when customer changes
-
-    // Fetch contacts for the selected customer (only if not "All Customers")
-    if (customerId) {
-      fetchContacts(customerId);
-    } else {
-      setContacts([]);
-    }
+    setSelectedContact("");
+    if (customerId) fetchContacts(customerId);
   };
 
-  // Handle contact change
   const handleContactChange = (contactId) => {
+    setAutoFilterFromNav(false);
     setSelectedContact(contactId);
   };
 
@@ -483,6 +529,7 @@ function ComplianceList() {
 
   // Search handler with debounce
   useEffect(() => {
+    if (!searchTerm.trim()) return;
     const timeoutId = setTimeout(() => {
       if (activeTab === "pf") {
         fetchPfData(0, searchTerm, true);
@@ -492,94 +539,23 @@ function ComplianceList() {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+  }, [searchTerm, activeTab]);
 
-  // Fetch data when filters change
-  useEffect(() => {
-    // Skip fetching for ROLE_CONTACT until they select something
-    if (role === "ROLE_CONTACT") {
-      return;
-    }
+  // Add a function to reset auto-filter
+  const handleClearFilters = () => {
+    setSelectedCustomer("");
+    setSelectedContact("");
+    setSearchTerm("");
+    setAutoFilterFromNav(false);
+    setCurrentPage(0);
 
-    // For ROLE_CUSTOMER, only fetch data if we have a customerId
-    if (role === "ROLE_CUSTOMER" && !selectedCustomer) {
-      return;
-    }
-
-    if (activeTab === "pf") {
-      fetchPfData(0, searchTerm);
-    } else {
-      fetchEsicData(0, searchTerm);
-    }
-  }, [selectedCustomer, selectedContact, activeTab, pageSize, role]);
-
-  // Initial data fetch - load data based on role
-  useEffect(() => {
-    const initializeData = async () => {
-      if (role === "ROLE_CUSTOMER") {
-        // For ROLE_CUSTOMER, get customerId from localStorage
-        const userDataStr = localStorage.getItem("userData");
-        if (userDataStr) {
-          const userData = JSON.parse(userDataStr);
-          const customerId = userData.customerId;
-
-          if (customerId) {
-            console.log(
-              "Initializing ROLE_CUSTOMER with customerId:",
-              customerId
-            );
-
-            // Set the customer ID
-            setSelectedCustomer(customerId);
-
-            // IMPORTANT: Wait for contacts to be fetched before fetching PF/ESIC data
-            await fetchContacts(customerId);
-
-            // Then fetch compliance data
-            if (activeTab === "pf") {
-              await fetchPfData(0, searchTerm);
-            } else {
-              await fetchEsicData(0, searchTerm);
-            }
-          }
-        }
-      } else if (role === "ROLE_CONTACT") {
-        // For ROLE_CONTACT, don't fetch anything initially
-        return;
-      } else {
-        // For other roles (admin, etc.), fetch customers normally
-        await fetchCustomers();
-
-        // Fetch initial data for "All Customers"
-        if (activeTab === "pf") {
-          await fetchPfData(0, searchTerm);
-        } else {
-          await fetchEsicData(0, searchTerm);
-        }
-      }
-    };
-
-    initializeData();
-  }, [role, activeTab]); // Added activeTab to dependencies
-
-  // When customer is selected, fetch contacts
-  useEffect(() => {
-    if (selectedCustomer) {
-      console.log("Customer changed, fetching contacts for:", selectedCustomer);
-      fetchContacts(selectedCustomer);
-    } else {
-      // If customer is cleared, clear contacts too
-      setContacts([]);
-      setSelectedContact("");
-    }
-  }, [selectedCustomer]);
-
-  // When customer is selected, fetch contacts
-  useEffect(() => {
-    if (selectedCustomer) {
-      fetchContacts(selectedCustomer);
-    }
-  }, [selectedCustomer]);
+    // Also clear from URL
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.delete("customerId");
+    newSearchParams.delete("contactId");
+    newSearchParams.delete("tab");
+    setSearchParams(newSearchParams);
+  };
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -796,35 +772,42 @@ function ComplianceList() {
                       <div className="relative">
                         <select
                           value={selectedCustomer}
-                          onChange={(e) => handleCustomerChange(e.target.value)}
+                          onChange={(e) => {
+                            const customerId = e.target.value;
+                            setSelectedCustomer(customerId);
+                            setSelectedContact("");
+
+                            // Clear URL params when changing customer
+                            const newSearchParams = new URLSearchParams(
+                              searchParams
+                            );
+                            newSearchParams.delete("customerId");
+                            newSearchParams.delete("contactId");
+                            setSearchParams(newSearchParams);
+
+                            if (customerId) {
+                              fetchContacts(customerId);
+                            } else {
+                              setContacts([]);
+                            }
+                          }}
                           disabled={loadingCustomers}
                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white transition-colors duration-200 appearance-none pr-10"
                         >
                           {loadingCustomers ? (
                             <option>Loading customers...</option>
+                          ) : customers.length === 0 ? (
+                            <option>No customers available</option>
                           ) : (
                             customers.map((customer) => (
                               <option key={customer.id} value={customer.id}>
-                                {customer.companyName}
+                                {customer.companyName ||
+                                  customer.name ||
+                                  `Customer ${customer.id}`}
                               </option>
                             ))
                           )}
                         </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                          <svg
-                            className="w-4 h-4 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 9l-7 7-7-7"
-                            />
-                          </svg>
-                        </div>
                       </div>
                     </div>
                   )}
