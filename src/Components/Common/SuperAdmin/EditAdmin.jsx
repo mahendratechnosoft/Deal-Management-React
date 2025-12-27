@@ -42,6 +42,7 @@ function EditAdmin() {
     employeeAccess: false,
     settingAccess: false,
     itemAccess: false,
+
     // Detailed access permissions - add all the new fields here
     leadViewAll: false,
     leadCreate: false,
@@ -114,6 +115,12 @@ function EditAdmin() {
     customerComplianceCreate: false,
     customerComplianceDelete: false,
     customerComplianceEdit: false,
+
+    complianceAccess: false,
+    complianceCreate: false,
+    complianceDelete: false,
+    complianceEdit: false,
+    complianceViewAll: false,
   });
 
   const [errors, setErrors] = useState({});
@@ -177,6 +184,8 @@ function EditAdmin() {
             customerComplianceDelete:
               accessData.customerComplianceDelete || false,
             customerComplianceEdit: accessData.customerComplianceEdit || false,
+
+            complianceAccess: accessData.complianceAccess || false,
           });
         }
       } catch (error) {
@@ -206,26 +215,26 @@ function EditAdmin() {
     }
   };
 
-const handleAccessChange = (field, value) => {
-  setModuleAccess((prev) => {
-    const updated = {
-      ...prev,
-      [field]: value,
-    };
+  const handleAccessChange = (field, value) => {
+    setModuleAccess((prev) => {
+      const updated = {
+        ...prev,
+        [field]: value,
+      };
 
-    // If "canCustomerLogin" is turned OFF, set all related permissions to false
-    if (field === "canCustomerLogin" && !value) {
-      updated.canContactPersonLogin = false;
-      updated.customerComplianceAccess = false;
-      updated.customerComplianceViewAll = false;
-      updated.customerComplianceCreate = false;
-      updated.customerComplianceDelete = false;
-      updated.customerComplianceEdit = false;
-    }
+      // If "canCustomerLogin" is turned OFF, set all related permissions to false
+      if (field === "canCustomerLogin" && !value) {
+        updated.canContactPersonLogin = false;
+        updated.customerComplianceAccess = false;
+        updated.customerComplianceViewAll = false;
+        updated.customerComplianceCreate = false;
+        updated.customerComplianceDelete = false;
+        updated.customerComplianceEdit = false;
+      }
 
-    return updated;
-  });
-};
+      return updated;
+    });
+  };
 
   const handleClearAllAccess = () => {
     setModuleAccess((prev) => ({
@@ -253,6 +262,8 @@ const handleAccessChange = (field, value) => {
       customerComplianceCreate: false,
       customerComplianceDelete: false,
       customerComplianceEdit: false,
+
+      complianceAccess:false,
     }));
     toast.success("All permissions cleared");
   };
@@ -283,6 +294,8 @@ const handleAccessChange = (field, value) => {
       customerComplianceCreate: true,
       customerComplianceDelete: true,
       customerComplianceEdit: true,
+
+      complianceAccess:true,
     }));
     toast.success("All permissions granted");
   };
@@ -385,7 +398,10 @@ const handleAccessChange = (field, value) => {
           vendorEdit: true,
           vendorViewAll: true,
 
-   
+          complianceCreate: true,
+          complianceDelete: true,
+          complianceEdit: true,
+          complianceViewAll: true,
         },
       };
 
@@ -757,7 +773,6 @@ const handleAccessChange = (field, value) => {
             </div>
 
             {/* Right Column - Module Access */}
-            {/* Right Column - Module Access */}
             <div className="space-y-4">
               <div className="bg-white rounded-lg border border-gray-200 p-4">
                 <div className="flex items-center justify-between mb-4">
@@ -922,14 +937,22 @@ const handleAccessChange = (field, value) => {
                         handleAccessChange("amcAccess", isChecked)
                       }
                     />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
                     <ModuleAccessToggle
                       title="Vendor"
                       field="vendorAccess"
                       isChecked={getAccess("vendorAccess")}
                       onChange={(isChecked) =>
                         handleAccessChange("vendorAccess", isChecked)
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <ModuleAccessToggle
+                      title="compliance"
+                      field="complianceAccess"
+                      isChecked={getAccess("complianceAccess")}
+                      onChange={(isChecked) =>
+                        handleAccessChange("complianceAccess", isChecked)
                       }
                     />
                   </div>
