@@ -10,7 +10,10 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { Country, State, City } from "country-state-city";
 import { hasPermission } from "../../BaseComponet/permissions";
-import { showErrorAlert,showDeleteConfirmation  } from "../../BaseComponet/alertUtils";
+import {
+  showErrorAlert,
+  showDeleteConfirmation,
+} from "../../BaseComponet/alertUtils";
 
 function EditVendorModal({ vendorId, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -27,6 +30,7 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
 
   const [existingAttachments, setExistingAttachments] = useState([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(false);
+  const [dynamicPrefix, setDynamicPrefix] = useState("");
   const canEdit = hasPermission("vendor", "Edit");
   // Form state
   const [formData, setFormData] = useState({
@@ -54,6 +58,7 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
     country: "",
     createdAt: "", // Add this line
     createdBy: "",
+    vendorCodeNumber: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -221,6 +226,14 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
         const vendorData = response.data;
         setOriginalData(vendorData);
 
+        const fullString = vendorData.vendorCode || "";
+        if (fullString && fullString.length > 6) {
+          const extractedPrefix = fullString.slice(0, -6);
+          setDynamicPrefix(extractedPrefix);
+        } else {
+          setDynamicPrefix("Vendor-");
+        }
+
         // Set form data
         setFormData({
           vendorId: vendorData.vendorId || "",
@@ -247,6 +260,7 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
           country: vendorData.country || "",
           createdAt: vendorData.createdAt || "", // Add this line
           createdBy: vendorData.createdBy || "",
+          vendorCodeNumber: vendorData.vendorCodeNumber || "",
         });
       }
     } catch (error) {
@@ -755,11 +769,15 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
       return;
     }
 
+    const sequenceString = String(formData.vendorCodeNumber).padStart(6, "0");
+    const finalFormattedString = `${dynamicPrefix}${sequenceString}`;
+
     setLoading(true);
     try {
       const payload = {
         vendorId: formData.vendorId,
-        vendorCode: formData.vendorCode || "",
+        vendorCode: finalFormattedString,
+        vendorCodeNumber: formData.vendorCodeNumber,
         vendorName: formData.vendorName || "",
         companyName: formData.companyName || "",
         emailAddress: formData.emailAddress || "",
@@ -853,22 +871,48 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Vendor Code Field - READ ONLY */}
-        <GlobalInputField
-          label={
-            <>
-              Vendor Code
-              <span className="text-red-500 ml-1">*</span>
-            </>
-          }
-          name="vendorCode"
-          value={formData.vendorCode}
-          onChange={(e) =>
-            handleChange("vendorCode", e.target.value.toUpperCase())
-          }
-          error={errors["vendorCode"]}
-          placeholder="Vendor code"
-          className="text-sm uppercase bg-gray-50 text-gray-800 "
-        />
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-gray-700">
+            Vendor Code <span className="text-red-500">*</span>
+          </label>
+
+          <div
+            className={`flex items-center border rounded-lg overflow-hidden bg-white transition-colors ${
+              errors["vendorCode"]
+                ? "border-red-500 ring-1 ring-red-500"
+                : "border-gray-300 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500"
+            }`}
+          >
+            {/* The Static Prefix */}
+            <div className="bg-gray-50 px-3 py-2 border-r border-gray-200 text-gray-500 font-medium text-sm select-none">
+              {dynamicPrefix}
+            </div>
+
+            {/* The Input Field (User types only the number/suffix here) */}
+            <input
+              type="text"
+              name="vendorCodeNumber"
+              value={
+                formData.vendorCodeNumber
+                  ? formData.vendorCodeNumber.toString().padStart(6, "0")
+                  : "000000"
+              }
+              onChange={(e) => {
+                const rawValue = e.target.value.replace(/\D/g, "");
+                const numericValue = rawValue.slice(-6);
+
+                handleChange("vendorCodeNumber", numericValue);
+              }}
+              placeholder="000001"
+              className="flex-1 px-3 py-2 text-sm outline-none text-gray-700 placeholder-gray-400"
+            />
+          </div>
+
+          {/* Error Message */}
+          {errors["vendorCode"] && (
+            <p className="text-red-500 text-xs mt-1">{errors["vendorCode"]}</p>
+          )}
+        </div>
 
         <GlobalInputField
           label={
@@ -1531,7 +1575,6 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
             <div className="text-xs text-gray-500">
               {/* Add permission message */}
               {!canEdit && (
-                
                 <span className="flex items-center gap-1 text-red-600">
                   <svg
                     className="w-4 h-4"
@@ -1548,7 +1591,6 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
                   </svg>
                   You don't have edit permission
                 </span>
-            
               )}
             </div>
 
@@ -1583,10 +1625,7 @@ function EditVendorModal({ vendorId, onClose, onSuccess }) {
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={
-                    loading ||
-                           !canEdit
-                  }
+                  disabled={loading || !canEdit}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {loading ? (

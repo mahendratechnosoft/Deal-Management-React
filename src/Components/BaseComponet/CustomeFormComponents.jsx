@@ -346,21 +346,21 @@ export const FormNumberInputWithPrefix = ({
             placeholder=" "
             disabled={disabled}
             className={`block w-full px-3 py-2 bg-transparent appearance-none focus:outline-none peer text-sm rounded-r-lg border-none
-              ${
-                disabled ? "bg-gray-200 cursor-not-allowed text-gray-500" : ""
-              }`}
+                ${
+                  disabled ? "bg-gray-200 cursor-not-allowed text-gray-500" : ""
+                }`}
           />
 
           <label
             htmlFor={name}
             className={`absolute text-sm duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 left-1 
-              peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
-              peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none 
-              ${
-                error
-                  ? "text-red-600"
-                  : "text-gray-700 peer-focus:text-blue-600"
-              }`}
+                peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-2 
+                peer-focus:px-2 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2 pointer-events-none 
+                ${
+                  error
+                    ? "text-red-600"
+                    : "text-gray-700 peer-focus:text-blue-600"
+                }`}
           >
             {label} {required && <span className="text-red-500">*</span>}
           </label>
