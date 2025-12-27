@@ -63,6 +63,8 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
     { value: "Mother", label: "Mother" },
     { value: "Brother", label: "Brother" },
     { value: "Sister", label: "Sister" },
+    { value: "Grandfather", label: "Grandfather" },
+    { value: "Grandmother", label: "Grandmother" },
   ];
 
   // Tabs configuration
