@@ -400,6 +400,12 @@ function EditEmployee() {
         vendorCreate: selectedRole.vendorCreate || false,
         vendorDelete: selectedRole.vendorDelete || false,
         vendorEdit: selectedRole.vendorEdit || false,
+
+        complianceAccess: selectedRole.complianceAccess || false,
+        complianceViewAll: selectedRole.complianceViewAll || false,
+        complianceCreate: selectedRole.complianceCreate || false,
+        complianceDelete: selectedRole.complianceDelete || false,
+        complianceEdit: selectedRole.complianceEdit || false,
       });
     }
 
@@ -480,6 +486,12 @@ function EditEmployee() {
           vendorDelete: false,
           vendorEdit: false,
           vendorViewAll: false,
+
+          complianceAccess: false,
+          complianceCreate: false,
+          complianceDelete: false,
+          complianceEdit: false,
+          complianceViewAll: false,
         };
       }
       return {
@@ -559,6 +571,12 @@ function EditEmployee() {
       vendorDelete: false,
       vendorEdit: false,
       vendorViewAll: false,
+
+      complianceAccess: false,
+      complianceCreate: false,
+      complianceDelete: false,
+      complianceEdit: false,
+      complianceViewAll: false,
     });
     toast.success("All permissions cleared");
   };
@@ -632,6 +650,12 @@ function EditEmployee() {
       vendorDelete: true,
       vendorEdit: true,
       vendorViewAll: true,
+
+      complianceAccess: true,
+      complianceCreate: true,
+      complianceDelete: true,
+      complianceEdit: true,
+      complianceViewAll: true,
     });
     toast.success("All permissions granted");
   };
@@ -1369,6 +1393,21 @@ function EditEmployee() {
                             { label: "Create", field: "vendorCreate" },
                             { label: "Edit", field: "vendorEdit" },
                             { label: "Delete", field: "vendorDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
+
+                      {hasModulePermission("compliance") && (
+                        <ModuleAccessGroup
+                          title="Compliance Permissions"
+                          permissions={[
+                            { label: "Access", field: "complianceAccess" },
+                            { label: "View All", field: "complianceViewAll" },
+                            { label: "Create", field: "complianceCreate" },
+                            { label: "Edit", field: "complianceEdit" },
+                            { label: "Delete", field: "complianceDelete" },
                           ]}
                           getAccess={getAccess}
                           handleAccessChange={handleAccessChange}

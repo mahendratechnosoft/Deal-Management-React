@@ -170,6 +170,12 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
     vendorDelete: false,
     vendorEdit: false,
     vendorViewAll: false,
+
+    complianceAccess: false,
+    complianceCreate: false,
+    complianceDelete: false,
+    complianceEdit: false,
+    complianceViewAll: false,
   });
 
   // =======================================COUNTrY STATE CITY DROPDOWN START__>===================================
@@ -502,6 +508,12 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
         vendorCreate: role.vendorCreate,
         vendorDelete: role.vendorDelete,
         vendorEdit: role.vendorEdit,
+
+        complianceAccess: role.complianceAccess,
+        complianceViewAll: role.complianceViewAll,
+        complianceCreate: role.complianceCreate,
+        complianceDelete: role.complianceDelete,
+        complianceEdit: role.complianceEdit,
       }));
       setRoleOptions(options);
     } catch (error) {
@@ -590,6 +602,12 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
       vendorDelete: false,
       vendorEdit: false,
       vendorViewAll: false,
+
+      complianceAccess: false,
+      complianceCreate: false,
+      complianceDelete: false,
+      complianceEdit: false,
+      complianceViewAll: false,
     });
 
     if (errors.departmentId) {
@@ -689,6 +707,12 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
           vendorCreate: selectedRole.vendorCreate || false,
           vendorDelete: selectedRole.vendorDelete || false,
           vendorEdit: selectedRole.vendorEdit || false,
+
+          complianceAccess: selectedRole.complianceAccess || false,
+          complianceViewAll: selectedRole.complianceViewAll || false,
+          complianceCreate: selectedRole.complianceCreate || false,
+          complianceDelete: selectedRole.complianceDelete || false,
+          complianceEdit: selectedRole.complianceEdit || false,
         });
 
         // Show success message
@@ -772,6 +796,12 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
         vendorDelete: false,
         vendorEdit: false,
         vendorViewAll: false,
+
+        complianceAccess: false,
+        complianceCreate: false,
+        complianceDelete: false,
+        complianceEdit: false,
+        complianceViewAll: false,
       });
 
       toast.success("Permissions reset");
@@ -1703,6 +1733,21 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                             { label: "Create", field: "vendorCreate" },
                             { label: "Edit", field: "vendorEdit" },
                             { label: "Delete", field: "vendorDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
+
+                      {hasModulePermission("compliance") && (
+                        <ModuleAccessGroup
+                          title="Compliance Permissions"
+                          permissions={[
+                            { label: "Access", field: "complianceAccess" },
+                            { label: "View All", field: "complianceViewAll" },
+                            { label: "Create", field: "complianceCreate" },
+                            { label: "Edit", field: "complianceEdit" },
+                            { label: "Delete", field: "complianceDelete" },
                           ]}
                           getAccess={getAccess}
                           handleAccessChange={handleAccessChange}

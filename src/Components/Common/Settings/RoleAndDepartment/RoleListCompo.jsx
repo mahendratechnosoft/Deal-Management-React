@@ -226,6 +226,12 @@ function RoleListCompo() {
     vendorDelete: false,
     vendorEdit: false,
     vendorViewAll: false,
+
+    complianceAccess: false,
+    complianceCreate: false,
+    complianceDelete: false,
+    complianceEdit: false,
+    complianceViewAll: false,
   });
 
   // Module Access State for Update Modal
@@ -301,6 +307,12 @@ function RoleListCompo() {
     vendorDelete: false,
     vendorEdit: false,
     vendorViewAll: false,
+
+    complianceAccess: false,
+    complianceCreate: false,
+    complianceDelete: false,
+    complianceEdit: false,
+    complianceViewAll: false,
   });
 
   useEffect(() => {
@@ -419,6 +431,12 @@ function RoleListCompo() {
       vendorDelete: false,
       vendorEdit: false,
       vendorViewAll: false,
+
+      complianceAccess: false,
+      complianceCreate: false,
+      complianceDelete: false,
+      complianceEdit: false,
+      complianceViewAll: false,
     });
   };
 
@@ -536,6 +554,12 @@ function RoleListCompo() {
         vendorCreate: role.vendorCreate || false,
         vendorDelete: role.vendorDelete || false,
         vendorEdit: role.vendorEdit || false,
+
+        complianceAccess: role.complianceAccess || false,
+        complianceViewAll: role.complianceViewAll || false,
+        complianceCreate: role.complianceCreate || false,
+        complianceDelete: role.complianceDelete || false,
+        complianceEdit: role.complianceEdit || false,
       });
     }
 
@@ -1142,6 +1166,22 @@ function RoleListCompo() {
                             handleAccessChange={handleAccessChange}
                           />
                         )}
+
+                        {hasModulePermission("compliance") && (
+                          <ModuleAccessGroup
+                            title="Compliance Permissions"
+                            permissions={[
+                              { label: "Access", field: "complianceAccess" },
+                              { label: "View All", field: "complianceViewAll" },
+                              { label: "Create", field: "complianceCreate" },
+                              { label: "Edit", field: "complianceEdit" },
+                              { label: "Delete", field: "complianceDelete" },
+                            ]}
+                            getAccess={getAccess}
+                            handleAccessChange={handleAccessChange}
+                          />
+                        )}
+                 
                       </>
                     )}
                     {hasPermission("donor", "Access") && (
@@ -1468,6 +1508,21 @@ function RoleListCompo() {
                               { label: "Create", field: "vendorCreate" },
                               { label: "Edit", field: "vendorEdit" },
                               { label: "Delete", field: "vendorDelete" },
+                            ]}
+                            getAccess={getUpdateAccess}
+                            handleAccessChange={handleUpdateAccessChange}
+                          />
+                        )}
+
+                        {hasModulePermission("compliance") && (
+                          <ModuleAccessGroup
+                            title="Compliance Permissions"
+                            permissions={[
+                              { label: "Access", field: "complianceAccess" },
+                              { label: "View All", field: "complianceViewAll" },
+                              { label: "Create", field: "complianceCreate" },
+                              { label: "Edit", field: "complianceEdit" },
+                              { label: "Delete", field: "complianceDelete" },
                             ]}
                             getAccess={getUpdateAccess}
                             handleAccessChange={handleUpdateAccessChange}

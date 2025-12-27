@@ -684,6 +684,31 @@ function App() {
               }
             />
 
+            <Route
+              path="/Customer/ComplianceList"
+              element={
+                <RoleBasedRoute allowedRoles={["ROLE_CUSTOMER"]}>
+                  <ComplianceList />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="/Admin/ComplianceList"
+              element={
+                <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
+                  <ComplianceList />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="/Employee/ComplianceList"
+              element={
+                <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
+                  <ComplianceList />
+                </RoleBasedRoute>
+              }
+            />
+
             {/* Settings Routes */}
             <Route
               path="/Admin/Settings"
@@ -717,17 +742,14 @@ function App() {
               path="/public-form/:adminId/:formId"
               element={<PublicForm />}
             />
-
             <Route
               path="/public-pf-form/:contactId/:formId"
-              element={<PublicPFForm/>}
+              element={<PublicPFForm />}
             />
-
             <Route
               path="/public-esic-form/:contactId/:formId"
               element={<PublicEsicForm />}
             />
-
             {/* Default redirect based on role */}
             <Route
               path="/"

@@ -1420,6 +1420,7 @@ const handleEdit = async (contact) => {
                           </svg>
                           Delete
                         </button>
+                        
                       </div>
                     </td>
                   </tr>

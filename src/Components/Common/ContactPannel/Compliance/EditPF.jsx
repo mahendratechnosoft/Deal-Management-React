@@ -8,6 +8,8 @@ import {
   GlobalSelectField,
 } from "../../../BaseComponet/CustomerFormInputs";
 import axiosInstance from "../../../BaseComponet/axiosInstance";
+import { hasPermission } from "../../../BaseComponet/permissions";
+import { useLayout } from "../../../Layout/useLayout";
 
 function EditPF({ pfId, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -18,6 +20,11 @@ function EditPF({ pfId, onClose, onSuccess }) {
   const [tabErrors, setTabErrors] = useState({});
   const [showAdminPassword, setShowAdminPassword] = useState(false);
   const fileInputRef = useRef(null);
+ const { LayoutComponent, role } = useLayout();
+  const canEdit =
+    role === "ROLE_CUSTOMER"
+      ? hasPermission("customerCompliance", "Edit")
+      : hasPermission("compliance", "Edit");
 
   // Refs for focusing on error fields
   const errorFieldRefs = useRef({});
@@ -1374,36 +1381,40 @@ function EditPF({ pfId, onClose, onSuccess }) {
                 Next
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Updating...
-                  </>
-                ) : (
-                  <>
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    Update PF Record
-                  </>
+              <>
+                {canEdit && (
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        Update PF Record
+                      </>
+                    )}
+                  </button>
                 )}
-              </button>
+              </>
             )}
           </div>
         </div>
