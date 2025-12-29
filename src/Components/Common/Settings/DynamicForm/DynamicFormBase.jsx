@@ -1,7 +1,7 @@
 // Components/Common/Settings/DynamicForm/DynamicFormBase.jsx
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../../BaseComponet/axiosInstance";
-import MtechLOGO from "../../../../../public/Images/Mtech_Logo.jpg";
+import MtechLOGO from "../../../../assets/Images/Mtech_Logo.jpg";
 import { showAutoCloseSuccess, showSuccessAlert } from "../../../BaseComponet/alertUtils";
 const DynamicFormBase = () => {
   const [adminInfo, setAdminInfo] = useState(null);

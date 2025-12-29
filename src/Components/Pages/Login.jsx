@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Mtech_logo from "../../../public/Images/Mtech_Logo.jpg";
+import Mtech_logo from "../../assets/Images/Mtech_Logo.jpg";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../BaseComponet/axiosInstance";
 

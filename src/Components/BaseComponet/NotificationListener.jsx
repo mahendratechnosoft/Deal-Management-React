@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
+import Mtech_Logo from "../../assets/Images/Mtech_Logo.jpg";
 import {FINAL_KEYWORD_URL} from "../BaseComponet/finalKeyWord"
 function NotificationListener() {
 
@@ -62,7 +63,7 @@ function NotificationListener() {
             if (Notification.permission === "granted") {
                 new Notification("New Task", {
                     body: bodyText,
-                    icon: "/Images/Mtech_Logo.jpg",
+                    icon: Mtech_Logo,
                 });
             }
         };
@@ -85,7 +86,7 @@ function NotificationListener() {
             if (Notification.permission === "granted") {
                 new Notification(" Task Status Update", {
                     body: bodyText,
-                    icon: "/Images/Mtech_Logo.jpg",
+                    icon: Mtech_Logo,
                 });
             }
         };

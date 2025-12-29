@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axiosInstance from "../../../BaseComponet/axiosInstance";
 import Swal from 'sweetalert2';
-import MtechLOGO from "../../../../../public/Images/Mtech_Logo.jpg";
+import MtechLOGO from "../../../../assets/Images/Mtech_Logo.jpg";
 import { FormPhoneInputFloating } from "../../../BaseComponet/CustomeFormComponents";
 import { Country, State, City } from "country-state-city";
 

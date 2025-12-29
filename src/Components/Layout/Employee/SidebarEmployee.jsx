@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
 import { hasPermission } from "../../BaseComponet/permissions";
-import Mtech_logoOnly from "../../../../public/Images/Mtech_OnlyLogo.jpg";
 function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
   const navigate = useNavigate();
   const location = useLocation();
