@@ -1084,11 +1084,11 @@ function ComplianceList() {
                       </th>
                    
                      
-                      {role === "ROLE_CONTACT" && (
+                    
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Status
                         </th>
-                      )}
+                      
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Created Date
                       </th>
@@ -1117,11 +1117,11 @@ function ComplianceList() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Phone
                       </th>
-                      {role === "ROLE_CONTACT" && (
+                     
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Status
                         </th>
-                      )}
+                      
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Created Date
                       </th>
@@ -1238,8 +1238,9 @@ function ComplianceList() {
                             </td>
                     
                        
-                            {role === "ROLE_CONTACT" && (
+                         
                               <td className="px-6 py-4 whitespace-nowrap">
+                                   {role === "ROLE_CONTACT" && (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1257,13 +1258,21 @@ function ComplianceList() {
                                       }`}
                                   />
                                 </button>
-                                {(role === "ROLE_ADMIN" || role === "ROLE_EMP") && (
-                                  <span className="ml-2 text-xs text-gray-500">
-                                    {item.verified ? "Verified" : "Unverified"}
-                                  </span>
+                                   )}
+                             {(role !== "ROLE_CONTACT") && (
+                               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.verified ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+  {item.verified ? (
+    <>
+      <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+      </svg>
+      Verified
+    </>
+  ) : 'Unverified'}
+</span>
                                 )}
                               </td>
-                            )}
+                         
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               {formatDate(item.createdAt)}
                             </td>
@@ -1358,8 +1367,9 @@ function ComplianceList() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               {item.phone || "N/A"}
                             </td>
-                            {role === "ROLE_CONTACT" && (
+                        
                               <td className="px-6 py-4 whitespace-nowrap">
+                                    {role === "ROLE_CONTACT" && (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1380,14 +1390,22 @@ function ComplianceList() {
                                       : "translate-x-1"
                                       }`}
                                   />
-                                </button>
-                                {(role === "ROLE_ADMIN" || role === "ROLE_EMP") && (
-                                  <span className="ml-2 text-xs text-gray-500">
-                                    {item.verified ? "Verified" : "Unverified"}
-                                  </span>
+                                </button>  )}
+                                
+                                {(role !== "ROLE_CONTACT") && (
+                               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.verified ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+  {item.verified ? (
+    <>
+      <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+      </svg>
+      Verified
+    </>
+  ) : 'Unverified'}
+</span>
                                 )}
                               </td>
-                            )}
+                          
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               {formatDate(item.createdAt)}
                             </td>
