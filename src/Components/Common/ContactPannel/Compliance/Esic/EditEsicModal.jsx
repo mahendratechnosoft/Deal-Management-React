@@ -37,7 +37,7 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
     accountNumber: "",
     ifsc: "",
     presentAddress: "",
-    permanentAddress: "",
+    permantAddress: "",
     nomineeName: "",
     nomineeRelation: "",
     nomineeAdhaar: "",
@@ -88,7 +88,7 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
     {
       id: "address",
       label: "Address Details",
-      fields: ["presentAddress", "permanentAddress"],
+      fields: ["presentAddress", "permantAddress"],
     },
     {
       id: "nominee",
@@ -155,8 +155,8 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
           accountNumber: esicData.accountNumber || "",
           ifsc: esicData.ifsc || "",
           presentAddress: esicData.presentAddress || "",
-          permanentAddress:
-            esicData.permantAddress || esicData.permanentAddress || "",
+          permantAddress:
+            esicData.permantAddress || esicData.permantAddress || "",
           nomineeName: esicData.nomineeName || "",
           nomineeRelation: esicData.nomineeRelation || "",
           nomineeAdhaar: esicData.nomineeAdhaar || "",
@@ -256,7 +256,7 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
       ) {
         errorTab = "personal";
       } else if (
-        ["presentAddress", "permanentAddress"].includes(firstErrorKey)
+        ["presentAddress", "permantAddress"].includes(firstErrorKey)
       ) {
         errorTab = "address";
       } else if (
@@ -618,7 +618,7 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
         }
         break;
       case "presentAddress":
-      case "permanentAddress":
+      case "permantAddress":
         if (value.length <= 500) {
           processedValue = value;
         }
@@ -839,8 +839,8 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
       formData.presentAddress,
       "Present address"
     );
-    newErrors.permanentAddress = validateAddress(
-      formData.permanentAddress,
+    newErrors.permantAddress = validateAddress(
+      formData.permantAddress,
       "Permanent address"
     );
 
@@ -977,7 +977,7 @@ const handleSubmit = async (e) => {
         accountNumber: formData.accountNumber,
         ifsc: formData.ifsc,
         presentAddress: formData.presentAddress.trim(),
-        permantAddress: formData.permanentAddress.trim(),
+        permantAddress: formData.permantAddress.trim(),
         nomineeName: formData.nomineeName.trim(),
         nomineeRelation: formData.nomineeRelation,
         nomineeAdhaar: formData.nomineeAdhaar,
@@ -1283,16 +1283,16 @@ const handleSubmit = async (e) => {
         />
         <GlobalTextAreaField
           label="Permanent Address"
-          name="permanentAddress"
-          value={formData.permanentAddress}
+          name="permantAddress"
+          value={formData.permantAddress}
           onChange={handleChange}
           required={true}
-          error={errors.permanentAddress}
+          error={errors.permantAddress}
           placeholder="Enter complete permanent address"
           rows={4}
           maxLength={500}
           className="text-sm"
-          ref={(el) => (errorFieldRefs.current.permanentAddress = el)}
+          ref={(el) => (errorFieldRefs.current.permantAddress = el)}
         />
       </div>
     </div>

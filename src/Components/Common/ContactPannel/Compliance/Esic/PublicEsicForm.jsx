@@ -38,7 +38,7 @@ function PublicEsicForm() {
     accountNumber: "",
     ifsc: "",
     presentAddress: "",
-    permanentAddress: "",
+    permantAddress: "",
     nomineeName: "",
     nomineeRelation: "",
     nomineeAdhaar: "",
@@ -381,8 +381,8 @@ function PublicEsicForm() {
       formData.presentAddress,
       "Present address"
     );
-    newErrors.permanentAddress = validateAddress(
-      formData.permanentAddress,
+    newErrors.permantAddress = validateAddress(
+      formData.permantAddress,
       "Permanent address"
     );
 
@@ -498,7 +498,7 @@ switch (name) {
     break;
 
   case "presentAddress":
-  case "permanentAddress":
+  case "permantAddress":
     if (/^[a-zA-Z0-9\s.,-]*$/.test(value) || value === "") {
       if (value.length <= 500) {
         processedValue = value;
@@ -671,7 +671,7 @@ const getTodayDate = () => {
           accountNumber: formData.accountNumber,
           ifsc: formData.ifsc,
           presentAddress: formData.presentAddress.trim(),
-          permanentAddress: formData.permanentAddress.trim(),
+          permantAddress: formData.permantAddress.trim(),
           nomineeName: formData.nomineeName.trim(),
           nomineeRelation: formData.nomineeRelation.trim(),
           nomineeAdhaar: formData.nomineeAdhaar,
@@ -715,7 +715,7 @@ const getTodayDate = () => {
         accountNumber: "",
         ifsc: "",
         presentAddress: "",
-        permanentAddress: "",
+        permantAddress: "",
         nomineeName: "",
         nomineeRelation: "",
         nomineeAdhaar: "",
@@ -1524,21 +1524,21 @@ const getTodayDate = () => {
                     Permanent Address <span className="text-red-500">*</span>
                   </label>
                   <textarea
-                    name="permanentAddress"
-                    value={formData.permanentAddress}
+                    name="permantAddress"
+                    value={formData.permantAddress}
                     onChange={handleChange}
                     rows={3}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      errors.permanentAddress
+                      errors.permantAddress
                         ? "border-red-500"
                         : "border-gray-300"
                     }`}
                     placeholder="House no, Street, City, State, Pincode"
                     maxLength={500}
                   />
-                  {errors.permanentAddress && (
+                  {errors.permantAddress && (
                     <p className="text-red-500 text-xs mt-1">
-                      {errors.permanentAddress}
+                      {errors.permantAddress}
                     </p>
                   )}
                 </div>
