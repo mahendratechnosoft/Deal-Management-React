@@ -572,7 +572,7 @@ function EditProposal() {
     );
     if (result.isConfirmed) {
       if (role === "ROLE_ADMIN") {
-        navigate("/Proposal");
+        navigate("/Admin/Proposal");
       } else if (role === "ROLE_EMPLOYEE") {
         navigate("/Employee/Proposal");
       } else {
@@ -1068,7 +1068,7 @@ function EditProposal() {
       setLoading(false);
 
       if (role === "ROLE_ADMIN") {
-        navigate("/Proposal");
+        navigate("/Admin/Proposal");
       } else if (role === "ROLE_EMPLOYEE") {
         navigate("/Employee/Proposal");
       }
@@ -1090,7 +1090,7 @@ function EditProposal() {
             <button
               onClick={() => {
                 if (role === "ROLE_ADMIN") {
-                  navigate("/Proposal");
+                  navigate("/Admin/Proposal");
                 } else if (role === "ROLE_EMPLOYEE") {
                   navigate("/Employee/Proposal");
                 }

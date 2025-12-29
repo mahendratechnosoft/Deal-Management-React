@@ -1,25 +1,16 @@
-
-
-
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Outlet } from "react-router-dom";
 
 import TopbarContact from "./Contact/TopbarContact";
 import SidebarContact from "./Contact/SidebarContact";
 
-const ContactLayout = ({ children, onLogout }) => {
+const ContactLayout = ({ onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isLargeScreen, setIsLargeScreen] = useState(false);
   const [userToggled, setUserToggled] = useState(false);
   const navigate = useNavigate();
-
-  // Detect screen size and handle responsive behavior
   useEffect(() => {
     const checkScreenSize = () => {
       const largeScreen = window.innerWidth >= 768;
-      setIsLargeScreen(largeScreen);
-
-      // Only auto-manage sidebar if user hasn't manually toggled it
       if (!userToggled) {
         if (!largeScreen && sidebarOpen) {
           setSidebarOpen(false);
@@ -28,11 +19,7 @@ const ContactLayout = ({ children, onLogout }) => {
         }
       }
     };
-
-    // Initial check
     checkScreenSize();
-
-    // Add event listener for resize
     window.addEventListener("resize", checkScreenSize);
 
     return () => {
@@ -68,8 +55,7 @@ const ContactLayout = ({ children, onLogout }) => {
             sidebarOpen ? "md:ml-0" : "ml-0"
           }`}
         >
-          {/* This is where the page content will be rendered */}
-          {children}
+          {<Outlet />}
         </div>
       </div>
     </div>

@@ -28,6 +28,11 @@ function App() {
     checkAuth();
   }, []);
 
+  const handleLogin = (data) => {
+    setIsLoggedIn(true);
+    setUserRole(data.user.role || "");
+  };
+
   const handleLogout = () => {
     localStorage.clear();
     setIsLoggedIn(false);
@@ -39,7 +44,11 @@ function App() {
       <NotificationListener />
       <Router>
         <TaskTimerProvider>
-          <AppRoutes userRole={userRole} isLoggedIn={isLoggedIn} />
+          <AppRoutes 
+            userRole={userRole} 
+            isLoggedIn={isLoggedIn} 
+            onLogin={handleLogin} 
+          />
         </TaskTimerProvider>
       </Router>
       <CustomToaster />

@@ -32,8 +32,27 @@ const EditFamily = lazy(() => import("../Components/Common/Donor/EditFamily"));
 const ProposalList = lazy(() =>
   import("../Components/Common/Proposal/ProposalList")
 );
+
+const CreateProposal = lazy(() =>
+  import("../Components/Common/Proposal/CreateProposal")
+);
+const EditProposal = lazy(() =>
+  import("../Components/Common/Proposal/EditProposal")
+);
+const ProposalPreview = lazy(() =>
+  import("../Components/Common/Proposal/ProposalPreview")
+);
 const ProformaList = lazy(() =>
   import("../Components/Common/Proforma/ProformaList")
+);
+const CreateProforma = lazy(() =>
+  import("../Components/Common/Proforma/CreateProforma")
+);
+const EditProforma = lazy(() =>
+  import("../Components/Common/Proforma/EditProforma")
+);
+const ProformaPreview = lazy(() =>
+  import("../Components/Common/Proforma/ProformaPreview")
 );
 const TimeSheetList = lazy(() =>
   import("../Components/Common/Timesheet/TimeSheetList")
@@ -57,44 +76,64 @@ const EditSemenEnquiry = lazy(() =>
 const ComplianceList = lazy(() =>
   import("../Components/Common/ContactPannel/Compliance/ComplianceList")
 );
+const EmployeeLayout = lazy(() =>
+  import("../Components/Layout/EmployeeLayout")
+);
 
 const EmployeeRoutes = () => {
   return (
     <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
       <Routes>
-        <Route path="LeadList" element={<LeadList />} />
-        <Route path="CreateLead" element={<CreateLead />} />
-        <Route path="EditLead/:id" element={<EditLead />} />
-        <Route path="CustomerList" element={<CustomerList />} />
-        <Route path="CreateCustomer" element={<CreateCustomer />} />
-        <Route path="EditCustomer/:customerId" element={<EditCustomer />} />
-        <Route path="Payment" element={<PaymentList />} />
-        <Route path="EditPayment/:paymentId" element={<EditPayment />} />
-        <Route path="DonorList" element={<DonorList />} />
-        <Route path="DonorEdit/:donorId" element={<EditDonar />} />
-        <Route path="DonorList/:pageName" element={<SelectedDonarList />} />
-        <Route path="FamilyList" element={<FamilyList />} />
-        <Route
-          path="PreviewMatchingDonors/:familyId"
-          element={<DonorMatchingFilter />}
-        />
-        <Route path="EditFamily/:familyInfoId" element={<EditFamily />} />
+        <Route element={<EmployeeLayout />}>
+          <Route path="LeadList" element={<LeadList />} />
+          <Route path="CreateLead" element={<CreateLead />} />
+          <Route path="EditLead/:id" element={<EditLead />} />
+          <Route path="CustomerList" element={<CustomerList />} />
+          <Route path="CreateCustomer" element={<CreateCustomer />} />
+          <Route path="EditCustomer/:customerId" element={<EditCustomer />} />
+          <Route path="Payment" element={<PaymentList />} />
+          <Route path="EditPayment/:paymentId" element={<EditPayment />} />
+          <Route path="DonorList" element={<DonorList />} />
+          <Route path="DonorEdit/:donorId" element={<EditDonar />} />
+          <Route path="DonorList/:pageName" element={<SelectedDonarList />} />
+          <Route path="FamilyList" element={<FamilyList />} />
+          <Route
+            path="PreviewMatchingDonors/:familyId"
+            element={<DonorMatchingFilter />}
+          />
+          <Route path="EditFamily/:familyInfoId" element={<EditFamily />} />
 
-        <Route path="Proposal" element={<ProposalList />} />
-        <Route path="Proforma" element={<ProformaList />} />
-        <Route path="TimesheetList" element={<TimeSheetList />} />
-        <Route path="Invoice" element={<InvoiceList />} />
-        <Route path="ItemList" element={<ItemList />} />
-        <Route path="TaskList" element={<TaskList />} />
-        <Route path="AMC" element={<AmcList />} />
-        <Route
-          path="VendorContactList/:vendorId"
-          element={<VendorContactList />}
-        />
-        <Route path="VendorList" element={<VendorList />} />
-        <Route path="SemenEnquiryList" element={<SemenEnquiryList />} />
-        <Route path="EditSemenEnquiry/:id" element={<EditSemenEnquiry />} />
-        <Route path="ComplianceList" element={<ComplianceList />} />
+          <Route path="Proposal" element={<ProposalList />} />
+          <Route path="Proposal/Create" element={<CreateProposal />} />
+          <Route path="Proposal/Edit/:proposalId" element={<EditProposal />} />
+          <Route
+            path="Proposal/Preview/:proposalId"
+            element={<ProposalPreview />}
+          />
+          <Route path="Proforma" element={<ProformaList />} />
+          <Route path="Proforma/Create" element={<CreateProforma />} />
+          <Route
+            path="Proforma/Edit/:proformaInvoiceId"
+            element={<EditProforma />}
+          />
+          <Route
+            path="Proforma/Preview/:proformaInvoiceId"
+            element={<ProformaPreview />}
+          />
+          <Route path="TimesheetList" element={<TimeSheetList />} />
+          <Route path="Invoice" element={<InvoiceList />} />
+          <Route path="ItemList" element={<ItemList />} />
+          <Route path="TaskList" element={<TaskList />} />
+          <Route path="AMC" element={<AmcList />} />
+          <Route
+            path="VendorContactList/:vendorId"
+            element={<VendorContactList />}
+          />
+          <Route path="VendorList" element={<VendorList />} />
+          <Route path="SemenEnquiryList" element={<SemenEnquiryList />} />
+          <Route path="EditSemenEnquiry/:id" element={<EditSemenEnquiry />} />
+          <Route path="ComplianceList" element={<ComplianceList />} />
+        </Route>
       </Routes>
     </RoleBasedRoute>
   );

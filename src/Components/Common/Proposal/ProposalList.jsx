@@ -61,15 +61,27 @@ function ProposalList() {
   }
 
   const handleCreateProposal = () => {
-    navigate("/Proposal/Create");
+    if (role === "ROLE_ADMIN") {
+      navigate(`/Admin/Proposal/Create`);
+    } else if (role === "ROLE_EMPLOYEE") {
+      navigate("/Employee/Proposal/Create");
+    } else {
+      navigate("/login");
+    }
   };
 
   const handleEdit = (proposalId) => {
-    navigate(`/Proposal/Edit/${proposalId}`);
+    if (role === "ROLE_ADMIN") {
+      navigate(`/Admin/Proposal/Edit/${proposalId}`);
+    } else if (role === "ROLE_EMPLOYEE") {
+      navigate(`/Employee/Proposal/Edit/${proposalId}`);
+    } else {
+      navigate("/login");
+    }
   };
 
   const handlePreview = (proposalId) => {
-    navigate(`/Proposal/Preview/${proposalId}`);
+    navigate(`/Admin/Proposal/Preview/${proposalId}`);
   };
 
   const handlePageSizeChange = (newSize) => {

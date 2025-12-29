@@ -428,7 +428,7 @@ function CreateProposal() {
 
   const handleCancel = () => {
     if (role === "ROLE_ADMIN") {
-      navigate("/Proposal");
+      navigate("/Admin/Proposal");
     } else if (role === "ROLE_EMPLOYEE") {
       navigate("/Employee/Proposal");
     } else {
@@ -940,7 +940,7 @@ function CreateProposal() {
       setLoading(false);
 
       if (role === "ROLE_ADMIN") {
-        navigate("/Proposal");
+        navigate("/Admin/Proposal");
       } else if (role === "ROLE_EMPLOYEE") {
         navigate("/Employee/Proposal");
       }
@@ -962,7 +962,7 @@ function CreateProposal() {
             <button
               onClick={() => {
                 if (role === "ROLE_ADMIN") {
-                  navigate("/Proposal");
+                  navigate("/Admin/Proposal");
                 } else if (role === "ROLE_EMPLOYEE") {
                   navigate("/Employee/Proposal");
                 }

@@ -13,13 +13,13 @@ const LoadingFallback = () => (
   <div className="p-4 text-center">Loading Application...</div>
 );
 
-const AppRoutes = ({ userRole, isLoggedIn }) => {
+const AppRoutes = ({ userRole, isLoggedIn, onLogin }) => {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
         <Route
           path="/*"
-          element={<PublicRoutes onLogin={(val) => console.log(val)} />}
+          element={<PublicRoutes onLogin={onLogin} />}
         />
         <Route path="/SuperAdmin/*" element={<SuperAdminRoutes />} />
         <Route path="/Admin/*" element={<AdminRoutes />} />

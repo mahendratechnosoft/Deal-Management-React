@@ -630,7 +630,7 @@ function CreateProforma() {
 
   const handleCancel = () => {
     if (role === "ROLE_ADMIN") {
-      navigate("/Proforma");
+      navigate("/Admin/Proforma");
     } else if (role === "ROLE_EMPLOYEE") {
       navigate("/Employee/Proforma");
     } else {
@@ -1278,7 +1278,7 @@ function CreateProforma() {
       setLoading(false);
 
       if (role === "ROLE_ADMIN") {
-        navigate("/Proforma");
+        navigate("/Admin/Proforma");
       } else if (role === "ROLE_EMPLOYEE") {
         navigate("/Employee/Proforma");
       }

@@ -8,13 +8,18 @@ const AdminList = lazy(() =>
 const EditAdmin = lazy(() =>
   import("../Components/Common/SuperAdmin/EditAdmin")
 );
+const SuperAdminLayout = lazy(() =>
+  import("../Components/Layout/SuperAdminLayout")
+);
 
 const ContactRoutes = () => {
   return (
     <RoleBasedRoute allowedRoles={["ROLE_SUPERADMIN"]}>
       <Routes>
+        <Route element={<SuperAdminLayout />}>
         <Route path="AdminList" element={<AdminList />} />
         <Route path="EditAdmin/:adminId" element={<EditAdmin />} />
+        </Route>
       </Routes>
     </RoleBasedRoute>
   );

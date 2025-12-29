@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
 
-import Mtech_logoOnly from "../../../../public/Images/Mtech_OnlyLogo.jpg";
 import { hasPermission } from "../../BaseComponet/permissions";
 function Sidebar({ isOpen, toggleSidebar }) {
   const navigate = useNavigate();
@@ -95,7 +93,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
     },
     {
       name: "Proposal",
-      path: "/Proposal",
+      path: "/Admin/Proposal",
       icon: (
         <svg
           className="w-5 h-5"
@@ -115,7 +113,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
     },
     {
       name: "Proforma",
-      path: "/Proforma",
+      path: "/Admin/Proforma",
       icon: (
         <svg
           className="w-5 h-5"
