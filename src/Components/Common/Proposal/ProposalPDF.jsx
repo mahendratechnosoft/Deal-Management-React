@@ -10,8 +10,8 @@ import {
   Font,
 } from "@react-pdf/renderer";
 import { ToWords } from "to-words";
-import RobotoRegular from "../../../../public/fonts/Roboto-Regular.ttf";
-import RobotoBold from "../../../../public/fonts/Roboto-Bold.ttf";
+import RobotoRegular from "../../../assets/fonts/Roboto-Regular.ttf";
+import RobotoBold from "../../../assets/fonts/Roboto-Bold.ttf";
 import { breakLongText } from "../../BaseComponet/UtilFunctions";
 
 Font.register({

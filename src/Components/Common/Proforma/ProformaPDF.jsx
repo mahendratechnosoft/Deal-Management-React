@@ -10,10 +10,10 @@ import {
 } from "@react-pdf/renderer";
 import { ToWords } from "to-words";
 
-import RobotoRegular from "../../../../public/fonts/Roboto-Regular.ttf";
-import RobotoBold from "../../../../public/fonts/Roboto-Bold.ttf";
-import RobotoItalic from "../../../../public/fonts/Roboto-Italic.ttf";
-import RobotoBoldItalic from "../../../../public/fonts/Roboto-BoldItalic.ttf";
+import RobotoRegular from "../../../assets/fonts/Roboto-Regular.ttf";
+import RobotoBold from "../../../assets/fonts/Roboto-Bold.ttf";
+import RobotoItalic from "../../../assets/fonts/Roboto-Italic.ttf";
+import RobotoBoldItalic from "../../../assets/fonts/Roboto-BoldItalic.ttf";
 import {
   breakLongText,
   formatInvoiceNumber,

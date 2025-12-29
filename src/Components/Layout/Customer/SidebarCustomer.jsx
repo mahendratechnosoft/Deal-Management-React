@@ -1,21 +1,18 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Mtech_logo from "../../../../public/Images/Mtech_Logo.jpg";
-import Mtech_logoOnly from "../../../../public/Images/Mtech_OnlyLogo.jpg";
 import { hasPermission } from "../../BaseComponet/permissions";
 
 function SidebarCustomer({ isOpen, toggleSidebar }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-    const userData = JSON.parse(localStorage.getItem("userData")) || {};
+  const userData = JSON.parse(localStorage.getItem("userData")) || {};
   // Module key mapping for permission checks
   const moduleKeyMap = {
     Compliance: "customerCompliance",
   };
 
   const navigationItems = [
-  
     {
       name: "Compliance",
       path: "/Customer/ComplianceList",
