@@ -212,7 +212,7 @@ function CreatePFModal({ onClose, onSuccess }) {
           setTimeout(() => {
             try {
               URL.revokeObjectURL(blobUrl);
-            } catch (e) {}
+            } catch (e) { }
           }, 5000);
         } else {
           toast.error("Popup blocked. Please allow popups to preview image.");
@@ -263,7 +263,7 @@ function CreatePFModal({ onClose, onSuccess }) {
       setTimeout(() => {
         try {
           URL.revokeObjectURL(blobUrl);
-        } catch (e) {}
+        } catch (e) { }
       }, 100);
       toast.success(`Downloading ${attachment.fileName}`);
     } catch (error) {
@@ -437,8 +437,10 @@ function CreatePFModal({ onClose, onSuccess }) {
   };
 
   const validateUAN = (uan) => {
-    if (!uan.trim()) return "UAN is required";
-    if (!/^\d{12}$/.test(uan)) return "UAN must be 12 digits";
+    // If UAN is provided, validate it, otherwise it's optional
+    if (uan && uan.trim() !== "") {
+      if (!/^\d{12}$/.test(uan)) return "UAN must be 12 digits";
+    }
     return "";
   };
 
@@ -485,11 +487,7 @@ function CreatePFModal({ onClose, onSuccess }) {
 
     // Basic information
     newErrors.name = validateName(formData.name);
-    newErrors.fatherName = validateRequired(
-      "fatherName",
-      formData.fatherName,
-      "Father's name"
-    );
+
     newErrors.dateOfJoining = validateDate(
       "dateOfJoining",
       formData.dateOfJoining,
@@ -500,7 +498,7 @@ function CreatePFModal({ onClose, onSuccess }) {
       formData.dateOfBirth,
       "Date of birth"
     );
-    newErrors.uan = validateUAN(formData.uan);
+
 
     // Contact information
     newErrors.email = validateEmail(formData.email);
@@ -552,6 +550,8 @@ function CreatePFModal({ onClose, onSuccess }) {
     }
 
     return Object.keys(filteredErrors).length === 0;
+
+
   };
 
   // Handle form submission
@@ -604,17 +604,17 @@ function CreatePFModal({ onClose, onSuccess }) {
         if (error.response.status === 500) {
           toast.error(
             "Server error: " +
-              (error.response.data?.message || "Check console for details")
+            (error.response.data?.message || "Check console for details")
           );
         } else if (error.response.status === 400) {
           toast.error(
             "Validation error: " +
-              (error.response.data?.message || "Please check all fields")
+            (error.response.data?.message || "Please check all fields")
           );
         } else {
           toast.error(
             "Failed to create PF record: " +
-              (error.response.data?.message || "Unknown error")
+            (error.response.data?.message || "Unknown error")
           );
         }
       } else if (error.request) {
@@ -690,7 +690,7 @@ function CreatePFModal({ onClose, onSuccess }) {
           name="fatherName"
           value={formData.fatherName}
           onChange={handleChange}
-          required={true}
+        
           error={errors.fatherName}
           placeholder="Enter father's name"
           maxLength={100}
@@ -726,9 +726,8 @@ function CreatePFModal({ onClose, onSuccess }) {
           name="uan"
           value={formData.uan}
           onChange={handleChange}
-          required={true}
           error={errors.uan}
-          placeholder="12 digit UAN"
+          placeholder="12 digit UAN (Optional)"
           maxLength={12}
           pattern="\d{12}"
           className="text-sm"
@@ -762,9 +761,8 @@ function CreatePFModal({ onClose, onSuccess }) {
             <span className="text-red-500 ml-1">*</span>
           </label>
           <div
-            className={`phone-input-wrapper ${
-              errors.phone ? "border-red-500 rounded-lg" : ""
-            }`}
+            className={`phone-input-wrapper ${errors.phone ? "border-red-500 rounded-lg" : ""
+              }`}
           >
             <PhoneInput
               country={"in"}
@@ -949,23 +947,21 @@ function CreatePFModal({ onClose, onSuccess }) {
           />
           <label
             htmlFor="aadhaar-upload"
-            className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-              attachment
+            className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${attachment
                 ? "bg-green-50 border-green-300 hover:border-green-400"
                 : errors.aadhaarPhoto
-                ? "bg-red-50 border-red-300 hover:border-red-400"
-                : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
-            }`}
+                  ? "bg-red-50 border-red-300 hover:border-red-400"
+                  : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
+              }`}
           >
             <div className="text-center">
               <svg
-                className={`w-8 h-8 mx-auto mb-2 ${
-                  attachment
+                className={`w-8 h-8 mx-auto mb-2 ${attachment
                     ? "text-green-500"
                     : errors.aadhaarPhoto
-                    ? "text-red-500"
-                    : "text-gray-400"
-                }`}
+                      ? "text-red-500"
+                      : "text-gray-400"
+                  }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -978,13 +974,12 @@ function CreatePFModal({ onClose, onSuccess }) {
                 />
               </svg>
               <p
-                className={`text-sm ${
-                  attachment
+                className={`text-sm ${attachment
                     ? "text-green-700"
                     : errors.aadhaarPhoto
-                    ? "text-red-700"
-                    : "text-gray-600"
-                }`}
+                      ? "text-red-700"
+                      : "text-gray-600"
+                  }`}
               >
                 {attachment
                   ? "Aadhaar photo uploaded ✓"
@@ -1166,11 +1161,10 @@ function CreatePFModal({ onClose, onSuccess }) {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative flex items-center gap-2 px-4 py-3 whitespace-nowrap transition-colors ${
-                  activeTab === tab.id
+                className={`relative flex items-center gap-2 px-4 py-3 whitespace-nowrap transition-colors ${activeTab === tab.id
                     ? "text-blue-600 border-b-2 border-blue-600 bg-white"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                } ${tabErrors[tab.id] ? "pr-8" : ""}`}
+                  } ${tabErrors[tab.id] ? "pr-8" : ""}`}
               >
                 <span className="text-sm font-medium">{tab.label}</span>
                 {tabErrors[tab.id] && (

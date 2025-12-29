@@ -237,8 +237,7 @@ function CreateEsicModal({ onClose, onSuccess }) {
     }
 
     toast.success(
-      `${
-        fieldName === "aadhaarPhoto" ? "Aadhaar" : "Passport"
+      `${fieldName === "aadhaarPhoto" ? "Aadhaar" : "Passport"
       } photo uploaded successfully`
     );
 
@@ -311,7 +310,7 @@ function CreateEsicModal({ onClose, onSuccess }) {
         setTimeout(() => {
           try {
             URL.revokeObjectURL(blobUrl);
-          } catch (e) {}
+          } catch (e) { }
         }, 5000);
       } else {
         toast.error("Popup blocked. Please allow popups to preview image.");
@@ -575,8 +574,15 @@ function CreateEsicModal({ onClose, onSuccess }) {
   };
 
   const validateESICNumber = (esicNumber) => {
-    if (!esicNumber.trim()) return "ESIC number is required";
-    if (!/^\d{17}$/.test(esicNumber)) return "ESIC number must be 17 digits";
+    // If empty, it's okay (not required)
+    if (!esicNumber || esicNumber.trim() === "") {
+      return "";
+    }
+
+    // If provided, validate format
+    if (!/^\d{17}$/.test(esicNumber)) {
+      return "ESIC number must be 17 digits if provided";
+    }
     return "";
   };
 
@@ -619,8 +625,7 @@ function CreateEsicModal({ onClose, onSuccess }) {
 
   const validateAddress = (address, fieldName) => {
     if (!address.trim()) return `${fieldName} is required`;
-    if (address.length < 10)
-      return `${fieldName} must be at least 10 characters`;
+
     if (address.length > 500)
       return `${fieldName} cannot exceed 500 characters`;
     return "";
@@ -632,11 +637,14 @@ function CreateEsicModal({ onClose, onSuccess }) {
 
     // Basic information
     newErrors.name = validateName(formData.name);
-    newErrors.fatherName = validateRequired(
-      "fatherName",
-      formData.fatherName,
-      "Father's name"
-    );
+
+  if (formData.fatherName && formData.fatherName.trim() !== "") {
+    if (formData.fatherName.length > 100) {
+      newErrors.fatherName = "Father's name cannot exceed 100 characters";
+    } else if (!/^[a-zA-Z\s]*$/.test(formData.fatherName.trim())) {
+      newErrors.fatherName = "Father's name can only contain letters and spaces";
+    }
+  }
     newErrors.dateOfJoining = validateDate(
       "dateOfJoining",
       formData.dateOfJoining,
@@ -647,7 +655,10 @@ function CreateEsicModal({ onClose, onSuccess }) {
       formData.dateOfBirth,
       "Date of birth"
     );
-    newErrors.esicNumber = validateESICNumber(formData.esicNumber);
+
+    if (formData.esicNumber && formData.esicNumber.trim() !== "") {
+      newErrors.esicNumber = validateESICNumber(formData.esicNumber);
+    }
 
     // Personal details
     newErrors.phone = validatePhone(formData.phone);
@@ -824,17 +835,17 @@ function CreateEsicModal({ onClose, onSuccess }) {
         if (error.response.status === 500) {
           toast.error(
             "Server error: " +
-              (error.response.data?.message || "Check console for details")
+            (error.response.data?.message || "Check console for details")
           );
         } else if (error.response.status === 400) {
           toast.error(
             "Validation error: " +
-              (error.response.data?.message || "Please check all fields")
+            (error.response.data?.message || "Please check all fields")
           );
         } else {
           toast.error(
             "Failed to create ESIC record: " +
-              (error.response.data?.message || "Unknown error")
+            (error.response.data?.message || "Unknown error")
           );
         }
       } else if (error.request) {
@@ -910,7 +921,7 @@ function CreateEsicModal({ onClose, onSuccess }) {
           name="fatherName"
           value={formData.fatherName}
           onChange={handleChange}
-          required={true}
+         
           error={errors.fatherName}
           placeholder="Enter father's name"
           maxLength={100}
@@ -941,14 +952,15 @@ function CreateEsicModal({ onClose, onSuccess }) {
           className="text-sm"
           ref={(el) => (errorFieldRefs.current.dateOfBirth = el)}
         />
+     
         <GlobalInputField
           label="ESIC Number"
           name="esicNumber"
           value={formData.esicNumber}
           onChange={handleChange}
-          required={true}
+          required={false} // Change from true to false
           error={errors.esicNumber}
-          placeholder="17 digit ESIC number"
+          placeholder="17 digit ESIC number (Optional)"
           maxLength={17}
           pattern="\d{17}"
           className="text-sm"
@@ -968,9 +980,8 @@ function CreateEsicModal({ onClose, onSuccess }) {
             <span className="text-red-500 ml-1">*</span>
           </label>
           <div
-            className={`phone-input-wrapper ${
-              errors.phone ? "border-red-500 rounded-lg" : ""
-            }`}
+            className={`phone-input-wrapper ${errors.phone ? "border-red-500 rounded-lg" : ""
+              }`}
           >
             <PhoneInput
               country={"in"}
@@ -1219,23 +1230,21 @@ function CreateEsicModal({ onClose, onSuccess }) {
           />
           <label
             htmlFor="aadhaar-upload"
-            className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-              formData.aadhaarPhoto
+            className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${formData.aadhaarPhoto
                 ? "bg-green-50 border-green-300 hover:border-green-400"
                 : errors.aadhaarPhoto
-                ? "bg-red-50 border-red-300 hover:border-red-400"
-                : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
-            }`}
+                  ? "bg-red-50 border-red-300 hover:border-red-400"
+                  : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
+              }`}
           >
             <div className="text-center">
               <svg
-                className={`w-8 h-8 mx-auto mb-2 ${
-                  formData.aadhaarPhoto
+                className={`w-8 h-8 mx-auto mb-2 ${formData.aadhaarPhoto
                     ? "text-green-500"
                     : errors.aadhaarPhoto
-                    ? "text-red-500"
-                    : "text-gray-400"
-                }`}
+                      ? "text-red-500"
+                      : "text-gray-400"
+                  }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1248,13 +1257,12 @@ function CreateEsicModal({ onClose, onSuccess }) {
                 />
               </svg>
               <p
-                className={`text-sm ${
-                  formData.aadhaarPhoto
+                className={`text-sm ${formData.aadhaarPhoto
                     ? "text-green-700"
                     : errors.aadhaarPhoto
-                    ? "text-red-700"
-                    : "text-gray-600"
-                }`}
+                      ? "text-red-700"
+                      : "text-gray-600"
+                  }`}
               >
                 {formData.aadhaarPhoto
                   ? "Aadhaar photo uploaded ✓"
@@ -1359,23 +1367,21 @@ function CreateEsicModal({ onClose, onSuccess }) {
           />
           <label
             htmlFor="passport-upload"
-            className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-              formData.passportPhoto
+            className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${formData.passportPhoto
                 ? "bg-green-50 border-green-300 hover:border-green-400"
                 : errors.passportPhoto
-                ? "bg-red-50 border-red-300 hover:border-red-400"
-                : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
-            }`}
+                  ? "bg-red-50 border-red-300 hover:border-red-400"
+                  : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
+              }`}
           >
             <div className="text-center">
               <svg
-                className={`w-8 h-8 mx-auto mb-2 ${
-                  formData.passportPhoto
+                className={`w-8 h-8 mx-auto mb-2 ${formData.passportPhoto
                     ? "text-green-500"
                     : errors.passportPhoto
-                    ? "text-red-500"
-                    : "text-gray-400"
-                }`}
+                      ? "text-red-500"
+                      : "text-gray-400"
+                  }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1388,13 +1394,12 @@ function CreateEsicModal({ onClose, onSuccess }) {
                 />
               </svg>
               <p
-                className={`text-sm ${
-                  formData.passportPhoto
+                className={`text-sm ${formData.passportPhoto
                     ? "text-green-700"
                     : errors.passportPhoto
-                    ? "text-red-700"
-                    : "text-gray-600"
-                }`}
+                      ? "text-red-700"
+                      : "text-gray-600"
+                  }`}
               >
                 {formData.passportPhoto
                   ? "Passport photo uploaded ✓"
@@ -1492,7 +1497,7 @@ function CreateEsicModal({ onClose, onSuccess }) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-sm font-medium text-gray-700">
-          Family Members (ESIC Contents)
+          Family Members
         </h3>
         <button
           type="button"
@@ -1585,8 +1590,8 @@ function CreateEsicModal({ onClose, onSuccess }) {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter family member name"
                     ref={(el) =>
-                      (errorFieldRefs.current[`familyMember_${index}_name`] =
-                        el)
+                    (errorFieldRefs.current[`familyMember_${index}_name`] =
+                      el)
                     }
                   />
                   {errors[`familyMember_${index}_name`] && (
@@ -1611,9 +1616,9 @@ function CreateEsicModal({ onClose, onSuccess }) {
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     ref={(el) =>
-                      (errorFieldRefs.current[
-                        `familyMember_${index}_relation`
-                      ] = el)
+                    (errorFieldRefs.current[
+                      `familyMember_${index}_relation`
+                    ] = el)
                     }
                   >
                     <option value="">Select Relation</option>
@@ -1640,8 +1645,8 @@ function CreateEsicModal({ onClose, onSuccess }) {
                   <div className="relative">
                     <input
                       ref={(el) =>
-                        (fileInputRefs.current[`family_${index}_aadhaarPhoto`] =
-                          el)
+                      (fileInputRefs.current[`family_${index}_aadhaarPhoto`] =
+                        el)
                       }
                       type="file"
                       onChange={(e) =>
@@ -1653,23 +1658,21 @@ function CreateEsicModal({ onClose, onSuccess }) {
                     />
                     <label
                       htmlFor={`family-aadhaar-${index}`}
-                      className={`flex items-center justify-center p-3 border border-dashed rounded-lg cursor-pointer transition-colors ${
-                        member.aadhaarPhoto
+                      className={`flex items-center justify-center p-3 border border-dashed rounded-lg cursor-pointer transition-colors ${member.aadhaarPhoto
                           ? "bg-green-50 border-green-300"
                           : errors[`familyMember_${index}_aadhaarPhoto`]
-                          ? "bg-red-50 border-red-300"
-                          : "border-gray-300 hover:border-blue-500 hover:bg-blue-50"
-                      }`}
+                            ? "bg-red-50 border-red-300"
+                            : "border-gray-300 hover:border-blue-500 hover:bg-blue-50"
+                        }`}
                     >
                       <div className="text-center">
                         <svg
-                          className={`w-6 h-6 mx-auto mb-1 ${
-                            member.aadhaarPhoto
+                          className={`w-6 h-6 mx-auto mb-1 ${member.aadhaarPhoto
                               ? "text-green-500"
                               : errors[`familyMember_${index}_aadhaarPhoto`]
-                              ? "text-red-500"
-                              : "text-gray-400"
-                          }`}
+                                ? "text-red-500"
+                                : "text-gray-400"
+                            }`}
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1682,11 +1685,10 @@ function CreateEsicModal({ onClose, onSuccess }) {
                           />
                         </svg>
                         <p
-                          className={`text-xs ${
-                            member.aadhaarPhoto
+                          className={`text-xs ${member.aadhaarPhoto
                               ? "text-green-700"
                               : "text-gray-600"
-                          }`}
+                            }`}
                         >
                           {member.aadhaarPhoto
                             ? "Uploaded ✓"
@@ -1781,9 +1783,9 @@ function CreateEsicModal({ onClose, onSuccess }) {
                   <div className="relative">
                     <input
                       ref={(el) =>
-                        (fileInputRefs.current[
-                          `family_${index}_passportPhoto`
-                        ] = el)
+                      (fileInputRefs.current[
+                        `family_${index}_passportPhoto`
+                      ] = el)
                       }
                       type="file"
                       onChange={(e) =>
@@ -1795,23 +1797,21 @@ function CreateEsicModal({ onClose, onSuccess }) {
                     />
                     <label
                       htmlFor={`family-passport-${index}`}
-                      className={`flex items-center justify-center p-3 border border-dashed rounded-lg cursor-pointer transition-colors ${
-                        member.passportPhoto
+                      className={`flex items-center justify-center p-3 border border-dashed rounded-lg cursor-pointer transition-colors ${member.passportPhoto
                           ? "bg-green-50 border-green-300"
                           : errors[`familyMember_${index}_passportPhoto`]
-                          ? "bg-red-50 border-red-300"
-                          : "border-gray-300 hover:border-blue-500 hover:bg-blue-50"
-                      }`}
+                            ? "bg-red-50 border-red-300"
+                            : "border-gray-300 hover:border-blue-500 hover:bg-blue-50"
+                        }`}
                     >
                       <div className="text-center">
                         <svg
-                          className={`w-6 h-6 mx-auto mb-1 ${
-                            member.passportPhoto
+                          className={`w-6 h-6 mx-auto mb-1 ${member.passportPhoto
                               ? "text-green-500"
                               : errors[`familyMember_${index}_passportPhoto`]
-                              ? "text-red-500"
-                              : "text-gray-400"
-                          }`}
+                                ? "text-red-500"
+                                : "text-gray-400"
+                            }`}
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1824,11 +1824,10 @@ function CreateEsicModal({ onClose, onSuccess }) {
                           />
                         </svg>
                         <p
-                          className={`text-xs ${
-                            member.passportPhoto
+                          className={`text-xs ${member.passportPhoto
                               ? "text-green-700"
                               : "text-gray-600"
-                          }`}
+                            }`}
                         >
                           {member.passportPhoto
                             ? "Uploaded ✓"
@@ -1980,11 +1979,10 @@ function CreateEsicModal({ onClose, onSuccess }) {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative flex items-center gap-2 px-4 py-3 whitespace-nowrap transition-colors ${
-                  activeTab === tab.id
+                className={`relative flex items-center gap-2 px-4 py-3 whitespace-nowrap transition-colors ${activeTab === tab.id
                     ? "text-blue-600 border-b-2 border-blue-600 bg-white"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                } ${tabErrors[tab.id] ? "pr-8" : ""}`}
+                  } ${tabErrors[tab.id] ? "pr-8" : ""}`}
               >
                 <span className="text-sm font-medium">{tab.label}</span>
                 {tabErrors[tab.id] && (

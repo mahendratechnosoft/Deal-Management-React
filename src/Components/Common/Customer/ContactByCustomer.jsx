@@ -209,7 +209,7 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
     if (moduleAccess) {
       try {
         const parsed = JSON.parse(moduleAccess);
-        setCanCustomerLogin(parsed.canCustomerLogin === true);
+        setCanCustomerLogin(parsed.canContactPersonLogin === true);
       } catch (error) {
         console.error("Error parsing moduleAccess:", error);
       }
@@ -294,16 +294,7 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
     }
 
     // Also check when regular email changes if it's being used as login email
-    if (
-      name === "email" &&
-      enableCustomerLogin &&
-      formData.loginEmail === value
-    ) {
-      setFormErrors((prev) => ({
-        ...prev,
-        loginEmail: "Login email cannot be same as contact email",
-      }));
-    }
+
   };
 
   // Create contact
@@ -312,10 +303,7 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
 
     // Check for duplicate email before submitting
     if (enableCustomerLogin && formData.loginEmail) {
-      if (formData.loginEmail === formData.email) {
-        toast.error("Login email cannot be same as contact email");
-        return;
-      }
+    
 
       // Perform one final check
       await checkEmailAvailability(formData.loginEmail);
@@ -623,14 +611,7 @@ function ContactByCustomer({ customerId, customerName, onClose }) {
       return;
     }
 
-    // Don't check if email is same as contact email
-    if (email === formData.email) {
-      setFormErrors((prev) => ({
-        ...prev,
-        loginEmail: "Login email cannot be same as contact email",
-      }));
-      return;
-    }
+
 
     setIsVerifyingEmail(true);
     setFormErrors((prev) => ({ ...prev, loginEmail: "" }));

@@ -347,8 +347,7 @@ function PublicEsicForm() {
 
   const validateAddress = (address, fieldName) => {
     if (!address.trim()) return `${fieldName} is required`;
-    if (address.length < 10)
-      return `${fieldName} must be at least 10 characters`;
+
     if (address.length > 500)
       return `${fieldName} cannot exceed 500 characters`;
     return "";
@@ -359,12 +358,8 @@ function PublicEsicForm() {
     const newErrors = {};
 
     // Basic information
-    newErrors.name = validateName(formData.name);
-    newErrors.fatherName = validateRequired(
-      "fatherName",
-      formData.fatherName,
-      "Father's name"
-    );
+     newErrors.name = validateName(formData.name);
+ 
     newErrors.dateOfJoining = validateDate(
       "dateOfJoining",
       formData.dateOfJoining,
@@ -483,51 +478,57 @@ function PublicEsicForm() {
     }
 
     // Input formatting
-    switch (name) {
-      case "name":
-      case "fatherName":
-      case "accountHolderName":
-      case "bankName":
-      case "nomineeName":
-      case "nomineeRelation":
-        if (/^[a-zA-Z\s.,-]*$/.test(value) || value === "") {
-          if (value.length <= 100) {
-            processedValue = value;
-          }
-        }
-        break;
-      case "esicNumber":
-        if (/^\d{0,17}$/.test(value)) {
-          processedValue = value;
-        }
-        break;
-      case "presentAddress":
-      case "permanentAddress":
-        if (/^[a-zA-Z0-9\s.,-]*$/.test(value) || value === "") {
-          if (value.length <= 500) {
-            processedValue = value;
-          }
-        }
-        break;
-      case "aadhaarNumber":
-      case "nomineeAdhaar":
-        if (/^\d{0,12}$/.test(value)) {
-          processedValue = value;
-        }
-        break;
-      case "accountNumber":
-        if (/^\d{0,20}$/.test(value)) {
-          processedValue = value;
-        }
-        break;
-      case "ifsc":
-        if (/^[A-Z0-9]{0,11}$/.test(value.toUpperCase())) {
-          processedValue = value.toUpperCase();
-        }
-        break;
-      default:
+switch (name) {
+  case "name":
+  case "fatherName":
+  case "accountHolderName":
+  case "bankName":
+  case "nomineeName":
+    if (/^[a-zA-Z\s.,-]*$/.test(value) || value === "") {
+      if (value.length <= 100) {
         processedValue = value;
+      }
     }
+    break;
+
+  case "esicNumber":
+    if (/^\d{0,17}$/.test(value)) {
+      processedValue = value;
+    }
+    break;
+
+  case "presentAddress":
+  case "permanentAddress":
+    if (/^[a-zA-Z0-9\s.,-]*$/.test(value) || value === "") {
+      if (value.length <= 500) {
+        processedValue = value;
+      }
+    }
+    break;
+
+  case "aadhaarNumber":
+  case "nomineeAdhaar":
+    if (/^\d{0,12}$/.test(value)) {
+      processedValue = value;
+    }
+    break;
+
+  case "accountNumber":
+    if (/^\d{0,20}$/.test(value)) {
+      processedValue = value;
+    }
+    break;
+
+  case "ifsc":
+    if (/^[A-Z0-9]{0,11}$/.test(value.toUpperCase())) {
+      processedValue = value.toUpperCase();
+    }
+    break;
+
+  default:
+    processedValue = value;
+}
+
 
     setFormData((prev) => ({
       ...prev,
@@ -605,20 +606,15 @@ function PublicEsicForm() {
   };
 
   // Get today's date for date restrictions
-  const getTodayDate = () => {
-    return new Date().toISOString().split("T")[0];
-  };
+const getTodayDate = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
-  // Calculate max date for date of birth (14 years ago for ESIC)
-  const getMaxBirthDate = () => {
-    const today = new Date();
-    const maxDate = new Date(
-      today.getFullYear() - 14,
-      today.getMonth(),
-      today.getDate()
-    );
-    return maxDate.toISOString().split("T")[0];
-  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -802,7 +798,7 @@ function PublicEsicForm() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-semibold text-gray-900">
-          Family Members (ESIC Contents)
+          Family Members
         </h3>
         <button
           type="button"
@@ -1344,31 +1340,33 @@ function PublicEsicForm() {
                 </div>
 
                 {/* Date of Birth */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date of Birth <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    name="dateOfBirth"
-                    value={formData.dateOfBirth}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      errors.dateOfBirth ? "border-red-500" : "border-gray-300"
-                    }`}
-                    max={getMaxBirthDate()}
-                  />
-                  {errors.dateOfBirth && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.dateOfBirth}
-                    </p>
-                  )}
-                </div>
+             {/* Date of Birth */}
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Date of Birth <span className="text-red-500">*</span>
+  </label>
+  <input
+    type="date"
+    name="dateOfBirth"
+    value={formData.dateOfBirth}
+    onChange={handleChange}
+    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+      errors.dateOfBirth ? "border-red-500" : "border-gray-300"
+    }`}
+    // Remove max attribute to allow calendar to show today's date
+    // max={getMaxBirthDate()}
+  />
+  {errors.dateOfBirth && (
+    <p className="text-red-500 text-xs mt-1">
+      {errors.dateOfBirth}
+    </p>
+  )}
+</div>
 
                 {/* Father's Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Father's Name <span className="text-red-500">*</span>
+                    Father's Name
                   </label>
                   <input
                     type="text"
@@ -1681,29 +1679,32 @@ function PublicEsicForm() {
                 </div>
 
                 {/* Nominee Relation */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Relation <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="nomineeRelation"
-                    value={formData.nomineeRelation}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      errors.nomineeRelation
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
-                    placeholder="Wife, Son, Daughter, etc."
-                    maxLength={50}
-                  />
-                  {errors.nomineeRelation && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.nomineeRelation}
-                    </p>
-                  )}
-                </div>
+              <div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Relation <span className="text-red-500">*</span>
+  </label>
+  <select
+    name="nomineeRelation"
+    value={formData.nomineeRelation}
+    onChange={handleChange}
+    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+      errors.nomineeRelation ? "border-red-500" : "border-gray-300"
+    }`}
+  >
+    <option value="">Select Relation</option>
+    {relationOptions.map((option) => (
+      <option key={option.value} value={option.value}>
+        {option.label}
+      </option>
+    ))}
+  </select>
+  {errors.nomineeRelation && (
+    <p className="text-red-500 text-xs mt-1">
+      {errors.nomineeRelation}
+    </p>
+  )}
+</div>
+
 
                 {/* Nominee Aadhaar */}
                 <div>

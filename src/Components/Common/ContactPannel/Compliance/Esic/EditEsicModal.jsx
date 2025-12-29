@@ -30,7 +30,7 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
     fatherName: "",
     phone: "",
     gender: "Male",
-    isMarried: false,
+    married: false,
     aadhaarNumber: "",
     accountHolderName: "",
     bankName: "",
@@ -83,7 +83,7 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
     {
       id: "personal",
       label: "Personal Details",
-      fields: ["phone", "gender", "isMarried", "aadhaarNumber"],
+      fields: ["phone", "gender", "married", "aadhaarNumber"],
     },
     {
       id: "address",
@@ -130,7 +130,7 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
 
         // Set original data for comparison
         setOriginalData({
-          esic: esicData,
+        esic: { ...esicData },
           esicContents: esicContents,
         });
 
@@ -148,7 +148,7 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
           fatherName: esicData.fatherName || "",
           phone: esicData.phone || "",
           gender: esicData.gender || "Male",
-          isMarried: esicData.married || esicData.isMarried || false,
+          married: esicData.married || esicData.married || false,
           aadhaarNumber: esicData.aadhaarNumber || "",
           accountHolderName: esicData.accountHolderName || "",
           bankName: esicData.bankName || "",
@@ -250,7 +250,7 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
       ) {
         errorTab = "basic";
       } else if (
-        ["phone", "gender", "isMarried", "aadhaarNumber"].includes(
+        ["phone", "gender", "married", "aadhaarNumber"].includes(
           firstErrorKey
         )
       ) {
@@ -797,8 +797,7 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
 
   const validateAddress = (address, fieldName) => {
     if (!address.trim()) return `${fieldName} is required`;
-    if (address.length < 10)
-      return `${fieldName} must be at least 10 characters`;
+
     if (address.length > 500)
       return `${fieldName} cannot exceed 500 characters`;
     return "";
@@ -825,7 +824,11 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
       formData.dateOfBirth,
       "Date of birth"
     );
+  
+      if (formData.esicNumber && formData.esicNumber.trim() !== "") {
     newErrors.esicNumber = validateESICNumber(formData.esicNumber);
+  }
+
 
     // Personal details
     newErrors.phone = validatePhone(formData.phone);
@@ -917,104 +920,117 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
     return Object.keys(filteredErrors).length === 0;
   };
 
-  // Handle form submission for update
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+// Handle form submission for update
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!validateForm()) {
-      toast.error("Please fix all form errors before submitting.");
-      return;
-    }
+  if (!validateForm()) {
+    toast.error("Please fix all form errors before submitting.");
+    return;
+  }
 
-    setLoading(true);
-    try {
-      // Convert main documents to base64 if changed
-      const aadhaarPhotoBase64 = await getBase64Data(formData.aadhaarPhoto);
-      const passportPhotoBase64 = await getBase64Data(formData.passportPhoto);
+  setLoading(true);
+  try {
+    // Convert main documents to base64 if changed
+    const aadhaarPhotoBase64 = await getBase64Data(formData.aadhaarPhoto);
+    const passportPhotoBase64 = await getBase64Data(formData.passportPhoto);
 
-      // Convert family member documents to base64
-      const esicContents = await Promise.all(
-        familyMembers.map(async (member) => {
-          const aadhaarBase64 = await getBase64Data(member.aadhaarPhoto);
-          const passportBase64 = await getBase64Data(member.passportPhoto);
+    // Convert family member documents to base64
+    const esicContents = await Promise.all(
+      familyMembers.map(async (member) => {
+        const aadhaarBase64 = await getBase64Data(member.aadhaarPhoto);
+        const passportBase64 = await getBase64Data(member.passportPhoto);
 
-          return {
-            esicContentId: member.esicContentId,
-            name: member.name.trim(),
-            relation: member.relation,
-            aadhaarPhoto: aadhaarBase64,
-            passportPhoto: passportBase64,
-          };
-        })
-      );
+        return {
+          esicContentId: member.esicContentId,
+          name: member.name.trim(),
+          relation: member.relation,
+          aadhaarPhoto: aadhaarBase64,
+          passportPhoto: passportBase64,
+        };
+      })
+    );
 
-      const payload = {
-        esic: {
-          esicId: formData.esicId,
-          name: formData.name.trim(),
-          dateOfJoining: formData.dateOfJoining,
-          esicNumber: formData.esicNumber,
-          dateOfBirth: formData.dateOfBirth,
-          fatherName: formData.fatherName.trim(),
-          phone: formData.phone,
-          gender: formData.gender,
-          married: formData.isMarried,
-          aadhaarNumber: formData.aadhaarNumber,
-          accountHolderName: formData.accountHolderName.trim(),
-          bankName: formData.bankName.trim(),
-          accountNumber: formData.accountNumber,
-          ifsc: formData.ifsc,
-          presentAddress: formData.presentAddress.trim(),
-          permantAddress: formData.permanentAddress.trim(),
-          nomineeName: formData.nomineeName.trim(),
-          nomineeRelation: formData.nomineeRelation,
-          nomineeAdhaar: formData.nomineeAdhaar,
-          aadhaarPhoto: aadhaarPhotoBase64,
-          passportPhoto: passportPhotoBase64,
-        },
-        esicContents: esicContents,
-      };
+    // Get the original data to preserve unchanged fields
+    const originalEsicData = originalData?.esic;
 
-      const response = await axiosInstance.put("updateEsic", payload);
+    // Create payload with ALL required fields from original data
+    const payload = {
+      esic: {
+        // Preserve all original IDs and fields
+        esicId: formData.esicId,
+        adminId: originalEsicData?.adminId || null, // Keep original adminId
+        employeeId: originalEsicData?.employeeId || null, // Keep original employeeId
+        customerId: originalEsicData?.customerId || null, // Keep original customerId
+        contactId: originalEsicData?.contactId || null, // Keep original contactId
+        name: formData.name.trim(),
+        dateOfJoining: formData.dateOfJoining,
+        esicNumber: formData.esicNumber,
+        dateOfBirth: formData.dateOfBirth,
+        fatherName: formData.fatherName.trim(),
+        phone: formData.phone,
+        gender: formData.gender,
+        married: formData.married,
+        aadhaarNumber: formData.aadhaarNumber,
+        accountHolderName: formData.accountHolderName.trim(),
+        bankName: formData.bankName.trim(),
+        accountNumber: formData.accountNumber,
+        ifsc: formData.ifsc,
+        presentAddress: formData.presentAddress.trim(),
+        permantAddress: formData.permanentAddress.trim(),
+        nomineeName: formData.nomineeName.trim(),
+        nomineeRelation: formData.nomineeRelation,
+        nomineeAdhaar: formData.nomineeAdhaar,
+        aadhaarPhoto: aadhaarPhotoBase64 || originalEsicData?.aadhaarPhoto, // Keep original if no new upload
+        passportPhoto: passportPhotoBase64 || originalEsicData?.passportPhoto, // Keep original if no new upload
+        // Preserve other original fields
+        createdBy: originalEsicData?.createdBy || null,
+        customerName: originalEsicData?.customerName || null,
+        createdAt: originalEsicData?.createdAt || null,
+        verified: originalEsicData?.verified || false,
+      },
+      esicContents: esicContents,
+    };
 
-      if (response.data) {
-        toast.success("ESIC record updated successfully!");
-        if (onSuccess) {
-          onSuccess(response.data);
-        }
-        onClose();
-      } else {
-        throw new Error("No response data received");
+    const response = await axiosInstance.put("updateEsic", payload);
+
+    if (response.data) {
+      toast.success("ESIC record updated successfully!");
+      if (onSuccess) {
+        onSuccess(response.data);
       }
-    } catch (error) {
-      console.error("Error updating ESIC record:", error);
-      if (error.response) {
-        if (error.response.status === 500) {
-          toast.error(
-            "Server error: " +
-              (error.response.data?.message || "Check console for details")
-          );
-        } else if (error.response.status === 400) {
-          toast.error(
-            "Validation error: " +
-              (error.response.data?.message || "Please check all fields")
-          );
-        } else {
-          toast.error(
-            "Failed to update ESIC record: " +
-              (error.response.data?.message || "Unknown error")
-          );
-        }
-      } else if (error.request) {
-        toast.error("Network error. Please check your connection.");
-      } else {
-        toast.error("Failed to update ESIC record. Please try again.");
-      }
-    } finally {
-      setLoading(false);
+      onClose();
+    } else {
+      throw new Error("No response data received");
     }
-  };
-
+  } catch (error) {
+    console.error("Error updating ESIC record:", error);
+    if (error.response) {
+      if (error.response.status === 500) {
+        toast.error(
+          "Server error: " +
+            (error.response.data?.message || "Check console for details")
+        );
+      } else if (error.response.status === 400) {
+        toast.error(
+          "Validation error: " +
+            (error.response.data?.message || "Please check all fields")
+        );
+      } else {
+        toast.error(
+          "Failed to update ESIC record: " +
+            (error.response.data?.message || "Unknown error")
+        );
+      }
+    } else if (error.request) {
+      toast.error("Network error. Please check your connection.");
+    } else {
+      toast.error("Failed to update ESIC record. Please try again.");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
   // Get today's date for date restrictions
   const getTodayDate = () => {
     return new Date().toISOString().split("T")[0];
@@ -1130,7 +1146,7 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
           name="esicNumber"
           value={formData.esicNumber}
           onChange={handleChange}
-          required={true}
+        
           error={errors.esicNumber}
           placeholder="17 digit ESIC number"
           maxLength={17}
@@ -1235,8 +1251,8 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
             <label className="flex items-center gap-1.5">
               <input
                 type="checkbox"
-                name="isMarried"
-                checked={formData.isMarried}
+                name="married"
+                checked={formData.married}
                 onChange={handleChange}
                 className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
               />
@@ -1690,7 +1706,7 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-sm font-medium text-gray-700">
-          Family Members (ESIC Contents)
+          Family Members
         </h3>
         <button
           type="button"
