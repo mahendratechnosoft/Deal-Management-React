@@ -518,7 +518,7 @@ function EditProforma() {
       "Are you sure you want to cancel? Any unsaved changes will be lost."
     );
     if (result.isConfirmed) {
-      if (role === "ROLE_ADMIN") navigate("/Proforma");
+      if (role === "ROLE_ADMIN") navigate("/Admin/Proforma");
       else if (role === "ROLE_EMPLOYEE") navigate("/Employee/Proforma");
       else navigate("/login");
     }
@@ -1255,7 +1255,7 @@ function EditProforma() {
       }
       toast.success("Proforma Invoice updated successfully!");
 
-      if (role === "ROLE_ADMIN") navigate("/Proforma");
+      if (role === "ROLE_ADMIN") navigate("/Admin/Proforma");
       else if (role === "ROLE_EMPLOYEE") navigate("/Employee/Proforma");
     } catch (error) {
       console.error("Failed to update:", error);

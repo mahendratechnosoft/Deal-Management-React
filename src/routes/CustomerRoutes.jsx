@@ -8,13 +8,16 @@ const ComplianceList = lazy(() =>
 const Customerdash = lazy(() =>
   import("../Components/Common/CustomerPannel/Customerdash")
 );
+const CustomerLayout = lazy(() => import("../Components/Layout/CustomerLayout"));
 
 const CustomerRoutes = () => {
   return (
     <RoleBasedRoute allowedRoles={["ROLE_CUSTOMER"]}>
       <Routes>
+        <Route element={<CustomerLayout />}>
         <Route path="dash" element={<Customerdash />} />
         <Route path="ComplianceList" element={<ComplianceList />} />
+        </Route>
       </Routes>
     </RoleBasedRoute>
   );

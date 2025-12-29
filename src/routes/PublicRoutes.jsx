@@ -1,15 +1,16 @@
 import React, { lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import Login from "../Components/Pages/Login";
+import PageNotFound from "../Components/Pages/PageNotFound";
 import Register from "../Components/Pages/Register";
 import PublicForm from "../Components/Common/Settings/DynamicForm/PublicForm";
 import PublicPFForm from "../Components/Common/ContactPannel/Compliance/PublicPFForm";
 import PublicEsicForm from "../Components/Common/ContactPannel/Compliance/Esic/PublicEsicForm";
 
-const PublicRoutes = () => {
+const PublicRoutes = ({ onLogin }) => {
   return (
     <Routes>
-      <Route path="/login" element={<Login onLogin={handleLogin} />} />
+      <Route path="/login" element={<Login onLogin={onLogin} />} />
       <Route path="/register" element={<Register />} />
       <Route path="/public-form/:adminId/:formId" element={<PublicForm />} />
       <Route

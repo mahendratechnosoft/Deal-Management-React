@@ -1,10 +1,4 @@
-// Components/Layout/useLayout.jsx
 import { useMemo } from "react";
-import AdminLayout from "./AdminLayout";
-import EmployeeLayout from "./EmployeeLayout";
-import SuperAdminLayout from "./SuperAdminLayout";
-import CustomerLayout from "./CustomerLayout";
-import ContactLayout from "./ContactLayout";
 
 export const useLayout = () => {
   const getRole = () => {
@@ -23,18 +17,18 @@ export const useLayout = () => {
   const role = getRole();
 
   const LayoutComponent = useMemo(() => {
-
     if (role === "ROLE_ADMIN") {
-      return ({ children }) => <AdminLayout>{children}</AdminLayout>;
+      return ({ children }) => <>{children}</>;
     } else if (role === "ROLE_EMPLOYEE") {
-      return ({ children }) => <EmployeeLayout>{children}</EmployeeLayout>;
+      return ({ children }) => <>{children}</>;
     } else if (role === "ROLE_SUPERADMIN") {
-      return ({ children }) => <SuperAdminLayout>{children}</SuperAdminLayout>;
+      return ({ children }) => <>{children}</>;
     } else if (role === "ROLE_CUSTOMER") {
-      return ({ children }) => <CustomerLayout>{children}</CustomerLayout>;
+      return ({ children }) => <>{children}</>;
     } else if (role === "ROLE_CONTACT") {
-      return ({ children }) => <ContactLayout>{children}</ContactLayout>;
+      return ({ children }) => <>{children}</>;
     }
+
     return ({ children }) => <>{children}</>;
   }, [role]);
 

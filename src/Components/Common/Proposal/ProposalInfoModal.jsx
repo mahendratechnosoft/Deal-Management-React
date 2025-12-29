@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
-// Assuming you are sharing the CSS, otherwise rename this file to a generic 'InfoModal.css'
 import "../Proforma/ProformaInfoModal.css";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
 import ProposalInvoiceDisplay from "./ProposalInvoiceDisplay";
-import { formatProposalNumber } from "../../BaseComponet/UtilFunctions";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 
@@ -147,7 +145,13 @@ const ProposalInfoModal = ({ isOpen, onClose, proposal, onOpenPdf }) => {
           customClass: swalCustomClasses,
         }).then((viewResult) => {
           if (viewResult.isConfirmed) {
-            navigate(`/Proforma/Edit/${proformaId}`);
+            if (role === "ROLE_ADMIN") {
+              navigate(`/Admin/Proforma/Edit/${proformaId}`);
+            } else if (role === "ROLE_EMPLOYEE") {
+              navigate(`/Employee/Proforma/Edit/${proformaId}`);
+            } else {
+              navigate("/login");
+            }
           }
         });
       }
@@ -165,7 +169,13 @@ const ProposalInfoModal = ({ isOpen, onClose, proposal, onOpenPdf }) => {
           customClass: swalCustomClasses,
         }).then((viewResult) => {
           if (viewResult.isConfirmed) {
-            navigate(`/Proforma/Edit/${proformaId}`);
+            if (role === "ROLE_ADMIN") {
+              navigate(`/Admin/Proforma/Edit/${proformaId}`);
+            } else if (role === "ROLE_EMPLOYEE") {
+              navigate(`/Employee/Proforma/Edit/${proformaId}`);
+            } else {
+              navigate("/login");
+            }
           }
         });
       }

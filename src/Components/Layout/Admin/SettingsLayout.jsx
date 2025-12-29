@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
-import TopBar from "./TopBarAdmin";
-import Sidebar from "./SidebarAdmin";
 import { hasPermission } from "../../BaseComponet/permissions";
 
 // --- Icons ---
@@ -126,7 +124,6 @@ const CloseIcon = () => (
 // --- End Icons ---
 
 const SettingsLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [settingsSidebarOpen, setSettingsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [openMenus, setOpenMenus] = useState({});
@@ -190,10 +187,8 @@ const SettingsLayout = () => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const toggleMainSidebar = () => setSidebarOpen(!sidebarOpen);
   const toggleSettingsSidebar = () =>
     setSettingsSidebarOpen(!settingsSidebarOpen);
-  const handleSignOut = () => navigate("/login");
 
   useEffect(() => {
     if (isMobile) setSettingsSidebarOpen(false);
@@ -209,21 +204,8 @@ const SettingsLayout = () => {
   const inactiveClass = "text-gray-600 hover:bg-gray-100 hover:text-gray-900";
 
   return (
-    <div className="min-h-screen font-sans flex flex-col">
-      <TopBar
-        toggleSidebar={toggleMainSidebar}
-        sidebarOpen={sidebarOpen}
-        onSwitchToLogin={handleSignOut}
-      />
-
-      <div className="flex flex-1">
-        <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleMainSidebar} />
-        <div
-          className={`flex-1 flex flex-col transition-all duration-300 overflow-x-auto ${
-            sidebarOpen ? "lg:ml-0" : "ml-0"
-          }`}
-        >
-          <div className="p-4 lg:p-6 lg:pb-0 overflow-x-auto CRM-scroll-width-none">
+    <div className="h-full flex flex-col">
+      <div className="p-4 lg:p-6 lg:pb-0 overflow-x-auto CRM-scroll-width-none h-full">
             <div className="lg:hidden mb-4 flex items-center justify-between bg-white p-3 rounded-lg shadow">
               <button
                 onClick={toggleSettingsSidebar}
@@ -359,8 +341,6 @@ const SettingsLayout = () => {
                 <Outlet />
               </main>
             </div>
-          </div>
-        </div>
       </div>
     </div>
   );

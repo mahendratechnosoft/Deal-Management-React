@@ -176,8 +176,25 @@ function ProformaList() {
     }
   }
 
-  const handleCreateProforma = () => navigate("/Proforma/Create");
-  const handleEdit = (proformaId) => navigate(`/Proforma/Edit/${proformaId}`);
+  const handleCreateProforma = () => {
+    if (role === "ROLE_ADMIN") {
+      navigate("/Admin/Proforma/Create");
+    } else if (role === "ROLE_EMPLOYEE") {
+      navigate("/Employee/Proforma/Create");
+    } else {
+      navigate("/login");
+    }
+  };
+  const handleEdit = (proformaId) => {
+    if (role === "ROLE_ADMIN") {
+      navigate(`/Admin/Proforma/Edit/${proformaId}`);
+    } else if (role === "ROLE_EMPLOYEE") {
+      navigate(`/Employee/Proforma/Edit/${proformaId}`);
+    } else {
+      navigate("/login");
+    }
+  };
+
   const handlePageSizeChange = (newSize) => setPageSize(newSize);
   const handlePageChange = (newPage) =>
     fetchProformaList(newPage, searchTerm, proformaTypeFilter);

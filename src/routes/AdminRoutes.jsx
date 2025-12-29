@@ -90,6 +90,7 @@ const ItemList = lazy(() => import("../Components/Common/Item/Itemlists"));
 const ComplianceList = lazy(() =>
   import("../Components/Common/ContactPannel/Compliance/ComplianceList")
 );
+const AdminLayout = lazy(() => import("../Components/Layout/AdminLayout"));
 const SettingsLayout = lazy(() =>
   import("../Components/Layout/Admin/SettingsLayout")
 );
@@ -123,6 +124,7 @@ const AdminRoutes = () => {
   return (
     <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
       <Routes>
+        <Route element={<AdminLayout />}>
         <Route path="LeadList" element={<LeadList />} />
         <Route path="CreateLead" element={<CreateLead />} />
         <Route path="EmployeeList" element={<EmployeeList />} />
@@ -200,6 +202,7 @@ const AdminRoutes = () => {
         </Route>
 
         {/* ------------Settings END--------------- */}
+        </Route>
       </Routes>
     </RoleBasedRoute>
   );
