@@ -672,6 +672,18 @@ function EditAdmin() {
                         </label>
                       </div>
 
+                           <ModuleAccessToggle
+                              title="Contact Person Login"
+                              field="canContactPersonLogin"
+                              isChecked={getAccess("canContactPersonLogin")}
+                              onChange={(isChecked) =>
+                                handleAccessChange(
+                                  "canContactPersonLogin",
+                                  isChecked
+                                )
+                              }
+                            />
+
                       {/* Customer Login Sub-permissions - Conditionally shown */}
                       {getAccess("canCustomerLogin") && (
                         <div className="mt-3 p-4 border border-gray-200 rounded bg-blue-50">
@@ -692,17 +704,7 @@ function EditAdmin() {
                             Customer Login Permissions
                           </h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <ModuleAccessToggle
-                              title="Contact Person Login"
-                              field="canContactPersonLogin"
-                              isChecked={getAccess("canContactPersonLogin")}
-                              onChange={(isChecked) =>
-                                handleAccessChange(
-                                  "canContactPersonLogin",
-                                  isChecked
-                                )
-                              }
-                            />
+                       
 
                             <ModuleAccessToggle
                               title="Compliance Access"

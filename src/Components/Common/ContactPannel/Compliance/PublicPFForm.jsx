@@ -1,5 +1,5 @@
 // PublicPFForm.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axiosInstance from "../../../BaseComponet/axiosInstance";
 import Swal from "sweetalert2";
@@ -11,6 +11,10 @@ function PublicPFForm() {
   const { contactId, formId } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [phone, setPhone] = useState("");
+
+    const [uploadedFileName, setUploadedFileName] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -277,12 +281,38 @@ function PublicPFForm() {
     }
   };
 
-  const handleFileChange = (e) => {
+   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    processFile(file);
+  };
 
+  // Handle drag and drop
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
+  // Process file (validation and conversion)
+  const processFile = (file) => {
+    // Validation
     if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file");
+      toast.error("Please upload an image file (JPEG, PNG, JPG, GIF)");
       return;
     }
 
@@ -291,20 +321,49 @@ function PublicPFForm() {
       return;
     }
 
+    setUploadedFileName(file.name);
+
+    // Preview image
     const reader = new FileReader();
     reader.onloadend = () => {
-      const base64String = reader.result.split(",")[1];
+      // For preview
+      const previewUrl = reader.result;
+      // You can store this in state if you want to show preview
+      // setPreviewImage(previewUrl);
+      
+      // For submission (Base64 without data URL prefix)
+      const base64String = previewUrl.split(",")[1];
       setFormData((prev) => ({
         ...prev,
         aadhaarPhoto: base64String,
       }));
-      toast.success("Aadhaar photo uploaded successfully");
+      toast.success("Aadhaar photo uploaded successfully!");
     };
     reader.onerror = () => {
-      toast.error("Failed to read file");
+      toast.error("Failed to read file. Please try again.");
+      setUploadedFileName("");
     };
     reader.readAsDataURL(file);
   };
+
+  // Remove uploaded file
+  const handleRemoveFile = () => {
+    setFormData((prev) => ({
+      ...prev,
+      aadhaarPhoto: "",
+    }));
+    setUploadedFileName("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    toast.success("File removed");
+  };
+
+  // Trigger file input click
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
 
   // Get today's date for date restrictions
   const getTodayDate = () => {
@@ -808,60 +867,191 @@ function PublicPFForm() {
             </div>
 
             {/* Aadhaar Photo Upload */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
-                Document Upload
-              </h3>
+       <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+          Document Upload
+        </h3>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Aadhaar Photo (Optional)
-                </label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
-                  <div className="space-y-1 text-center">
-                    <svg
-                      className="mx-auto h-12 w-12 text-gray-400"
-                      stroke="currentColor"
-                      fill="none"
-                      viewBox="0 0 48 48"
-                    >
-                      <path
-                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <div className="flex text-sm text-gray-600">
-                      <label
-                        htmlFor="aadhaarPhoto"
-                        className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            Aadhaar Photo <span className="text-red-500">*</span>
+         
+          </label>
+
+          {/* Preview Section (Shows when file is uploaded) */}
+          {formData.aadhaarPhoto && (
+            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
+                      <svg
+                        className="h-6 w-6 text-green-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                       >
-                        <span>Upload a file</span>
-                        <input
-                          id="aadhaarPhoto"
-                          name="aadhaarPhoto"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileChange}
-                          className="sr-only"
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
                         />
-                      </label>
-                      <p className="pl-1">or drag and drop</p>
+                      </svg>
                     </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {uploadedFileName || "Aadhaar Photo"}
+                    </p>
                     <p className="text-xs text-gray-500">
-                      PNG, JPG, GIF up to 5MB
+                      ✓ Successfully uploaded
                     </p>
                   </div>
                 </div>
-                {formData.aadhaarPhoto && (
-                  <p className="text-green-600 text-sm mt-2">
-                    ✓ Aadhaar photo uploaded successfully
-                  </p>
-                )}
+                <button
+                  type="button"
+                  onClick={handleRemoveFile}
+                  className="ml-3 p-1.5 rounded-full hover:bg-red-100 text-red-600 hover:text-red-800 transition-colors"
+                  title="Remove file"
+                >
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
               </div>
+
+              {/* Image Preview (Optional - if you want to show the image) */}
+              {/* 
+              <div className="mt-3">
+                <div className="relative w-32 h-32 border rounded-lg overflow-hidden">
+                  <img
+                    src={`data:image/jpeg;base64,${formData.aadhaarPhoto}`}
+                    alt="Aadhaar preview"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              </div>
+              */}
+            </div>
+          )}
+
+          {/* Upload Area */}
+          <div
+            className={`mt-1 ${!formData.aadhaarPhoto ? 'block' : 'hidden'}`}
+               onClick={handleUploadClick}
+          >
+            <div
+              className={`relative border-2 border-dashed rounded-lg transition-all duration-200 ${
+                isDragging
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-300 hover:border-blue-400"
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <div className="px-6 pt-10 pb-9 text-center">
+                {/* Upload Icon */}
+                <div className="flex justify-center mb-4">
+                  <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
+                    <svg
+                      className="h-8 w-8 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Instructions */}
+                <p className="text-sm text-gray-600 mb-2">
+                  <button
+                    type="button"
+                    onClick={handleUploadClick}
+                    className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:underline"
+                  >
+                    Click to upload
+                  </button>
+                  {" or drag and drop"}
+                </p>
+                <p className="text-xs text-gray-500 mb-3">
+                  PNG, JPG, GIF up to 5MB
+                </p>
+
+      
+
+                {/* Hidden File Input */}
+                <input
+                  id="aadhaarPhoto"
+                  ref={fileInputRef}
+                  name="aadhaarPhoto"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="sr-only"
+                />
+              </div>
+
+              {/* Drag overlay */}
+              {isDragging && (
+                <div className="absolute inset-0 bg-blue-500 bg-opacity-10 flex items-center justify-center rounded-lg">
+                  <div className="text-center">
+                    <svg
+                      className="h-12 w-12 text-blue-500 mx-auto mb-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1}
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                      />
+                    </svg>
+                    <p className="text-blue-600 font-medium">Drop file here</p>
+                  </div>
+                </div>
+              )}
             </div>
 
+            {/* Validation Message */}
+            {errors.aadhaarPhoto && (
+              <p className="text-red-500 text-xs mt-2">{errors.aadhaarPhoto}</p>
+            )}
+          </div>
+
+          {/* Progress Bar (Optional - for future if implementing upload progress) */}
+          {/* 
+          <div className="mt-3">
+            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-green-500 transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+          </div>
+          */}
+        </div>
+      </div>
             {/* Submit Button */}
             <div className="pt-4">
               <button
