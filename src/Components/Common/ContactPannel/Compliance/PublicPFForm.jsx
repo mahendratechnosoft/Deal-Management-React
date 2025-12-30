@@ -7,14 +7,25 @@ import toast from "react-hot-toast";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 
+
+
+
 function PublicPFForm() {
   const { contactId, formId } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [phone, setPhone] = useState("");
 
-    const [uploadedFileName, setUploadedFileName] = useState("");
+  const [uploadedFileName, setUploadedFileName] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
+
+const [uploadedBackFileName, setUploadedBackFileName] = useState(""); // NEW
+const [uploadedPanFileName, setUploadedPanFileName] = useState(""); // NEW
+const [draggingOver, setDraggingOver] = useState(null); // NEW: Track which file is being dragged over
+
+  const userData = JSON.parse(localStorage.getItem("userData")) || {};
+const fileInputBackRef = useRef(null); // NEW
+const fileInputPanRef = useRef(null); // NEW
 
   const [formData, setFormData] = useState({
     name: "",
@@ -33,6 +44,9 @@ function PublicPFForm() {
     accountNumber: "",
     ifsc: "",
     aadhaarPhoto: "",
+    aadhaarPhotoBack: "",
+    panPhoto: "",
+    grossSalary: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -180,6 +194,27 @@ function PublicPFForm() {
       }
     }
 
+
+    // Inside validateForm function, add this:
+newErrors.grossSalary = validateRequired(
+  "grossSalary", 
+  formData.grossSalary, 
+  "Gross salary"
+);
+
+// Optional: Add numeric validation
+if (formData.grossSalary && !/^\d+(\.\d{1,2})?$/.test(formData.grossSalary)) {
+  newErrors.grossSalary = "Please enter a valid salary amount (e.g., 50000 or 50000.50)";
+}
+
+// Also add validation for the new file uploads (optional but recommended):
+if (!formData.aadhaarPhotoBack) {
+  newErrors.aadhaarPhotoBack = "Aadhaar back side is required";
+}
+
+if (!formData.panPhoto) {
+  newErrors.panPhoto = "PAN Card or License is required";
+}
     // Filter out empty errors
     const filteredErrors = Object.fromEntries(
       Object.entries(newErrors).filter(([_, value]) => value !== "")
@@ -206,6 +241,11 @@ function PublicPFForm() {
       case "name":
       case "fatherName":
       case "accountHolderName":
+          case "grossSalary":
+    if (/^\d*\.?\d{0,2}$/.test(value) || value === "") {
+      processedValue = value;
+    }
+    break;
       case "bankName":
         if (/^[a-zA-Z\s]*$/.test(value) || value === "") {
           if (value.length <= 100) {
@@ -281,88 +321,132 @@ function PublicPFForm() {
     }
   };
 
-   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    processFile(file);
-  };
+// Update handleFileChange to handle multiple files
+const handleFileChange = (e, type = 'front') => {
+  const file = e.target.files[0];
+  if (!file) return;
+  processFile(file, type);
+};
 
-  // Handle drag and drop
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
+// Update handleDrop to handle multiple drop zones
+const handleDrop = (e, type = 'front') => {
+  e.preventDefault();
+  setIsDragging(false);
+  setDraggingOver(null);
+  
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    processFile(file, type);
+  }
+};
 
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
+// Update processFile to handle different file types
+const processFile = (file, type = 'front') => {
+  // Validation
+  if (!file.type.startsWith("image/")) {
+    toast.error("Please upload an image file (JPEG, PNG, JPG, GIF)");
+    return;
+  }
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      processFile(file);
-    }
-  };
+if (file.size > 200 * 1024) { // 200KB = 200 * 1024 bytes
+  toast.error("File size should be less than 200KB");
+  return;
+}
 
-  // Process file (validation and conversion)
-  const processFile = (file) => {
-    // Validation
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file (JPEG, PNG, JPG, GIF)");
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File size should be less than 5MB");
-      return;
-    }
-
+  // Set file name based on type
+  if (type === 'front') {
     setUploadedFileName(file.name);
+  } else if (type === 'back') {
+    setUploadedBackFileName(file.name);
+  } else if (type === 'pan') {
+    setUploadedPanFileName(file.name);
+  }
 
-    // Preview image
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      // For preview
-      const previewUrl = reader.result;
-      // You can store this in state if you want to show preview
-      // setPreviewImage(previewUrl);
-      
-      // For submission (Base64 without data URL prefix)
-      const base64String = previewUrl.split(",")[1];
+  // Preview image
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    const base64String = reader.result.split(",")[1];
+    
+    if (type === 'front') {
       setFormData((prev) => ({
         ...prev,
         aadhaarPhoto: base64String,
       }));
-      toast.success("Aadhaar photo uploaded successfully!");
-    };
-    reader.onerror = () => {
-      toast.error("Failed to read file. Please try again.");
-      setUploadedFileName("");
-    };
-    reader.readAsDataURL(file);
+      toast.success("Aadhaar front photo uploaded successfully!");
+    } else if (type === 'back') {
+      setFormData((prev) => ({
+        ...prev,
+        aadhaarPhotoBack: base64String,
+      }));
+      toast.success("Aadhaar back photo uploaded successfully!");
+    } else if (type === 'pan') {
+      setFormData((prev) => ({
+        ...prev,
+        panPhoto: base64String,
+      }));
+      toast.success("PAN/License photo uploaded successfully!");
+    }
   };
+  reader.onerror = () => {
+    toast.error("Failed to read file. Please try again.");
+    if (type === 'front') setUploadedFileName("");
+    else if (type === 'back') setUploadedBackFileName("");
+    else if (type === 'pan') setUploadedPanFileName("");
+  };
+  reader.readAsDataURL(file);
+};
 
-  // Remove uploaded file
-  const handleRemoveFile = () => {
+// Update handleRemoveFile to handle different file types
+const handleRemoveFile = (type = 'front') => {
+  if (type === 'front') {
     setFormData((prev) => ({
       ...prev,
       aadhaarPhoto: "",
     }));
     setUploadedFileName("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-    toast.success("File removed");
-  };
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  } else if (type === 'back') {
+    setFormData((prev) => ({
+      ...prev,
+      aadhaarPhotoBack: "",
+    }));
+    setUploadedBackFileName("");
+    if (fileInputBackRef.current) fileInputBackRef.current.value = "";
+  } else if (type === 'pan') {
+    setFormData((prev) => ({
+      ...prev,
+      panPhoto: "",
+    }));
+    setUploadedPanFileName("");
+    if (fileInputPanRef.current) fileInputPanRef.current.value = "";
+  }
+  toast.success("File removed");
+};
 
-  // Trigger file input click
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
+// Update handleUploadClick to handle different file inputs
+const handleUploadClick = (type = 'front') => {
+  if (type === 'front') fileInputRef.current?.click();
+  else if (type === 'back') fileInputBackRef.current?.click();
+  else if (type === 'pan') fileInputPanRef.current?.click();
+};
+
+// Update drag handlers
+const handleDragOver = (e, type = 'front') => {
+  e.preventDefault();
+  setIsDragging(true);
+  setDraggingOver(type);
+};
+
+const handleDragLeave = (e, type = 'front') => {
+  e.preventDefault();
+  setIsDragging(false);
+  setDraggingOver(null);
+};
+
+  // Handle drag and drop
+  
+
+
 
 
   // Get today's date for date restrictions
@@ -409,7 +493,10 @@ function PublicPFForm() {
         bankName: formData.bankName.trim(),
         accountNumber: formData.accountNumber,
         ifsc: formData.ifsc,
+         grossSalary: formData.grossSalary,
         aadhaarPhoto: formData.aadhaarPhoto || "",
+         aadhaarPhotoBack: formData.aadhaarPhotoBack || "", // NEW
+  panPhoto: formData.panPhoto || "",
       };
 
       const response = await axiosInstance.post("/submitPfForm", submitData, {
@@ -448,8 +535,16 @@ function PublicPFForm() {
         accountNumber: "",
         ifsc: "",
         aadhaarPhoto: "",
+
+          grossSalary: "", // NEW
+
+  aadhaarPhotoBack: "", // NEW
+  panPhoto: "", // NEW
       });
       setPhone("");
+      setUploadedFileName(""); // Add this
+setUploadedBackFileName(""); // Add this
+setUploadedPanFileName(""); 
     } catch (error) {
       console.error("Error submitting form:", error);
 
@@ -474,12 +569,121 @@ function PublicPFForm() {
     }
   };
 
+
+  // Helper function to render file upload component
+const renderFileUpload = (type, fileData, fileName, placeholderText) => {
+  const isActiveDragging = isDragging && draggingOver === type;
+  
+  return (
+    <>
+      {/* Preview Section */}
+      {fileData && (
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="flex-shrink-0">
+                <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
+                  <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{fileName || `${type.toUpperCase()} Document`}</p>
+                <p className="text-xs text-gray-500">✓ Successfully uploaded</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleRemoveFile(type)}
+              className="ml-3 p-1.5 rounded-full hover:bg-red-100 text-red-600 hover:text-red-800 transition-colors"
+              title="Remove file"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Area */}
+      <div className={`${!fileData ? 'block' : 'hidden'}`} onClick={() => handleUploadClick(type)}>
+        <div
+          className={`relative border-2 border-dashed rounded-lg transition-all duration-200 ${
+            isActiveDragging
+              ? "border-blue-500 bg-blue-50"
+              : "border-gray-300 hover:border-blue-400"
+          }`}
+          onDragOver={(e) => handleDragOver(e, type)}
+          onDragLeave={(e) => handleDragLeave(e, type)}
+          onDrop={(e) => handleDrop(e, type)}
+        >
+          <div className="px-6 pt-10 pb-9 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
+                <svg className="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-2">
+              <button
+                type="button"
+                onClick={() => handleUploadClick(type)}
+                className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:underline"
+              >
+                Click to upload
+              </button>
+              {" or drag and drop"}
+            </p>
+            <p className="text-xs text-gray-500 mb-3">{placeholderText}</p>
+          <p className="text-xs text-gray-500">PNG, JPG, GIF up to 200KB</p>
+
+            {/* Hidden File Input */}
+            <input
+              ref={type === 'front' ? fileInputRef : type === 'back' ? fileInputBackRef : fileInputPanRef}
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileChange(e, type)}
+              className="sr-only"
+            />
+          </div>
+
+          {/* Drag overlay */}
+          {isActiveDragging && (
+            <div className="absolute inset-0 bg-blue-500 bg-opacity-10 flex items-center justify-center rounded-lg">
+              <div className="text-center">
+                <svg className="h-12 w-12 text-blue-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p className="text-blue-600 font-medium">Drop file here</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+};
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-4">
           <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <div className="flex items-center space-x-3">
+                  {/* Logo with proper background */}
+                  {userData?.logo && (
+                    <div className="flex items-center justify-center rounded-lg p-2 w-full">
+                      <img
+                        src={`data:image/png;base64,${userData?.logo}`}
+                        alt="Mtech Logo"
+                        className="w-15 h-10 object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Employee PF Registration
             </h1>
@@ -520,9 +724,8 @@ function PublicPFForm() {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.name ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.name ? "border-red-500" : "border-gray-300"
+                      }`}
                     placeholder="Enter your full name"
                     maxLength={100}
                   />
@@ -541,11 +744,10 @@ function PublicPFForm() {
                     name="dateOfJoining"
                     value={formData.dateOfJoining}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.dateOfJoining
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.dateOfJoining
                         ? "border-red-500"
                         : "border-gray-300"
-                    }`}
+                      }`}
                     max={getTodayDate()}
                   />
                   {errors.dateOfJoining && (
@@ -565,9 +767,8 @@ function PublicPFForm() {
                     name="uan"
                     value={formData.uan}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.uan ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.uan ? "border-red-500" : "border-gray-300"
+                      }`}
                     placeholder="12-digit UAN number"
                     maxLength={12}
                   />
@@ -586,9 +787,8 @@ function PublicPFForm() {
                     name="dateOfBirth"
                     value={formData.dateOfBirth}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.dateOfBirth ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.dateOfBirth ? "border-red-500" : "border-gray-300"
+                      }`}
                     max={getMaxBirthDate()}
                   />
                   {errors.dateOfBirth && (
@@ -608,9 +808,8 @@ function PublicPFForm() {
                     name="fatherName"
                     value={formData.fatherName}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.fatherName ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.fatherName ? "border-red-500" : "border-gray-300"
+                      }`}
                     placeholder="Enter father's name"
                     maxLength={100}
                   />
@@ -631,9 +830,8 @@ function PublicPFForm() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.email ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? "border-red-500" : "border-gray-300"
+                      }`}
                     placeholder="your.email@example.com"
                     maxLength={100}
                   />
@@ -648,9 +846,8 @@ function PublicPFForm() {
                     Phone Number <span className="text-red-500">*</span>
                   </label>
                   <div
-                    className={`phone-input-wrapper ${
-                      errors.phone ? "border-red-500 rounded-lg" : ""
-                    }`}
+                    className={`phone-input-wrapper ${errors.phone ? "border-red-500 rounded-lg" : ""
+                      }`}
                   >
                     <PhoneInput
                       country={"in"}
@@ -690,11 +887,10 @@ function PublicPFForm() {
                     name="aadhaarNumber"
                     value={formData.aadhaarNumber}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.aadhaarNumber
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.aadhaarNumber
                         ? "border-red-500"
                         : "border-gray-300"
-                    }`}
+                      }`}
                     placeholder="12-digit Aadhaar number"
                     maxLength={12}
                   />
@@ -751,9 +947,8 @@ function PublicPFForm() {
                   name="pan"
                   value={formData.pan}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase ${
-                    errors.pan ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase ${errors.pan ? "border-red-500" : "border-gray-300"
+                    }`}
                   placeholder="ABCDE1234F"
                   maxLength={10}
                 />
@@ -761,6 +956,31 @@ function PublicPFForm() {
                   <p className="text-red-500 text-xs mt-1">{errors.pan}</p>
                 )}
               </div>
+
+              {/* Gross Salary */}
+<div className="md:w-1/2">
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Gross Salary (₹) <span className="text-red-500">*</span>
+  </label>
+  <div className="relative">
+    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <span className="text-gray-500">₹</span>
+    </div>
+    <input
+      type="text"
+      name="grossSalary"
+      value={formData.grossSalary}
+      onChange={handleChange}
+      className={`w-full pl-8 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+        errors.grossSalary ? "border-red-500" : "border-gray-300"
+      }`}
+      placeholder="e.g., 50000.00"
+    />
+  </div>
+  {errors.grossSalary && (
+    <p className="text-red-500 text-xs mt-1">{errors.grossSalary}</p>
+  )}
+</div>
             </div>
 
             {/* Bank Information Section */}
@@ -780,11 +1000,10 @@ function PublicPFForm() {
                     name="accountHolderName"
                     value={formData.accountHolderName}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.accountHolderName
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.accountHolderName
                         ? "border-red-500"
                         : "border-gray-300"
-                    }`}
+                      }`}
                     placeholder="As per bank records"
                     maxLength={100}
                   />
@@ -805,9 +1024,8 @@ function PublicPFForm() {
                     name="bankName"
                     value={formData.bankName}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.bankName ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.bankName ? "border-red-500" : "border-gray-300"
+                      }`}
                     placeholder="Bank name"
                     maxLength={100}
                   />
@@ -828,11 +1046,10 @@ function PublicPFForm() {
                     name="accountNumber"
                     value={formData.accountNumber}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.accountNumber
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.accountNumber
                         ? "border-red-500"
                         : "border-gray-300"
-                    }`}
+                      }`}
                     placeholder="Bank account number"
                     maxLength={20}
                   />
@@ -853,9 +1070,8 @@ function PublicPFForm() {
                     name="ifsc"
                     value={formData.ifsc}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase ${
-                      errors.ifsc ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase ${errors.ifsc ? "border-red-500" : "border-gray-300"
+                      }`}
                     placeholder="SBIN0001234"
                     maxLength={11}
                   />
@@ -866,192 +1082,60 @@ function PublicPFForm() {
               </div>
             </div>
 
-            {/* Aadhaar Photo Upload */}
-       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
-          Document Upload
-        </h3>
+            {/* Document Upload Section */}
+<div className="space-y-6">
+  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+    Document Upload
+  </h3>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Aadhaar Photo <span className="text-red-500">*</span>
-         
-          </label>
+  {/* Aadhaar Front Side */}
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-3">
+      Aadhaar Front Side <span className="text-red-500">*</span>
+    </label>
+    {renderFileUpload(
+      'front',
+      formData.aadhaarPhoto,
+      uploadedFileName,
+      "Upload front side of Aadhaar"
+    )}
+    {errors.aadhaarPhoto && (
+      <p className="text-red-500 text-xs mt-2">{errors.aadhaarPhoto}</p>
+    )}
+  </div>
 
-          {/* Preview Section (Shows when file is uploaded) */}
-          {formData.aadhaarPhoto && (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">
-                    <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
-                      <svg
-                        className="h-6 w-6 text-green-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {uploadedFileName || "Aadhaar Photo"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      ✓ Successfully uploaded
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleRemoveFile}
-                  className="ml-3 p-1.5 rounded-full hover:bg-red-100 text-red-600 hover:text-red-800 transition-colors"
-                  title="Remove file"
-                >
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
+  {/* Aadhaar Back Side */}
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-3">
+      Aadhaar Back Side <span className="text-red-500">*</span>
+    </label>
+    {renderFileUpload(
+      'back',
+      formData.aadhaarPhotoBack,
+      uploadedBackFileName,
+      "Upload back side of Aadhaar"
+    )}
+    {errors.aadhaarPhotoBack && (
+      <p className="text-red-500 text-xs mt-2">{errors.aadhaarPhotoBack}</p>
+    )}
+  </div>
 
-              {/* Image Preview (Optional - if you want to show the image) */}
-              {/* 
-              <div className="mt-3">
-                <div className="relative w-32 h-32 border rounded-lg overflow-hidden">
-                  <img
-                    src={`data:image/jpeg;base64,${formData.aadhaarPhoto}`}
-                    alt="Aadhaar preview"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-              */}
-            </div>
-          )}
-
-          {/* Upload Area */}
-          <div
-            className={`mt-1 ${!formData.aadhaarPhoto ? 'block' : 'hidden'}`}
-               onClick={handleUploadClick}
-          >
-            <div
-              className={`relative border-2 border-dashed rounded-lg transition-all duration-200 ${
-                isDragging
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-300 hover:border-blue-400"
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <div className="px-6 pt-10 pb-9 text-center">
-                {/* Upload Icon */}
-                <div className="flex justify-center mb-4">
-                  <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
-                    <svg
-                      className="h-8 w-8 text-blue-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                      />
-                    </svg>
-                  </div>
-                </div>
-
-                {/* Instructions */}
-                <p className="text-sm text-gray-600 mb-2">
-                  <button
-                    type="button"
-                    onClick={handleUploadClick}
-                    className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:underline"
-                  >
-                    Click to upload
-                  </button>
-                  {" or drag and drop"}
-                </p>
-                <p className="text-xs text-gray-500 mb-3">
-                  PNG, JPG, GIF up to 5MB
-                </p>
-
-      
-
-                {/* Hidden File Input */}
-                <input
-                  id="aadhaarPhoto"
-                  ref={fileInputRef}
-                  name="aadhaarPhoto"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="sr-only"
-                />
-              </div>
-
-              {/* Drag overlay */}
-              {isDragging && (
-                <div className="absolute inset-0 bg-blue-500 bg-opacity-10 flex items-center justify-center rounded-lg">
-                  <div className="text-center">
-                    <svg
-                      className="h-12 w-12 text-blue-500 mx-auto mb-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1}
-                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                      />
-                    </svg>
-                    <p className="text-blue-600 font-medium">Drop file here</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Validation Message */}
-            {errors.aadhaarPhoto && (
-              <p className="text-red-500 text-xs mt-2">{errors.aadhaarPhoto}</p>
-            )}
-          </div>
-
-          {/* Progress Bar (Optional - for future if implementing upload progress) */}
-          {/* 
-          <div className="mt-3">
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-green-500 transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
-              ></div>
-            </div>
-          </div>
-          */}
-        </div>
-      </div>
+  {/* PAN Card or License */}
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-3">
+      PAN Card or License <span className="text-red-500">*</span>
+    </label>
+    {renderFileUpload(
+      'pan',
+      formData.panPhoto,
+      uploadedPanFileName,
+      "Upload PAN Card or License"
+    )}
+    {errors.panPhoto && (
+      <p className="text-red-500 text-xs mt-2">{errors.panPhoto}</p>
+    )}
+  </div>
+</div>
             {/* Submit Button */}
             <div className="pt-4">
               <button

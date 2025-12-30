@@ -20,6 +20,12 @@ function EditPF({ pfId, onClose, onSuccess }) {
   const [tabErrors, setTabErrors] = useState({});
   const [showAdminPassword, setShowAdminPassword] = useState(false);
   const fileInputRef = useRef(null);
+
+const [attachmentBack, setAttachmentBack] = useState(null); // NEW for back side
+const [attachmentPan, setAttachmentPan] = useState(null); // NEW for PANpayload 
+const [attachmentErrorBack, setAttachmentErrorBack] = useState(""); // NEW
+const [attachmentErrorPan, setAttachmentErrorPan] = useState(""); // NEW
+
   const { LayoutComponent, role } = useLayout();
   const canEdit =
     role === "ROLE_CUSTOMER"
@@ -45,6 +51,10 @@ function EditPF({ pfId, onClose, onSuccess }) {
     bankName: "",
     accountNumber: "",
     ifsc: "",
+      aadhaarPhoto: "",
+  aadhaarPhotoBack: "",
+  panPhoto: "",
+  grossSalary: "",
   });
 
   const [originalData, setOriginalData] = useState(null);
@@ -57,33 +67,33 @@ function EditPF({ pfId, onClose, onSuccess }) {
   ];
 
   // Tabs configuration matching AMC modal structure
-  const tabs = [
-    {
-      id: "basic",
-      label: "Basic Information",
-      fields: ["name", "fatherName", "dateOfJoining", "dateOfBirth", "uan"],
-    },
-    {
-      id: "contact",
-      label: "Contact Information",
-      fields: ["email", "phone"],
-    },
-    {
-      id: "identification",
-      label: "Identification",
-      fields: ["aadhaarNumber", "gender", "pan"],
-    },
-    {
-      id: "bank",
-      label: "Bank Details",
-      fields: ["accountHolderName", "bankName", "accountNumber", "ifsc"],
-    },
-    {
-      id: "document",
-      label: "Aadhaar Document",
-      fields: ["aadhaarPhoto"],
-    },
-  ];
+ const tabs = [
+  {
+    id: "basic",
+    label: "Basic Information",
+    fields: ["name", "fatherName", "dateOfJoining", "dateOfBirth", "uan", "grossSalary"],
+  },
+  {
+    id: "contact",
+    label: "Contact Information",
+    fields: ["email", "phone"],
+  },
+  {
+    id: "identification",
+    label: "Identification",
+    fields: ["aadhaarNumber", "gender", "pan", "married"],
+  },
+  {
+    id: "bank",
+    label: "Bank Details",
+    fields: ["accountHolderName", "bankName", "accountNumber", "ifsc"],
+  },
+  {
+    id: "document",
+    label: "Documents",
+    fields: ["aadhaarPhoto", "aadhaarPhotoBack", "panPhoto"],
+  },
+];
 
   // Fetch PF data on component mount
   useEffect(() => {
@@ -107,114 +117,138 @@ function EditPF({ pfId, onClose, onSuccess }) {
     setTabErrors(newTabErrors);
   }, [errors]);
 
-  // Focus on the first error field
-  const focusOnFirstError = (newErrors) => {
-    const firstErrorKey = Object.keys(newErrors)[0];
-    if (firstErrorKey) {
-      let errorTab = "basic";
+const focusOnFirstError = (newErrors) => {
+  const firstErrorKey = Object.keys(newErrors)[0];
+  if (firstErrorKey) {
+    let errorTab = "basic";
 
-      // Determine which tab contains the error
-      if (
-        ["name", "fatherName", "dateOfJoining", "dateOfBirth", "uan"].includes(
-          firstErrorKey
-        )
-      ) {
-        errorTab = "basic";
-      } else if (["email", "phone"].includes(firstErrorKey)) {
-        errorTab = "contact";
-      } else if (["aadhaarNumber", "gender", "pan"].includes(firstErrorKey)) {
-        errorTab = "identification";
-      } else if (
-        ["accountHolderName", "bankName", "accountNumber", "ifsc"].includes(
-          firstErrorKey
-        )
-      ) {
-        errorTab = "bank";
-      } else if (firstErrorKey === "aadhaarPhoto") {
-        errorTab = "document";
-      }
-
-      setActiveTab(errorTab);
-
-      setTimeout(() => {
-        const fieldRef = errorFieldRefs.current[firstErrorKey];
-        if (fieldRef && fieldRef.focus) {
-          fieldRef.focus();
-          fieldRef.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 100);
+    // Determine which tab contains the error
+    if (
+      ["name", "fatherName", "dateOfJoining", "dateOfBirth", "uan", "grossSalary"].includes(
+        firstErrorKey
+      )
+    ) {
+      errorTab = "basic";
+    } else if (["email", "phone"].includes(firstErrorKey)) {
+      errorTab = "contact";
+    } else if (["aadhaarNumber", "gender", "pan", "married"].includes(firstErrorKey)) {
+      errorTab = "identification";
+    } else if (
+      ["accountHolderName", "bankName", "accountNumber", "ifsc"].includes(
+        firstErrorKey
+      )
+    ) {
+      errorTab = "bank";
+    } else if (["aadhaarPhoto", "aadhaarPhotoBack", "panPhoto"].includes(firstErrorKey)) {
+      errorTab = "document";
     }
-  };
 
-  // Fetch PF data by ID
-  const fetchPFData = async () => {
-    setFetching(true);
-    try {
-      const response = await axiosInstance.get(`getPfById/${pfId}`);
-      if (response.data) {
-        const pfData = response.data;
+    setActiveTab(errorTab);
 
-        // Store original data for comparison
-        setOriginalData(pfData);
+    setTimeout(() => {
+      const fieldRef = errorFieldRefs.current[firstErrorKey];
+      if (fieldRef && fieldRef.focus) {
+        fieldRef.focus();
+        fieldRef.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 100);
+  }
+};
 
-        // Update form data with fetched values
-        setFormData({
-          name: pfData.name || "",
-          dateOfJoining: pfData.dateOfJoining || "",
-          uan: pfData.uan || "",
-          dateOfBirth: pfData.dateOfBirth || "",
-          fatherName: pfData.fatherName || "",
-          email: pfData.email || "",
-          phone: pfData.phone || "",
-          aadhaarNumber: pfData.aadhaarNumber || "",
-          gender: pfData.gender || "MALE",
-          married: pfData.married || false,
-          pan: pfData.pan || "",
-          accountHolderName: pfData.accountHolderName || "",
-          bankName: pfData.bankName || "",
-          accountNumber: pfData.accountNumber || "",
-          ifsc: pfData.ifsc || "",
-        });
+const fetchPFData = async () => {
+  setFetching(true);
+  try {
+    const response = await axiosInstance.get(`getPfById/${pfId}`);
+    if (response.data) {
+      const pfData = response.data;
 
-        // If there's a base64 aadhaar photo, create a file object
-        if (pfData.aadhaarPhoto) {
-          try {
-            const byteCharacters = atob(pfData.aadhaarPhoto);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: "image/jpeg" });
+      // Store original data for comparison
+      setOriginalData(pfData);
 
-            const file = new File([blob], "aadhaar-photo.jpg", {
-              type: "image/jpeg",
-            });
+      // Update form data with fetched values
+      setFormData({
+        name: pfData.name || "",
+        dateOfJoining: pfData.dateOfJoining || "",
+        uan: pfData.uan || "",
+        dateOfBirth: pfData.dateOfBirth || "",
+        fatherName: pfData.fatherName || "",
+        email: pfData.email || "",
+        phone: pfData.phone || "",
+        aadhaarNumber: pfData.aadhaarNumber || "",
+        gender: pfData.gender || "MALE",
+        married: Boolean(pfData.married), // Convert to boolean
+        pan: pfData.pan || "",
+        accountHolderName: pfData.accountHolderName || "",
+        bankName: pfData.bankName || "",
+        accountNumber: pfData.accountNumber || "",
+        ifsc: pfData.ifsc || "",
+        grossSalary: pfData.grossSalary ? String(pfData.grossSalary) : "", // Convert number to string
+      });
 
-            const newAttachment = {
-              id: Date.now(),
-              file: file,
-              fileName: "aadhaar-photo.jpg",
-              size: file.size,
-              type: file.type,
-              preview: URL.createObjectURL(file),
-              isFromServer: true,
-            };
-
-            setAttachment(newAttachment);
-          } catch (error) {
-            console.error("Error converting base64 to file:", error);
+      // Helper function to convert base64 to file
+      const convertBase64ToFile = (base64String, fileName, type) => {
+        try {
+          if (!base64String) return null;
+          
+          const byteCharacters = atob(base64String);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
           }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: type || "image/jpeg" });
+
+          const file = new File([blob], fileName, {
+            type: type || "image/jpeg",
+          });
+
+          return {
+            id: Date.now(),
+            file: file,
+            fileName: fileName,
+            size: file.size,
+            type: file.type,
+            preview: URL.createObjectURL(file),
+            isFromServer: true,
+          };
+        } catch (error) {
+          console.error(`Error converting ${fileName} base64 to file:`, error);
+          return null;
+        }
+      };
+
+      // Handle Aadhaar front photo
+      if (pfData.aadhaarPhoto) {
+        const aadhaarAttachment = convertBase64ToFile(pfData.aadhaarPhoto, "aadhaar-front.jpg");
+        if (aadhaarAttachment) {
+          setAttachment(aadhaarAttachment);
         }
       }
-    } catch (error) {
-      console.error("Error fetching PF data:", error);
-      toast.error("Failed to load PF data");
-      onClose();
-    } finally {
-      setFetching(false);
+
+      // Handle Aadhaar back photo
+      if (pfData.aadhaarPhotoBack) {
+        const aadhaarBackAttachment = convertBase64ToFile(pfData.aadhaarPhotoBack, "aadhaar-back.jpg");
+        if (aadhaarBackAttachment) {
+          setAttachmentBack(aadhaarBackAttachment);
+        }
+      }
+
+      // Handle PAN/License photo
+      if (pfData.panPhoto) {
+        const panAttachment = convertBase64ToFile(pfData.panPhoto, "pan-license.jpg");
+        if (panAttachment) {
+          setAttachmentPan(panAttachment);
+        }
+      }
     }
-  };
+  } catch (error) {
+    console.error("Error fetching PF data:", error);
+    toast.error("Failed to load PF data");
+    onClose();
+  } finally {
+    setFetching(false);
+  }
+};
 
   // Format file size
   const formatFileSize = (bytes) => {
@@ -230,12 +264,13 @@ function EditPF({ pfId, onClose, onSuccess }) {
     const file = e.target.files[0];
     if (!file) return;
 
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      setAttachmentError("File size exceeds 5MB limit");
-      toast.error("File size exceeds 5MB limit");
-      return;
-    }
+  // Change from 5MB to 200KB:
+const maxSize = 200 * 1024; // 200KB
+if (file.size > maxSize) {
+  setAttachmentError("File size exceeds 200KB limit");
+  toast.error("File size exceeds 200KB limit");
+  return;
+}
 
     const allowedTypes = [
       "image/jpeg",
@@ -281,6 +316,310 @@ function EditPF({ pfId, onClose, onSuccess }) {
       fileInputRef.current.value = "";
     }
   };
+
+  // Handle Aadhaar Back Side attachment
+const handleAttachmentChangeBack = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const maxSize = 200 * 1024; // 200KB
+  if (file.size > maxSize) {
+    setAttachmentErrorBack("File size exceeds 200KB limit");
+    toast.error("File size exceeds 200KB limit");
+    return;
+  }
+
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/bmp",
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    setAttachmentErrorBack(
+      "Only image files are allowed (JPEG, PNG, GIF, WebP, BMP)"
+    );
+    toast.error("Invalid file type. Please upload an image file.");
+    return;
+  }
+
+  const newAttachment = {
+    id: Date.now(),
+    file: file,
+    fileName: file.name,
+    size: file.size,
+    type: file.type,
+    preview: URL.createObjectURL(file),
+    isFromServer: false,
+  };
+
+  setAttachmentBack(newAttachment);
+  setAttachmentErrorBack("");
+  
+  // Clear any previous attachment error
+  if (errors.aadhaarPhotoBack) {
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors.aadhaarPhotoBack;
+      return newErrors;
+    });
+  }
+
+  toast.success("Aadhaar back side uploaded successfully");
+};
+
+// Handle PAN/License attachment
+const handleAttachmentChangePan = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const maxSize = 200 * 1024; // 200KB
+  if (file.size > maxSize) {
+    setAttachmentErrorPan("File size exceeds 200KB limit");
+    toast.error("File size exceeds 200KB limit");
+    return;
+  }
+
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/bmp",
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    setAttachmentErrorPan(
+      "Only image files are allowed (JPEG, PNG, GIF, WebP, BMP)"
+    );
+    toast.error("Invalid file type. Please upload an image file.");
+    return;
+  }
+
+  const newAttachment = {
+    id: Date.now(),
+    file: file,
+    fileName: file.name,
+    size: file.size,
+    type: file.type,
+    preview: URL.createObjectURL(file),
+    isFromServer: false,
+  };
+
+  setAttachmentPan(newAttachment);
+  setAttachmentErrorPan("");
+  
+  // Clear any previous attachment error
+  if (errors.panPhoto) {
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors.panPhoto;
+      return newErrors;
+    });
+  }
+
+  toast.success("PAN/License uploaded successfully");
+};
+
+// Preview Aadhaar Back Side attachment
+const handlePreviewAttachmentBack = () => {
+  if (!attachmentBack) return;
+  try {
+    if (attachmentBack.type.includes("image")) {
+      const blobUrl = URL.createObjectURL(attachmentBack.file);
+      const newWindow = window.open(blobUrl, "_blank");
+      if (newWindow) {
+        newWindow.focus();
+        newWindow.onload = () => {
+          setTimeout(() => {
+            URL.revokeObjectURL(blobUrl);
+          }, 1000);
+        };
+        setTimeout(() => {
+          try {
+            URL.revokeObjectURL(blobUrl);
+          } catch (e) { }
+        }, 5000);
+      } else {
+        toast.error("Popup blocked. Please allow popups to preview image.");
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = document.createElement("img");
+          img.src = e.target.result;
+          img.style.maxWidth = "90vw";
+          img.style.maxHeight = "90vh";
+          const modal = document.createElement("div");
+          modal.style.position = "fixed";
+          modal.style.top = "0";
+          modal.style.left = "0";
+          modal.style.width = "100%";
+          modal.style.height = "100%";
+          modal.style.backgroundColor = "rgba(0,0,0,0.8)";
+          modal.style.display = "flex";
+          modal.style.alignItems = "center";
+          modal.style.justifyContent = "center";
+          modal.style.zIndex = "9999";
+          modal.style.cursor = "pointer";
+          modal.appendChild(img);
+          modal.onclick = () => document.body.removeChild(modal);
+          document.body.appendChild(modal);
+        };
+        reader.readAsDataURL(attachmentBack.file);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      }
+    }
+  } catch (error) {
+    console.error("Error previewing attachment:", error);
+    toast.error("Failed to preview image");
+  }
+};
+
+// Preview PAN/License attachment
+const handlePreviewAttachmentPan = () => {
+  if (!attachmentPan) return;
+  try {
+    if (attachmentPan.type.includes("image")) {
+      const blobUrl = URL.createObjectURL(attachmentPan.file);
+      const newWindow = window.open(blobUrl, "_blank");
+      if (newWindow) {
+        newWindow.focus();
+        newWindow.onload = () => {
+          setTimeout(() => {
+            URL.revokeObjectURL(blobUrl);
+          }, 1000);
+        };
+        setTimeout(() => {
+          try {
+            URL.revokeObjectURL(blobUrl);
+          } catch (e) { }
+        }, 5000);
+      } else {
+        toast.error("Popup blocked. Please allow popups to preview image.");
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = document.createElement("img");
+          img.src = e.target.result;
+          img.style.maxWidth = "90vw";
+          img.style.maxHeight = "90vh";
+          const modal = document.createElement("div");
+          modal.style.position = "fixed";
+          modal.style.top = "0";
+          modal.style.left = "0";
+          modal.style.width = "100%";
+          modal.style.height = "100%";
+          modal.style.backgroundColor = "rgba(0,0,0,0.8)";
+          modal.style.display = "flex";
+          modal.style.alignItems = "center";
+          modal.style.justifyContent = "center";
+          modal.style.zIndex = "9999";
+          modal.style.cursor = "pointer";
+          modal.appendChild(img);
+          modal.onclick = () => document.body.removeChild(modal);
+          document.body.appendChild(modal);
+        };
+        reader.readAsDataURL(attachmentPan.file);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      }
+    }
+  } catch (error) {
+    console.error("Error previewing attachment:", error);
+    toast.error("Failed to preview image");
+  }
+};
+
+// Download Aadhaar Back Side attachment
+const handleDownloadAttachmentBack = () => {
+  if (!attachmentBack) return;
+  try {
+    const blobUrl = URL.createObjectURL(attachmentBack.file);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = attachmentBack.fileName;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => {
+      try {
+        URL.revokeObjectURL(blobUrl);
+      } catch (e) { }
+    }, 100);
+    toast.success(`Downloading ${attachmentBack.fileName}`);
+  } catch (error) {
+    console.error("Error downloading attachment:", error);
+    toast.error("Failed to download file");
+  }
+};
+
+// Download PAN/License attachment
+const handleDownloadAttachmentPan = () => {
+  if (!attachmentPan) return;
+  try {
+    const blobUrl = URL.createObjectURL(attachmentPan.file);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = attachmentPan.fileName;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => {
+      try {
+        URL.revokeObjectURL(blobUrl);
+      } catch (e) { }
+    }, 100);
+    toast.success(`Downloading ${attachmentPan.fileName}`);
+  } catch (error) {
+    console.error("Error downloading attachment:", error);
+    toast.error("Failed to download file");
+  }
+};
+
+// Remove Aadhaar Back Side attachment
+const handleRemoveAttachmentBack = () => {
+  if (attachmentBack) {
+    if (attachmentBack.preview) {
+      URL.revokeObjectURL(attachmentBack.preview);
+    }
+    setAttachmentBack(null);
+    setAttachmentErrorBack("");
+    
+    // Clear aadhaarPhotoBack error if exists
+    if (errors.aadhaarPhotoBack) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.aadhaarPhotoBack;
+        return newErrors;
+      });
+    }
+    
+    toast.success("Aadhaar back side removed");
+  }
+};
+
+// Remove PAN/License attachment
+const handleRemoveAttachmentPan = () => {
+  if (attachmentPan) {
+    if (attachmentPan.preview) {
+      URL.revokeObjectURL(attachmentPan.preview);
+    }
+    setAttachmentPan(null);
+    setAttachmentErrorPan("");
+    
+    // Clear panPhoto error if exists
+    if (errors.panPhoto) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.panPhoto;
+        return newErrors;
+      });
+    }
+    
+    toast.success("PAN/License removed");
+  }
+};
 
   // Preview attachment
   const handlePreviewAttachment = () => {
@@ -383,13 +722,19 @@ function EditPF({ pfId, onClose, onSuccess }) {
   };
 
   // Clean up object URL on unmount
-  useEffect(() => {
-    return () => {
-      if (attachment?.preview) {
-        URL.revokeObjectURL(attachment.preview);
-      }
-    };
-  }, [attachment]);
+useEffect(() => {
+  return () => {
+    if (attachment?.preview) {
+      URL.revokeObjectURL(attachment.preview);
+    }
+    if (attachmentBack?.preview) {
+      URL.revokeObjectURL(attachmentBack.preview);
+    }
+    if (attachmentPan?.preview) {
+      URL.revokeObjectURL(attachmentPan.preview);
+    }
+  };
+}, [attachment, attachmentBack, attachmentPan]);
 
   // Convert file to base64
   const convertFileToBase64 = (file) => {
@@ -462,6 +807,11 @@ function EditPF({ pfId, onClose, onSuccess }) {
           processedValue = value.toLowerCase();
         }
         break;
+          case "grossSalary":
+    if (/^\d*\.?\d{0,2}$/.test(value) || value === "") {
+      processedValue = value;
+    }
+    break;
       default:
         processedValue = value;
     }
@@ -555,10 +905,24 @@ function EditPF({ pfId, onClose, onSuccess }) {
     return "";
   };
 
-  const validateRequired = (fieldName, value, displayName) => {
-    if (!value.trim()) return `${displayName} is required`;
-    return "";
-  };
+const validateRequired = (fieldName, value, displayName) => {
+  // Handle different data types
+  if (value === null || value === undefined || value === "") {
+    return `${displayName} is required`;
+  }
+  
+  // For strings, check if trimmed value is empty
+  if (typeof value === 'string' && !value.trim()) {
+    return `${displayName} is required`;
+  }
+  
+  // For numbers, check if it's 0 or positive
+  if (typeof value === 'number' && value <= 0) {
+    return `${displayName} must be greater than 0`;
+  }
+  
+  return "";
+};
 
   const validateDate = (fieldName, value, displayName) => {
     if (!value) return `${displayName} is required`;
@@ -578,173 +942,217 @@ function EditPF({ pfId, onClose, onSuccess }) {
     return "";
   };
 
-  // Main validation function
-  const validateForm = () => {
-    const newErrors = {};
+const validateForm = () => {
+  const newErrors = {};
 
-    // Basic information
-    newErrors.name = validateName(formData.name);
+  // Basic information
+  newErrors.name = validateName(formData.name);
 
-    newErrors.dateOfJoining = validateDate(
-      "dateOfJoining",
-      formData.dateOfJoining,
-      "Date of joining"
-    );
-    newErrors.dateOfBirth = validateDate(
-      "dateOfBirth",
-      formData.dateOfBirth,
-      "Date of birth"
-    );
-    newErrors.uan = validateUAN(formData.uan);
+  newErrors.dateOfJoining = validateDate(
+    "dateOfJoining",
+    formData.dateOfJoining,
+    "Date of joining"
+  );
+  newErrors.dateOfBirth = validateDate(
+    "dateOfBirth",
+    formData.dateOfBirth,
+    "Date of birth"
+  );
+  newErrors.uan = validateUAN(formData.uan);
 
-    // Contact information
-    newErrors.email = validateEmail(formData.email);
-    newErrors.phone = validatePhone(formData.phone);
+  // Gross Salary validation
+  if (!formData.grossSalary && formData.grossSalary !== 0) {
+    newErrors.grossSalary = "Gross salary is required";
+  } else {
+    // Convert to number and validate
+    const salaryStr = String(formData.grossSalary);
+    const salaryNum = parseFloat(salaryStr);
+    if (isNaN(salaryNum)) {
+      newErrors.grossSalary = "Please enter a valid salary amount";
+    } else if (salaryNum <= 0) {
+      newErrors.grossSalary = "Gross salary must be greater than 0";
+    }
+  }
 
-    // Identification
-    newErrors.aadhaarNumber = validateAadhaar(formData.aadhaarNumber);
-    newErrors.pan = validatePAN(formData.pan);
+  // Contact information
+  newErrors.email = validateEmail(formData.email);
+  newErrors.phone = validatePhone(formData.phone);
 
-    // Bank information
-    newErrors.accountHolderName = validateRequired(
-      "accountHolderName",
-      formData.accountHolderName,
-      "Account holder name"
-    );
-    newErrors.bankName = validateRequired(
-      "bankName",
-      formData.bankName,
-      "Bank name"
-    );
-    newErrors.accountNumber = validateBankAccount(formData.accountNumber);
-    newErrors.ifsc = validateIFSC(formData.ifsc);
+  // Identification
+  newErrors.aadhaarNumber = validateAadhaar(formData.aadhaarNumber);
+  newErrors.pan = validatePAN(formData.pan);
 
-    // Validate date order
-    if (formData.dateOfJoining && formData.dateOfBirth) {
-      const joinDate = new Date(formData.dateOfJoining);
-      const birthDate = new Date(formData.dateOfBirth);
-      if (joinDate < birthDate) {
-        newErrors.dateOfJoining =
-          "Date of joining cannot be before date of birth";
-      }
+  // Bank information
+  newErrors.accountHolderName = validateRequired(
+    "accountHolderName",
+    formData.accountHolderName,
+    "Account holder name"
+  );
+  newErrors.bankName = validateRequired(
+    "bankName",
+    formData.bankName,
+    "Bank name"
+  );
+  newErrors.accountNumber = validateBankAccount(formData.accountNumber);
+  newErrors.ifsc = validateIFSC(formData.ifsc);
+
+  // Validate date order
+  if (formData.dateOfJoining && formData.dateOfBirth) {
+    const joinDate = new Date(formData.dateOfJoining);
+    const birthDate = new Date(formData.dateOfBirth);
+    if (joinDate < birthDate) {
+      newErrors.dateOfJoining =
+        "Date of joining cannot be before date of birth";
+    }
+  }
+
+  // Document validations - only required if not already present
+  if (!attachment && !originalData?.aadhaarPhoto) {
+    newErrors.aadhaarPhoto = "Aadhaar front photo is required";
+  }
+  
+  if (!attachmentBack && !originalData?.aadhaarPhotoBack) {
+    newErrors.aadhaarPhotoBack = "Aadhaar back side is required";
+  }
+  
+  if (!attachmentPan && !originalData?.panPhoto) {
+    newErrors.panPhoto = "PAN Card or License is required";
+  }
+
+  // Filter out empty errors
+  const filteredErrors = Object.fromEntries(
+    Object.entries(newErrors).filter(([_, value]) => value !== "")
+  );
+
+  setErrors(filteredErrors);
+
+  // Focus on first error if any
+  if (Object.keys(filteredErrors).length > 0) {
+    focusOnFirstError(filteredErrors);
+  }
+
+  return Object.keys(filteredErrors).length === 0;
+};
+
+// Handle form submission for update
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!validateForm()) {
+    toast.error("Please fix all form errors before submitting.");
+    return;
+  }
+
+  setLoading(true);
+  try {
+    let aadhaarPhotoBase64 = null;
+    let aadhaarPhotoBackBase64 = null;
+    let panPhotoBase64 = null;
+
+    // Handle Aadhaar front photo
+    if (attachment && !attachment.isFromServer) {
+      aadhaarPhotoBase64 = await convertFileToBase64(attachment.file);
+    } else if (attachment && attachment.isFromServer) {
+      // Keep existing photo from server
+      aadhaarPhotoBase64 = originalData?.aadhaarPhoto || "";
+    } else if (!attachment) {
+      // No photo selected - keep empty or existing
+      aadhaarPhotoBase64 = originalData?.aadhaarPhoto || "";
     }
 
-    // Aadhaar photo validation - only if it's a new upload
-    if (!attachment && !originalData?.aadhaarPhoto) {
-      newErrors.aadhaarPhoto = "Aadhaar photo is required";
+    // Handle Aadhaar back photo
+    if (attachmentBack && !attachmentBack.isFromServer) {
+      aadhaarPhotoBackBase64 = await convertFileToBase64(attachmentBack.file);
+    } else if (attachmentBack && attachmentBack.isFromServer) {
+      // Keep existing photo from server
+      aadhaarPhotoBackBase64 = originalData?.aadhaarPhotoBack || "";
+    } else if (!attachmentBack) {
+      // No photo selected - keep empty or existing
+      aadhaarPhotoBackBase64 = originalData?.aadhaarPhotoBack || "";
     }
 
-    // Filter out empty errors
-    const filteredErrors = Object.fromEntries(
-      Object.entries(newErrors).filter(([_, value]) => value !== "")
-    );
-
-    setErrors(filteredErrors);
-
-    // Focus on first error if any
-    if (Object.keys(filteredErrors).length > 0) {
-      focusOnFirstError(filteredErrors);
+    // Handle PAN/License photo
+    if (attachmentPan && !attachmentPan.isFromServer) {
+      panPhotoBase64 = await convertFileToBase64(attachmentPan.file);
+    } else if (attachmentPan && attachmentPan.isFromServer) {
+      // Keep existing photo from server
+      panPhotoBase64 = originalData?.panPhoto || "";
+    } else if (!attachmentPan) {
+      // No photo selected - keep empty or existing
+      panPhotoBase64 = originalData?.panPhoto || "";
     }
 
-    return Object.keys(filteredErrors).length === 0;
-  };
+    // Convert grossSalary to number
+    const grossSalaryValue = formData.grossSalary ? 
+      parseFloat(formData.grossSalary) : 
+      originalData?.grossSalary || 0;
 
-  // Handle form submission for update
-  // Handle form submission for update
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+    const payload = {
+      pfId: pfId,
+      adminId: originalData?.adminId || "",
+      employeeId: originalData?.employeeId || null,
+      customerId: originalData?.customerId || "",
+      contactId: originalData?.contactId || "",
+      name: formData.name.trim(),
+      dateOfJoining: formData.dateOfJoining,
+      uan: formData.uan || "",
+      dateOfBirth: formData.dateOfBirth,
+      fatherName: formData.fatherName.trim(),
+      email: formData.email.trim().toLowerCase(),
+      phone: formData.phone,
+      aadhaarNumber: formData.aadhaarNumber,
+      gender: formData.gender,
+      married: Boolean(formData.married), // Ensure it's boolean
+      pan: formData.pan,
+      accountHolderName: formData.accountHolderName.trim(),
+      bankName: formData.bankName.trim(),
+      accountNumber: formData.accountNumber,
+      ifsc: formData.ifsc,
+      grossSalary: grossSalaryValue, // Convert to number
+      aadhaarPhoto: aadhaarPhotoBase64,
+      aadhaarPhotoBack: aadhaarPhotoBackBase64,
+      panPhoto: panPhotoBase64,
+      // Add these fields that might be required by backend
+      verified: originalData?.verified || false,
+      createdBy: originalData?.createdBy || "",
 
-    if (!validateForm()) {
-      toast.error("Please fix all form errors before submitting.");
-      return;
+       
+  
+  // ADD THIS LINE - include createdAt from originalData
+  createdAt: originalData?.createdAt || "",
+
+    };
+
+    console.log("Update payload:", payload); // Debug log
+
+    const response = await axiosInstance.put("updatePf", payload);
+
+    if (response.data) {
+      toast.success("PF record updated successfully!");
+      onSuccess(response.data);
+      onClose();
+    } else {
+      throw new Error("No response data received");
     }
-
-    setLoading(true);
-    try {
-      let aadhaarPhotoBase64 = null;
-
-      // If attachment exists and it's a new upload, convert to base64
-      if (attachment && !attachment.isFromServer) {
-        aadhaarPhotoBase64 = await convertFileToBase64(attachment.file);
-      }
-      // If no attachment but original data had aadhaar photo, keep existing
-      else if (!attachment && originalData?.aadhaarPhoto) {
-        aadhaarPhotoBase64 = originalData.aadhaarPhoto;
-      }
-      // If attachment was removed (attachment is null) and original had aadhaar photo, pass empty string to clear it
-      else if (!attachment && originalData?.aadhaarPhoto) {
-        aadhaarPhotoBase64 = "";
-      }
-      // If no attachment and no original aadhaar photo, pass empty string
-      else if (!attachment && !originalData?.aadhaarPhoto) {
-        aadhaarPhotoBase64 = "";
-      }
-
-      // Include all fields from the original data that are required by the backend
-      const payload = {
-        pfId: pfId,
-        adminId: originalData?.adminId || "", // Include adminId from original data
-        employeeId: originalData?.employeeId || null, // Include employeeId from original data
-        customerId: originalData?.customerId || "", // Include customerId from original data
-        contactId: originalData?.contactId || "", // Include contactId from original data
-        name: formData.name.trim(),
-        dateOfJoining: formData.dateOfJoining,
-        uan: formData.uan,
-        dateOfBirth: formData.dateOfBirth,
-        fatherName: formData.fatherName.trim(),
-        email: formData.email.trim().toLowerCase(),
-        phone: formData.phone,
-        aadhaarNumber: formData.aadhaarNumber,
-        gender: formData.gender,
-        married: formData.married,
-        pan: formData.pan,
-        accountHolderName: formData.accountHolderName.trim(),
-        bankName: formData.bankName.trim(),
-        accountNumber: formData.accountNumber,
-        ifsc: formData.ifsc,
-        aadhaarPhoto: aadhaarPhotoBase64,
-        // Note: createdAt is usually handled by the backend and shouldn't be sent in updates
-      };
-
-      console.log("Updating PF with payload:", payload);
-
-      const response = await axiosInstance.put("updatePf", payload);
-
-      if (response.data) {
-        toast.success("PF record updated successfully!");
-        onSuccess(response.data);
-        onClose();
-      } else {
-        throw new Error("No response data received");
-      }
-    } catch (error) {
-      console.error("Error updating PF record:", error);
-      if (error.response) {
-        if (error.response.status === 500) {
-          toast.error(
-            "Server error: " +
-            (error.response.data?.message || "Check console for details")
-          );
-        } else if (error.response.status === 400) {
-          toast.error(
-            "Validation error: " +
-            (error.response.data?.message || "Please check all fields")
-          );
-        } else {
-          toast.error(
-            "Failed to update PF record: " +
-            (error.response.data?.message || "Unknown error")
-          );
-        }
-      } else if (error.request) {
-        toast.error("Network error. Please check your connection.");
-      } else {
-        toast.error("Failed to update PF record. Please try again.");
-      }
-    } finally {
-      setLoading(false);
+  } catch (error) {
+    console.error("Error updating PF:", error);
+    if (error.response) {
+      // Server responded with error status
+      console.error("Response error:", error.response.data);
+      toast.error(`Update failed: ${error.response.data.message || error.response.statusText}`);
+    } else if (error.request) {
+      // Request made but no response
+      console.error("Request error:", error.request);
+      toast.error("Network error. Please check your connection.");
+    } else {
+      // Something else
+      console.error("Error:", error.message);
+      toast.error(`Update failed: ${error.message}`);
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Get today's date for date restrictions
   const getTodayDate = () => {
@@ -789,73 +1197,82 @@ function EditPF({ pfId, onClose, onSuccess }) {
   };
 
   // Render Basic Tab
-  const renderBasicTab = () => (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <GlobalInputField
-          label="Employee Name"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          required={true}
-          error={errors.name}
-          placeholder="Enter full name"
-          maxLength={100}
-          className="text-sm"
-          ref={(el) => (errorFieldRefs.current.name = el)}
-        />
-        <GlobalInputField
-          label="Father's Name"
-          name="fatherName"
-          value={formData.fatherName}
-          onChange={handleChange}
-        
-          error={errors.fatherName}
-          placeholder="Enter father's name"
-          maxLength={100}
-          className="text-sm"
-          ref={(el) => (errorFieldRefs.current.fatherName = el)}
-        />
-        <GlobalInputField
-          label="Date of Joining"
-          name="dateOfJoining"
-          type="date"
-          value={formData.dateOfJoining}
-          onChange={handleChange}
-          required={true}
-          error={errors.dateOfJoining}
-          max={getTodayDate()}
-          className="text-sm"
-          ref={(el) => (errorFieldRefs.current.dateOfJoining = el)}
-        />
-        <GlobalInputField
-          label="Date of Birth"
-          name="dateOfBirth"
-          type="date"
-          value={formData.dateOfBirth}
-          onChange={handleChange}
-          required={true}
-          error={errors.dateOfBirth}
-          max={getMaxBirthDate()}
-          className="text-sm"
-          ref={(el) => (errorFieldRefs.current.dateOfBirth = el)}
-        />
-
-        <GlobalInputField
-          label="UAN Number"
-          name="uan"
-          value={formData.uan}
-          onChange={handleChange}
-          error={errors.uan}
-          placeholder="12 digit UAN (Optional)"
-          maxLength={12}
-          pattern="\d{12}"
-          className="text-sm"
-          ref={(el) => (errorFieldRefs.current.uan = el)}
-        />
-      </div>
+const renderBasicTab = () => (
+  <div className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <GlobalInputField
+        label="Employee Name"
+        name="name"
+        value={formData.name}
+        onChange={handleChange}
+        required={true}
+        error={errors.name}
+        placeholder="Enter full name"
+        maxLength={100}
+        className="text-sm"
+        ref={(el) => (errorFieldRefs.current.name = el)}
+      />
+      <GlobalInputField
+        label="Father's Name"
+        name="fatherName"
+        value={formData.fatherName}
+        onChange={handleChange}
+        error={errors.fatherName}
+        placeholder="Enter father's name"
+        maxLength={100}
+        className="text-sm"
+        ref={(el) => (errorFieldRefs.current.fatherName = el)}
+      />
+      <GlobalInputField
+        label="Date of Joining"
+        name="dateOfJoining"
+        type="date"
+        value={formData.dateOfJoining}
+        onChange={handleChange}
+        required={true}
+        error={errors.dateOfJoining}
+        max={getTodayDate()}
+        className="text-sm"
+        ref={(el) => (errorFieldRefs.current.dateOfJoining = el)}
+      />
+      <GlobalInputField
+        label="Date of Birth"
+        name="dateOfBirth"
+        type="date"
+        value={formData.dateOfBirth}
+        onChange={handleChange}
+        required={true}
+        error={errors.dateOfBirth}
+        max={getMaxBirthDate()}
+        className="text-sm"
+        ref={(el) => (errorFieldRefs.current.dateOfBirth = el)}
+      />
+      <GlobalInputField
+        label="UAN Number"
+        name="uan"
+        value={formData.uan}
+        onChange={handleChange}
+        error={errors.uan}
+        placeholder="12 digit UAN (Optional)"
+        maxLength={12}
+        pattern="\d{12}"
+        className="text-sm"
+        ref={(el) => (errorFieldRefs.current.uan = el)}
+      />
+      <GlobalInputField
+        label="Gross Salary (₹)"
+        name="grossSalary"
+        value={formData.grossSalary}
+        onChange={handleChange}
+        required={true}
+        error={errors.grossSalary}
+        placeholder="e.g., 50000.00"
+        className="text-sm"
+        ref={(el) => (errorFieldRefs.current.grossSalary = el)}
+      />
     </div>
-  );
+  </div>
+);
 
   // Render Contact Tab with PhoneInput
   const renderContactTab = () => (
@@ -1053,79 +1470,78 @@ function EditPF({ pfId, onClose, onSuccess }) {
   );
 
   // Render Document Tab
-  const renderDocumentTab = () => (
-    <div className="space-y-4">
-      <div className="mb-3">
-        <div className="relative">
-          <input
-            ref={fileInputRef}
-            type="file"
-            onChange={handleAttachmentChange}
-            className="hidden"
-            id="aadhaar-upload"
-            accept="image/*"
-          />
-          <label
-            htmlFor="aadhaar-upload"
-            className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${attachment
-                ? "bg-green-50 border-green-300 hover:border-green-400"
-                : errors.aadhaarPhoto
-                  ? "bg-red-50 border-red-300 hover:border-red-400"
-                  : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
-              }`}
-          >
-            <div className="text-center">
-              <svg
-                className={`w-8 h-8 mx-auto mb-2 ${attachment
-                    ? "text-green-500"
-                    : errors.aadhaarPhoto
-                      ? "text-red-500"
-                      : "text-gray-400"
-                  }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
-              <p
-                className={`text-sm ${attachment
-                    ? "text-green-700"
-                    : errors.aadhaarPhoto
-                      ? "text-red-700"
-                      : "text-gray-600"
-                  }`}
-              >
-                {attachment
-                  ? `Aadhaar photo uploaded ${attachment.isFromServer ? "(from server)" : "(new upload)"
-                  }`
-                  : "Click to upload new Aadhaar photo"}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                JPEG, PNG, GIF, WebP, BMP (Max 5MB)
-              </p>
-            </div>
-          </label>
-        </div>
-
-        {errors.aadhaarPhoto && (
-          <p className="mt-2 text-xs text-red-600">{errors.aadhaarPhoto}</p>
-        )}
-        {attachmentError && (
-          <p className="mt-2 text-xs text-red-600">{attachmentError}</p>
-        )}
+ const renderDocumentTab = () => (
+  <div className="space-y-6">
+    {/* Aadhaar Front Side */}
+    <div>
+      <h4 className="text-sm font-medium text-gray-700 mb-2">Aadhaar Front Side</h4>
+      <div className="relative">
+        <input
+          type="file"
+          onChange={handleAttachmentChange}
+          className="hidden"
+          id="aadhaar-upload-front"
+          accept="image/*"
+        />
+        <label
+          htmlFor="aadhaar-upload-front"
+          className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${attachment
+              ? "bg-green-50 border-green-300 hover:border-green-400"
+              : errors.aadhaarPhoto
+                ? "bg-red-50 border-red-300 hover:border-red-400"
+                : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
+            }`}
+        >
+          <div className="text-center">
+            <svg
+              className={`w-8 h-8 mx-auto mb-2 ${attachment
+                  ? "text-green-500"
+                  : errors.aadhaarPhoto
+                    ? "text-red-500"
+                    : "text-gray-400"
+                }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+            <p
+              className={`text-sm ${attachment
+                  ? "text-green-700"
+                  : errors.aadhaarPhoto
+                    ? "text-red-700"
+                    : "text-gray-600"
+                }`}
+            >
+              {attachment
+                ? `Aadhaar front side uploaded ${attachment.isFromServer ? "(from server)" : "(new upload)"
+                }`
+                : "Click to upload Aadhaar front side"}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              JPEG, PNG, GIF, WebP, BMP (Max 200KB)
+            </p>
+          </div>
+        </label>
       </div>
-
+      {errors.aadhaarPhoto && (
+        <p className="mt-2 text-xs text-red-600">{errors.aadhaarPhoto}</p>
+      )}
+      {attachmentError && (
+        <p className="mt-2 text-xs text-red-600">{attachmentError}</p>
+      )}
+      
       {attachment && (
         <div className="mt-3">
           <div className="flex items-center justify-between mb-2">
             <h4 className="text-sm font-medium text-gray-700">
-              Selected Aadhaar Photo
+              Selected Aadhaar Front Side
             </h4>
             <div className="flex items-center gap-2">
               {attachment.isFromServer && (
@@ -1133,26 +1549,6 @@ function EditPF({ pfId, onClose, onSuccess }) {
                   From Server
                 </span>
               )}
-              <button
-                type="button"
-                onClick={handleRemoveAttachment}
-                className="p-1 text-gray-400 hover:text-red-600 transition-colors rounded hover:bg-red-50"
-                title="Remove"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
             </div>
           </div>
           <div className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200">
@@ -1225,17 +1621,398 @@ function EditPF({ pfId, onClose, onSuccess }) {
                   />
                 </svg>
               </button>
+              <button
+                type="button"
+                onClick={handleRemoveAttachment}
+                className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded hover:bg-red-50"
+                title="Remove"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
           {attachment.isFromServer && (
             <p className="mt-2 text-xs text-gray-500">
-              To update the Aadhaar photo, upload a new file above.
+              To update the Aadhaar front photo, upload a new file above.
             </p>
           )}
         </div>
       )}
     </div>
-  );
+
+    {/* Aadhaar Back Side */}
+    <div>
+      <h4 className="text-sm font-medium text-gray-700 mb-2">Aadhaar Back Side</h4>
+      <div className="relative">
+        <input
+          type="file"
+          onChange={handleAttachmentChangeBack}
+          className="hidden"
+          id="aadhaar-upload-back"
+          accept="image/*"
+        />
+        <label
+          htmlFor="aadhaar-upload-back"
+          className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${attachmentBack
+              ? "bg-green-50 border-green-300 hover:border-green-400"
+              : errors.aadhaarPhotoBack
+                ? "bg-red-50 border-red-300 hover:border-red-400"
+                : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
+            }`}
+        >
+          <div className="text-center">
+            <svg
+              className={`w-8 h-8 mx-auto mb-2 ${attachmentBack
+                  ? "text-green-500"
+                  : errors.aadhaarPhotoBack
+                    ? "text-red-500"
+                    : "text-gray-400"
+                }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+            <p
+              className={`text-sm ${attachmentBack
+                  ? "text-green-700"
+                  : errors.aadhaarPhotoBack
+                    ? "text-red-700"
+                    : "text-gray-600"
+                }`}
+            >
+              {attachmentBack
+                ? `Aadhaar back side uploaded ${attachmentBack.isFromServer ? "(from server)" : "(new upload)"
+                }`
+                : "Click to upload Aadhaar back side"}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              JPEG, PNG, GIF, WebP, BMP (Max 200KB)
+            </p>
+          </div>
+        </label>
+      </div>
+      {errors.aadhaarPhotoBack && (
+        <p className="mt-2 text-xs text-red-600">{errors.aadhaarPhotoBack}</p>
+      )}
+      {attachmentErrorBack && (
+        <p className="mt-2 text-xs text-red-600">{attachmentErrorBack}</p>
+      )}
+      
+      {attachmentBack && (
+        <div className="mt-3">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-medium text-gray-700">
+              Selected Aadhaar Back Side
+            </h4>
+            <div className="flex items-center gap-2">
+              {attachmentBack.isFromServer && (
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  From Server
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200">
+            <div
+              className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
+              onClick={handlePreviewAttachmentBack}
+              title="Click to preview"
+            >
+              <div className="flex-shrink-0 w-10 h-10 bg-white rounded border border-gray-200 overflow-hidden">
+                <img
+                  src={attachmentBack.preview}
+                  alt="Aadhaar back preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-medium text-gray-900 text-xs truncate hover:text-blue-600">
+                  {attachmentBack.fileName}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {formatFileSize(attachmentBack.size)}
+                  {attachmentBack.isFromServer && " • Previously uploaded"}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handlePreviewAttachmentBack}
+                className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded hover:bg-blue-50"
+                title="Preview"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadAttachmentBack}
+                className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded hover:bg-blue-50"
+                title="Download"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={handleRemoveAttachmentBack}
+                className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded hover:bg-red-50"
+                title="Remove"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+          {attachmentBack.isFromServer && (
+            <p className="mt-2 text-xs text-gray-500">
+              To update the Aadhaar back photo, upload a new file above.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+
+    {/* PAN Card or License */}
+    <div>
+      <h4 className="text-sm font-medium text-gray-700 mb-2">PAN Card or License</h4>
+      <div className="relative">
+        <input
+          type="file"
+          onChange={handleAttachmentChangePan}
+          className="hidden"
+          id="pan-upload"
+          accept="image/*"
+        />
+        <label
+          htmlFor="pan-upload"
+          className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${attachmentPan
+              ? "bg-green-50 border-green-300 hover:border-green-400"
+              : errors.panPhoto
+                ? "bg-red-50 border-red-300 hover:border-red-400"
+                : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
+            }`}
+        >
+          <div className="text-center">
+            <svg
+              className={`w-8 h-8 mx-auto mb-2 ${attachmentPan
+                  ? "text-green-500"
+                  : errors.panPhoto
+                    ? "text-red-500"
+                    : "text-gray-400"
+                }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+            <p
+              className={`text-sm ${attachmentPan
+                  ? "text-green-700"
+                  : errors.panPhoto
+                    ? "text-red-700"
+                    : "text-gray-600"
+                }`}
+            >
+              {attachmentPan
+                ? `PAN/License uploaded ${attachmentPan.isFromServer ? "(from server)" : "(new upload)"
+                }`
+                : "Click to upload PAN Card or License"}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              JPEG, PNG, GIF, WebP, BMP (Max 200KB)
+            </p>
+          </div>
+        </label>
+      </div>
+      {errors.panPhoto && (
+        <p className="mt-2 text-xs text-red-600">{errors.panPhoto}</p>
+      )}
+      {attachmentErrorPan && (
+        <p className="mt-2 text-xs text-red-600">{attachmentErrorPan}</p>
+      )}
+      
+      {attachmentPan && (
+        <div className="mt-3">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-medium text-gray-700">
+              Selected PAN Card or License
+            </h4>
+            <div className="flex items-center gap-2">
+              {attachmentPan.isFromServer && (
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  From Server
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200">
+            <div
+              className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
+              onClick={handlePreviewAttachmentPan}
+              title="Click to preview"
+            >
+              <div className="flex-shrink-0 w-10 h-10 bg-white rounded border border-gray-200 overflow-hidden">
+                <img
+                  src={attachmentPan.preview}
+                  alt="PAN/License preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-medium text-gray-900 text-xs truncate hover:text-blue-600">
+                  {attachmentPan.fileName}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {formatFileSize(attachmentPan.size)}
+                  {attachmentPan.isFromServer && " • Previously uploaded"}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handlePreviewAttachmentPan}
+                className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded hover:bg-blue-50"
+                title="Preview"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadAttachmentPan}
+                className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded hover:bg-blue-50"
+                title="Download"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={handleRemoveAttachmentPan}
+                className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded hover:bg-red-50"
+                title="Remove"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+          {attachmentPan.isFromServer && (
+            <p className="mt-2 text-xs text-gray-500">
+              To update the PAN/License photo, upload a new file above.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  </div>
+);
 
   if (fetching) {
     return (
