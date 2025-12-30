@@ -42,7 +42,13 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
     nomineeRelation: "",
     nomineeAdhaar: "",
     aadhaarPhoto: null,
+      
     passportPhoto: null,
+
+     aadhaarPhotoBack: null, // NEW: Add Aadhaar back side
+  panPhoto: null,         // NEW: Add PAN/License
+
+  grossSalary: "",   
   });
 
   const [originalData, setOriginalData] = useState(null);
@@ -68,49 +74,56 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
   ];
 
   // Tabs configuration
-  const tabs = [
-    {
-      id: "basic",
-      label: "Basic Information",
-      fields: [
-        "name",
-        "fatherName",
-        "dateOfJoining",
-        "dateOfBirth",
-        "esicNumber",
-      ],
-    },
-    {
-      id: "personal",
-      label: "Personal Details",
-      fields: ["phone", "gender", "married", "aadhaarNumber"],
-    },
-    {
-      id: "address",
-      label: "Address Details",
-      fields: ["presentAddress", "permantAddress"],
-    },
-    {
-      id: "nominee",
-      label: "Nominee Details",
-      fields: ["nomineeName", "nomineeRelation", "nomineeAdhaar"],
-    },
-    {
-      id: "bank",
-      label: "Bank Details",
-      fields: ["accountHolderName", "bankName", "accountNumber", "ifsc"],
-    },
-    {
-      id: "documents",
-      label: "Documents",
-      fields: ["aadhaarPhoto", "passportPhoto"],
-    },
-    {
-      id: "family",
-      label: "Family Members",
-      fields: ["familyMembers"],
-    },
-  ];
+// Update the tabs array:
+const tabs = [
+  {
+    id: "basic",
+    label: "Basic Information",
+    fields: [
+      "name",
+      "fatherName",
+      "dateOfJoining",
+      "dateOfBirth",
+      "esicNumber",
+      "grossSalary", // NEW: Add gross salary to basic tab
+    ],
+  },
+  {
+    id: "personal",
+    label: "Personal Details",
+    fields: ["phone", "gender", "married", "aadhaarNumber"],
+  },
+  {
+    id: "address",
+    label: "Address Details",
+    fields: ["presentAddress", "permantAddress"],
+  },
+  {
+    id: "nominee",
+    label: "Nominee Details",
+    fields: ["nomineeName", "nomineeRelation", "nomineeAdhaar"],
+  },
+  {
+    id: "bank",
+    label: "Bank Details",
+    fields: ["accountHolderName", "bankName", "accountNumber", "ifsc"],
+  },
+  {
+    id: "documents",
+    label: "Documents",
+    fields: [
+      "aadhaarPhoto",
+      "aadhaarPhotoBack", // NEW: Add Aadhaar back side
+      "panPhoto",         // NEW: Add PAN/License
+      "passportPhoto"
+    ],
+  },
+  {
+    id: "family",
+    label: "Family Members",
+    fields: ["familyMembers"],
+  },
+];
 
   // Fetch ESIC data by ID
   useEffect(() => {
@@ -135,76 +148,106 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
         });
 
         // Map API response to form data
-        setFormData({
-          esicId: esicData.esicId,
-          name: esicData.name || "",
-          dateOfJoining: esicData.dateOfJoining
-            ? esicData.dateOfJoining.split("T")[0]
-            : "",
-          esicNumber: esicData.esicNumber || "",
-          dateOfBirth: esicData.dateOfBirth
-            ? esicData.dateOfBirth.split("T")[0]
-            : "",
-          fatherName: esicData.fatherName || "",
-          phone: esicData.phone || "",
-          gender: esicData.gender || "Male",
-          married: esicData.married || esicData.married || false,
-          aadhaarNumber: esicData.aadhaarNumber || "",
-          accountHolderName: esicData.accountHolderName || "",
-          bankName: esicData.bankName || "",
-          accountNumber: esicData.accountNumber || "",
-          ifsc: esicData.ifsc || "",
-          presentAddress: esicData.presentAddress || "",
-          permantAddress:
-            esicData.permantAddress || esicData.permantAddress || "",
-          nomineeName: esicData.nomineeName || "",
-          nomineeRelation: esicData.nomineeRelation || "",
-          nomineeAdhaar: esicData.nomineeAdhaar || "",
-          aadhaarPhoto: esicData.aadhaarPhoto
-            ? {
-                id: "existing_aadhaar",
-                isBase64: true,
-                base64: esicData.aadhaarPhoto,
-                fileName: "Aadhaar_Card.jpg",
-                preview: `data:image/jpeg;base64,${esicData.aadhaarPhoto}`,
-              }
-            : null,
-          passportPhoto: esicData.passportPhoto
-            ? {
-                id: "existing_passport",
-                isBase64: true,
-                base64: esicData.passportPhoto,
-                fileName: "Passport_Photo.jpg",
-                preview: `data:image/jpeg;base64,${esicData.passportPhoto}`,
-              }
-            : null,
-        });
+     // In the fetchEsicData function, update the setFormData mapping:
+setFormData({
+  esicId: esicData.esicId,
+  name: esicData.name || "",
+  dateOfJoining: esicData.dateOfJoining
+    ? esicData.dateOfJoining.split("T")[0]
+    : "",
+  esicNumber: esicData.esicNumber || "",
+  dateOfBirth: esicData.dateOfBirth
+    ? esicData.dateOfBirth.split("T")[0]
+    : "",
+  fatherName: esicData.fatherName || "",
+  phone: esicData.phone || "",
+  gender: esicData.gender || "Male",
+  married: esicData.married || esicData.married || false,
+  aadhaarNumber: esicData.aadhaarNumber || "",
+  accountHolderName: esicData.accountHolderName || "",
+  bankName: esicData.bankName || "",
+  accountNumber: esicData.accountNumber || "",
+  ifsc: esicData.ifsc || "",
+  presentAddress: esicData.presentAddress || "",
+  permantAddress:
+    esicData.permantAddress || esicData.permantAddress || "",
+  nomineeName: esicData.nomineeName || "",
+  nomineeRelation: esicData.nomineeRelation || "",
+  nomineeAdhaar: esicData.nomineeAdhaar || "",
+  grossSalary: esicData.grossSalary || "", // NEW: Add gross salary
+  aadhaarPhoto: esicData.aadhaarPhoto
+    ? {
+        id: "existing_aadhaar",
+        isBase64: true,
+        base64: esicData.aadhaarPhoto,
+        fileName: "Aadhaar_Card.jpg",
+        preview: `data:image/jpeg;base64,${esicData.aadhaarPhoto}`,
+      }
+    : null,
+  aadhaarPhotoBack: esicData.aadhaarPhotoBack // NEW: Add Aadhaar back side
+    ? {
+        id: "existing_aadhaar_back",
+        isBase64: true,
+        base64: esicData.aadhaarPhotoBack,
+        fileName: "Aadhaar_Back.jpg",
+        preview: `data:image/jpeg;base64,${esicData.aadhaarPhotoBack}`,
+      }
+    : null,
+  panPhoto: esicData.panPhoto // NEW: Add PAN/License
+    ? {
+        id: "existing_pan",
+        isBase64: true,
+        base64: esicData.panPhoto,
+        fileName: "PAN_License.jpg",
+        preview: `data:image/jpeg;base64,${esicData.panPhoto}`,
+      }
+    : null,
+  passportPhoto: esicData.passportPhoto
+    ? {
+        id: "existing_passport",
+        isBase64: true,
+        base64: esicData.passportPhoto,
+        fileName: "Passport_Photo.jpg",
+        preview: `data:image/jpeg;base64,${esicData.passportPhoto}`,
+      }
+    : null,
+});
 
         // Map family members
-        const mappedFamilyMembers = esicContents.map((content, index) => ({
-          id: content.esicContentId || `temp_${index}`,
-          esicContentId: content.esicContentId,
-          name: content.name || "",
-          relation: content.relation || "",
-          aadhaarPhoto: content.aadhaarPhoto
-            ? {
-                id: `family_aadhaar_${index}`,
-                isBase64: true,
-                base64: content.aadhaarPhoto,
-                fileName: `Family_Aadhaar_${index + 1}.jpg`,
-                preview: `data:image/jpeg;base64,${content.aadhaarPhoto}`,
-              }
-            : null,
-          passportPhoto: content.passportPhoto
-            ? {
-                id: `family_passport_${index}`,
-                isBase64: true,
-                base64: content.passportPhoto,
-                fileName: `Family_Passport_${index + 1}.jpg`,
-                preview: `data:image/jpeg;base64,${content.passportPhoto}`,
-              }
-            : null,
-        }));
+       // Update the mappedFamilyMembers in fetchEsicData:
+const mappedFamilyMembers = esicContents.map((content, index) => ({
+  id: content.esicContentId || `temp_${index}`,
+  esicContentId: content.esicContentId,
+  name: content.name || "",
+  relation: content.relation || "",
+  aadhaarPhoto: content.aadhaarPhoto
+    ? {
+        id: `family_aadhaar_${index}`,
+        isBase64: true,
+        base64: content.aadhaarPhoto,
+        fileName: `Family_Aadhaar_${index + 1}.jpg`,
+        preview: `data:image/jpeg;base64,${content.aadhaarPhoto}`,
+      }
+    : null,
+  aadhaarPhotoBack: content.aadhaarPhotoBack // NEW: Add Aadhaar back side
+    ? {
+        id: `family_aadhaar_back_${index}`,
+        isBase64: true,
+        base64: content.aadhaarPhotoBack,
+        fileName: `Family_Aadhaar_Back_${index + 1}.jpg`,
+        preview: `data:image/jpeg;base64,${content.aadhaarPhotoBack}`,
+      }
+    : null,
+  passportPhoto: content.passportPhoto
+    ? {
+        id: `family_passport_${index}`,
+        isBase64: true,
+        base64: content.passportPhoto,
+        fileName: `Family_Passport_${index + 1}.jpg`,
+        preview: `data:image/jpeg;base64,${content.passportPhoto}`,
+      }
+    : null,
+}));
 
         setFamilyMembers(mappedFamilyMembers);
       }
@@ -233,62 +276,65 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
   }, [errors]);
 
   // Focus on the first error field
-  const focusOnFirstError = (newErrors) => {
-    const firstErrorKey = Object.keys(newErrors)[0];
-    if (firstErrorKey) {
-      let errorTab = "basic";
+ // Update the focusOnFirstError function to include new fields:
+const focusOnFirstError = (newErrors) => {
+  const firstErrorKey = Object.keys(newErrors)[0];
+  if (firstErrorKey) {
+    let errorTab = "basic";
 
-      // Determine which tab contains the error
-      if (
-        [
-          "name",
-          "fatherName",
-          "dateOfJoining",
-          "dateOfBirth",
-          "esicNumber",
-        ].includes(firstErrorKey)
-      ) {
-        errorTab = "basic";
-      } else if (
-        ["phone", "gender", "married", "aadhaarNumber"].includes(
-          firstErrorKey
-        )
-      ) {
-        errorTab = "personal";
-      } else if (
-        ["presentAddress", "permantAddress"].includes(firstErrorKey)
-      ) {
-        errorTab = "address";
-      } else if (
-        ["nomineeName", "nomineeRelation", "nomineeAdhaar"].includes(
-          firstErrorKey
-        )
-      ) {
-        errorTab = "nominee";
-      } else if (
-        ["accountHolderName", "bankName", "accountNumber", "ifsc"].includes(
-          firstErrorKey
-        )
-      ) {
-        errorTab = "bank";
-      } else if (["aadhaarPhoto", "passportPhoto"].includes(firstErrorKey)) {
-        errorTab = "documents";
-      } else if (firstErrorKey.startsWith("familyMember_")) {
-        errorTab = "family";
-      }
-
-      setActiveTab(errorTab);
-
-      setTimeout(() => {
-        const fieldRef = errorFieldRefs.current[firstErrorKey];
-        if (fieldRef && fieldRef.focus) {
-          fieldRef.focus();
-          fieldRef.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 100);
+    // Determine which tab contains the error
+    if (
+      [
+        "name",
+        "fatherName",
+        "dateOfJoining",
+        "dateOfBirth",
+        "esicNumber",
+        "grossSalary", // NEW: Add gross salary
+      ].includes(firstErrorKey)
+    ) {
+      errorTab = "basic";
+    } else if (
+      ["phone", "gender", "married", "aadhaarNumber"].includes(
+        firstErrorKey
+      )
+    ) {
+      errorTab = "personal";
+    } else if (
+      ["presentAddress", "permantAddress"].includes(firstErrorKey)
+    ) {
+      errorTab = "address";
+    } else if (
+      ["nomineeName", "nomineeRelation", "nomineeAdhaar"].includes(
+        firstErrorKey
+      )
+    ) {
+      errorTab = "nominee";
+    } else if (
+      ["accountHolderName", "bankName", "accountNumber", "ifsc"].includes(
+        firstErrorKey
+      )
+    ) {
+      errorTab = "bank";
+    } else if (
+      ["aadhaarPhoto", "aadhaarPhotoBack", "panPhoto", "passportPhoto"].includes(firstErrorKey) // UPDATED
+    ) {
+      errorTab = "documents";
+    } else if (firstErrorKey.startsWith("familyMember_")) {
+      errorTab = "family";
     }
-  };
 
+    setActiveTab(errorTab);
+
+    setTimeout(() => {
+      const fieldRef = errorFieldRefs.current[firstErrorKey];
+      if (fieldRef && fieldRef.focus) {
+        fieldRef.focus();
+        fieldRef.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 100);
+  }
+};
   // Format file size
   const formatFileSize = (bytes) => {
     if (bytes === 0) return "0 Bytes";
@@ -303,11 +349,11 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
     const file = e.target.files[0];
     if (!file) return;
 
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast.error("File size exceeds 5MB limit");
-      return;
-    }
+  const maxSize = 200 * 1024; // 200KB
+  if (file.size > maxSize) {
+    toast.error("File size exceeds 200KB limit");
+    return;
+  }
 
     const allowedTypes = [
       "image/jpeg",
@@ -359,52 +405,59 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
   };
 
   // Handle file attachment for family members
-  const handleFamilyFileChange = (index, fieldName, e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+ // Update handleFamilyFileChange to support aadhaarPhotoBack:
+const handleFamilyFileChange = (index, fieldName, e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast.error("File size exceeds 5MB limit");
-      return;
-    }
+  const maxSize = 200 * 1024; // 200KB
+  if (file.size > maxSize) {
+    toast.error("File size exceeds 200KB limit");
+    return;
+  }
 
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-      "image/bmp",
-    ];
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/bmp",
+  ];
 
-    if (!allowedTypes.includes(file.type)) {
-      toast.error("Invalid file type. Please upload an image file.");
-      return;
-    }
+  if (!allowedTypes.includes(file.type)) {
+    toast.error("Invalid file type. Please upload an image file.");
+    return;
+  }
 
-    const newAttachment = {
-      id: Date.now(),
-      file: file,
-      fileName: file.name,
-      size: file.size,
-      type: file.type,
-      preview: URL.createObjectURL(file),
-      isBase64: false,
-    };
-
-    setFamilyMembers((prev) =>
-      prev.map((member, i) =>
-        i === index ? { ...member, [fieldName]: newAttachment } : member
-      )
-    );
-
-    toast.success(`Family member ${fieldName} updated successfully`);
-
-    // Reset file input
-    if (fileInputRefs.current[`family_${index}_${fieldName}`]) {
-      fileInputRefs.current[`family_${index}_${fieldName}`].value = "";
-    }
+  const newAttachment = {
+    id: Date.now(),
+    file: file,
+    fileName: file.name,
+    size: file.size,
+    type: file.type,
+    preview: URL.createObjectURL(file),
+    isBase64: false,
   };
+
+  setFamilyMembers((prev) =>
+    prev.map((member, i) =>
+      i === index ? { ...member, [fieldName]: newAttachment } : member
+    )
+  );
+
+  // Update success message based on field type
+  let fieldDisplayName = "";
+  if (fieldName === "aadhaarPhoto") fieldDisplayName = "Aadhaar front";
+  else if (fieldName === "aadhaarPhotoBack") fieldDisplayName = "Aadhaar back";
+  else if (fieldName === "passportPhoto") fieldDisplayName = "Passport";
+
+  toast.success(`Family member ${fieldDisplayName} photo updated successfully`);
+
+  // Reset file input
+  if (fileInputRefs.current[`family_${index}_${fieldName}`]) {
+    fileInputRefs.current[`family_${index}_${fieldName}`].value = "";
+  }
+};
 
   // Preview attachment
   const handlePreviewAttachment = (attachment) => {
@@ -501,43 +554,59 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
   };
 
   // Remove family member attachment
-  const handleRemoveFamilyAttachment = (index, fieldName) => {
-    setFamilyMembers((prev) =>
-      prev.map((member, i) => {
-        if (i === index && member[fieldName]) {
-          if (member[fieldName].preview && !member[fieldName].isBase64) {
-            URL.revokeObjectURL(member[fieldName].preview);
-          }
-          return { ...member, [fieldName]: null };
+// Update handleRemoveFamilyAttachment to support aadhaarPhotoBack:
+const handleRemoveFamilyAttachment = (index, fieldName) => {
+  setFamilyMembers((prev) =>
+    prev.map((member, i) => {
+      if (i === index && member[fieldName]) {
+        if (member[fieldName].preview && !member[fieldName].isBase64) {
+          URL.revokeObjectURL(member[fieldName].preview);
         }
-        return member;
-      })
-    );
-    toast.success("Family member document removed");
+        return { ...member, [fieldName]: null };
+      }
+      return member;
+    })
+  );
+
+  let fieldDisplayName = "";
+  if (fieldName === "aadhaarPhoto") fieldDisplayName = "Aadhaar front";
+  else if (fieldName === "aadhaarPhotoBack") fieldDisplayName = "Aadhaar back";
+  else if (fieldName === "passportPhoto") fieldDisplayName = "Passport";
+
+  toast.success(`Family member ${fieldDisplayName} removed`);
+};
+
+// Update the cleanup useEffect:
+useEffect(() => {
+  return () => {
+    // Clean up main document URLs
+    if (formData.aadhaarPhoto?.preview && !formData.aadhaarPhoto.isBase64) {
+      URL.revokeObjectURL(formData.aadhaarPhoto.preview);
+    }
+    if (formData.aadhaarPhotoBack?.preview && !formData.aadhaarPhotoBack.isBase64) { // NEW
+      URL.revokeObjectURL(formData.aadhaarPhotoBack.preview);
+    }
+    if (formData.panPhoto?.preview && !formData.panPhoto.isBase64) { // NEW
+      URL.revokeObjectURL(formData.panPhoto.preview);
+    }
+    if (formData.passportPhoto?.preview && !formData.passportPhoto.isBase64) {
+      URL.revokeObjectURL(formData.passportPhoto.preview);
+    }
+
+    // Clean up family member URLs
+    familyMembers.forEach((member) => {
+      if (member.aadhaarPhoto?.preview && !member.aadhaarPhoto.isBase64) {
+        URL.revokeObjectURL(member.aadhaarPhoto.preview);
+      }
+      if (member.aadhaarPhotoBack?.preview && !member.aadhaarPhotoBack.isBase64) { // Add this
+        URL.revokeObjectURL(member.aadhaarPhotoBack.preview);
+      }
+      if (member.passportPhoto?.preview && !member.passportPhoto.isBase64) {
+        URL.revokeObjectURL(member.passportPhoto.preview);
+      }
+    });
   };
-
-  // Clean up object URLs on unmount
-  useEffect(() => {
-    return () => {
-      // Clean up main document URLs
-      if (formData.aadhaarPhoto?.preview && !formData.aadhaarPhoto.isBase64) {
-        URL.revokeObjectURL(formData.aadhaarPhoto.preview);
-      }
-      if (formData.passportPhoto?.preview && !formData.passportPhoto.isBase64) {
-        URL.revokeObjectURL(formData.passportPhoto.preview);
-      }
-
-      // Clean up family member URLs
-      familyMembers.forEach((member) => {
-        if (member.aadhaarPhoto?.preview && !member.aadhaarPhoto.isBase64) {
-          URL.revokeObjectURL(member.aadhaarPhoto.preview);
-        }
-        if (member.passportPhoto?.preview && !member.passportPhoto.isBase64) {
-          URL.revokeObjectURL(member.passportPhoto.preview);
-        }
-      });
-    };
-  }, [formData, familyMembers]);
+}, [formData, familyMembers]);
 
   // Convert file to base64
   const convertFileToBase64 = (file) => {
@@ -623,6 +692,11 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
           processedValue = value;
         }
         break;
+          case "grossSalary": // NEW: Add gross salary validation
+    if (/^\d*\.?\d{0,2}$/.test(value) || value === "") {
+      processedValue = value;
+    }
+    break;
       default:
         processedValue = value;
     }
@@ -657,56 +731,62 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
   };
 
   // Add family member
-  const addFamilyMember = () => {
-    setFamilyMembers((prev) => [
-      ...prev,
-      {
-        id: Date.now() + Math.random(),
-        esicContentId: null,
-        name: "",
-        relation: "",
-        aadhaarPhoto: null,
-        passportPhoto: null,
-      },
-    ]);
-  };
+
+const addFamilyMember = () => {
+  setFamilyMembers((prev) => [
+    ...prev,
+    {
+      id: Date.now() + Math.random(),
+      esicContentId: null,
+      name: "",
+      relation: "",
+      aadhaarPhoto: null,
+      aadhaarPhotoBack: null, // NEW: Add Aadhaar back side
+      passportPhoto: null,
+    },
+  ]);
+};
+
   // Remove family member
-  const removeFamilyMember = async (index) => {
-    const member = familyMembers[index];
+  // Update the removeFamilyMember function to clean up aadhaarPhotoBack:
+const removeFamilyMember = async (index) => {
+  const member = familyMembers[index];
 
-    // If family member has an esicContentId, delete from backend
-    if (member.esicContentId) {
-      const result = await showDeleteConfirmation(
-        "Are you sure you want to delete this family member? This action cannot be undone.",
-        "Delete Family Member"
+  // If family member has an esicContentId, delete from backend
+  if (member.esicContentId) {
+    const result = await showDeleteConfirmation(
+      "Are you sure you want to delete this family member? This action cannot be undone.",
+      "Delete Family Member"
+    );
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      await axiosInstance.delete(
+        `deleteEsicContentById/${member.esicContentId}`
       );
-
-      // ✅ Correct check
-      if (!result.isConfirmed) {
-        return;
-      }
-
-      try {
-        await axiosInstance.delete(
-          `deleteEsicContentById/${member.esicContentId}`
-        );
-        toast.success("Family member deleted successfully");
-      } catch (error) {
-        toast.error("Failed to delete family member. Please try again.");
-        return;
-      }
+      toast.success("Family member deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete family member. Please try again.");
+      return;
     }
+  }
 
-    // Clean up URLs
-    if (member.aadhaarPhoto?.preview && !member.aadhaarPhoto.isBase64) {
-      URL.revokeObjectURL(member.aadhaarPhoto.preview);
-    }
-    if (member.passportPhoto?.preview && !member.passportPhoto.isBase64) {
-      URL.revokeObjectURL(member.passportPhoto.preview);
-    }
+  // Clean up URLs
+  if (member.aadhaarPhoto?.preview && !member.aadhaarPhoto.isBase64) {
+    URL.revokeObjectURL(member.aadhaarPhoto.preview);
+  }
+  if (member.aadhaarPhotoBack?.preview && !member.aadhaarPhotoBack.isBase64) { // NEW
+    URL.revokeObjectURL(member.aadhaarPhotoBack.preview);
+  }
+  if (member.passportPhoto?.preview && !member.passportPhoto.isBase64) {
+    URL.revokeObjectURL(member.passportPhoto.preview);
+  }
 
-    setFamilyMembers((prev) => prev.filter((_, i) => i !== index));
-  };
+  setFamilyMembers((prev) => prev.filter((_, i) => i !== index));
+};
 
   // Handle family member field change
   const handleFamilyMemberChange = (index, fieldName, value) => {
@@ -727,30 +807,55 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
     }
   };
 
-  // Validation functions (same as CreateEsicModal)
-  const validateName = (name) => {
-    if (!name.trim()) return "Name is required";
-    if (name.length > 100) return "Name cannot exceed 100 characters";
-    if (!/^[a-zA-Z\s]+$/.test(name.trim()))
-      return "Name can only contain letters and spaces";
-    return "";
-  };
+const validateName = (name) => {
+  // Handle null/undefined
+  if (name === null || name === undefined) return "Name is required";
+  
+  const stringName = String(name || "");
+  if (!stringName.trim()) return "Name is required";
+  if (stringName.length > 100) return "Name cannot exceed 100 characters";
+  if (!/^[a-zA-Z\s]+$/.test(stringName.trim()))
+    return "Name can only contain letters and spaces";
+  return "";
+};
 
-  const validatePhone = (phone) => {
-    if (!phone.trim()) return "Phone number is required";
-    if (!phone.startsWith("+"))
-      return "Please enter a valid phone number with country code";
-    if (phone.replace(/\D/g, "").length < 10)
-      return "Phone number must be at least 10 digits";
-    return "";
-  };
+const validatePhone = (phone) => {
+  // Handle null/undefined
+  if (phone === null || phone === undefined) return "Phone number is required";
+  
+  const stringPhone = String(phone || "");
+  if (!stringPhone.trim()) return "Phone number is required";
+  if (!stringPhone.startsWith("+"))
+    return "Please enter a valid phone number with country code";
+  if (stringPhone.replace(/\D/g, "").length < 10)
+    return "Phone number must be at least 10 digits";
+  return "";
+};
 
-  const validateAadhaar = (aadhaar, fieldName = "Aadhaar") => {
-    if (!aadhaar.trim()) return `${fieldName} number is required`;
-    if (!/^\d{12}$/.test(aadhaar))
-      return `${fieldName} number must be 12 digits`;
-    return "";
-  };
+const validateAadhaar = (aadhaar, fieldName = "Aadhaar") => {
+  // Handle null/undefined
+  if (aadhaar === null || aadhaar === undefined) return `${fieldName} number is required`;
+  
+  const stringAadhaar = String(aadhaar || "");
+  if (!stringAadhaar.trim()) return `${fieldName} number is required`;
+  if (!/^\d{12}$/.test(stringAadhaar))
+    return `${fieldName} number must be 12 digits`;
+  return "";
+};
+
+const validateAddress = (address, fieldName) => {
+  // Handle null/undefined
+  if (address === null || address === undefined) return `${fieldName} is required`;
+  
+  const stringAddress = String(address || "");
+  if (!stringAddress.trim()) return `${fieldName} is required`;
+
+  if (stringAddress.length > 500)
+    return `${fieldName} cannot exceed 500 characters`;
+  return "";
+};
+
+
 
   const validateESICNumber = (esicNumber) => {
     if (!esicNumber.trim()) return "ESIC number is required";
@@ -772,10 +877,20 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
     return "";
   };
 
-  const validateRequired = (fieldName, value, displayName) => {
-    if (!value.trim()) return `${displayName} is required`;
-    return "";
-  };
+const validateRequired = (fieldName, value, displayName) => {
+  // Handle all possible value types
+  if (value === null || value === undefined) {
+    return `${displayName} is required`;
+  }
+  
+  // Convert to string if it's not already
+  const stringValue = typeof value === 'string' ? value : String(value);
+  
+  if (!stringValue.trim()) {
+    return `${displayName} is required`;
+  }
+  return "";
+};
 
   const validateDate = (fieldName, value, displayName) => {
     if (!value) return `${displayName} is required`;
@@ -795,131 +910,124 @@ function EditEsicModal({ esicId, onClose, onSuccess }) {
     return "";
   };
 
-  const validateAddress = (address, fieldName) => {
-    if (!address.trim()) return `${fieldName} is required`;
 
-    if (address.length > 500)
-      return `${fieldName} cannot exceed 500 characters`;
-    return "";
-  };
 
   // Main validation function
-  const validateForm = () => {
-    const newErrors = {};
+const validateForm = () => {
+  const newErrors = {};
 
-    // Basic information
-    newErrors.name = validateName(formData.name);
-    newErrors.fatherName = validateRequired(
-      "fatherName",
-      formData.fatherName,
-      "Father's name"
-    );
-    newErrors.dateOfJoining = validateDate(
-      "dateOfJoining",
-      formData.dateOfJoining,
-      "Date of joining"
-    );
-    newErrors.dateOfBirth = validateDate(
-      "dateOfBirth",
-      formData.dateOfBirth,
-      "Date of birth"
-    );
-  
-      if (formData.esicNumber && formData.esicNumber.trim() !== "") {
+  // Convert grossSalary to string for validation
+  const grossSalaryStr = String(formData.grossSalary || "");
+
+  // Basic information
+  newErrors.name = validateName(formData.name);
+ 
+  newErrors.dateOfJoining = validateDate(
+    "dateOfJoining",
+    formData.dateOfJoining,
+    "Date of joining"
+  );
+  newErrors.dateOfBirth = validateDate(
+    "dateOfBirth",
+    formData.dateOfBirth,
+    "Date of birth"
+  );
+
+  if (formData.esicNumber && formData.esicNumber.trim() !== "") {
     newErrors.esicNumber = validateESICNumber(formData.esicNumber);
   }
 
-
-    // Personal details
-    newErrors.phone = validatePhone(formData.phone);
-    newErrors.aadhaarNumber = validateAadhaar(formData.aadhaarNumber);
-
-    // Address details
-    newErrors.presentAddress = validateAddress(
-      formData.presentAddress,
-      "Present address"
-    );
-    newErrors.permantAddress = validateAddress(
-      formData.permantAddress,
-      "Permanent address"
-    );
-
-    // Nominee details
-    newErrors.nomineeName = validateRequired(
-      "nomineeName",
-      formData.nomineeName,
-      "Nominee name"
-    );
-    newErrors.nomineeRelation = validateRequired(
-      "nomineeRelation",
-      formData.nomineeRelation,
-      "Nominee relation"
-    );
-    newErrors.nomineeAdhaar = validateAadhaar(
-      formData.nomineeAdhaar,
-      "Nominee Aadhaar"
-    );
-
-    // Bank information
-    newErrors.accountHolderName = validateRequired(
-      "accountHolderName",
-      formData.accountHolderName,
-      "Account holder name"
-    );
-    newErrors.bankName = validateRequired(
-      "bankName",
-      formData.bankName,
-      "Bank name"
-    );
-    newErrors.accountNumber = validateBankAccount(formData.accountNumber);
-    newErrors.ifsc = validateIFSC(formData.ifsc);
-
-    // Validate date order
-    if (formData.dateOfJoining && formData.dateOfBirth) {
-      const joinDate = new Date(formData.dateOfJoining);
-      const birthDate = new Date(formData.dateOfBirth);
-      if (joinDate < birthDate) {
-        newErrors.dateOfJoining =
-          "Date of joining cannot be before date of birth";
-      }
+  // Fix: Don't call trim() on grossSalary if it might be a number
+  // Instead, check if it's empty or not
+  if (!grossSalaryStr || grossSalaryStr === "" || grossSalaryStr === "0") {
+    newErrors.grossSalary = "Gross salary is required";
+  } else {
+    // Also add numeric validation for gross salary
+    const grossValue = parseFloat(formData.grossSalary);
+    if (isNaN(grossValue) || grossValue < 0) {
+      newErrors.grossSalary = "Gross salary must be a valid positive number";
     }
+  }
 
-    // Document validation (optional for edit)
-    // Note: Documents are optional in edit mode
-    // if (!formData.aadhaarPhoto) {
-    //   newErrors.aadhaarPhoto = "Aadhaar photo is required";
-    // }
-    // if (!formData.passportPhoto) {
-    //   newErrors.passportPhoto = "Passport photo is required";
-    // }
+  // Personal details
+  newErrors.phone = validatePhone(formData.phone);
+  newErrors.aadhaarNumber = validateAadhaar(formData.aadhaarNumber);
 
-    // Validate family members
-    familyMembers.forEach((member, index) => {
-      if (!member.name.trim()) {
-        newErrors[`familyMember_${index}_name`] =
-          "Family member name is required";
-      }
-      if (!member.relation) {
-        newErrors[`familyMember_${index}_relation`] = "Relation is required";
-      }
-      // Note: Documents are optional for family members in edit mode
-    });
+  // Address details
+  newErrors.presentAddress = validateAddress(
+    formData.presentAddress,
+    "Present address"
+  );
+  newErrors.permantAddress = validateAddress(
+    formData.permantAddress,
+    "Permanent address"
+  );
 
-    // Filter out empty errors
-    const filteredErrors = Object.fromEntries(
-      Object.entries(newErrors).filter(([_, value]) => value !== "")
-    );
+  // Nominee details
+  newErrors.nomineeName = validateRequired(
+    "nomineeName",
+    formData.nomineeName,
+    "Nominee name"
+  );
+  newErrors.nomineeRelation = validateRequired(
+    "nomineeRelation",
+    formData.nomineeRelation,
+    "Nominee relation"
+  );
+  newErrors.nomineeAdhaar = validateAadhaar(
+    formData.nomineeAdhaar,
+    "Nominee Aadhaar"
+  );
 
-    setErrors(filteredErrors);
+  // Bank information
+  newErrors.accountHolderName = validateRequired(
+    "accountHolderName",
+    formData.accountHolderName,
+    "Account holder name"
+  );
+  newErrors.bankName = validateRequired(
+    "bankName",
+    formData.bankName,
+    "Bank name"
+  );
+  newErrors.accountNumber = validateBankAccount(formData.accountNumber);
+  newErrors.ifsc = validateIFSC(formData.ifsc);
 
-    // Focus on first error if any
-    if (Object.keys(filteredErrors).length > 0) {
-      focusOnFirstError(filteredErrors);
+  // Validate date order
+  if (formData.dateOfJoining && formData.dateOfBirth) {
+    const joinDate = new Date(formData.dateOfJoining);
+    const birthDate = new Date(formData.dateOfBirth);
+    if (joinDate < birthDate) {
+      newErrors.dateOfJoining =
+        "Date of joining cannot be before date of birth";
     }
+  }
 
-    return Object.keys(filteredErrors).length === 0;
-  };
+  // Validate family members
+  familyMembers.forEach((member, index) => {
+    if (!member.name.trim()) {
+      newErrors[`familyMember_${index}_name`] =
+        "Family member name is required";
+    }
+    if (!member.relation) {
+      newErrors[`familyMember_${index}_relation`] = "Relation is required";
+    }
+  });
 
+  // Filter out empty errors
+  const filteredErrors = Object.fromEntries(
+    Object.entries(newErrors).filter(([_, value]) => value !== "")
+  );
+
+  setErrors(filteredErrors);
+
+  // Focus on first error if any
+  if (Object.keys(filteredErrors).length > 0) {
+    focusOnFirstError(filteredErrors);
+  }
+
+  return Object.keys(filteredErrors).length === 0;
+};
 // Handle form submission for update
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -934,19 +1042,21 @@ const handleSubmit = async (e) => {
     // Convert main documents to base64 if changed
     const aadhaarPhotoBase64 = await getBase64Data(formData.aadhaarPhoto);
     const passportPhotoBase64 = await getBase64Data(formData.passportPhoto);
-
+    const aadhaarPhotoBackBase64 = await getBase64Data(formData.aadhaarPhotoBack); // Add this
+    const panPhotoBase64 = await getBase64Data(formData.panPhoto); 
     // Convert family member documents to base64
     const esicContents = await Promise.all(
       familyMembers.map(async (member) => {
         const aadhaarBase64 = await getBase64Data(member.aadhaarPhoto);
         const passportBase64 = await getBase64Data(member.passportPhoto);
-
+ const aadhaarBackBase64 = await getBase64Data(member.aadhaarPhotoBack); 
         return {
           esicContentId: member.esicContentId,
           name: member.name.trim(),
           relation: member.relation,
           aadhaarPhoto: aadhaarBase64,
           passportPhoto: passportBase64,
+          aadhaarPhotoBack: aadhaarBackBase64,
         };
       })
     );
@@ -983,11 +1093,14 @@ const handleSubmit = async (e) => {
         nomineeAdhaar: formData.nomineeAdhaar,
         aadhaarPhoto: aadhaarPhotoBase64 || originalEsicData?.aadhaarPhoto, // Keep original if no new upload
         passportPhoto: passportPhotoBase64 || originalEsicData?.passportPhoto, // Keep original if no new upload
+         aadhaarPhotoBack: aadhaarPhotoBackBase64 || originalEsicData?.aadhaarPhotoBack, // NEW
+        panPhoto: panPhotoBase64 || originalEsicData?.panPhoto, // NEW
         // Preserve other original fields
         createdBy: originalEsicData?.createdBy || null,
         customerName: originalEsicData?.customerName || null,
         createdAt: originalEsicData?.createdAt || null,
         verified: originalEsicData?.verified || false,
+         grossSalary: formData.grossSalary,
       },
       esicContents: esicContents,
     };
@@ -1090,73 +1203,84 @@ const handleSubmit = async (e) => {
   }
 
   // Render Basic Tab
-  const renderBasicTab = () => (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <GlobalInputField
-          label="Employee Name"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          required={true}
-          error={errors.name}
-          placeholder="Enter full name"
-          maxLength={100}
-          className="text-sm"
-          ref={(el) => (errorFieldRefs.current.name = el)}
-        />
-        <GlobalInputField
-          label="Father's Name"
-          name="fatherName"
-          value={formData.fatherName}
-          onChange={handleChange}
-          required={true}
-          error={errors.fatherName}
-          placeholder="Enter father's name"
-          maxLength={100}
-          className="text-sm"
-          ref={(el) => (errorFieldRefs.current.fatherName = el)}
-        />
-        <GlobalInputField
-          label="Date of Joining"
-          name="dateOfJoining"
-          type="date"
-          value={formData.dateOfJoining}
-          onChange={handleChange}
-          required={true}
-          error={errors.dateOfJoining}
-          max={getTodayDate()}
-          className="text-sm"
-          ref={(el) => (errorFieldRefs.current.dateOfJoining = el)}
-        />
-        <GlobalInputField
-          label="Date of Birth"
-          name="dateOfBirth"
-          type="date"
-          value={formData.dateOfBirth}
-          onChange={handleChange}
-          required={true}
-          error={errors.dateOfBirth}
-          max={getMaxBirthDate()}
-          className="text-sm"
-          ref={(el) => (errorFieldRefs.current.dateOfBirth = el)}
-        />
-        <GlobalInputField
-          label="ESIC Number"
-          name="esicNumber"
-          value={formData.esicNumber}
-          onChange={handleChange}
-        
-          error={errors.esicNumber}
-          placeholder="17 digit ESIC number"
-          maxLength={17}
-          pattern="\d{17}"
-          className="text-sm"
-          ref={(el) => (errorFieldRefs.current.esicNumber = el)}
-        />
-      </div>
+// Update renderBasicTab to include gross salary:
+const renderBasicTab = () => (
+  <div className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <GlobalInputField
+        label="Employee Name"
+        name="name"
+        value={formData.name}
+        onChange={handleChange}
+        required={true}
+        error={errors.name}
+        placeholder="Enter full name"
+        maxLength={100}
+        className="text-sm"
+        ref={(el) => (errorFieldRefs.current.name = el)}
+      />
+      <GlobalInputField
+        label="Father's Name"
+        name="fatherName"
+        value={formData.fatherName}
+        onChange={handleChange}
+        error={errors.fatherName}
+        placeholder="Enter father's name"
+        maxLength={100}
+        className="text-sm"
+        ref={(el) => (errorFieldRefs.current.fatherName = el)}
+      />
+      <GlobalInputField
+        label="Date of Joining"
+        name="dateOfJoining"
+        type="date"
+        value={formData.dateOfJoining}
+        onChange={handleChange}
+        required={true}
+        error={errors.dateOfJoining}
+        max={getTodayDate()}
+        className="text-sm"
+        ref={(el) => (errorFieldRefs.current.dateOfJoining = el)}
+      />
+      <GlobalInputField
+        label="Date of Birth"
+        name="dateOfBirth"
+        type="date"
+        value={formData.dateOfBirth}
+        onChange={handleChange}
+        required={true}
+        error={errors.dateOfBirth}
+        max={getMaxBirthDate()}
+        className="text-sm"
+        ref={(el) => (errorFieldRefs.current.dateOfBirth = el)}
+      />
+      <GlobalInputField
+        label="Gross Salary (₹)"
+        name="grossSalary"
+        value={formData.grossSalary}
+        onChange={handleChange}
+        required={true}
+        error={errors.grossSalary}
+        placeholder="e.g., 50000.00"
+        className="text-sm"
+        ref={(el) => (errorFieldRefs.current.grossSalary = el)}
+      />
+      <GlobalInputField
+        label="ESIC Number"
+        name="esicNumber"
+        value={formData.esicNumber}
+        onChange={handleChange}
+        required={false}
+        error={errors.esicNumber}
+        placeholder="17 digit ESIC number (Optional)"
+        maxLength={17}
+        pattern="\d{17}"
+        className="text-sm"
+        ref={(el) => (errorFieldRefs.current.esicNumber = el)}
+      />
     </div>
-  );
+  </div>
+);
 
   // Render Personal Details Tab
   const renderPersonalTab = () => (
@@ -1401,306 +1525,600 @@ const handleSubmit = async (e) => {
   );
 
   // Render Documents Tab
-  const renderDocumentsTab = () => (
-    <div className="space-y-6">
-      {/* Aadhaar Photo Upload */}
-      <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">
-          Aadhaar Photo {formData.aadhaarPhoto ? "(Uploaded)" : ""}
-        </h3>
-        <div className="relative">
-          <input
-            ref={(el) => (fileInputRefs.current.aadhaarPhoto = el)}
-            type="file"
-            onChange={(e) => handleFileChange("aadhaarPhoto", e)}
-            className="hidden"
-            id="aadhaar-upload"
-            accept="image/*"
-          />
-          <label
-            htmlFor="aadhaar-upload"
-            className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-              formData.aadhaarPhoto
-                ? "bg-blue-50 border-blue-300 hover:border-blue-400"
-                : errors.aadhaarPhoto
-                ? "bg-red-50 border-red-300 hover:border-red-400"
-                : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
-            }`}
-          >
-            <div className="text-center">
-              <svg
-                className={`w-8 h-8 mx-auto mb-2 ${
-                  formData.aadhaarPhoto
-                    ? "text-blue-500"
-                    : errors.aadhaarPhoto
-                    ? "text-red-500"
-                    : "text-gray-400"
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
-              <p
-                className={`text-sm ${
-                  formData.aadhaarPhoto
-                    ? "text-blue-700"
-                    : errors.aadhaarPhoto
-                    ? "text-red-700"
-                    : "text-gray-600"
-                }`}
-              >
-                {formData.aadhaarPhoto
-                  ? "Click to update Aadhaar photo"
-                  : "Click to upload Aadhaar photo"}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                JPEG, PNG, GIF, WebP, BMP (Max 5MB)
-              </p>
-            </div>
-          </label>
-        </div>
-        {errors.aadhaarPhoto && (
-          <p className="mt-2 text-xs text-red-600">{errors.aadhaarPhoto}</p>
-        )}
+// Replace the entire renderDocumentsTab function with this:
+const renderDocumentsTab = () => (
+  <div className="space-y-6">
+    {/* Aadhaar Front Photo Upload */}
+    <div>
+      <h3 className="text-sm font-medium text-gray-700 mb-3">
+        Aadhaar Front Photo {formData.aadhaarPhoto ? "(Uploaded)" : ""}
+      </h3>
+      <div className="relative">
+        <input
+          ref={(el) => (fileInputRefs.current.aadhaarPhoto = el)}
+          type="file"
+          onChange={(e) => handleFileChange("aadhaarPhoto", e)}
+          className="hidden"
+          id="aadhaar-upload"
+          accept="image/*"
+        />
+        <label
+          htmlFor="aadhaar-upload"
+          className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+            formData.aadhaarPhoto
+              ? "bg-blue-50 border-blue-300 hover:border-blue-400"
+              : errors.aadhaarPhoto
+              ? "bg-red-50 border-red-300 hover:border-red-400"
+              : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
+          }`}
+        >
+          <div className="text-center">
+            <svg
+              className={`w-8 h-8 mx-auto mb-2 ${
+                formData.aadhaarPhoto
+                  ? "text-blue-500"
+                  : errors.aadhaarPhoto
+                  ? "text-red-500"
+                  : "text-gray-400"
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+            <p
+              className={`text-sm ${
+                formData.aadhaarPhoto
+                  ? "text-blue-700"
+                  : errors.aadhaarPhoto
+                  ? "text-red-700"
+                  : "text-gray-600"
+              }`}
+            >
+              {formData.aadhaarPhoto
+                ? "Click to update Aadhaar front photo"
+                : "Click to upload Aadhaar front photo"}
+            </p>
+       <p className="text-xs text-gray-500 mt-1">
+  JPEG, PNG, GIF, WebP, BMP (Max 200KB)
+</p>
+          </div>
+        </label>
+      </div>
+      {errors.aadhaarPhoto && (
+        <p className="mt-2 text-xs text-red-600">{errors.aadhaarPhoto}</p>
+      )}
 
-        {formData.aadhaarPhoto && (
-          <div className="mt-3 p-3 bg-gray-50 rounded border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-white rounded border border-gray-200 overflow-hidden">
-                  <img
-                    src={formData.aadhaarPhoto.preview}
-                    alt="Aadhaar preview"
-                    className="w-full h-full object-cover"
-                  />
+      {formData.aadhaarPhoto && (
+        <div className="mt-3 p-3 bg-gray-50 rounded border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-white rounded border border-gray-200 overflow-hidden">
+                <img
+                  src={formData.aadhaarPhoto.preview}
+                  alt="Aadhaar preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div>
+                <div className="text-xs font-medium text-gray-900">
+                  {formData.aadhaarPhoto.fileName}
                 </div>
-                <div>
-                  <div className="text-xs font-medium text-gray-900">
-                    {formData.aadhaarPhoto.fileName}
+                {formData.aadhaarPhoto.size && (
+                  <div className="text-xs text-gray-500">
+                    {formatFileSize(formData.aadhaarPhoto.size)}
                   </div>
-                  {formData.aadhaarPhoto.size && (
-                    <div className="text-xs text-gray-500">
-                      {formatFileSize(formData.aadhaarPhoto.size)}
-                    </div>
-                  )}
-                  {formData.aadhaarPhoto.isBase64 && (
-                    <div className="text-xs text-blue-500">
-                      Previously uploaded
-                    </div>
-                  )}
-                </div>
+                )}
+                {formData.aadhaarPhoto.isBase64 && (
+                  <div className="text-xs text-blue-500">
+                    Previously uploaded
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handlePreviewAttachment(formData.aadhaarPhoto)}
-                  className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded hover:bg-blue-50"
-                  title="Preview"
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handlePreviewAttachment(formData.aadhaarPhoto)}
+                className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded hover:bg-blue-50"
+                title="Preview"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                    />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveAttachment("aadhaarPhoto")}
-                  className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded hover:bg-red-50"
-                  title="Remove"
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRemoveAttachment("aadhaarPhoto")}
+                className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded hover:bg-red-50"
+                title="Remove"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
-        )}
-      </div>
-
-      {/* Passport Photo Upload */}
-      <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">
-          Passport Photo {formData.passportPhoto ? "(Uploaded)" : ""}
-        </h3>
-        <div className="relative">
-          <input
-            ref={(el) => (fileInputRefs.current.passportPhoto = el)}
-            type="file"
-            onChange={(e) => handleFileChange("passportPhoto", e)}
-            className="hidden"
-            id="passport-upload"
-            accept="image/*"
-          />
-          <label
-            htmlFor="passport-upload"
-            className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-              formData.passportPhoto
-                ? "bg-blue-50 border-blue-300 hover:border-blue-400"
-                : errors.passportPhoto
-                ? "bg-red-50 border-red-300 hover:border-red-400"
-                : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
-            }`}
-          >
-            <div className="text-center">
-              <svg
-                className={`w-8 h-8 mx-auto mb-2 ${
-                  formData.passportPhoto
-                    ? "text-blue-500"
-                    : errors.passportPhoto
-                    ? "text-red-500"
-                    : "text-gray-400"
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
-              <p
-                className={`text-sm ${
-                  formData.passportPhoto
-                    ? "text-blue-700"
-                    : errors.passportPhoto
-                    ? "text-red-700"
-                    : "text-gray-600"
-                }`}
-              >
-                {formData.passportPhoto
-                  ? "Click to update Passport photo"
-                  : "Click to upload Passport photo"}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                JPEG, PNG, GIF, WebP, BMP (Max 5MB)
-              </p>
-            </div>
-          </label>
         </div>
-        {errors.passportPhoto && (
-          <p className="mt-2 text-xs text-red-600">{errors.passportPhoto}</p>
-        )}
-
-        {formData.passportPhoto && (
-          <div className="mt-3 p-3 bg-gray-50 rounded border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-white rounded border border-gray-200 overflow-hidden">
-                  <img
-                    src={formData.passportPhoto.preview}
-                    alt="Passport preview"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div>
-                  <div className="text-xs font-medium text-gray-900">
-                    {formData.passportPhoto.fileName}
-                  </div>
-                  {formData.passportPhoto.size && (
-                    <div className="text-xs text-gray-500">
-                      {formatFileSize(formData.passportPhoto.size)}
-                    </div>
-                  )}
-                  {formData.passportPhoto.isBase64 && (
-                    <div className="text-xs text-blue-500">
-                      Previously uploaded
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    handlePreviewAttachment(formData.passportPhoto)
-                  }
-                  className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded hover:bg-blue-50"
-                  title="Preview"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                    />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveAttachment("passportPhoto")}
-                  className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded hover:bg-red-50"
-                  title="Remove"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </div>
-  );
 
+    {/* Aadhaar Back Photo Upload */}
+    <div>
+      <h3 className="text-sm font-medium text-gray-700 mb-3">
+        Aadhaar Back Photo {formData.aadhaarPhotoBack ? "(Uploaded)" : ""}
+      </h3>
+      <div className="relative">
+        <input
+          ref={(el) => (fileInputRefs.current.aadhaarPhotoBack = el)}
+          type="file"
+          onChange={(e) => handleFileChange("aadhaarPhotoBack", e)}
+          className="hidden"
+          id="aadhaar-back-upload"
+          accept="image/*"
+        />
+        <label
+          htmlFor="aadhaar-back-upload"
+          className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+            formData.aadhaarPhotoBack
+              ? "bg-blue-50 border-blue-300 hover:border-blue-400"
+              : errors.aadhaarPhotoBack
+              ? "bg-red-50 border-red-300 hover:border-red-400"
+              : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
+          }`}
+        >
+          <div className="text-center">
+            <svg
+              className={`w-8 h-8 mx-auto mb-2 ${
+                formData.aadhaarPhotoBack
+                  ? "text-blue-500"
+                  : errors.aadhaarPhotoBack
+                  ? "text-red-500"
+                  : "text-gray-400"
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+            <p
+              className={`text-sm ${
+                formData.aadhaarPhotoBack
+                  ? "text-blue-700"
+                  : errors.aadhaarPhotoBack
+                  ? "text-red-700"
+                  : "text-gray-600"
+              }`}
+            >
+              {formData.aadhaarPhotoBack
+                ? "Click to update Aadhaar back photo"
+                : "Click to upload Aadhaar back photo"}
+            </p>
+         <p className="text-xs text-gray-500 mt-1">
+  JPEG, PNG, GIF, WebP, BMP (Max 200KB)
+</p>
+          </div>
+        </label>
+      </div>
+      {errors.aadhaarPhotoBack && (
+        <p className="mt-2 text-xs text-red-600">{errors.aadhaarPhotoBack}</p>
+      )}
+
+      {formData.aadhaarPhotoBack && (
+        <div className="mt-3 p-3 bg-gray-50 rounded border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-white rounded border border-gray-200 overflow-hidden">
+                <img
+                  src={formData.aadhaarPhotoBack.preview}
+                  alt="Aadhaar back preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div>
+                <div className="text-xs font-medium text-gray-900">
+                  {formData.aadhaarPhotoBack.fileName}
+                </div>
+                {formData.aadhaarPhotoBack.size && (
+                  <div className="text-xs text-gray-500">
+                    {formatFileSize(formData.aadhaarPhotoBack.size)}
+                  </div>
+                )}
+                {formData.aadhaarPhotoBack.isBase64 && (
+                  <div className="text-xs text-blue-500">
+                    Previously uploaded
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handlePreviewAttachment(formData.aadhaarPhotoBack)}
+                className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded hover:bg-blue-50"
+                title="Preview"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRemoveAttachment("aadhaarPhotoBack")}
+                className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded hover:bg-red-50"
+                title="Remove"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+
+    {/* PAN/License Photo Upload */}
+    <div>
+      <h3 className="text-sm font-medium text-gray-700 mb-3">
+        PAN Card or License {formData.panPhoto ? "(Uploaded)" : ""}
+      </h3>
+      <div className="relative">
+        <input
+          ref={(el) => (fileInputRefs.current.panPhoto = el)}
+          type="file"
+          onChange={(e) => handleFileChange("panPhoto", e)}
+          className="hidden"
+          id="pan-upload"
+          accept="image/*"
+        />
+        <label
+          htmlFor="pan-upload"
+          className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+            formData.panPhoto
+              ? "bg-blue-50 border-blue-300 hover:border-blue-400"
+              : errors.panPhoto
+              ? "bg-red-50 border-red-300 hover:border-red-400"
+              : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
+          }`}
+        >
+          <div className="text-center">
+            <svg
+              className={`w-8 h-8 mx-auto mb-2 ${
+                formData.panPhoto
+                  ? "text-blue-500"
+                  : errors.panPhoto
+                  ? "text-red-500"
+                  : "text-gray-400"
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+            <p
+              className={`text-sm ${
+                formData.panPhoto
+                  ? "text-blue-700"
+                  : errors.panPhoto
+                  ? "text-red-700"
+                  : "text-gray-600"
+              }`}
+            >
+              {formData.panPhoto
+                ? "Click to update PAN/License"
+                : "Click to upload PAN Card or License"}
+            </p>
+          <p className="text-xs text-gray-500 mt-1">
+  JPEG, PNG, GIF, WebP, BMP (Max 200KB)
+</p>
+          </div>
+        </label>
+      </div>
+      {errors.panPhoto && (
+        <p className="mt-2 text-xs text-red-600">{errors.panPhoto}</p>
+      )}
+
+      {formData.panPhoto && (
+        <div className="mt-3 p-3 bg-gray-50 rounded border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-white rounded border border-gray-200 overflow-hidden">
+                <img
+                  src={formData.panPhoto.preview}
+                  alt="PAN/License preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div>
+                <div className="text-xs font-medium text-gray-900">
+                  {formData.panPhoto.fileName}
+                </div>
+                {formData.panPhoto.size && (
+                  <div className="text-xs text-gray-500">
+                    {formatFileSize(formData.panPhoto.size)}
+                  </div>
+                )}
+                {formData.panPhoto.isBase64 && (
+                  <div className="text-xs text-blue-500">
+                    Previously uploaded
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handlePreviewAttachment(formData.panPhoto)}
+                className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded hover:bg-blue-50"
+                title="Preview"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRemoveAttachment("panPhoto")}
+                className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded hover:bg-red-50"
+                title="Remove"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+
+    {/* Passport Photo Upload */}
+    <div>
+      <h3 className="text-sm font-medium text-gray-700 mb-3">
+        Passport Photo {formData.passportPhoto ? "(Uploaded)" : ""}
+      </h3>
+      <div className="relative">
+        <input
+          ref={(el) => (fileInputRefs.current.passportPhoto = el)}
+          type="file"
+          onChange={(e) => handleFileChange("passportPhoto", e)}
+          className="hidden"
+          id="passport-upload"
+          accept="image/*"
+        />
+        <label
+          htmlFor="passport-upload"
+          className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+            formData.passportPhoto
+              ? "bg-blue-50 border-blue-300 hover:border-blue-400"
+              : errors.passportPhoto
+              ? "bg-red-50 border-red-300 hover:border-red-400"
+              : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
+          }`}
+        >
+          <div className="text-center">
+            <svg
+              className={`w-8 h-8 mx-auto mb-2 ${
+                formData.passportPhoto
+                  ? "text-blue-500"
+                  : errors.passportPhoto
+                  ? "text-red-500"
+                  : "text-gray-400"
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+            <p
+              className={`text-sm ${
+                formData.passportPhoto
+                  ? "text-blue-700"
+                  : errors.passportPhoto
+                  ? "text-red-700"
+                  : "text-gray-600"
+              }`}
+            >
+              {formData.passportPhoto
+                ? "Click to update Passport photo"
+                : "Click to upload Passport photo"}
+            </p>
+       <p className="text-xs text-gray-500 mt-1">
+  JPEG, PNG, GIF, WebP, BMP (Max 200KB)
+</p>
+          </div>
+        </label>
+      </div>
+      {errors.passportPhoto && (
+        <p className="mt-2 text-xs text-red-600">{errors.passportPhoto}</p>
+      )}
+
+      {formData.passportPhoto && (
+        <div className="mt-3 p-3 bg-gray-50 rounded border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-white rounded border border-gray-200 overflow-hidden">
+                <img
+                  src={formData.passportPhoto.preview}
+                  alt="Passport preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div>
+                <div className="text-xs font-medium text-gray-900">
+                  {formData.passportPhoto.fileName}
+                </div>
+                {formData.passportPhoto.size && (
+                  <div className="text-xs text-gray-500">
+                    {formatFileSize(formData.passportPhoto.size)}
+                  </div>
+                )}
+                {formData.passportPhoto.isBase64 && (
+                  <div className="text-xs text-blue-500">
+                    Previously uploaded
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  handlePreviewAttachment(formData.passportPhoto)
+                }
+                className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded hover:bg-blue-50"
+                title="Preview"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRemoveAttachment("passportPhoto")}
+                className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded hover:bg-red-50"
+                title="Remove"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+);
   // Render Family Members Tab
   const renderFamilyTab = () => (
     <div className="space-y-6">
@@ -1852,11 +2270,11 @@ const handleSubmit = async (e) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Family Member Aadhaar Photo */}
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">
-                    Aadhaar Photo {member.aadhaarPhoto ? "(Uploaded)" : ""}
+                    Aadhaar Front {member.aadhaarPhoto ? "(Uploaded)" : ""}
                   </label>
                   <div className="relative">
                     <input
@@ -1998,6 +2416,150 @@ const handleSubmit = async (e) => {
                     </div>
                   )}
                 </div>
+
+                  <div>
+    <label className="block text-xs font-medium text-gray-700 mb-1">
+      Aadhaar Back {member.aadhaarPhotoBack ? "(Uploaded)" : ""}
+    </label>
+    <div className="relative">
+      <input
+        ref={(el) =>
+          (fileInputRefs.current[`family_${index}_aadhaarPhotoBack`] = el)
+        }
+        type="file"
+        onChange={(e) =>
+          handleFamilyFileChange(index, "aadhaarPhotoBack", e)
+        }
+        className="hidden"
+        id={`family-aadhaar-back-${index}`}
+        accept="image/*"
+      />
+      <label
+        htmlFor={`family-aadhaar-back-${index}`}
+        className={`flex items-center justify-center p-3 border border-dashed rounded-lg cursor-pointer transition-colors ${
+          member.aadhaarPhotoBack
+            ? "bg-blue-50 border-blue-300"
+            : errors[`familyMember_${index}_aadhaarPhotoBack`]
+            ? "bg-red-50 border-red-300"
+            : "border-gray-300 hover:border-blue-500 hover:bg-blue-50"
+        }`}
+      >
+        <div className="text-center">
+          <svg
+            className={`w-6 h-6 mx-auto mb-1 ${
+              member.aadhaarPhotoBack
+                ? "text-blue-500"
+                : errors[`familyMember_${index}_aadhaarPhotoBack`]
+                ? "text-red-500"
+                : "text-gray-400"
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+            />
+          </svg>
+          <p
+            className={`text-xs ${
+              member.aadhaarPhotoBack
+                ? "text-blue-700"
+                : "text-gray-600"
+            }`}
+          >
+            {member.aadhaarPhotoBack
+              ? "Click to update"
+              : "Upload Aadhaar Back"}
+          </p>
+        </div>
+      </label>
+    </div>
+    {errors[`familyMember_${index}_aadhaarPhotoBack`] && (
+      <p className="mt-1 text-xs text-red-600">
+        {errors[`familyMember_${index}_aadhaarPhotoBack`]}
+      </p>
+    )}
+
+    {member.aadhaarPhotoBack && (
+      <div className="mt-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-white rounded border border-gray-200 overflow-hidden">
+            <img
+              src={member.aadhaarPhotoBack.preview}
+              alt="Aadhaar back preview"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-gray-900 truncate max-w-[100px]">
+              {member.aadhaarPhotoBack.fileName}
+            </div>
+            {member.aadhaarPhotoBack.isBase64 && (
+              <div className="text-xs text-blue-500">
+                Existing
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() =>
+              handlePreviewAttachment(member.aadhaarPhotoBack)
+            }
+            className="p-1 text-gray-400 hover:text-blue-600"
+            title="Preview"
+          >
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              handleRemoveFamilyAttachment(index, "aadhaarPhotoBack")
+            }
+            className="p-1 text-gray-400 hover:text-red-600"
+            title="Remove"
+          >
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    )}
+  </div>
 
                 {/* Family Member Passport Photo */}
                 <div>
@@ -2179,8 +2741,8 @@ const handleSubmit = async (e) => {
               <div>
                 <h2 className="text-lg font-bold">Edit ESIC Record</h2>
                 <p className="text-blue-100 text-xs">
-                  Update employee ESIC information - ID:{" "}
-                  {esicId?.substring(0, 8)}...
+                  Update employee ESIC information 
+                
                 </p>
               </div>
             </div>

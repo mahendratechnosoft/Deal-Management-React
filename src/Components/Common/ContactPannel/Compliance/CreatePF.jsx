@@ -18,6 +18,11 @@ function CreatePFModal({ onClose, onSuccess }) {
   const [showAdminPassword, setShowAdminPassword] = useState(false);
   const fileInputRef = useRef(null);
 
+  const [attachmentBack, setAttachmentBack] = useState(null); // NEW for back side
+const [attachmentPan, setAttachmentPan] = useState(null); // NEW for PAN
+
+const [attachmentErrorBack, setAttachmentErrorBack] = useState(""); // NEW
+const [attachmentErrorPan, setAttachmentErrorPan] = useState(""); // NEW
   // Refs for focusing on error fields
   const errorFieldRefs = useRef({});
 
@@ -37,6 +42,10 @@ function CreatePFModal({ onClose, onSuccess }) {
     bankName: "",
     accountNumber: "",
     ifsc: "",
+  aadhaarPhoto: "", // Add this
+  aadhaarPhotoBack: "", // NEW
+  panPhoto: "", // NEW
+  grossSalary: "",     
   });
 
   const [errors, setErrors] = useState({});
@@ -62,7 +71,7 @@ function CreatePFModal({ onClose, onSuccess }) {
     {
       id: "identification",
       label: "Identification",
-      fields: ["aadhaarNumber", "gender", "pan"],
+      fields: ["aadhaarNumber", "gender", "pan","married"],
     },
     {
       id: "bank",
@@ -72,7 +81,7 @@ function CreatePFModal({ onClose, onSuccess }) {
     {
       id: "document",
       label: "Aadhaar Document",
-      fields: ["aadhaarPhoto"],
+        fields: ["aadhaarPhoto", "aadhaarPhotoBack", "panPhoto"], 
     },
   ];
 
@@ -131,25 +140,26 @@ function CreatePFModal({ onClose, onSuccess }) {
   };
 
   // Format file size
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
 
   // Handle file attachment
   const handleAttachmentChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      setAttachmentError("File size exceeds 5MB limit");
-      toast.error("File size exceeds 5MB limit");
-      return;
-    }
+ // Change from 5MB to 200KB:
+const maxSize = 200 * 1024; // 200KB
+if (file.size > maxSize) {
+  setAttachmentError("File size exceeds 200KB limit");
+  toast.error("File size exceeds 200KB limit");
+  return;
+}
 
     const allowedTypes = [
       "image/jpeg",
@@ -194,6 +204,110 @@ function CreatePFModal({ onClose, onSuccess }) {
       fileInputRef.current.value = "";
     }
   };
+
+  // Handle Aadhaar Back Side attachment
+const handleAttachmentChangeBack = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const maxSize = 200 * 1024; // 200KB
+  if (file.size > maxSize) {
+    setAttachmentErrorBack("File size exceeds 200KB limit");
+    toast.error("File size exceeds 200KB limit");
+    return;
+  }
+
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/bmp",
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    setAttachmentErrorBack(
+      "Only image files are allowed (JPEG, PNG, GIF, WebP, BMP)"
+    );
+    toast.error("Invalid file type. Please upload an image file.");
+    return;
+  }
+
+  const newAttachment = {
+    id: Date.now(),
+    file: file,
+    fileName: file.name,
+    size: file.size,
+    type: file.type,
+    preview: URL.createObjectURL(file),
+  };
+
+  setAttachmentBack(newAttachment);
+  setAttachmentErrorBack("");
+  
+  // Clear any previous attachment error
+  if (errors.aadhaarPhotoBack) {
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors.aadhaarPhotoBack;
+      return newErrors;
+    });
+  }
+
+  toast.success("Aadhaar back side uploaded successfully");
+};
+
+// Handle PAN/License attachment
+const handleAttachmentChangePan = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const maxSize = 200 * 1024; // 200KB
+  if (file.size > maxSize) {
+    setAttachmentErrorPan("File size exceeds 200KB limit");
+    toast.error("File size exceeds 200KB limit");
+    return;
+  }
+
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/bmp",
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    setAttachmentErrorPan(
+      "Only image files are allowed (JPEG, PNG, GIF, WebP, BMP)"
+    );
+    toast.error("Invalid file type. Please upload an image file.");
+    return;
+  }
+
+  const newAttachment = {
+    id: Date.now(),
+    file: file,
+    fileName: file.name,
+    size: file.size,
+    type: file.type,
+    preview: URL.createObjectURL(file),
+  };
+
+  setAttachmentPan(newAttachment);
+  setAttachmentErrorPan("");
+  
+  // Clear any previous attachment error
+  if (errors.panPhoto) {
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors.panPhoto;
+      return newErrors;
+    });
+  }
+
+  toast.success("PAN/License uploaded successfully");
+};
 
   // Preview attachment
   const handlePreviewAttachment = () => {
@@ -285,13 +399,19 @@ function CreatePFModal({ onClose, onSuccess }) {
   };
 
   // Clean up object URL on unmount
-  useEffect(() => {
-    return () => {
-      if (attachment?.preview) {
-        URL.revokeObjectURL(attachment.preview);
-      }
-    };
-  }, [attachment]);
+useEffect(() => {
+  return () => {
+    if (attachment?.preview) {
+      URL.revokeObjectURL(attachment.preview);
+    }
+    if (attachmentBack?.preview) {
+      URL.revokeObjectURL(attachmentBack.preview);
+    }
+    if (attachmentPan?.preview) {
+      URL.revokeObjectURL(attachmentPan.preview);
+    }
+  };
+}, [attachment, attachmentBack, attachmentPan]);
 
   // Convert file to base64
   const convertFileToBase64 = (file) => {
@@ -364,6 +484,11 @@ function CreatePFModal({ onClose, onSuccess }) {
           processedValue = value.toLowerCase();
         }
         break;
+        case "grossSalary":
+  if (/^\d*\.?\d{0,2}$/.test(value) || value === "") {
+    processedValue = value;
+  }
+  break;
       default:
         processedValue = value;
     }
@@ -537,6 +662,34 @@ function CreatePFModal({ onClose, onSuccess }) {
       newErrors.aadhaarPhoto = "Aadhaar photo is required";
     }
 
+    // Inside validateForm function, add:
+
+// Gross Salary validation
+newErrors.grossSalary = validateRequired(
+  "grossSalary", 
+  formData.grossSalary, 
+  "Gross salary"
+);
+
+// Optional: Add numeric validation
+if (formData.grossSalary && !/^\d+(\.\d{1,2})?$/.test(formData.grossSalary)) {
+  newErrors.grossSalary = "Please enter a valid salary amount (e.g., 50000 or 50000.50)";
+}
+
+// Aadhaar photo validations
+if (!attachment) {
+  newErrors.aadhaarPhoto = "Aadhaar front photo is required";
+}
+
+if (!attachmentBack) {
+  newErrors.aadhaarPhotoBack = "Aadhaar back side is required";
+}
+
+if (!attachmentPan) {
+  newErrors.panPhoto = "PAN Card or License is required";
+}
+
+
     // Filter out empty errors
     const filteredErrors = Object.fromEntries(
       Object.entries(newErrors).filter(([_, value]) => value !== "")
@@ -556,38 +709,50 @@ function CreatePFModal({ onClose, onSuccess }) {
 
   // Handle form submission
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!validateForm()) {
-      toast.error("Please fix all form errors before submitting.");
-      return;
+  if (!validateForm()) {
+    toast.error("Please fix all form errors before submitting.");
+    return;
+  }
+
+  setLoading(true);
+  try {
+    let aadhaarPhotoBase64 = null;
+    let aadhaarPhotoBackBase64 = null;
+    let panPhotoBase64 = null;
+    
+    if (attachment) {
+      aadhaarPhotoBase64 = await convertFileToBase64(attachment.file);
+    }
+    if (attachmentBack) {
+      aadhaarPhotoBackBase64 = await convertFileToBase64(attachmentBack.file);
+    }
+    if (attachmentPan) {
+      panPhotoBase64 = await convertFileToBase64(attachmentPan.file);
     }
 
-    setLoading(true);
-    try {
-      let aadhaarPhotoBase64 = null;
-      if (attachment) {
-        aadhaarPhotoBase64 = await convertFileToBase64(attachment.file);
-      }
-
-      const payload = {
-        name: formData.name.trim(),
-        dateOfJoining: formData.dateOfJoining,
-        uan: formData.uan,
-        dateOfBirth: formData.dateOfBirth,
-        fatherName: formData.fatherName.trim(),
-        email: formData.email.trim().toLowerCase(),
-        phone: formData.phone,
-        aadhaarNumber: formData.aadhaarNumber,
-        gender: formData.gender,
-        married: formData.married,
-        pan: formData.pan,
-        accountHolderName: formData.accountHolderName.trim(),
-        bankName: formData.bankName.trim(),
-        accountNumber: formData.accountNumber,
-        ifsc: formData.ifsc,
-        aadhaarPhoto: aadhaarPhotoBase64,
-      };
+    const payload = {
+      name: formData.name.trim(),
+      dateOfJoining: formData.dateOfJoining,
+      uan: formData.uan,
+      dateOfBirth: formData.dateOfBirth,
+      fatherName: formData.fatherName.trim(),
+      email: formData.email.trim().toLowerCase(),
+      phone: formData.phone,
+      aadhaarNumber: formData.aadhaarNumber,
+      gender: formData.gender,
+      married: formData.married,
+      pan: formData.pan,
+      accountHolderName: formData.accountHolderName.trim(),
+      bankName: formData.bankName.trim(),
+      accountNumber: formData.accountNumber,
+      ifsc: formData.ifsc,
+      grossSalary: formData.grossSalary,
+      aadhaarPhoto: aadhaarPhotoBase64,
+      aadhaarPhotoBack: aadhaarPhotoBackBase64,
+      panPhoto: panPhotoBase64,
+    };
 
       const response = await axiosInstance.post("createPf", payload);
 
@@ -685,18 +850,17 @@ function CreatePFModal({ onClose, onSuccess }) {
           className="text-sm"
           ref={(el) => (errorFieldRefs.current.name = el)}
         />
-        <GlobalInputField
-          label="Father's Name"
-          name="fatherName"
-          value={formData.fatherName}
-          onChange={handleChange}
-        
-          error={errors.fatherName}
-          placeholder="Enter father's name"
-          maxLength={100}
-          className="text-sm"
-          ref={(el) => (errorFieldRefs.current.fatherName = el)}
-        />
+    <GlobalInputField
+  label="Father's Name"
+  name="fatherName"
+  value={formData.fatherName}
+  onChange={handleChange}
+  error={errors.fatherName}
+  placeholder="Enter father's name"
+  maxLength={100}
+  className="text-sm"
+  ref={(el) => (errorFieldRefs.current.fatherName = el)}
+/>
         <GlobalInputField
           label="Date of Joining"
           name="dateOfJoining"
@@ -733,6 +897,17 @@ function CreatePFModal({ onClose, onSuccess }) {
           className="text-sm"
           ref={(el) => (errorFieldRefs.current.uan = el)}
         />
+        <GlobalInputField
+  label="Gross Salary (₹)"
+  name="grossSalary"
+  value={formData.grossSalary}
+  onChange={handleChange}
+  required={true}
+  error={errors.grossSalary}
+  placeholder="e.g., 50000.00"
+  className="text-sm"
+  ref={(el) => (errorFieldRefs.current.grossSalary = el)}
+/>
       </div>
     </div>
   );
@@ -932,81 +1107,256 @@ function CreatePFModal({ onClose, onSuccess }) {
     </div>
   );
 
+
+  // Preview Aadhaar Back Side attachment
+const handlePreviewAttachmentBack = () => {
+  if (!attachmentBack) return;
+  try {
+    if (attachmentBack.type.includes("image")) {
+      const blobUrl = URL.createObjectURL(attachmentBack.file);
+      const newWindow = window.open(blobUrl, "_blank");
+      if (newWindow) {
+        newWindow.focus();
+        newWindow.onload = () => {
+          setTimeout(() => {
+            URL.revokeObjectURL(blobUrl);
+          }, 1000);
+        };
+        setTimeout(() => {
+          try {
+            URL.revokeObjectURL(blobUrl);
+          } catch (e) { }
+        }, 5000);
+      } else {
+        toast.error("Popup blocked. Please allow popups to preview image.");
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = document.createElement("img");
+          img.src = e.target.result;
+          img.style.maxWidth = "90vw";
+          img.style.maxHeight = "90vh";
+          const modal = document.createElement("div");
+          modal.style.position = "fixed";
+          modal.style.top = "0";
+          modal.style.left = "0";
+          modal.style.width = "100%";
+          modal.style.height = "100%";
+          modal.style.backgroundColor = "rgba(0,0,0,0.8)";
+          modal.style.display = "flex";
+          modal.style.alignItems = "center";
+          modal.style.justifyContent = "center";
+          modal.style.zIndex = "9999";
+          modal.style.cursor = "pointer";
+          modal.appendChild(img);
+          modal.onclick = () => document.body.removeChild(modal);
+          document.body.appendChild(modal);
+        };
+        reader.readAsDataURL(attachmentBack.file);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      }
+    }
+  } catch (error) {
+    console.error("Error previewing attachment:", error);
+    toast.error("Failed to preview image");
+  }
+};
+
+// Preview PAN/License attachment
+const handlePreviewAttachmentPan = () => {
+  if (!attachmentPan) return;
+  try {
+    if (attachmentPan.type.includes("image")) {
+      const blobUrl = URL.createObjectURL(attachmentPan.file);
+      const newWindow = window.open(blobUrl, "_blank");
+      if (newWindow) {
+        newWindow.focus();
+        newWindow.onload = () => {
+          setTimeout(() => {
+            URL.revokeObjectURL(blobUrl);
+          }, 1000);
+        };
+        setTimeout(() => {
+          try {
+            URL.revokeObjectURL(blobUrl);
+          } catch (e) { }
+        }, 5000);
+      } else {
+        toast.error("Popup blocked. Please allow popups to preview image.");
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = document.createElement("img");
+          img.src = e.target.result;
+          img.style.maxWidth = "90vw";
+          img.style.maxHeight = "90vh";
+          const modal = document.createElement("div");
+          modal.style.position = "fixed";
+          modal.style.top = "0";
+          modal.style.left = "0";
+          modal.style.width = "100%";
+          modal.style.height = "100%";
+          modal.style.backgroundColor = "rgba(0,0,0,0.8)";
+          modal.style.display = "flex";
+          modal.style.alignItems = "center";
+          modal.style.justifyContent = "center";
+          modal.style.zIndex = "9999";
+          modal.style.cursor = "pointer";
+          modal.appendChild(img);
+          modal.onclick = () => document.body.removeChild(modal);
+          document.body.appendChild(modal);
+        };
+        reader.readAsDataURL(attachmentPan.file);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      }
+    }
+  } catch (error) {
+    console.error("Error previewing attachment:", error);
+    toast.error("Failed to preview image");
+  }
+};
+
+// Download Aadhaar Back Side attachment
+const handleDownloadAttachmentBack = () => {
+  if (!attachmentBack) return;
+  try {
+    const blobUrl = URL.createObjectURL(attachmentBack.file);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = attachmentBack.fileName;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => {
+      try {
+        URL.revokeObjectURL(blobUrl);
+      } catch (e) { }
+    }, 100);
+    toast.success(`Downloading ${attachmentBack.fileName}`);
+  } catch (error) {
+    console.error("Error downloading attachment:", error);
+    toast.error("Failed to download file");
+  }
+};
+
+// Download PAN/License attachment
+const handleDownloadAttachmentPan = () => {
+  if (!attachmentPan) return;
+  try {
+    const blobUrl = URL.createObjectURL(attachmentPan.file);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = attachmentPan.fileName;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => {
+      try {
+        URL.revokeObjectURL(blobUrl);
+      } catch (e) { }
+    }, 100);
+    toast.success(`Downloading ${attachmentPan.fileName}`);
+  } catch (error) {
+    console.error("Error downloading attachment:", error);
+    toast.error("Failed to download file");
+  }
+};
+
+// Remove Aadhaar Back Side attachment
+const handleRemoveAttachmentBack = () => {
+  if (attachmentBack) {
+    if (attachmentBack.preview) {
+      URL.revokeObjectURL(attachmentBack.preview);
+    }
+    setAttachmentBack(null);
+    setAttachmentErrorBack("");
+    toast.success("Aadhaar back side removed");
+  }
+};
+
+// Remove PAN/License attachment
+const handleRemoveAttachmentPan = () => {
+  if (attachmentPan) {
+    if (attachmentPan.preview) {
+      URL.revokeObjectURL(attachmentPan.preview);
+    }
+    setAttachmentPan(null);
+    setAttachmentErrorPan("");
+    toast.success("PAN/License removed");
+  }
+};
   // Render Document Tab
-  const renderDocumentTab = () => (
-    <div className="space-y-4">
-      <div className="mb-3">
-        <div className="relative">
-          <input
-            ref={fileInputRef}
-            type="file"
-            onChange={handleAttachmentChange}
-            className="hidden"
-            id="aadhaar-upload"
-            accept="image/*"
-          />
-          <label
-            htmlFor="aadhaar-upload"
-            className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${attachment
-                ? "bg-green-50 border-green-300 hover:border-green-400"
-                : errors.aadhaarPhoto
-                  ? "bg-red-50 border-red-300 hover:border-red-400"
-                  : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
-              }`}
-          >
-            <div className="text-center">
-              <svg
-                className={`w-8 h-8 mx-auto mb-2 ${attachment
-                    ? "text-green-500"
-                    : errors.aadhaarPhoto
-                      ? "text-red-500"
-                      : "text-gray-400"
-                  }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
-              <p
-                className={`text-sm ${attachment
-                    ? "text-green-700"
-                    : errors.aadhaarPhoto
-                      ? "text-red-700"
-                      : "text-gray-600"
-                  }`}
-              >
-                {attachment
-                  ? "Aadhaar photo uploaded ✓"
-                  : "Click to upload Aadhaar photo"}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                JPEG, PNG, GIF, WebP, BMP (Max 5MB)
-              </p>
-            </div>
-          </label>
-        </div>
+// Replace the entire renderDocumentTab function with:
 
-        {errors.aadhaarPhoto && (
-          <p className="mt-2 text-xs text-red-600">{errors.aadhaarPhoto}</p>
-        )}
-        {attachmentError && (
-          <p className="mt-2 text-xs text-red-600">{attachmentError}</p>
-        )}
+const renderDocumentTab = () => (
+  <div className="space-y-6">
+    {/* Aadhaar Front Side */}
+    <div>
+      <h4 className="text-sm font-medium text-gray-700 mb-2">Aadhaar Front Side</h4>
+      <div className="relative">
+        <input
+          ref={fileInputRef}
+          type="file"
+          onChange={handleAttachmentChange}
+          className="hidden"
+          id="aadhaar-upload-front"
+          accept="image/*"
+        />
+        <label
+          htmlFor="aadhaar-upload-front"
+          className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${attachment
+              ? "bg-green-50 border-green-300 hover:border-green-400"
+              : errors.aadhaarPhoto
+                ? "bg-red-50 border-red-300 hover:border-red-400"
+                : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
+            }`}
+        >
+          <div className="text-center">
+            <svg
+              className={`w-8 h-8 mx-auto mb-2 ${attachment
+                  ? "text-green-500"
+                  : errors.aadhaarPhoto
+                    ? "text-red-500"
+                    : "text-gray-400"
+                }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+            <p
+              className={`text-sm ${attachment
+                  ? "text-green-700"
+                  : errors.aadhaarPhoto
+                    ? "text-red-700"
+                    : "text-gray-600"
+                }`}
+            >
+              {attachment
+                ? "Aadhaar front side uploaded ✓"
+                : "Click to upload Aadhaar front side"}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              JPEG, PNG, GIF, WebP, BMP (Max 200KB)
+            </p>
+          </div>
+        </label>
       </div>
-
+      {errors.aadhaarPhoto && (
+        <p className="mt-2 text-xs text-red-600">{errors.aadhaarPhoto}</p>
+      )}
+      {attachmentError && (
+        <p className="mt-2 text-xs text-red-600">{attachmentError}</p>
+      )}
+      
       {attachment && (
         <div className="mt-3">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm font-medium text-gray-700">
-              Selected Aadhaar Photo
-            </h4>
-          </div>
           <div className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200">
             <div
               className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
@@ -1101,7 +1451,330 @@ function CreatePFModal({ onClose, onSuccess }) {
         </div>
       )}
     </div>
-  );
+
+    {/* Aadhaar Back Side */}
+    <div>
+      <h4 className="text-sm font-medium text-gray-700 mb-2">Aadhaar Back Side</h4>
+      <div className="relative">
+        <input
+          type="file"
+          onChange={handleAttachmentChangeBack}
+          className="hidden"
+          id="aadhaar-upload-back"
+          accept="image/*"
+        />
+        <label
+          htmlFor="aadhaar-upload-back"
+          className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${attachmentBack
+              ? "bg-green-50 border-green-300 hover:border-green-400"
+              : errors.aadhaarPhotoBack
+                ? "bg-red-50 border-red-300 hover:border-red-400"
+                : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
+            }`}
+        >
+          <div className="text-center">
+            <svg
+              className={`w-8 h-8 mx-auto mb-2 ${attachmentBack
+                  ? "text-green-500"
+                  : errors.aadhaarPhotoBack
+                    ? "text-red-500"
+                    : "text-gray-400"
+                }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+            <p
+              className={`text-sm ${attachmentBack
+                  ? "text-green-700"
+                  : errors.aadhaarPhotoBack
+                    ? "text-red-700"
+                    : "text-gray-600"
+                }`}
+            >
+              {attachmentBack
+                ? "Aadhaar back side uploaded ✓"
+                : "Click to upload Aadhaar back side"}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              JPEG, PNG, GIF, WebP, BMP (Max 200KB)
+            </p>
+          </div>
+        </label>
+      </div>
+      {errors.aadhaarPhotoBack && (
+        <p className="mt-2 text-xs text-red-600">{errors.aadhaarPhotoBack}</p>
+      )}
+      {attachmentErrorBack && (
+        <p className="mt-2 text-xs text-red-600">{attachmentErrorBack}</p>
+      )}
+      
+      {attachmentBack && (
+        <div className="mt-3">
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200">
+            <div
+              className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
+              onClick={handlePreviewAttachmentBack}
+              title="Click to preview"
+            >
+              <div className="flex-shrink-0 w-10 h-10 bg-white rounded border border-gray-200 overflow-hidden">
+                <img
+                  src={attachmentBack.preview}
+                  alt="Aadhaar back preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-medium text-gray-900 text-xs truncate hover:text-blue-600">
+                  {attachmentBack.fileName}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {formatFileSize(attachmentBack.size)}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handlePreviewAttachmentBack}
+                className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded hover:bg-blue-50"
+                title="Preview"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadAttachmentBack}
+                className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded hover:bg-blue-50"
+                title="Download"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={handleRemoveAttachmentBack}
+                className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded hover:bg-red-50"
+                title="Remove"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+
+    {/* PAN Card or License */}
+    <div>
+      <h4 className="text-sm font-medium text-gray-700 mb-2">PAN Card or License</h4>
+      <div className="relative">
+        <input
+          type="file"
+          onChange={handleAttachmentChangePan}
+          className="hidden"
+          id="pan-upload"
+          accept="image/*"
+        />
+        <label
+          htmlFor="pan-upload"
+          className={`flex items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${attachmentPan
+              ? "bg-green-50 border-green-300 hover:border-green-400"
+              : errors.panPhoto
+                ? "bg-red-50 border-red-300 hover:border-red-400"
+                : "border-blue-300 hover:border-blue-500 hover:bg-blue-50"
+            }`}
+        >
+          <div className="text-center">
+            <svg
+              className={`w-8 h-8 mx-auto mb-2 ${attachmentPan
+                  ? "text-green-500"
+                  : errors.panPhoto
+                    ? "text-red-500"
+                    : "text-gray-400"
+                }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+            <p
+              className={`text-sm ${attachmentPan
+                  ? "text-green-700"
+                  : errors.panPhoto
+                    ? "text-red-700"
+                    : "text-gray-600"
+                }`}
+            >
+              {attachmentPan
+                ? "PAN/License uploaded ✓"
+                : "Click to upload PAN Card or License"}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              JPEG, PNG, GIF, WebP, BMP (Max 200KB)
+            </p>
+          </div>
+        </label>
+      </div>
+      {errors.panPhoto && (
+        <p className="mt-2 text-xs text-red-600">{errors.panPhoto}</p>
+      )}
+      {attachmentErrorPan && (
+        <p className="mt-2 text-xs text-red-600">{attachmentErrorPan}</p>
+      )}
+      
+      {attachmentPan && (
+        <div className="mt-3">
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200">
+            <div
+              className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
+              onClick={handlePreviewAttachmentPan}
+              title="Click to preview"
+            >
+              <div className="flex-shrink-0 w-10 h-10 bg-white rounded border border-gray-200 overflow-hidden">
+                <img
+                  src={attachmentPan.preview}
+                  alt="PAN/License preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-medium text-gray-900 text-xs truncate hover:text-blue-600">
+                  {attachmentPan.fileName}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {formatFileSize(attachmentPan.size)}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handlePreviewAttachmentPan}
+                className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded hover:bg-blue-50"
+                title="Preview"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadAttachmentPan}
+                className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded hover:bg-blue-50"
+                title="Download"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={handleRemoveAttachmentPan}
+                className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded hover:bg-red-50"
+                title="Remove"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-3 z-50">
