@@ -1,4 +1,13 @@
 import { ToWords } from "to-words";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
+
+export const formatRelativeTime = (dateString) => {
+  if (!dateString) return "";
+  return dayjs(dateString).fromNow();
+};
 
 export const formatInvoiceNumber = (number) => {
   const numberString = String(number || 0);

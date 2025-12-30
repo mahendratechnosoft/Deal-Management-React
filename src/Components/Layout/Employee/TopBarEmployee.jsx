@@ -3,13 +3,20 @@ import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import CheckInOutButton from "../../Common/Timesheet/CheckInOutButton";
 import { hasPermission } from "../../BaseComponet/permissions";
-import { useTimer } from "../../BaseComponet/TaskTimerContext"; // Added
-import { formatDuration } from "../../BaseComponet/UtilFunctions"; // Added
+import { useTimer } from "../../BaseComponet/TaskTimerContext";
+import { formatDuration } from "../../BaseComponet/UtilFunctions";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import { FINAL_KEYWORD_URL } from "../../BaseComponet/finalKeyWord";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import {
   showAutoCloseSuccess,
   showCustomAlert,
-  showErrorAlert, // Ensure this is imported for the validation in handleStopTimer
+  showErrorAlert,
 } from "../../BaseComponet/alertUtils";
+
+dayjs.extend(relativeTime);
 
 function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
   // Timer Context
@@ -18,23 +25,31 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAttendanceList, setShowAttendanceList] = useState(false);
-  const [showTimerDropdown, setShowTimerDropdown] = useState(false); // Added
+  const [showTimerDropdown, setShowTimerDropdown] = useState(false);
 
   const [userData, setUserData] = useState(null);
-  const [notificationCount, setNotificationCount] = useState(3);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
   const [attendanceData, setAttendanceData] = useState([]);
   const [loadingAttendance, setLoadingAttendance] = useState(false);
+
+  // Pagination State
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const pageSize = 10;
+
   const navigate = useNavigate();
 
   // Refs for dropdown containers
   const userMenuRef = useRef(null);
   const notificationRef = useRef(null);
   const attendanceRef = useRef(null);
-  const timerRef = useRef(null); // Added
+  const timerRef = useRef(null);
   const userButtonRef = useRef(null);
   const notificationButtonRef = useRef(null);
   const attendanceButtonRef = useRef(null);
-  const timerButtonRef = useRef(null); // Added
+  const timerButtonRef = useRef(null);
 
   // Get user data from localStorage
   useEffect(() => {
@@ -51,7 +66,132 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
   // Fetch active timer on mount
   useEffect(() => {
     fetchActiveTimer();
+    fetchNotificationCount();
   }, []);
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("userData"));
+    const employeeId = user?.employeeId;
+
+    if (!employeeId) return;
+
+    const client = new Client({
+      webSocketFactory: () => new SockJS(`${FINAL_KEYWORD_URL}/ws`),
+      reconnectDelay: 5000,
+      onConnect: () => {
+        client.subscribe(`/topic/notifications/${employeeId}`, (message) => {
+          handleNotification(message);
+        });
+      },
+    });
+
+    client.activate();
+
+    return () => {
+      client.deactivate();
+    };
+  }, []);
+
+  const handleNotification = (message) => {
+    let data;
+    try {
+      data = JSON.parse(message.body);
+    } catch {
+      data = 0;
+    }
+    setNotificationCount(data);
+  };
+
+  const fetchNotificationCount = async () => {
+    try {
+      const response = await axiosInstance.get("getUnreadNotificationCount");
+      if (response.data !== undefined) {
+        setNotificationCount(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching notification count:", error);
+    }
+  };
+
+  const fetchNotifications = async (pageNum = 0) => {
+    if (loadingNotifications && pageNum !== 0) return;
+
+    setLoadingNotifications(true);
+    try {
+      const response = await axiosInstance.get(
+        `getNotifications/${pageNum}/${pageSize}`
+      );
+      const data = response.data;
+      const newItems = Array.isArray(data.content) ? data.content : [];
+
+      setNotifications((prev) => {
+        if (pageNum === 0) return newItems;
+        const existingIds = new Set(prev.map((n) => n.notificationId));
+        const filteredNewItems = newItems.filter(
+          (n) => !existingIds.has(n.notificationId)
+        );
+        return [...prev, ...filteredNewItems];
+      });
+
+      if (data.totalPages !== undefined) {
+        setHasMore(pageNum + 1 < data.totalPages);
+      } else {
+        setHasMore(newItems.length === pageSize);
+      }
+
+      setPage(pageNum);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  const handleNotificationScroll = (e) => {
+    const { scrollTop, clientHeight, scrollHeight } = e.target;
+    if (scrollHeight - scrollTop - clientHeight < 20) {
+      if (hasMore && !loadingNotifications) {
+        fetchNotifications(page + 1);
+      }
+    }
+  };
+
+  const handleMarkAsRead = async (notificationId) => {
+    try {
+      await axiosInstance.put(`markNotificationAsRead/${notificationId}`);
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.notificationId === notificationId ? { ...n, read: true } : n
+        )
+      );
+      fetchNotificationCount();
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  };
+
+  const handleDeleteNotification = async (notificationId, event) => {
+    event.stopPropagation(); // Prevent click from bubbling to the parent
+    try {
+      await axiosInstance.delete(`deleteNotification/${notificationId}`);
+      setNotifications((prev) =>
+        prev.filter((n) => n.notificationId !== notificationId)
+      );
+      fetchNotificationCount();
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await axiosInstance.put("markAllNotificationsAsRead");
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      setNotificationCount(0);
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+    }
+  };
 
   // Function to fetch today's attendance data
   const fetchTodayAttendance = async () => {
@@ -135,13 +275,17 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
   };
 
   const toggleNotifications = () => {
-    setShowNotifications(!showNotifications);
+    const isOpening = !showNotifications;
+    setShowNotifications(isOpening);
+
     if (showUserMenu) setShowUserMenu(false);
     if (showAttendanceList) setShowAttendanceList(false);
     if (showTimerDropdown) setShowTimerDropdown(false);
 
-    if (!showNotifications && notificationCount > 0) {
-      setNotificationCount(0);
+    if (isOpening) {
+      setPage(0);
+      setHasMore(true);
+      fetchNotifications(0);
     }
   };
 
@@ -681,75 +825,152 @@ function TopBarEmployee({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
                     </div>
                   )}
                 </div>
-                {/* Notifications (Hidden/False in original code) */}
-                {false && (
-                  <div className="relative">
-                    <button
-                      ref={notificationButtonRef}
-                      onClick={toggleNotifications}
-                      className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative"
-                      title="Notifications"
+
+                {/* Notifications */}
+                <div className="relative">
+                  <button
+                    ref={notificationButtonRef}
+                    onClick={toggleNotifications}
+                    className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm group relative"
+                    title="Notifications"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-5 h-5 text-white group-hover:scale-110 transition-transform duration-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      <svg
-                        className="w-5 h-5 text-white group-hover:scale-110 transition-transform duration-300"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 17h5l-5 5v-5zM10.24 8.56a5.97 5.97 0 01-4.66-6.24M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M3.124 7.5A8.969 8.969 0 0 1 5.292 3m13.416 0a8.969 8.969 0 0 1 2.168 4.5"
+                      />
+                    </svg>
 
-                      {/* Notification Badge */}
-                      {notificationCount > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
-                          {notificationCount > 9 ? "9+" : notificationCount}
-                        </span>
-                      )}
-                    </button>
-
-                    {/* Notifications Dropdown */}
-                    {showNotifications && (
-                      <div
-                        ref={notificationRef}
-                        className="absolute right-0 mt-1 w-72 bg-white rounded-xl shadow border border-gray-200 py-1 z-50"
-                      >
-                        <div className="px-3 py-1.5 border-b border-gray-100 flex justify-between items-center">
-                          <h3 className="font-medium text-gray-800 text-sm">
-                            Notifications
-                          </h3>
-                          <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                            {notificationCount} new
-                          </span>
-                        </div>
-                        <div className="max-h-48 overflow-y-auto">
-                          {/* Sample notifications */}
-                          <div className="px-3 py-2 hover:bg-blue-50 transition-colors duration-200 border-b border-gray-50">
-                            <p className="text-xs text-gray-700 font-medium">
-                              New task assigned
-                            </p>
-                            <p className="text-xs text-gray-600 mt-0.5">
-                              You have been assigned a new project task.
-                            </p>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              2 minutes ago
-                            </p>
-                          </div>
-                          {/* ... other notifications ... */}
-                          <div className="border-t border-gray-100 pt-1">
-                            <button className="w-full text-center text-xs text-blue-600 hover:text-blue-800 font-medium py-2">
-                              View All Notifications
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                    {/* Notification Badge */}
+                    {notificationCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                        {notificationCount > 9 ? "9+" : notificationCount}
+                      </span>
                     )}
-                  </div>
-                )}
+                  </button>
+
+                  {/* Notifications Dropdown */}
+                  {showNotifications && (
+                    <div
+                      ref={notificationRef}
+                      className="absolute right-0 mt-1 w-80 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50"
+                    >
+                      <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
+                        <h3 className="font-semibold text-gray-800 text-sm">
+                          Notifications
+                        </h3>
+                        {notificationCount > 0 && (
+                          <button
+                            onClick={handleMarkAllAsRead}
+                            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                          >
+                            Mark all as read
+                          </button>
+                        )}
+                      </div>
+                      <div
+                        className="max-h-80 overflow-y-auto"
+                        onScroll={handleNotificationScroll}
+                      >
+                        {notifications.length > 0 ? (
+                          notifications.map((notif) => (
+                            <div
+                              key={notif.notificationId}
+                              onClick={() =>
+                                handleMarkAsRead(notif.notificationId)
+                              }
+                              className={`px-4 py-3 hover:bg-blue-50 transition-colors duration-200 border-b border-gray-50 cursor-pointer ${
+                                !notif.read ? "bg-blue-50" : ""
+                              }`}
+                            >
+                              <div className="flex items-start space-x-3">
+                                <div
+                                  className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                                    !notif.read ? "bg-blue-500" : "bg-gray-300"
+                                  }`}
+                                ></div>
+                                <div className="flex-1">
+                                  <div className="flex justify-between items-start">
+                                    <p
+                                      className={`text-sm font-medium ${
+                                        !notif.read
+                                          ? "text-gray-800"
+                                          : "text-gray-500"
+                                      }`}
+                                    >
+                                      {notif.title || "New Notification"}
+                                    </p>
+                                    <button
+                                      onClick={(e) =>
+                                        handleDeleteNotification(
+                                          notif.notificationId,
+                                          e
+                                        )
+                                      }
+                                      className="text-gray-400 hover:text-red-500 ml-2 p-1 -mt-1 -mr-1"
+                                      title="Delete Notification"
+                                    >
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-3 w-3"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M6 18L18 6M6 6l12 12"
+                                        />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                  <p
+                                    className={`text-xs mt-1 ${
+                                      !notif.read
+                                        ? "text-gray-600"
+                                        : "text-gray-400"
+                                    }`}
+                                  >
+                                    {notif.message}
+                                  </p>
+                                  <p
+                                    className={`text-[10px] mt-1 ${
+                                      !notif.read
+                                        ? "text-gray-500"
+                                        : "text-gray-400"
+                                    }`}
+                                  >
+                                    {dayjs(notif.createdAt).fromNow()}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 text-center text-gray-500 text-xs">
+                            {!loadingNotifications && "You're all caught up!"}
+                          </div>
+                        )}
+
+                        {loadingNotifications && (
+                          <div className="flex justify-center items-center py-2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <CheckInOutButton />
