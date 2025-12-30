@@ -91,6 +91,12 @@ function TopBar({ toggleSidebar, sidebarOpen, onSwitchToLogin }) {
     let data;
     try {
       data = JSON.parse(message.body);
+      const audio = new Audio("/notification.mp3");
+      audio
+        .play()
+        .catch((error) =>
+          console.error("Error playing notification sound:", error)
+        );
     } catch {
       data = 0;
     }

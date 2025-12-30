@@ -104,6 +104,9 @@ const RoleListCompo = lazy(() =>
 const PaymentModeList = lazy(() =>
   import("../Components/Common/Settings/Finance/PaymentMode/PaymentModeList")
 );
+const EmailSetting = lazy(() =>
+  import("../Components/Common/Settings/EmailSetting")
+);
 const ProposalSetting = lazy(() =>
   import("../Components/Common/Settings/Finance/ProposalSetting")
 );
@@ -184,6 +187,7 @@ const AdminRoutes = () => {
 
         <Route path="Settings" element={<SettingsLayout />}>
           <Route index element={<General />} />
+          <Route path="Email" element={<EmailSetting />} />
           <Route path="Department" element={<Department />} />
 
           <Route
