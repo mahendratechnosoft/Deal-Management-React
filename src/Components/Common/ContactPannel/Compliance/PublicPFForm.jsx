@@ -96,11 +96,13 @@ const fileInputPanRef = useRef(null); // NEW
     return "";
   };
 
-  const validateUAN = (uan) => {
-    if (!uan.trim()) return "UAN is required";
-    if (!/^\d{12}$/.test(uan)) return "UAN must be 12 digits";
-    return "";
-  };
+const validateUAN = (uan) => {
+  if (uan.trim() === "") {
+    return ""; // Empty is okay - not required
+  }
+  if (!/^\d{12}$/.test(uan)) return "UAN must be 12 digits";
+  return "";
+};
 
   const validateBankAccount = (account) => {
     if (!account.trim()) return "Account number is required";
@@ -760,7 +762,7 @@ const renderFileUpload = (type, fileData, fileName, placeholderText) => {
                 {/* UAN */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    UAN Number <span className="text-red-500">*</span>
+                    UAN Number 
                   </label>
                   <input
                     type="text"
