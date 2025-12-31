@@ -1,5 +1,6 @@
 import React, { lazy } from "react";
 import { Routes, Route } from "react-router-dom";
+import ForgetPassword1 from "../Components/Pages/forgetpassword1";
 
 const Login = lazy(() => import("../Components/Pages/Login"));
 const PageNotFound = lazy(() => import("../Components/Pages/PageNotFound"));
@@ -13,6 +14,7 @@ const PublicRoutes = ({ onLogin }) => {
     <Routes>
       <Route path="/login" element={<Login onLogin={onLogin} />} />
       <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgetPassword1 />} />
       <Route path="/public-form/:adminId/:formId" element={<PublicForm />} />
       <Route
         path="/public-pf-form/:contactId/:formId"
