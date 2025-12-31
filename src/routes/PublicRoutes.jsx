@@ -1,10 +1,12 @@
 import React, { lazy } from "react";
 import { Routes, Route } from "react-router-dom";
-import ForgetPassword1 from "../Components/Pages/forgetpassword1";
+
+
 
 const Login = lazy(() => import("../Components/Pages/Login"));
 const PageNotFound = lazy(() => import("../Components/Pages/PageNotFound"));
 const Register = lazy(() => import("../Components/Pages/Register"));
+const ForgetPassword1 = lazy(() => import("../Components/Pages/forgetpassword1"));
 const PublicForm = lazy(() => import("../Components/Common/Settings/DynamicForm/PublicForm"));
 const PublicPFForm = lazy(() => import("../Components/Common/ContactPannel/Compliance/PublicPFForm"));
 const PublicEsicForm = lazy(() => import("../Components/Common/ContactPannel/Compliance/Esic/PublicEsicForm"));
