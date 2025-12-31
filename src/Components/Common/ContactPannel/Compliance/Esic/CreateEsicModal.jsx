@@ -209,11 +209,11 @@ function CreateEsicModal({ onClose, onSuccess }) {
     const file = e.target.files[0];
     if (!file) return;
 
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast.error("File size exceeds 5MB limit");
-      return;
-    }
+     const maxSize = 200 * 1024; // 200KB
+  if (file.size > maxSize) {
+    toast.error("File size exceeds 200KB limit");
+    return;
+  }
 
     const allowedTypes = [
       "image/jpeg",
@@ -268,11 +268,11 @@ function CreateEsicModal({ onClose, onSuccess }) {
     const file = e.target.files[0];
     if (!file) return;
 
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast.error("File size exceeds 5MB limit");
-      return;
-    }
+const maxSize = 200 * 1024; // 200KB
+  if (file.size > maxSize) {
+    toast.error("File size exceeds 200KB limit");
+    return;
+  }
 
     const allowedTypes = [
       "image/jpeg",
@@ -1355,9 +1355,9 @@ function CreateEsicModal({ onClose, onSuccess }) {
                   ? "Aadhaar front photo uploaded ✓"
                   : "Click to upload Aadhaar front photo"}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
-                JPEG, PNG, GIF, WebP, BMP (Max 5MB)
-              </p>
+            <p className="text-xs text-gray-500 mt-1">
+  JPEG, PNG, GIF, WebP, BMP (Max 200KB)
+</p>
             </div>
           </label>
         </div>
@@ -1492,9 +1492,9 @@ function CreateEsicModal({ onClose, onSuccess }) {
                   ? "Aadhaar back photo uploaded ✓"
                   : "Click to upload Aadhaar back photo"}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
-                JPEG, PNG, GIF, WebP, BMP (Max 5MB)
-              </p>
+           <p className="text-xs text-gray-500 mt-1">
+  JPEG, PNG, GIF, WebP, BMP (Max 200KB)
+</p>
             </div>
           </label>
         </div>
@@ -1629,9 +1629,9 @@ function CreateEsicModal({ onClose, onSuccess }) {
                   ? "PAN/License uploaded ✓"
                   : "Click to upload PAN Card or License"}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
-                JPEG, PNG, GIF, WebP, BMP (Max 5MB)
-              </p>
+             <p className="text-xs text-gray-500 mt-1">
+  JPEG, PNG, GIF, WebP, BMP (Max 200KB)
+</p>
             </div>
           </label>
         </div>
@@ -1766,9 +1766,9 @@ function CreateEsicModal({ onClose, onSuccess }) {
                   ? "Passport photo uploaded ✓"
                   : "Click to upload Passport photo"}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
-                JPEG, PNG, GIF, WebP, BMP (Max 5MB)
-              </p>
+          <p className="text-xs text-gray-500 mt-1">
+  JPEG, PNG, GIF, WebP, BMP (Max 200KB)
+</p>
             </div>
           </label>
         </div>
