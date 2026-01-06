@@ -62,7 +62,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-blue-500 to-cyan-500",
+     
     },
 
     {
@@ -83,7 +83,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-teal-500 to-green-500",
+  
     },
 
     {
@@ -104,7 +104,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-cyan-500 to-emerald-500",
+     
     },
     {
       name: "Proforma",
@@ -124,7 +124,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-red-500 to-yellow-500",
+
     },
     {
       name: "Invoice",
@@ -144,7 +144,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-purple-500 to-yellow-500",
+ 
     },
 
     {
@@ -165,7 +165,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-emerald-500 to-lime-500", // Fresh green for financial transactions
+     
     },
 
     {
@@ -192,7 +192,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-emerald-500 to-green-600",
+
     },
 
     {
@@ -213,7 +213,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-amber-500 to-orange-500",
+    
     },
     {
       name: "Item",
@@ -233,7 +233,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-teal-600 to-cyan-500",
+
     },
     {
       name: "Tasks",
@@ -254,7 +254,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
         </svg>
       ),
 
-      color: "from-red-500 to-rose-600",
+      
     },
     {
       name: "Timesheet",
@@ -274,7 +274,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-fuchsia-500 to-purple-600",
+
     },
 
     {
@@ -295,7 +295,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-blue-600 to-indigo-600",
+
     },
     {
       name: "Under Screening",
@@ -315,7 +315,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-rose-500 to-pink-500",
+   
     },
     {
       name: "Selected",
@@ -335,7 +335,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-green-500 to-emerald-500",
+
     },
     {
       name: "Shortlisted",
@@ -355,7 +355,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-green-500 to-emerald-500",
+    
     },
     {
       name: "Quarantined",
@@ -375,7 +375,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-green-500 to-emerald-500",
+  
     },
     {
       name: "Qualified",
@@ -395,7 +395,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-green-500 to-emerald-500",
+
     },
     {
       name: "Donor",
@@ -415,7 +415,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-green-500 to-emerald-500",
+     
     },
     {
       name: "FamilyList",
@@ -435,7 +435,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-orange-500 to-amber-500",
+  
     },
     {
       name: "Search Donor",
@@ -455,7 +455,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-violet-500 to-purple-500",
+  
     },
     {
       name: "Semen Enquiry",
@@ -475,7 +475,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-      color: "from-orange-500 to-amber-500",
+    
     },
   ];
 
@@ -614,7 +614,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
                     }}
                     className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${
                       isActive(item.path)
-                        ? `bg-gradient-to-r ${item.color} shadow transform scale-105`
+                        ? "bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg transform scale-105"
                         : "bg-gray-800/50 hover:bg-gray-700/70 hover:transform hover:scale-105"
                     } ${
                       isOpen

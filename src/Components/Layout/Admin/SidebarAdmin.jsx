@@ -68,7 +68,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-blue-500 to-cyan-500",
+    
     },
 
     {
@@ -89,7 +89,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-teal-500 to-green-500",
+
     },
     {
       name: "Proposal",
@@ -109,7 +109,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-cyan-500 to-emerald-500",
+
     },
     {
       name: "Proforma",
@@ -129,7 +129,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-red-500 to-yellow-500",
+    
     },
     {
       name: "Invoice",
@@ -149,7 +149,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-purple-500 to-yellow-500",
+
     },
     {
       name: "Payment",
@@ -169,7 +169,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-emerald-500 to-lime-500",
+  
     },
     {
       name: "AMC",
@@ -195,7 +195,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-emerald-500 to-green-600",
+
     },
     {
       name: "Vendor",
@@ -215,7 +215,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-amber-500 to-orange-500",
+
     },
     {
       name: "Item",
@@ -235,7 +235,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-teal-600 to-cyan-500",
+
     },
     {
       name: "Tasks",
@@ -256,7 +256,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
         </svg>
       ),
 
-      color: "from-red-500 to-rose-600",
+
     },
     {
       name: "Timesheet",
@@ -276,7 +276,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-fuchsia-500 to-purple-600",
+    
     },
     {
       name: "Compliance",
@@ -296,7 +296,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-blue-600 to-indigo-600",
+
     },
     {
       name: "Prospects",
@@ -316,7 +316,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-rose-500 to-pink-500",
+
     },
     {
       name: "Under Screening",
@@ -336,7 +336,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-rose-500 to-pink-500",
+
     },
     {
       name: "Selected",
@@ -356,7 +356,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-green-500 to-emerald-500",
+    
     },
     {
       name: "Shortlisted",
@@ -376,7 +376,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-green-500 to-emerald-500",
+    
     },
     {
       name: "Quarantined",
@@ -396,7 +396,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-green-500 to-emerald-500",
+    
     },
     {
       name: "Qualified",
@@ -416,7 +416,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-green-500 to-emerald-500",
+
     },
     {
       name: "Donor",
@@ -436,7 +436,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-green-500 to-emerald-500",
+
     },
     {
       name: "FamilyList",
@@ -456,7 +456,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-orange-500 to-amber-500",
+
     },
     {
       name: "Search Donor",
@@ -476,7 +476,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-violet-500 to-purple-500",
+
     },
     {
       name: "Semen Enquiry",
@@ -496,7 +496,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-orange-500 to-amber-500",
+    
     },
     {
       name: "Employee",
@@ -516,7 +516,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-indigo-500 to-purple-600",
+
     },
     {
       name: "Setting",
@@ -542,7 +542,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-      color: "from-slate-600 to-gray-500",
+     
     },
   ];
 
@@ -672,7 +672,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
                     }}
                     className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${
                       isActive(item.path)
-                        ? `bg-gradient-to-r ${item.color} shadow transform scale-105`
+                        ? "bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg transform scale-105"
                         : "bg-gray-800/50 hover:bg-gray-700/70 hover:transform hover:scale-105"
                     } ${
                       isOpen
@@ -683,9 +683,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
                   >
                     {/* Background Glow Effect */}
                     <div
-                      className={`absolute inset-0 bg-gradient-to-r ${
-                        item.color
-                      } opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${
+                      className={`absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${
                         isActive(item.path) && "opacity-20"
                       }`}
                     ></div>
