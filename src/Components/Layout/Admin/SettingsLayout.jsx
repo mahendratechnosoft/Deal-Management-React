@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { hasPermission } from "../../BaseComponet/permissions";
 
-// --- Icons ---
+// --- Icons (updated Email Template icon) ---
 const GeneralIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -86,6 +86,23 @@ const FinanceIcon = () => (
       strokeLinejoin="round"
       strokeWidth={2}
       d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
+  </svg>
+);
+
+// New Email Template Icon
+const EmailTemplateIcon = () => (
+  <svg
+    className="w-5 h-5"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"
     />
   </svg>
 );
@@ -180,7 +197,7 @@ const SettingsLayout = () => {
     {
       title: "Email Template",
       id: "template",
-      icon: <FinanceIcon />,
+      icon: <EmailTemplateIcon />, // Changed icon here
       submenu: [
         {
           title: "Task",
@@ -234,150 +251,227 @@ const SettingsLayout = () => {
   const toggleMenu = (id) =>
     setOpenMenus((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  const baseItemClass =
-    "w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden px-3 py-2.5 justify-start cursor-pointer";
-  const activeClass =
-    "bg-gradient-to-r from-blue-500 to-cyan-500 shadow transform scale-105 text-white font-medium";
-  const inactiveClass = "text-gray-600 hover:bg-gray-100 hover:text-gray-900";
-
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 lg:p-6 lg:pb-0 overflow-x-auto CRM-scroll-width-none h-full">
-            <div className="lg:hidden mb-4 flex items-center justify-between bg-white p-3 rounded-lg shadow">
-              <button
-                onClick={toggleSettingsSidebar}
-                className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+    <div className="h-full flex flex-col bg-gray-50">
+      <div className="flex-1 p-4 lg:p-6 overflow-hidden">
+        {/* Mobile Header */}
+        <div className="lg:hidden mb-4 flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+          <button
+            onClick={toggleSettingsSidebar}
+            className="p-2.5 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 transition-all duration-300 border border-blue-200"
+            aria-label={settingsSidebarOpen ? "Close menu" : "Open menu"}
+          >
+            {settingsSidebarOpen ? <CloseIcon /> : <MenuIcon />}
+          </button>
+          <h2 className="text-lg font-semibold text-gray-900">Settings</h2>
+          <div className="w-10"></div>
+        </div>
+
+        <div className="flex flex-row flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden h-[85vh] lg:h-[86vh]">
+          {/* Settings Sidebar - Reduced size */}
+          {settingsSidebarOpen && (
+            <>
+              {/* Mobile Overlay */}
+              {isMobile && (
+                <div
+                  className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden animate-fadeIn"
+                  onClick={() => setSettingsSidebarOpen(false)}
+                ></div>
+              )}
+
+              <nav
+                className={`fixed lg:relative inset-y-0 left-0 z-50 w-56 lg:w-64 bg-white border-r border-gray-200 h-full overflow-y-auto transform transition-all duration-300 ease-out ${
+                  settingsSidebarOpen
+                    ? "translate-x-0 shadow-xl lg:shadow-none"
+                    : "-translate-x-full"
+                } lg:translate-x-0`}
               >
-                {settingsSidebarOpen ? <CloseIcon /> : <MenuIcon />}
-              </button>
-              <h2 className="text-lg font-semibold text-gray-900">Settings</h2>
-              <div className="w-10"></div>
-            </div>
+                <div className="p-4 lg:p-5">
+                  {/* Desktop Title */}
+                  <div className="hidden lg:block mb-5">
+                    <h2 className="text-lg font-bold text-gray-900">
+                      Settings
+                    </h2>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Manage system configurations
+                    </p>
+                  </div>
 
-            <div className="flex flex-row flex-1 bg-white shadow-lg h-[85vh] lg:h-[86vh] overflow-hidden CRM-scroll-width-none">
-              {settingsSidebarOpen && (
-                <>
-                  {isMobile && (
-                    <div
-                      className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-                      onClick={() => setSettingsSidebarOpen(false)}
-                    ></div>
-                  )}
+                  <div className="flex flex-col space-y-1">
+                    {MENU_ITEMS.map((item, index) => {
+                      // Permission check
+                      if (
+                        hasPermission("donor", "Access") &&
+                        (item.title === "Dynamic Form" ||
+                          item.title === "Finance")
+                      )
+                        return null;
 
-                  <nav
-                    className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 CRM-scroll-width-none h-full overflow-y-auto transform transition-transform duration-300 ${
-                      settingsSidebarOpen
-                        ? "translate-x-0"
-                        : "-translate-x-full"
-                    } lg:translate-x-0`}
-                  >
-                    <div className="p-4">
-                      <h2 className="text-xl font-semibold text-gray-900 mb-4 px-2 hidden lg:block">
-                        Settings
-                      </h2>
+                      // Submenu items
+                      if (item.submenu) {
+                        const isOpen = openMenus[item.id];
+                        const isChildActive = item.submenu.some((sub) =>
+                          location.pathname.includes(sub.path)
+                        );
 
-                      <div className="flex flex-col space-y-1">
-                        {MENU_ITEMS.map((item, index) => {
-                          if (
-                            hasPermission("donor", "Access") &&
-                            (item.title === "Dynamic Form" ||
-                              item.title === "Finance")
-                          )
-                            return null;
-
-                          if (item.submenu) {
-                            const isOpen = openMenus[item.id];
-                            const isChildActive = item.submenu.some((sub) =>
-                              location.pathname.includes(sub.path)
-                            );
-
-                            return (
-                              <div key={index} className="flex flex-col">
+                        return (
+                          <div key={index} className="flex flex-col">
+                            {/* Parent Menu Item */}
+                            <div
+                              onClick={() => toggleMenu(item.id)}
+                              className={`flex items-center justify-between w-full px-2.5 py-2.5 rounded-lg transition-all duration-300 cursor-pointer group ${
+                                isChildActive
+                                  ? "bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 text-blue-700"
+                                  : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 border border-transparent hover:border-gray-200"
+                              }`}
+                            >
+                              <div className="flex items-center">
                                 <div
-                                  onClick={() => toggleMenu(item.id)}
-                                  className={`${baseItemClass} ${
-                                    isChildActive ? activeClass : inactiveClass
+                                  className={`p-1.5 rounded-md transition-colors ${
+                                    isChildActive
+                                      ? "bg-blue-100 text-blue-600"
+                                      : "bg-gray-100 text-gray-500 group-hover:bg-gray-200 group-hover:text-gray-700"
                                   }`}
                                 >
                                   {item.icon}
-                                  <span className="ml-3 font-medium block text-xs flex-1">
-                                    {item.title}
-                                  </span>
-                                  <ChevronDownIcon
-                                    className={`w-4 h-4 transition-transform duration-300 ${
-                                      isOpen ? "rotate-180" : ""
-                                    }`}
-                                  />
                                 </div>
+                                <span className="ml-2.5 font-medium text-sm">
+                                  {item.title}
+                                </span>
+                              </div>
+                              <ChevronDownIcon
+                                className={`w-3.5 h-3.5 transition-transform duration-300 flex-shrink-0 ${
+                                  isOpen ? "rotate-180" : ""
+                                } ${
+                                  isChildActive
+                                    ? "text-blue-600"
+                                    : "text-gray-400"
+                                }`}
+                              />
+                            </div>
 
-                                <div
-                                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                                    isOpen
-                                      ? "max-h-48 opacity-100 mt-1"
-                                      : "max-h-0 opacity-0"
-                                  }`}
-                                >
+                            {/* Submenu Items - Fixed alignment */}
+                            <div
+                              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                                isOpen
+                                  ? "max-h-96 opacity-100 mt-1"
+                                  : "max-h-0 opacity-0"
+                              }`}
+                            >
+                              <div className="ml-8 flex">
+                                {/* Left border line - aligned with dots */}
+                                <div className="w-0.5 bg-gray-200 mr-2.5 flex-shrink-0"></div>
+                                <div className="flex-1 py-1 space-y-0.5">
                                   {item.submenu.map((sub, subIdx) => (
                                     <NavLink
                                       key={subIdx}
                                       to={sub.path}
                                       className={({ isActive }) =>
-                                        `ml-4 mt-1 w-[90%] flex items-center rounded-xl transition-all duration-300 px-3 py-2 justify-start cursor-pointer text-xs
+                                        `block w-full px-2.5 py-2 rounded-lg transition-all duration-200 text-sm font-medium
                                         ${
-                                          isActive ? activeClass : inactiveClass
+                                          isActive
+                                            ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm transform scale-[1.02]"
+                                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 hover:translate-x-0.5"
                                         }`
                                       }
+                                      onClick={() => {
+                                        if (isMobile) {
+                                          setSettingsSidebarOpen(false);
+                                        }
+                                      }}
                                     >
-                                      <span className="font-medium">
-                                        {sub.title}
-                                      </span>
+                                      <div className="flex items-center">
+                                        {/* Dot - properly aligned with text */}
+                                        <div
+                                          className={`w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 ${
+                                            location.pathname.includes(sub.path)
+                                              ? "bg-white"
+                                              : "bg-gray-400"
+                                          }`}
+                                        ></div>
+                                        <span className="truncate">
+                                          {sub.title}
+                                        </span>
+                                      </div>
                                     </NavLink>
                                   ))}
                                 </div>
                               </div>
-                            );
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      // Regular menu items
+                      return (
+                        <NavLink
+                          key={index}
+                          to={item.path}
+                          end={item.end}
+                          className={({ isActive }) =>
+                            `flex items-center w-full px-2.5 py-2.5 rounded-lg transition-all duration-300 group ${
+                              isActive
+                                ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm transform scale-[1.02]"
+                                : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 border border-transparent hover:border-gray-200"
+                            }`
                           }
+                          onClick={() => {
+                            if (isMobile) {
+                              setSettingsSidebarOpen(false);
+                            }
+                          }}
+                        >
+                          <div
+                            className={`p-1.5 rounded-md transition-colors ${
+                              location.pathname === item.path ||
+                              (item.end && location.pathname === item.path)
+                                ? "bg-white/20 text-white"
+                                : "bg-gray-100 text-gray-500 group-hover:bg-gray-200 group-hover:text-gray-700"
+                            }`}
+                          >
+                            {item.icon}
+                          </div>
+                          <span className="ml-2.5 font-medium text-sm truncate">
+                            {item.title}
+                          </span>
+                        </NavLink>
+                      );
+                    })}
+                  </div>
 
-                          return (
-                            <NavLink
-                              key={index}
-                              to={item.path}
-                              end={item.end}
-                              className={({ isActive }) =>
-                                `${baseItemClass} ${
-                                  isActive ? activeClass : inactiveClass
-                                }`
-                              }
-                            >
-                              {item.icon}
-                              <span className="ml-3 font-medium block text-xs">
-                                {item.title}
-                              </span>
-                            </NavLink>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </nav>
-                </>
-              )}
+               
+                </div>
+              </nav>
+            </>
+          )}
 
-              <main
-                className={`flex-1 p-4 lg:p-4 lg:pb-0 overflow-y-auto bg-white CRM-scroll-width-none ${
-                  !settingsSidebarOpen ? "lg:ml-0" : ""
-                }`}
-              >
-                {!settingsSidebarOpen && (
-                  <button
-                    onClick={toggleSettingsSidebar}
-                    className="lg:hidden mb-4 p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-                  >
-                    <MenuIcon />
-                  </button>
-                )}
+          {/* Main Content Area */}
+          <main
+            className={`flex-1 overflow-hidden flex flex-col ${
+              !settingsSidebarOpen ? "lg:ml-0" : ""
+            }`}
+          >
+            {/* Toggle button when sidebar is closed (desktop) */}
+            {!settingsSidebarOpen && (
+              <div className="hidden lg:flex p-3 border-b border-gray-200">
+                <button
+                  onClick={toggleSettingsSidebar}
+                  className="p-2 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 transition-all duration-300 border border-blue-200"
+                  aria-label="Open settings menu"
+                >
+                  <MenuIcon />
+                </button>
+              </div>
+            )}
+
+            {/* Content Area */}
+            <div className="flex-1 overflow-y-auto p-4 lg:p-5 bg-gradient-to-b from-gray-50/50 to-white CRM-scroll-width-none">
+              <div className="max-w-8xl mx-auto">
                 <Outlet />
-              </main>
+              </div>
             </div>
+          </main>
+        </div>
       </div>
     </div>
   );
