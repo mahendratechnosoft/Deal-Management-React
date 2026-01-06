@@ -123,89 +123,102 @@ const DynamicFormBase = lazy(() =>
   import("../Components/Common/Settings/DynamicForm/DynamicFormBase")
 );
 
+const EmailTemplateTask = lazy(() =>
+  import("../Components/Common/Settings/Template/Email/TaskTemplateList")
+);
+
+const EmailTemplateSales = lazy(() =>
+  import("../Components/Common/Settings/Template/Email/SalesTemplateList")
+);
+
 const AdminRoutes = () => {
   return (
     <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
       <Routes>
         <Route element={<AdminLayout />}>
-        <Route path="LeadList" element={<LeadList />} />
-        <Route path="CreateLead" element={<CreateLead />} />
-        <Route path="EmployeeList" element={<EmployeeList />} />
-        <Route path="EditEmployee/:employeeId" element={<EditEmployee />} />
-        <Route path="EditLead/:id" element={<EditLead />} />
-        <Route path="CustomerList" element={<CustomerList />} />
-        <Route path="CreateCustomer" element={<CreateCustomer />} />
-        <Route path="EditCustomer/:customerId" element={<EditCustomer />} />
-        <Route path="Payment" element={<PaymentList />} />
-        <Route path="EditPayment/:paymentId" element={<EditPayment />} />
-        <Route path="ViewPayment/:paymentId" element={<PaymentPreview />} />
-        <Route path="DonorList" element={<DonorList />} />
-        <Route path="DonorEdit/:donorId" element={<EditDonar />} />
-        <Route path="DonorList/:pageName" element={<SelectedDonarList />} />
-        <Route path="FamilyList" element={<FamilyList />} />
-        <Route
-          path="PreviewMatchingDonors/:familyId"
-          element={<DonorMatchingFilter />}
-        />
-        <Route path="EditFamily/:familyInfoId" element={<EditFamily />} />
-        <Route path="Proposal" element={<ProposalList />} />
-        <Route path="Proposal/Create" element={<CreateProposal />} />
-        <Route path="Proposal/Edit/:proposalId" element={<EditProposal />} />
-        <Route
-          path="Proposal/Preview/:proposalId"
-          element={<ProposalPreview />}
-        />
-        <Route path="Proforma" element={<ProformaList />} />
-        <Route path="Proforma/Create" element={<CreateProforma />} />
-        <Route
-          path="Proforma/Edit/:proformaInvoiceId"
-          element={<EditProforma />}
-        />
-        <Route
-          path="Proforma/Preview/:proformaInvoiceId"
-          element={<ProformaPreview />}
-        />
-        <Route path="TimesheetList" element={<TimeSheetList />} />
-        <Route path="Invoice" element={<InvoiceList />} />
-        <Route path="ItemList" element={<ItemList />} />
-        <Route
-          path="Invoice/Preview/:proformaInvoiceId"
-          element={<InvoicePreview />}
-        />
-        <Route path="TaskList" element={<TaskList />} />
-        <Route path="AMC" element={<AmcList />} />
-        <Route
-          path="VendorContactList/:vendorId"
-          element={<VendorContactList />}
-        />
-        <Route path="VendorList" element={<VendorList />} />
-        <Route path="SemenEnquiryList" element={<SemenEnquiryList />} />
-        <Route path="EditSemenEnquiry/:id" element={<EditSemenEnquiry />} />
-        <Route path="ComplianceList" element={<ComplianceList />} />
-
-        {/* ------------Settings--------------- */}
-
-        <Route path="Settings" element={<SettingsLayout />}>
-          <Route index element={<General />} />
-          <Route path="Email" element={<EmailSetting />} />
-          <Route path="Department" element={<Department />} />
-
+          <Route path="LeadList" element={<LeadList />} />
+          <Route path="CreateLead" element={<CreateLead />} />
+          <Route path="EmployeeList" element={<EmployeeList />} />
+          <Route path="EditEmployee/:employeeId" element={<EditEmployee />} />
+          <Route path="EditLead/:id" element={<EditLead />} />
+          <Route path="CustomerList" element={<CustomerList />} />
+          <Route path="CreateCustomer" element={<CreateCustomer />} />
+          <Route path="EditCustomer/:customerId" element={<EditCustomer />} />
+          <Route path="Payment" element={<PaymentList />} />
+          <Route path="EditPayment/:paymentId" element={<EditPayment />} />
+          <Route path="ViewPayment/:paymentId" element={<PaymentPreview />} />
+          <Route path="DonorList" element={<DonorList />} />
+          <Route path="DonorEdit/:donorId" element={<EditDonar />} />
+          <Route path="DonorList/:pageName" element={<SelectedDonarList />} />
+          <Route path="FamilyList" element={<FamilyList />} />
           <Route
-            path="Department/:departmentId/Roles"
-            element={<RoleListCompo />}
+            path="PreviewMatchingDonors/:familyId"
+            element={<DonorMatchingFilter />}
           />
-          <Route path="Finance">
-            <Route path="PaymentMode" element={<PaymentModeList />} />
-            <Route path="Proposal" element={<ProposalSetting />} />
-            <Route path="Proforma" element={<ProformaSetting />} />
-            <Route path="Invoice" element={<InvoiceSetting />} />
-            <Route path="Vendor" element={<VendorSetting />} />
+          <Route path="EditFamily/:familyInfoId" element={<EditFamily />} />
+          <Route path="Proposal" element={<ProposalList />} />
+          <Route path="Proposal/Create" element={<CreateProposal />} />
+          <Route path="Proposal/Edit/:proposalId" element={<EditProposal />} />
+          <Route
+            path="Proposal/Preview/:proposalId"
+            element={<ProposalPreview />}
+          />
+          <Route path="Proforma" element={<ProformaList />} />
+          <Route path="Proforma/Create" element={<CreateProforma />} />
+          <Route
+            path="Proforma/Edit/:proformaInvoiceId"
+            element={<EditProforma />}
+          />
+          <Route
+            path="Proforma/Preview/:proformaInvoiceId"
+            element={<ProformaPreview />}
+          />
+          <Route path="TimesheetList" element={<TimeSheetList />} />
+          <Route path="Invoice" element={<InvoiceList />} />
+          <Route path="ItemList" element={<ItemList />} />
+          <Route
+            path="Invoice/Preview/:proformaInvoiceId"
+            element={<InvoicePreview />}
+          />
+          <Route path="TaskList" element={<TaskList />} />
+          <Route path="AMC" element={<AmcList />} />
+          <Route
+            path="VendorContactList/:vendorId"
+            element={<VendorContactList />}
+          />
+          <Route path="VendorList" element={<VendorList />} />
+          <Route path="SemenEnquiryList" element={<SemenEnquiryList />} />
+          <Route path="EditSemenEnquiry/:id" element={<EditSemenEnquiry />} />
+          <Route path="ComplianceList" element={<ComplianceList />} />
+
+          {/* ------------Settings--------------- */}
+
+          <Route path="Settings" element={<SettingsLayout />}>
+            <Route index element={<General />} />
+            <Route path="Email" element={<EmailSetting />} />
+            <Route path="Department" element={<Department />} />
+
+            <Route
+              path="Department/:departmentId/Roles"
+              element={<RoleListCompo />}
+            />
+            <Route path="Finance">
+              <Route path="PaymentMode" element={<PaymentModeList />} />
+              <Route path="Proposal" element={<ProposalSetting />} />
+              <Route path="Proforma" element={<ProformaSetting />} />
+              <Route path="Invoice" element={<InvoiceSetting />} />
+              <Route path="Vendor" element={<VendorSetting />} />
+            </Route>
+
+            <Route path="Form" element={<DynamicFormBase />} />
+
+            <Route path="EmailTemplate">
+              <Route path="Task" element={<EmailTemplateTask />} />
+              <Route path="Sales" element={<EmailTemplateSales />} />
+            </Route>
           </Route>
 
-          <Route path="Form" element={<DynamicFormBase />} />
-        </Route>
-
-        {/* ------------Settings END--------------- */}
+          {/* ------------Settings END--------------- */}
         </Route>
       </Routes>
     </RoleBasedRoute>

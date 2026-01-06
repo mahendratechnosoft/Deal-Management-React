@@ -178,6 +178,21 @@ const SettingsLayout = () => {
       ],
     },
     {
+      title: "Email Template",
+      id: "template",
+      icon: <FinanceIcon />,
+      submenu: [
+        {
+          title: "Task",
+          path: "/Admin/Settings/EmailTemplate/Task",
+        },
+        {
+          title: "Sales",
+          path: "/Admin/Settings/EmailTemplate/Sales",
+        },
+      ],
+    },
+    {
       title: "Dynamic Form",
       path: "/Admin/Settings/Form",
       icon: <DynamicFormIcon />,

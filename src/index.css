@@ -80,3 +80,6 @@ user-select: none !important; /* Prevent text selection */
 }
 
 
+.ql-container {
+  height: 80% !important;
+}
