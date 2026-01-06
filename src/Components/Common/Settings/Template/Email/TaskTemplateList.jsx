@@ -365,12 +365,7 @@ const TaskTemplateList = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Subject
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Preview
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Status
-                            </th>
+
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Actions
                             </th>
@@ -386,7 +381,7 @@ const TaskTemplateList = () => {
                                 {index + 1}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm font-medium text-gray-900">
+                                <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
                                   {template.templateName}
                                 </div>
                                 {template.default && (
@@ -395,35 +390,12 @@ const TaskTemplateList = () => {
                                   </span>
                                 )}
                               </td>
-                              <td className="px-6 py-4 text-sm text-gray-500">
-                                <div className="font-medium">
+                              <td className="px-6 py-4 text-sm text-gray-500 ">
+                                <div className="font-medium truncate max-w-[250px]">
                                   {template.subject}
                                 </div>
                               </td>
-                              <td className="px-6 py-4 text-sm text-gray-500">
-                                <div className="max-w-xs truncate">
-                                  {template.emailBody.substring(0, 80)}...
-                                </div>
-                                <button className="text-xs text-blue-600 hover:text-blue-800 mt-1">
-                                  View Full
-                                </button>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    className="sr-only peer"
-                                    checked={template.active}
-                                    onChange={() =>
-                                      handleStatusToggle(
-                                        template.emailTemplateId,
-                                        template.active
-                                      )
-                                    }
-                                  />
-                                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                                </label>
-                              </td>
+
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <div className="flex items-center gap-3">
                                   {!template.default && (
