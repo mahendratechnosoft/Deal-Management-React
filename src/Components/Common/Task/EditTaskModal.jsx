@@ -490,7 +490,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
       const response = await axiosInstance.put("updateTask", payload);
 
       if (response.status >= 200 && response.status < 300) {
-        toast.success("Task updated successfully!");
+        // toast.success("Task updated successfully!");
 
         const updatedTaskData = {
           taskId: formData.taskId,
@@ -520,7 +520,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
         }
       } else {
         console.warn("API returned non-success status:", response.status);
-        toast.success("Task updated successfully!");
+        // toast.success("Task updated successfully!");
 
         if (onSuccess) {
           const updatedTaskData = {
@@ -558,7 +558,7 @@ function EditTaskModal({ taskId, onClose, onSuccess }) {
         toast.error("Network error. Please check your connection.");
       } else {
         console.error("Other error:", error.message);
-        toast.success("Task updated successfully!");
+        // toast.success("Task updated successfully!");
 
         if (onSuccess) {
           const updatedTaskData = {

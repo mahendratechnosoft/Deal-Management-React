@@ -432,13 +432,28 @@ function General() {
                     onChange={handleChange}
                     error={errors.description}
                   />
+
+                  <FormInput
+                    name="gstNumber"
+                    label="GST Number"
+                    value={formData.gstNumber}
+                    onChange={handleChange}
+                    error={errors.gstNumber}
+                  />
+                  <FormInput
+                    name="panNumber"
+                    label="PAN Number"
+                    value={formData.panNumber}
+                    onChange={handleChange}
+                    error={errors.panNumber}
+                  />
                 </div>
               </section>
 
               <hr className="border-gray-100" />
 
               {/* --- Section 3: Financial Details --- */}
-              {!hasPermission("donor", "Access") && (
+              {/* {!hasPermission("donor", "Access") && (
                 <section>
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
@@ -466,20 +481,6 @@ function General() {
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormInput
-                      name="gstNumber"
-                      label="GST Number"
-                      value={formData.gstNumber}
-                      onChange={handleChange}
-                      error={errors.gstNumber}
-                    />
-                    <FormInput
-                      name="panNumber"
-                      label="PAN Number"
-                      value={formData.panNumber}
-                      onChange={handleChange}
-                      error={errors.panNumber}
-                    />
                     <FormInput
                       name="bankName"
                       label="Bank Name"
@@ -510,7 +511,7 @@ function General() {
                     />
                   </div>
                 </section>
-              )}
+              )} */}
 
               <hr className="border-gray-100" />
 
