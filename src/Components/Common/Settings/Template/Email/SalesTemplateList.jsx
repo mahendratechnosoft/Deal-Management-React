@@ -21,22 +21,12 @@ const SalesTemplateList = () => {
   const triggers = [
     "PROPOSAL_SEND",
     "PROFORMA_SEND",
-    "PROFORMA_DUE_REMINDER",
-    "PROFORMA_OVERDUE_ALERT",
+    // "PROFORMA_DUE_REMINDER",
+    // "PROFORMA_OVERDUE_ALERT",
     "INVOICE_SEND",
-    "PAYMENT_RECORDED",
+    // "PAYMENT_RECORDED",
   ];
 
-  // Group triggers by type for better organization
-  const triggerGroups = {
-    "Proposal Related": ["PROPOSAL_SEND"],
-    "Proforma Related": [
-      "PROFORMA_SEND",
-      "PROFORMA_DUE_REMINDER",
-      "PROFORMA_OVERDUE_ALERT",
-    ],
-    "Invoice & Payment": ["INVOICE_SEND", "PAYMENT_RECORDED"],
-  };
 
   // Fetch templates for a specific trigger
   const fetchTemplates = async (trigger) => {
@@ -228,8 +218,7 @@ const SalesTemplateList = () => {
               </button>
             </div>
 
-            {/* Search Input */}
-            <div className="relative flex-1 sm:max-w-64">
+            {/* <div className="relative flex-1 sm:max-w-64">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg
                   className="w-4 h-4 text-gray-400"
@@ -254,7 +243,6 @@ const SalesTemplateList = () => {
               />
             </div>
 
-            {/* Create Button */}
             <button
               onClick={() => {
                 setSelectedTrigger("");
@@ -276,49 +264,67 @@ const SalesTemplateList = () => {
                 />
               </svg>
               Create Template
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
 
       {/* Triggers Accordion by Groups */}
-      <div className="space-y-6">
-        {Object.entries(triggerGroups).map(([groupName, groupTriggers]) => (
-          <div key={groupName} className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">{groupName}</h3>
-            {groupTriggers.map((trigger) => {
-              const filteredTemplates = getFilteredTemplates(trigger);
-              const isExpanded = expandedTriggers[trigger];
+      <div className="space-y-4">
+        {triggers.map((trigger) => {
+          const filteredTemplates = getFilteredTemplates(trigger);
+          const isExpanded = expandedTriggers[trigger];
 
-              return (
-                <div
-                  key={trigger}
-                  className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-                >
-                  {/* Accordion Header */}
+          return (
+            <div
+              key={trigger}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+            >
+              {/* Accordion Header */}
+              <button
+                onClick={() => handleTriggerToggle(trigger)}
+                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-gray-900">
+                    {getTriggerDisplayName(trigger)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
                   <button
-                    onClick={() => handleTriggerToggle(trigger)}
-                    className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCreateForTrigger(trigger);
+                    }}
+                    className="px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 border border-blue-200 hover:border-blue-300 rounded-lg hover:bg-blue-50"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-gray-900">
-                        {getTriggerDisplayName(trigger)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCreateForTrigger(trigger);
-                        }}
-                        className="px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 border border-blue-200 hover:border-blue-300 rounded-lg hover:bg-blue-50"
-                      >
-                        + Add Template
-                      </button>
+                    + Add Template
+                  </button>
+                  <svg
+                    className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
+                      isExpanded ? "transform rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </button>
+
+              {/* Accordion Content */}
+              {isExpanded && (
+                <div className="border-t border-gray-200">
+                  {filteredTemplates.length === 0 ? (
+                    <div className="px-6 py-8 text-center">
                       <svg
-                        className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
-                          isExpanded ? "transform rotate-180" : ""
-                        }`}
+                        className="w-12 h-12 text-gray-300 mx-auto mb-3"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -326,178 +332,159 @@ const SalesTemplateList = () => {
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
+                          strokeWidth={1}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                         />
                       </svg>
+                      <p className="text-gray-500 mb-2">
+                        No templates found for{" "}
+                        <span className="font-medium">
+                          {getTriggerDisplayName(trigger)}
+                        </span>
+                      </p>
+                      <button
+                        onClick={() => handleCreateForTrigger(trigger)}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Create Template
+                      </button>
                     </div>
-                  </button>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              #
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Template Name
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Subject
+                            </th>
 
-                  {/* Accordion Content */}
-                  {isExpanded && (
-                    <div className="border-t border-gray-200">
-                      {filteredTemplates.length === 0 ? (
-                        <div className="px-6 py-8 text-center">
-                          <svg
-                            className="w-12 h-12 text-gray-300 mx-auto mb-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1}
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            />
-                          </svg>
-                          <p className="text-gray-500 mb-2">
-                            No templates found for{" "}
-                            <span className="font-medium">
-                              {getTriggerDisplayName(trigger)}
-                            </span>
-                          </p>
-                          <button
-                            onClick={() => handleCreateForTrigger(trigger)}
-                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                          >
-                            Create Template
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                              <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  #
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Template Name
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Subject
-                                </th>
-
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Actions
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                              {filteredTemplates.map((template, index) => (
-                                <tr
-                                  key={template.emailTemplateId}
-                                  className="hover:bg-gray-50 transition-colors duration-150"
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {filteredTemplates.map((template, index) => (
+                            <tr
+                              key={template.emailTemplateId}
+                              className="hover:bg-gray-50 transition-colors duration-150"
+                            >
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {index + 1}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div
+                                  className="text-sm font-medium text-gray-900 truncate max-w-[200px]"
+                                  title={template.templateName}
                                 >
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {index + 1}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
-                                      {template.templateName}
-                                    </div>
-                                    {template.default && (
-                                      <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded ml-1">
-                                        Default
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="px-6 py-4 text-sm text-gray-500 ">
-                                    <div className="font-medium truncate max-w-[250px]">
-                                      {template.subject}
-                                    </div>
-                                  </td>
+                                  {template.templateName}
+                                </div>
+                                {template.default && (
+                                  <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded ml-1">
+                                    Default
+                                  </span>
+                                )}
+                              </td>
+                              <td
+                                className="px-6 py-4 text-sm text-gray-500 "
+                                title={template.subject}
+                              >
+                                <div className="font-medium truncate max-w-[250px]">
+                                  {template.subject}
+                                </div>
+                              </td>
 
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <div className="flex items-center gap-3">
-                                      {!template.default && (
-                                        <button
-                                          onClick={() =>
-                                            handleMakeDefault(
-                                              template.emailTemplateId
-                                            )
-                                          }
-                                          className="text-green-600 hover:text-green-900 transition-colors"
-                                          title="Set as Default"
-                                        >
-                                          <svg
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth="2"
-                                              d="M5 13l4 4L19 7"
-                                            />
-                                          </svg>
-                                        </button>
-                                      )}
-                                      <button
-                                        onClick={() =>
-                                          handleEditClick(
-                                            template.emailTemplateId
-                                          )
-                                        }
-                                        className="text-blue-600 hover:text-blue-900 transition-colors"
-                                        title="Edit"
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div className="flex items-center gap-3">
+                                  {!template.default && (
+                                    <button
+                                      onClick={() =>
+                                        handleMakeDefault(
+                                          template.emailTemplateId
+                                        )
+                                      }
+                                      className="text-green-600 hover:text-green-900 transition-colors"
+                                      title="Set as Default"
+                                    >
+                                      <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
                                       >
-                                        <svg
-                                          className="w-4 h-4"
-                                          fill="none"
-                                          viewBox="0 0 24 24"
-                                          stroke="currentColor"
-                                        >
-                                          <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                          />
-                                        </svg>
-                                      </button>
-                                      <button
-                                        onClick={() =>
-                                          handleDelete(
-                                            template.emailTemplateId,
-                                            template.templateName
-                                          )
-                                        }
-                                        className="text-red-600 hover:text-red-900 transition-colors"
-                                        title="Delete"
-                                      >
-                                        <svg
-                                          className="w-4 h-4"
-                                          fill="none"
-                                          viewBox="0 0 24 24"
-                                          stroke="currentColor"
-                                        >
-                                          <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                          />
-                                        </svg>
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth="2"
+                                          d="M5 13l4 4L19 7"
+                                        />
+                                      </svg>
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() =>
+                                      handleEditClick(template.emailTemplateId)
+                                    }
+                                    className="text-blue-600 hover:text-blue-900 transition-colors"
+                                    title="Edit"
+                                  >
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                      />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleDelete(
+                                        template.emailTemplateId,
+                                        template.templateName
+                                      )
+                                    }
+                                    className="text-red-600 hover:text-red-900 transition-colors"
+                                    title="Delete"
+                                  >
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   )}
                 </div>
-              );
-            })}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Create Template Modal */}

@@ -2,6 +2,11 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import RichTextEditor from "../../BaseComponet/RichTextEditor";
+import {
+  FormInput,
+  FormSelect,
+  FormTextarea,
+} from "../../BaseComponet/CustomeFormComponents";
 
 const EmailSetting = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -21,6 +26,7 @@ const EmailSetting = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
 
   // Comprehensive SMTP provider configurations
   const smtpProviders = [
@@ -88,21 +94,21 @@ const EmailSetting = () => {
       label: "SendGrid",
       host: "smtp.sendgrid.net",
       ports: { TLS: 587, SSL: 465, NONE: 25 },
-      encryption: ["TLS", "SSL"],
+      encryption: ["TLS", "SSL", "NONE"],
     },
     {
       value: "MAILGUN",
       label: "Mailgun",
       host: "smtp.mailgun.org",
       ports: { TLS: 587, SSL: 465, NONE: 25 },
-      encryption: ["TLS", "SSL"],
+      encryption: ["TLS", "SSL", "NONE"],
     },
     {
       value: "AMAZON_SES",
       label: "Amazon SES",
       host: "email-smtp.us-east-1.amazonaws.com",
       ports: { TLS: 587, SSL: 465, NONE: 25 },
-      encryption: ["TLS", "SSL"],
+      encryption: ["TLS", "SSL", "NONE"],
     },
     {
       value: "BREVO",
@@ -130,7 +136,7 @@ const EmailSetting = () => {
       label: "Elastic Email",
       host: "smtp.elasticemail.com",
       ports: { TLS: 587, SSL: 465, NONE: 2525 },
-      encryption: ["TLS", "SSL"],
+      encryption: ["TLS", "SSL", "NONE"],
     },
 
     // Web Hosting Services
@@ -173,49 +179,63 @@ const EmailSetting = () => {
     },
   ];
 
-  // Encryption options
+  // Format providers for FormSelect
+  const providerOptions = [
+    {
+      label: "Email Services",
+      options: smtpProviders
+        .slice(0, 8)
+        .map((p) => ({ value: p.value, label: p.label })),
+    },
+    {
+      label: "Email Marketing Services",
+      options: smtpProviders
+        .slice(8, 15)
+        .map((p) => ({ value: p.value, label: p.label })),
+    },
+    {
+      label: "Web Hosting Services",
+      options: smtpProviders
+        .slice(15, 19)
+        .map((p) => ({ value: p.value, label: p.label })),
+    },
+    {
+      label: "Other",
+      options: smtpProviders
+        .slice(19)
+        .map((p) => ({ value: p.value, label: p.label })),
+    },
+  ];
+
+  // Encryption options for FormSelect (including NONE)
   const encryptionOptions = [
-    { value: "TLS", label: "TLS (Recommended)" },
+    { value: "TLS", label: "TLS" },
     { value: "SSL", label: "SSL" },
-    { value: "NONE", label: "No Encryption" },
+    { value: "NONE", label: "None" },
   ];
 
   // Get available ports for selected provider and encryption
   const getAvailablePorts = (provider, encryptionType) => {
     const providerConfig = smtpProviders.find((p) => p.value === provider);
-    if (!providerConfig) return [{ value: 587, label: "587 (TLS)" }];
+    if (!providerConfig) return [];
 
     const ports = providerConfig.ports;
-    if (!ports) return [{ value: 587, label: "587 (TLS)" }];
+    if (!ports) return [];
 
-    // Return ports for selected encryption
-    if (encryptionType === "NONE") {
-      return ports.NONE
-        ? [{ value: ports.NONE, label: `${ports.NONE} (No Encryption)` }]
-        : [];
-    } else if (encryptionType === "SSL") {
-      return ports.SSL
-        ? [{ value: ports.SSL, label: `${ports.SSL} (SSL)` }]
-        : [];
-    } else if (encryptionType === "TLS") {
-      return ports.TLS
-        ? [{ value: ports.TLS, label: `${ports.TLS} (TLS)` }]
-        : [];
+    const formattedPorts = [];
+
+    if (encryptionType === "NONE" && ports.NONE) {
+      formattedPorts.push({
+        value: ports.NONE,
+        label: `${ports.NONE} (None)`,
+      });
+    } else if (encryptionType === "SSL" && ports.SSL) {
+      formattedPorts.push({ value: ports.SSL, label: `${ports.SSL} (SSL)` });
+    } else if (encryptionType === "TLS" && ports.TLS) {
+      formattedPorts.push({ value: ports.TLS, label: `${ports.TLS} (TLS)` });
     }
 
-    // Default to all available ports
-    const availablePorts = [];
-    if (ports.TLS)
-      availablePorts.push({ value: ports.TLS, label: `${ports.TLS} (TLS)` });
-    if (ports.SSL)
-      availablePorts.push({ value: ports.SSL, label: `${ports.SSL} (SSL)` });
-    if (ports.NONE)
-      availablePorts.push({
-        value: ports.NONE,
-        label: `${ports.NONE} (No Encryption)`,
-      });
-
-    return availablePorts;
+    return formattedPorts;
   };
 
   // Get supported encryption types for selected provider
@@ -224,49 +244,67 @@ const EmailSetting = () => {
     return providerConfig?.encryption || ["TLS"];
   };
 
-  useEffect(() => {
-    const fetchEmailSettings = async () => {
-      try {
-        const response = await axiosInstance.get("getEmailConfiguration");
-        const data = response.data;
-        if (data) {
-          setEmailSettings({
-            id: data.id || null,
-            adminId: data.adminId || "",
-            provider: data.provider || "GMAIL",
-            host: data.host || "smtp.gmail.com",
-            port: data.port || 587,
-            fromEmail: data.fromEmail || "",
-            username: data.username || "",
-            password: data.password || "",
-            encryptionType: data.encryptionType || "TLS",
-            emailHeader: data.emailHeader || "",
-            emailFooter: data.emailFooter || "",
-            active: data.active !== undefined ? data.active : true,
-          });
-        }
-      } catch (error) {
-        console.error("Failed to fetch email settings", error);
+const getCurrentEncryptionOptions = () => {
+  const supportedEncryptions = getSupportedEncryptionTypes(
+    emailSettings.provider
+  );
+
+  // Always include "NONE" option regardless of provider support
+  const allOptions = [...encryptionOptions];
+
+  // Filter to show only options that are either supported by provider or NONE
+  const filteredOptions = allOptions.filter(
+    (option) =>
+      option.value === "NONE" || supportedEncryptions.includes(option.value)
+  );
+
+  return filteredOptions;
+};
+
+useEffect(() => {
+  const fetchEmailSettings = async () => {
+    try {
+      const response = await axiosInstance.get("getEmailConfiguration");
+      const data = response.data;
+      if (data) {
+        // Check if encryptionType is null and convert it to "NONE" for UI
+        const encryptionType =
+          data.encryptionType === null ? "NONE" : data.encryptionType || "TLS";
+
+        setEmailSettings({
+          id: data.id || null,
+          adminId: data.adminId || "",
+          provider: data.provider || "GMAIL",
+          host: data.host || "smtp.gmail.com",
+          port: data.port || 587,
+          fromEmail: data.fromEmail || "",
+          username: data.username || "",
+          password: data.password || "",
+          encryptionType: encryptionType, // Use the converted value
+          emailHeader: data.emailHeader || "",
+          emailFooter: data.emailFooter || "",
+          active: data.active !== undefined ? data.active : true,
+        });
       }
-    };
-    fetchEmailSettings();
-  }, []);
+    } catch (error) {
+      console.error("Failed to fetch email settings", error);
+    }
+  };
+  fetchEmailSettings();
+}, []);
 
   const handleChange = (e) => {
-    const { name, value, type } = e.target;
+    const { name, value } = e.target;
 
     if (name === "provider") {
       const selectedProvider = smtpProviders.find((p) => p.value === value);
       if (selectedProvider) {
-        // Get supported encryption types for new provider
         const supportedEncryptions = getSupportedEncryptionTypes(value);
-        // Check if current encryption is supported
         const currentEncryption = emailSettings.encryptionType;
         const encryptionType = supportedEncryptions.includes(currentEncryption)
           ? currentEncryption
           : supportedEncryptions[0] || "TLS";
 
-        // Get available ports for selected encryption
         const availablePorts = getAvailablePorts(value, encryptionType);
         const port = availablePorts.length > 0 ? availablePorts[0].value : 587;
 
@@ -279,10 +317,53 @@ const EmailSetting = () => {
         }));
       }
     } else if (name === "encryptionType") {
-      // When encryption changes, update port based on provider and encryption
-      const selectedProvider = smtpProviders.find(
-        (p) => p.value === emailSettings.provider
-      );
+      const availablePorts = getAvailablePorts(emailSettings.provider, value);
+      const port = availablePorts.length > 0 ? availablePorts[0].value : 587;
+
+      setEmailSettings((prev) => ({
+        ...prev,
+        encryptionType: value,
+        port: port,
+      }));
+    } else {
+      setEmailSettings((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: undefined,
+      }));
+    }
+  };
+
+  const handleSelectChange = (name, selectedOption) => {
+    const value = selectedOption ? selectedOption.value : "";
+
+    if (name === "provider") {
+      const selectedProvider = smtpProviders.find((p) => p.value === value);
+      if (selectedProvider) {
+        const supportedEncryptions = getSupportedEncryptionTypes(value);
+        const currentEncryption = emailSettings.encryptionType;
+        const encryptionType = supportedEncryptions.includes(currentEncryption)
+          ? currentEncryption
+          : supportedEncryptions[0] || "TLS";
+
+        const availablePorts = getAvailablePorts(value, encryptionType);
+        const port = availablePorts.length > 0 ? availablePorts[0].value : 587;
+
+        setEmailSettings((prev) => ({
+          ...prev,
+          provider: value,
+          host: selectedProvider.host || "",
+          port: port,
+          encryptionType: encryptionType,
+        }));
+      }
+    } else if (name === "encryptionType") {
       const availablePorts = getAvailablePorts(emailSettings.provider, value);
       const port = availablePorts.length > 0 ? availablePorts[0].value : 587;
 
@@ -292,19 +373,12 @@ const EmailSetting = () => {
         port: port,
       }));
     } else if (name === "port") {
-      const newValue = type === "number" ? parseInt(value) || 0 : value;
       setEmailSettings((prev) => ({
         ...prev,
-        [name]: newValue,
-      }));
-    } else {
-      setEmailSettings((prev) => ({
-        ...prev,
-        [name]: value,
+        port: value,
       }));
     }
 
-    // Clear error for this field
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -313,70 +387,60 @@ const EmailSetting = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    // Basic validation
-    const newErrors = {};
-    if (!emailSettings.fromEmail)
-      newErrors.fromEmail = "From email is required";
-    if (!emailSettings.host) newErrors.host = "SMTP host is required";
-    if (!emailSettings.port) newErrors.port = "SMTP port is required";
-    if (!emailSettings.username) newErrors.username = "Username is required";
-    if (!emailSettings.password) newErrors.password = "Password is required";
+  const newErrors = {};
+  if (!emailSettings.fromEmail) newErrors.fromEmail = "From email is required";
+  if (!emailSettings.host) newErrors.host = "SMTP host is required";
+  if (!emailSettings.port) newErrors.port = "SMTP port is required";
+  if (!emailSettings.username) newErrors.username = "Username is required";
+  if (!emailSettings.password) newErrors.password = "Password is required";
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      toast.error("Please fill in all required fields");
-      return;
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    toast.error("Please fill in all required fields");
+    return;
+  }
+
+  setIsLoading(true);
+  try {
+    const payload = {
+      ...emailSettings,
+      port: parseInt(emailSettings.port),
+      active: emailSettings.id ? emailSettings.active : true,
+    };
+
+    // Handle null/empty encryptionType
+    if (!payload.encryptionType || payload.encryptionType === "NONE") {
+      payload.encryptionType = null; // or delete payload.encryptionType;
     }
 
-    setIsLoading(true);
-    try {
-      // Prepare payload - don't include encryptionType if it's "NONE"
-      const payload = {
-        ...emailSettings,
-        port: parseInt(emailSettings.port),
-        active: emailSettings.id ? emailSettings.active : true, // If no ID, set active to true
-      };
+    const response = await axiosInstance.put(
+      "updateEmailConfiguration",
+      payload
+    );
 
-      // If encryption is NONE, remove encryptionType from payload
-      if (payload.encryptionType === "NONE") {
-        delete payload.encryptionType;
-      }
-
-      const response = await axiosInstance.put(
-        "updateEmailConfiguration",
-        payload
-      );
-
-      if (response.data) {
-        setEmailSettings((prev) => ({
-          ...prev,
-          ...response.data,
-        }));
-      }
-      toast.success("Email configuration updated successfully.");
-    } catch (err) {
-      console.error("Error updating email settings:", err);
-      toast.error(
-        err.response?.data?.message ||
-          "Failed to update email configuration. Please try again."
-      );
+    if (response.data) {
+      setEmailSettings((prev) => ({
+        ...prev,
+        ...response.data,
+      }));
     }
-    setIsLoading(false);
+    toast.success("Email configuration updated successfully.");
+  } catch (err) {
+    console.error("Error updating email settings:", err);
+    toast.error(
+      err.response?.data?.message ||
+        "Failed to update email configuration. Please try again."
+    );
+  }
+  setIsLoading(false);
+};
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
-
-  // Get current encryption options based on selected provider
-  const currentEncryptionOptions = getSupportedEncryptionTypes(
-    emailSettings.provider
-  );
-
-  // Get available ports for current provider and encryption
-  const availablePorts = getAvailablePorts(
-    emailSettings.provider,
-    emailSettings.encryptionType
-  );
 
   return (
     <>
@@ -449,289 +513,202 @@ const EmailSetting = () => {
       <hr className="border-gray-200" />
       <div className="p-4 h-[70vh] overflow-y-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* SMTP Provider Selection */}
+          {/* Combined Section - All Settings in One */}
           <div className="bg-white p-6 rounded-lg border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              SMTP Provider Settings
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-6">
+              {/* Provider Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Service Provider *
-                </label>
-                <select
+                <FormSelect
                   name="provider"
-                  value={emailSettings.provider}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {/* Group Email Services */}
-                  <optgroup label="Email Services">
-                    {smtpProviders.slice(0, 8).map((provider) => (
-                      <option key={provider.value} value={provider.value}>
-                        {provider.label}
-                      </option>
-                    ))}
-                  </optgroup>
-
-                  {/* Group Email Marketing Services */}
-                  <optgroup label="Email Marketing Services">
-                    {smtpProviders.slice(8, 15).map((provider) => (
-                      <option key={provider.value} value={provider.value}>
-                        {provider.label}
-                      </option>
-                    ))}
-                  </optgroup>
-
-                  {/* Group Web Hosting Services */}
-                  <optgroup label="Web Hosting Services">
-                    {smtpProviders.slice(15, 19).map((provider) => (
-                      <option key={provider.value} value={provider.value}>
-                        {provider.label}
-                      </option>
-                    ))}
-                  </optgroup>
-
-                  {/* Custom Option */}
-                  <optgroup label="Other">
-                    {smtpProviders.slice(19).map((provider) => (
-                      <option key={provider.value} value={provider.value}>
-                        {provider.label}
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
-                {errors.provider && (
-                  <p className="mt-1 text-sm text-red-600">{errors.provider}</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* SMTP Connection Details */}
-          <div className="bg-white p-6 rounded-lg border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              SMTP Connection Details
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  SMTP Host *
-                </label>
-                <input
-                  type="text"
-                  name="host"
-                  value={emailSettings.host}
-                  onChange={handleChange}
-                  placeholder="e.g., smtp.gmail.com"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.host ? "border-red-500" : "border-gray-300"
-                  }`}
-                  required
-                  readOnly={emailSettings.provider !== "CUSTOM"}
-                />
-                {errors.host && (
-                  <p className="mt-1 text-sm text-red-600">{errors.host}</p>
-                )}
-                {emailSettings.provider !== "CUSTOM" && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    Host is auto-filled based on provider
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Encryption Type *
-                </label>
-                <select
-                  name="encryptionType"
-                  value={emailSettings.encryptionType}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.encryptionType ? "border-red-500" : "border-gray-300"
-                  }`}
-                >
-                  {encryptionOptions
-                    .filter((option) =>
-                      currentEncryptionOptions.includes(option.value)
-                    )
-                    .map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                </select>
-                {errors.encryptionType && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.encryptionType}
-                  </p>
-                )}
-                <p className="mt-1 text-xs text-gray-500">
-                  Available for {emailSettings.provider}:{" "}
-                  {currentEncryptionOptions.join(", ")}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  SMTP Port *
-                </label>
-                <select
-                  name="port"
-                  value={emailSettings.port}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.port ? "border-red-500" : "border-gray-300"
-                  }`}
-                  required
-                >
-                  {availablePorts.length > 0 ? (
-                    availablePorts.map((portOption) => (
-                      <option key={portOption.value} value={portOption.value}>
-                        {portOption.label}
-                      </option>
-                    ))
-                  ) : (
-                    <option value={emailSettings.port}>
-                      {emailSettings.port}
-                    </option>
-                  )}
-                </select>
-                {errors.port && (
-                  <p className="mt-1 text-sm text-red-600">{errors.port}</p>
-                )}
-                <p className="mt-1 text-xs text-gray-500">
-                  Recommended port for {emailSettings.encryptionType}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Email Account Details */}
-          <div className="bg-white p-6 rounded-lg border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Email Account Details
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  From Email Address *
-                </label>
-                <input
-                  type="email"
-                  name="fromEmail"
-                  value={emailSettings.fromEmail}
-                  onChange={handleChange}
-                  placeholder="your-email@example.com"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.fromEmail ? "border-red-500" : "border-gray-300"
-                  }`}
-                  required
-                />
-                {errors.fromEmail && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.fromEmail}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Username / Login Email *
-                </label>
-                <input
-                  type="email"
-                  name="username"
-                  value={emailSettings.username}
-                  onChange={handleChange}
-                  placeholder="your-email@example.com"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.username ? "border-red-500" : "border-gray-300"
-                  }`}
-                  required
-                />
-                {errors.username && (
-                  <p className="mt-1 text-sm text-red-600">{errors.username}</p>
-                )}
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password / App Password *
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={emailSettings.password}
-                  onChange={handleChange}
-                  placeholder="Enter your SMTP password"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.password ? "border-red-500" : "border-gray-300"
-                  }`}
-                  required
-                />
-                {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-                )}
-                {emailSettings.provider === "GMAIL" && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    Note: Use Gmail App Password (not your regular password).
-                    Generate it from Google Account Security settings.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Email Templates */}
-          <div className="bg-white p-6 rounded-lg border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Email Templates
-            </h3>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Header
-                </label>
-                <RichTextEditor
-                  value={emailSettings.emailHeader}
-                  onChange={(content) =>
-                    setEmailSettings((prev) => ({
-                      ...prev,
-                      emailHeader: content,
-                    }))
+                  value={providerOptions
+                    .flatMap((group) => group.options)
+                    .find((option) => option.value === emailSettings.provider)}
+                  onChange={(selectedOption) =>
+                    handleSelectChange("provider", selectedOption)
                   }
-                  placeholder="<div style='...'>Your header HTML</div>"
-                  height="200px"
-                  toolbarConfig="email"
-                  label=""
-                  error={errors.emailHeader}
+                  options={providerOptions}
+                  required={true}
+                  label="Email Service Provider"
+                  error={errors.provider}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Footer
-                </label>
-                <RichTextEditor
-                  value={emailSettings.emailFooter}
-                  onChange={(content) =>
-                    setEmailSettings((prev) => ({
-                      ...prev,
-                      emailFooter: content,
-                    }))
-                  }
-                  placeholder="Enter your email footer HTML here..."
-                  height="200px"
-                  toolbarConfig="email"
-                  label=""
-                  error={errors.emailFooter}
-                />
+              {/* Connection and Account Details - 2 inputs per row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <FormSelect
+                    name="encryptionType"
+                    value={
+                      emailSettings.encryptionType
+                        ? getCurrentEncryptionOptions().find(
+                            (option) =>
+                              option.value === emailSettings.encryptionType
+                          )
+                        : { value: "NONE", label: "None" }
+                    }
+                    onChange={(selectedOption) =>
+                      handleSelectChange("encryptionType", selectedOption)
+                    }
+                    options={getCurrentEncryptionOptions()}
+                    required={true}
+                    label="Email Encryption"
+                    error={errors.encryptionType}
+                  />
+                </div>
+
+                {/* SMTP Host */}
+                <div>
+                  <FormInput
+                    name="host"
+                    value={emailSettings.host}
+                    onChange={handleChange}
+                    type="text"
+                    required={true}
+                    label="SMTP Host"
+                    error={errors.host}
+                    className="w-full"
+                  />
+                </div>
+
+                {/* SMTP Port - Normal Input Field */}
+                <div>
+                  <FormInput
+                    name="port"
+                    value={emailSettings.port}
+                    onChange={handleChange}
+                    type="number"
+                    required={true}
+                    label="SMTP Port"
+                    error={errors.port}
+                    className="w-full"
+                    min="1"
+                    max="65535"
+                  />
+                </div>
+
+                {/* From Email */}
+                <div>
+                  <FormInput
+                    label="From Email Address"
+                    name="fromEmail"
+                    value={emailSettings.fromEmail}
+                    onChange={handleChange}
+                    type="email"
+                    required={true}
+                    error={errors.fromEmail}
+                    className="w-full"
+                  />
+                </div>
+
+                {/* Username */}
+                <div>
+                  <FormInput
+                    label="SMTP Username"
+                    name="username"
+                    value={emailSettings.username}
+                    onChange={handleChange}
+                    type="email"
+                    required={true}
+                    error={errors.username}
+                    className="w-full"
+                  />
+                </div>
+
+                {/* Password with Eye Icon */}
+                <div>
+                  <div className="relative">
+                    <FormInput
+                      label="SMTP Password"
+                      name="password"
+                      value={emailSettings.password}
+                      onChange={handleChange}
+                      type={showPassword ? "text" : "password"}
+                      required={true}
+                      error={errors.password}
+                      className="w-full pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={togglePasswordVisibility}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    >
+                      {showPassword ? (
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.59 6.59m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Email Templates */}
+              <div className="space-y-4">
+                <div>
+                  <RichTextEditor
+                    value={emailSettings.emailHeader}
+                    onChange={(content) =>
+                      setEmailSettings((prev) => ({
+                        ...prev,
+                        emailHeader: content,
+                      }))
+                    }
+                    placeholder="<div style='...'>Your header HTML</div>"
+                    height="200px"
+                    toolbarConfig="email"
+                    label="Predefined Header"
+                    error={errors.emailHeader}
+                  />
+                </div>
+
+                <div>
+                  <RichTextEditor
+                    value={emailSettings.emailFooter}
+                    onChange={(content) =>
+                      setEmailSettings((prev) => ({
+                        ...prev,
+                        emailFooter: content,
+                      }))
+                    }
+                    placeholder="Enter your email footer HTML here..."
+                    height="200px"
+                    toolbarConfig="email"
+                    label="Predefined Footer"
+                    error={errors.emailFooter}
+                  />
+                </div>
               </div>
             </div>
           </div>
