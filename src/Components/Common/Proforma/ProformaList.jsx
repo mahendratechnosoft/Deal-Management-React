@@ -705,7 +705,7 @@ function ProformaList() {
       </div>
 
       {/* PDF Modal */}
-      {isPdfModalOpen && (
+      {/* {isPdfModalOpen && (
         <div className="proposal-pdf-modal-backdrop">
           <div className="proposal-pdf-modal-content">
             <div className="proposal-pdf-modal-header">
@@ -781,6 +781,85 @@ function ProformaList() {
                 </div>
               ) : (
                 <PDFViewer width="100%" height="100%">
+                  <ProformaPDF
+                    invoiceData={selectedProformaData}
+                    adminInformation={adminInformation}
+                  />
+                </PDFViewer>
+              )}
+            </div>
+          </div>
+        </div>
+      )} */}
+
+      {/* PDF Modal */}
+      {isPdfModalOpen && (
+        // 1. BACKDROP (Replaces .proposal-pdf-modal-backdrop)
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          {/* 2. CONTENT (Replaces .proposal-pdf-modal-content) */}
+          <div className="bg-white w-[90%] h-[90vh] rounded-lg flex flex-col overflow-hidden shadow-2xl">
+            {/* 3. HEADER (Replaces .proposal-pdf-modal-header) */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+              <h3 className="text-xl font-semibold text-gray-800">
+                {selectedProformaData
+                  ? selectedProformaData.proformaInvoiceInfo
+                      .formatedProformaInvoiceNumber
+                  : "Loading..."}
+              </h3>
+
+              <div className="flex gap-3">
+                {!isPdfLoading && selectedProformaData && (
+                  <PDFDownloadLink
+                    document={
+                      <ProformaPDF
+                        invoiceData={selectedProformaData}
+                        adminInformation={adminInformation}
+                      />
+                    }
+                    fileName={`${selectedProformaData.proformaInvoiceInfo.formatedProformaInvoiceNumber}.pdf`}
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 transition-colors"
+                  >
+                    {({ loading }) =>
+                      loading ? (
+                        "..."
+                      ) : (
+                        <>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-5 h-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                            />
+                          </svg>
+                        </>
+                      )
+                    }
+                  </PDFDownloadLink>
+                )}
+                <button
+                  onClick={() => setIsPdfModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            {/* 4. PDF VIEWER CONTAINER */}
+            <div className="flex-1 w-full overflow-hidden">
+              {isPdfLoading || !selectedProformaData ? (
+                <div className="flex items-center justify-center h-full text-white">
+                  Loading PDF...
+                </div>
+              ) : (
+                <PDFViewer width="100%" height="100%" className="w-full h-full">
                   <ProformaPDF
                     invoiceData={selectedProformaData}
                     adminInformation={adminInformation}
