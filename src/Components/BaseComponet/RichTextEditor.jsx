@@ -16,6 +16,8 @@ const RichTextEditor = ({
   required = false,
 }) => {
   const [editorValue, setEditorValue] = useState(value);
+  const [showSourceModal, setShowSourceModal] = useState(false);
+  const [sourceCode, setSourceCode] = useState(value);
   const quillRef = useRef(null);
 
   // Simplified toolbar configurations for email
@@ -34,6 +36,7 @@ const RichTextEditor = ({
       ["link"],
       ["clean"],
     ],
+    
   };
 
   // Module configurations
@@ -69,6 +72,28 @@ const RichTextEditor = ({
     if (onChange) {
       onChange(content, editor.getText(), delta, source, editor);
     }
+  };
+
+  // Open source code modal
+  const openSourceModal = () => {
+    setSourceCode(editorValue);
+    setShowSourceModal(true);
+  };
+
+  // Apply source code changes
+  const applySourceCode = () => {
+    setEditorValue(sourceCode);
+    if (onChange) {
+      onChange(sourceCode);
+    }
+    setShowSourceModal(false);
+  };
+
+  // Close source code modal without applying changes
+  const closeSourceModal = () => {
+    setShowSourceModal(false);
+    // Reset to current editor value
+    setSourceCode(editorValue);
   };
 
   // Custom image handler for email (optional)
@@ -109,6 +134,7 @@ const RichTextEditor = ({
   // Update editor value when prop changes
   useEffect(() => {
     setEditorValue(value);
+    setSourceCode(value);
   }, [value]);
 
   // Get word count
@@ -160,6 +186,30 @@ const RichTextEditor = ({
             >
               Clear
             </button>
+
+            {/* Source Code Button */}
+            <button
+              type="button"
+              onClick={openSourceModal}
+              className="px-3 py-1.5 text-xs font-medium text-blue-600 bg-white border border-blue-300 rounded hover:bg-blue-50 transition-colors duration-200 flex items-center gap-1"
+              title="Edit HTML Source Code"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+                />
+              </svg>
+              Source Code
+            </button>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -194,6 +244,115 @@ const RichTextEditor = ({
           </div>
         )}
       </div>
+
+      {/* Source Code Modal */}
+      {showSourceModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <svg
+                  className="w-5 h-5 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+                  />
+                </svg>
+                Edit HTML Source Code
+              </h3>
+              <button
+                onClick={closeSourceModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body - Source Code Editor */}
+            <div className="flex-1 overflow-hidden p-4">
+              <div className="h-full flex flex-col">
+                <div className="mb-3">
+                  <div className="text-sm text-gray-600 mb-1">
+                    Edit the HTML code below. Changes will be reflected in the
+                    editor.
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span>HTML tags supported</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span>CSS inline styles supported</span>
+                    </div>
+                  </div>
+                </div>
+
+                <textarea
+                  value={sourceCode}
+                  onChange={(e) => setSourceCode(e.target.value)}
+                  className="w-full h-full min-h-[400px] font-mono text-sm p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  placeholder="Enter HTML code here..."
+                  spellCheck="false"
+                  autoFocus
+                />
+
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end items-center gap-3 p-4 border-t bg-gray-50">
+              <button
+                onClick={closeSourceModal}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={applySourceCode}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                Apply Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Custom CSS for Quill editor */}
       <style jsx>{`

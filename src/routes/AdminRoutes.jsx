@@ -131,6 +131,11 @@ const EmailTemplateSales = lazy(() =>
   import("../Components/Common/Settings/Template/Email/SalesTemplateList")
 );
 
+const EmailTemplateAttendance = lazy(() =>
+  import("../Components/Common/Settings/Template/Email/AttendanceTemplateList")
+);
+
+
 const AdminRoutes = () => {
   return (
     <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
@@ -215,6 +220,7 @@ const AdminRoutes = () => {
             <Route path="EmailTemplate">
               <Route path="Task" element={<EmailTemplateTask />} />
               <Route path="Sales" element={<EmailTemplateSales />} />
+              <Route path="Attendance" element={<EmailTemplateAttendance />} />
             </Route>
           </Route>
 

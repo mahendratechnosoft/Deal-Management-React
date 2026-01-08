@@ -207,6 +207,10 @@ const SettingsLayout = () => {
           title: "Sales",
           path: "/Admin/Settings/EmailTemplate/Sales",
         },
+        {
+          title: "Attendance",
+          path: "/Admin/Settings/EmailTemplate/Attendance",
+        },
       ],
     },
     {

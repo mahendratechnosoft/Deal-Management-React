@@ -8,6 +8,7 @@ import {
 import PlaceholdersModal from "./PlaceholdersModal";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import RichTextEditor from "../../../../BaseComponet/RichTextEditor";
 
 const CreateTemplate = ({
   isOpen,
@@ -22,6 +23,8 @@ const CreateTemplate = ({
   const [hasFetchedPlaceholders, setHasFetchedPlaceholders] = useState(false);
   const [showPlaceholdersModal, setShowPlaceholdersModal] = useState(false);
   const [editorContent, setEditorContent] = useState("");
+
+  const [placeholderInsertMode, setPlaceholderInsertMode] = useState("body"); // 'body' or 'subject'
 
   const prevTriggerRef = useRef("");
   const mainModalRef = useRef(null);
@@ -43,16 +46,15 @@ const CreateTemplate = ({
       { value: "UPDATE_TASK", label: "Update Task" },
       { value: "TASK_STATUS_CHANGE", label: "Task Status Change" },
     ],
-    // Add more categories here as needed in the future
-    // MARKETING: [...],
-    // SUPPORT: [...],
+    ATTENDANCE: [
+      { value: "ATTENDANCE_CHECK_IN", label: "Attendance Check In" },
+      { value: "ATTENDANCE_CHECK_OUT", label: "Attendance Check Out" },
+    ],
   };
 
   // Get triggers for current category
   const getTriggers = () => {
     const triggers = ALL_TRIGGERS[category] || [];
-
-    // Always add empty option at the beginning
     return [
       { value: "", label: `Select ${category} Trigger Event` },
       ...triggers,
@@ -68,6 +70,29 @@ const CreateTemplate = ({
     return trigger ? trigger.label : triggerValue.replace(/_/g, " ");
   };
 
+  // Add keyboard event listener for # key
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (
+        e.key === "#" &&
+        e.target.tagName !== "INPUT" &&
+        e.target.tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault();
+        setPlaceholderInsertMode("body"); // Set to body mode
+        setShowPlaceholdersModal(true);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keypress", handleKeyPress);
+    }
+
+    return () => {
+      document.removeEventListener("keypress", handleKeyPress);
+    };
+  }, [isOpen]);
+
   // Form state matching API structure
   const [formData, setFormData] = useState({
     category: category,
@@ -79,35 +104,6 @@ const CreateTemplate = ({
   });
 
   const [errors, setErrors] = useState({});
-
-  // Customize ReactQuill toolbar
-  const modules = {
-    toolbar: [
-      [{ header: [1, 2, 3, 4, 5, 6, false] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      [{ indent: "-1" }, { indent: "+1" }],
-      [{ align: [] }],
-      ["link"],
-      ["clean"],
-    ],
-    clipboard: {
-      matchVisual: false,
-    },
-  };
-
-  const formats = [
-    "header",
-    "bold",
-    "italic",
-    "underline",
-    "strike",
-    "list",
-    "bullet",
-    "indent",
-    "align",
-    "link",
-  ];
 
   // Reset form when modal opens or trigger/category changes
   useEffect(() => {
@@ -160,31 +156,24 @@ const CreateTemplate = ({
         let placeholdersData = {};
 
         if (response.data) {
-          // Format 1: Direct object with categories
           if (
             typeof response.data === "object" &&
             !Array.isArray(response.data)
           ) {
             placeholdersData = response.data;
-          }
-          // Format 2: Data wrapped in data property
-          else if (
+          } else if (
             response.data.data &&
             typeof response.data.data === "object"
           ) {
             placeholdersData = response.data.data;
-          }
-          // Format 3: Simple array format
-          else if (Array.isArray(response.data)) {
+          } else if (Array.isArray(response.data)) {
             placeholdersData = {
               General: response.data.map((item) => ({
                 label: item.label || item.name || item.key,
                 key: item.key || item.value,
               })),
             };
-          }
-          // Format 4: Stringified JSON
-          else if (typeof response.data === "string") {
+          } else if (typeof response.data === "string") {
             try {
               const parsedData = JSON.parse(response.data);
               if (typeof parsedData === "object") {
@@ -240,18 +229,27 @@ const CreateTemplate = ({
     }
   };
 
-  const handleVariableInsert = (variableKey) => {
-    const quill = quillRef.current?.getEditor();
-    if (quill) {
-      const selection = quill.getSelection();
-      const position = selection ? selection.index : quill.getLength();
+const handleVariableInsert = (variableKey) => {
+  // Since RichTextEditor manages its own content via state,
+  // we'll append the placeholder to the current content
+  const placeholder = `{{${variableKey}}}`;
+  setEditorContent((prev) => prev + placeholder);
 
-      quill.insertText(position, `${variableKey}`, "user");
-      quill.setSelection(position + variableKey.length + 4);
-    } else {
-      // Fallback if quill not available
-      setEditorContent((prev) => prev + ` {{${variableKey}}} `);
-    }
+  // Focus back on the editor after insertion
+  // You might need to add a ref to RichTextEditor and call focus method
+  // or handle this within the PlaceholdersModal
+};
+
+  // Handle inserting placeholder into subject field
+  const handleSubjectVariableInsert = (variableKey) => {
+    const placeholder = `${variableKey}`;
+    const currentSubject = formData.subject || "";
+
+    // If cursor is in subject input, we need a ref to handle that
+    // For now, just append to the end
+    const newSubject =
+      currentSubject + (currentSubject ? " " : "") + placeholder;
+    handleChange("subject", newSubject);
   };
 
   const validateForm = () => {
@@ -269,7 +267,6 @@ const CreateTemplate = ({
       newErrors["subject"] = "Email subject is required";
     }
 
-    // Remove HTML tags for validation
     const plainText = formData.emailBody.replace(/<[^>]*>/g, "").trim();
     if (!plainText) {
       newErrors["emailBody"] = "Email body is required";
@@ -347,9 +344,11 @@ const CreateTemplate = ({
     );
   }, [availablePlaceholders]);
 
-  // Calculate character count (excluding HTML tags)
+  // Replace the current characterCount useMemo:
   const characterCount = useMemo(() => {
-    return formData.emailBody.replace(/<[^>]*>/g, "").length;
+    // Remove HTML tags and count characters
+    const plainText = formData.emailBody.replace(/<[^>]*>/g, "");
+    return plainText.length;
   }, [formData.emailBody]);
 
   if (!isOpen) return null;
@@ -392,24 +391,28 @@ const CreateTemplate = ({
                   </p>
                 </div>
               </div>
-              <button
-                onClick={handleClose}
-                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+
+              {/* Status Toggle moved to top right */}
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleClose}
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -422,172 +425,80 @@ const CreateTemplate = ({
             <form onSubmit={handleSubmit}>
               <div className="space-y-6">
                 {/* Category Display (Read-only) */}
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
-                    {category} Category
-                  </span>
-                  {formData.triggerEvent && (
-                    <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
-                      {getTriggerDisplayName(formData.triggerEvent)}
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+                      {category} Category
                     </span>
-                  )}
-                </div>
-                <div>
-                  {/* Trigger Selection - ALWAYS SHOW dropdown */}
-                  <GlobalSelectField
-                    label={
-                      <>
-                        Trigger Event
-                        <span className="text-red-500 ml-1">*</span>
-                      </>
-                    }
-                    name="triggerEvent"
-                    value={formData.triggerEvent}
-                    onChange={(e) =>
-                      handleChange("triggerEvent", e.target.value)
-                    }
-                    options={getTriggers()}
-                    error={errors["triggerEvent"]}
-                    className="text-sm"
-                    disabled={!!trigger} // Disable if trigger is pre-filled from parent
-                  />
-
-                  {/* Show warning if trigger is pre-filled */}
-                  {trigger && (
-                    <div className=" rounded-lg text-sm mt-1">
-                      <div className="flex items-start gap-2">
-                        <svg
-                          className="w-4 h-4 text-grey-600 mt-0.5 flex-shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        <div>
-                          <p className="text-grey-500 font-medium text-xs leading-tight mt-0.5">
-                            Trigger Pre-selected
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Template Name */}
-                <GlobalInputField
-                  label={
-                    <>
-                      Template Name
-                      <span className="text-red-500 ml-1">*</span>
-                    </>
-                  }
-                  name="templateName"
-                  value={formData.templateName}
-                  onChange={(e) => handleChange("templateName", e.target.value)}
-                  error={errors["templateName"]}
-                  placeholder={`e.g., Standard ${category} ${
-                    formData.triggerEvent
-                      ? getTriggerDisplayName(formData.triggerEvent)
-                      : "Template"
-                  }`}
-                  className="text-sm"
-                />
-
-                {/* Email Subject */}
-                <GlobalInputField
-                  label={
-                    <>
-                      Email Subject
-                      <span className="text-red-500 ml-1">*</span>
-                    </>
-                  }
-                  name="subject"
-                  value={formData.subject}
-                  onChange={(e) => handleChange("subject", e.target.value)}
-                  error={errors["subject"]}
-                  placeholder={
-                    category === "TASK"
-                      ? "e.g., Task Update: {{taskTitle}}"
-                      : "e.g., New Proposal: {{proposalNumber}}"
-                  }
-                  className="text-sm"
-                />
-
-                {/* Available Placeholders Section */}
-                {formData.triggerEvent && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700">
-                          Available Placeholders
-                          {totalPlaceholders > 0 && (
-                            <span className="ml-2 text-xs text-gray-500">
-                              ({totalPlaceholders} available)
-                            </span>
-                          )}
-                        </label>
-                        <p className="text-xs text-gray-500">
-                          Dynamic variables for personalizing emails
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowPlaceholdersModal(true)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2"
-                        disabled={loadingPlaceholders}
-                      >
-                        {loadingPlaceholders ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            Loading...
-                          </>
-                        ) : (
-                          <>
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
-                              />
-                            </svg>
-                            Browse Placeholders
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Email Body - Rich Text Editor */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      <>
-                        Email Body
-                        <span className="text-red-500 ml-1">*</span>
-                      </>
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-500">
-                        {characterCount} characters
+                    {formData.triggerEvent && (
+                      <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                        {getTriggerDisplayName(formData.triggerEvent)}
                       </span>
-                      {totalPlaceholders > 0 && (
+                    )}
+                  </div>
+                  {/* <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg">
+                    <span className="text-sm font-medium">Status:</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.active}
+                        onChange={(e) =>
+                          handleChange("active", e.target.checked)
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-10 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                      <span className="ml-2 text-sm font-medium">
+                        {formData.active ? "Active" : "Inactive"}
+                      </span>
+                    </label>
+                  </div> */}
+                </div>
+
+                {/* Template Name and Email Subject in one row */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Template Name */}
+                  <div>
+                    <GlobalInputField
+                      label={
+                        <>
+                          Template Name
+                          <span className="text-red-500 ml-1">*</span>
+                        </>
+                      }
+                      name="templateName"
+                      value={formData.templateName}
+                      onChange={(e) =>
+                        handleChange("templateName", e.target.value)
+                      }
+                      error={errors["templateName"]}
+                      placeholder={`e.g., Standard ${category} ${
+                        formData.triggerEvent
+                          ? getTriggerDisplayName(formData.triggerEvent)
+                          : "Template"
+                      }`}
+                      className="text-sm"
+                    />
+                  </div>
+
+                  {/* Email Subject */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-sm font-semibold text-gray-700">
+                        <>
+                          Email Subject
+                          <span className="text-red-500 ml-1">*</span>
+                        </>
+                      </label>
+
+                      {formData.triggerEvent && totalPlaceholders > 0 && (
                         <button
                           type="button"
-                          onClick={() => setShowPlaceholdersModal(true)}
-                          className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                          onClick={() => {
+                            setPlaceholderInsertMode("subject"); // Set to subject mode
+                            setShowPlaceholdersModal(true);
+                          }}
+                          className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
                         >
                           <svg
                             className="w-3 h-3"
@@ -602,63 +513,95 @@ const CreateTemplate = ({
                               d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
                             />
                           </svg>
-                          Insert Placeholder
+                          Email Subject Placeholder
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      name="subject"
+                      value={formData.subject}
+                      onChange={(e) => handleChange("subject", e.target.value)}
+                      placeholder={
+                        category === "TASK"
+                          ? "e.g., Task Update: {{taskTitle}}"
+                          : "e.g., New Proposal: {{proposalNumber}}"
+                      }
+                      className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${
+                        errors["subject"]
+                          ? "border-red-500 ring-1 ring-red-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+                    {errors["subject"] && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors["subject"]}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Email Body - Rich Text Editor */}
+                {/* Email Body - Rich Text Editor */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      <>
+                        Email Body
+                        <span className="text-red-500 ml-1">*</span>
+                      </>
+                    </label>
+
+                    <div className="flex">
+                      <div className="flex items-center gap-3 ml-2">
+                        <span className="text-xs text-gray-500">
+                          {characterCount} characters
+                        </span>
+                      </div>
+                      {formData.triggerEvent && totalPlaceholders > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPlaceholderInsertMode("body");
+                            setShowPlaceholdersModal(true);
+                          }}
+                          className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 ml-2"
+                        >
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
+                            />
+                          </svg>
+                          Email Body Placeholder
                         </button>
                       )}
                     </div>
                   </div>
 
-                  <div
-                    className={`border rounded-lg overflow-hidden ${
-                      errors["emailBody"]
-                        ? "border-red-500 ring-1 ring-red-500"
-                        : "border-gray-300"
-                    }`}
-                  >
-                    <ReactQuill
-                      ref={quillRef}
-                      theme="snow"
-                      value={editorContent}
-                      onChange={setEditorContent}
-                      modules={modules}
-                      formats={formats}
-                      placeholder={
-                        category === "TASK"
-                          ? "Enter your task email content here. Use placeholders like {{taskTitle}}, {{assigneeName}}, {{taskStatus}}, etc."
-                          : "Enter your sales email content here. Use placeholders like {{clientName}}, {{proposalNumber}}, {{amount}}, etc."
-                      }
-                      className="h-48"
-                    />
-                  </div>
-
-                  {errors["emailBody"] && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors["emailBody"]}
-                    </p>
-                  )}
-                </div>
-
-                {/* Status Toggle */}
-                <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                  <div>
-                    <h3 className="font-medium text-gray-900">
-                      Template Status
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      {formData.active
-                        ? "Template will be active and available for use"
-                        : "Template will be created as inactive"}
-                    </p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.active}
-                      onChange={(e) => handleChange("active", e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
+                  {/* Replace this entire div with RichTextEditor */}
+                  <RichTextEditor
+                    value={editorContent}
+                    onChange={(content) => setEditorContent(content)}
+                    placeholder={
+                      category === "TASK"
+                        ? "Enter your task email content here. Use placeholders like {{taskTitle}}, {{assigneeName}}, {{taskStatus}}, etc."
+                        : "Enter your sales email content here. Use placeholders like {{clientName}}, {{proposalNumber}}, {{amount}}, etc."
+                    }
+                    height="300px"
+                    toolbarConfig="email"
+                    label="" // Empty since we have our own label above
+                    error={errors["emailBody"]}
+                    required={true}
+                    className={errors["emailBody"] ? "border-red-500" : ""}
+                  />
                 </div>
               </div>
             </form>
@@ -713,10 +656,18 @@ const CreateTemplate = ({
       {/* Placeholders Modal */}
       <PlaceholdersModal
         isOpen={showPlaceholdersModal}
-        onClose={() => setShowPlaceholdersModal(false)}
+        onClose={() => {
+          setShowPlaceholdersModal(false);
+          setPlaceholderInsertMode("body"); // Reset to default
+        }}
         placeholders={availablePlaceholders}
         triggerEvent={formData.triggerEvent}
-        onInsert={handleVariableInsert}
+        onInsert={
+          placeholderInsertMode === "body"
+            ? handleVariableInsert
+            : handleSubjectVariableInsert
+        }
+        mode={placeholderInsertMode} // Pass the mode for UI indication
       />
     </>
   );

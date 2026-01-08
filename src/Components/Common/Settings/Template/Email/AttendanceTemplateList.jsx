@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import CreateTemplate from "./CreateTemplate";
 import EditTemplate from "./EditTemplate";
 
-const TaskTemplateList = () => {
+const AttendanceTemplateList = () => {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -13,22 +13,19 @@ const TaskTemplateList = () => {
 
   // Modal States
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-
-  const [selectedTrigger, setSelectedTrigger] = useState("");
-
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
+  const [selectedTrigger, setSelectedTrigger] = useState("");
 
-  // Available triggers for TASK - Updated with all 3 triggers
-  const triggers = ["NEW_TASK", "UPDATE_TASK", "TASK_STATUS_CHANGE"];
+  // Available triggers for ATTENDANCE
+  const triggers = ["ATTENDANCE_CHECK_IN", "ATTENDANCE_CHECK_OUT"];
 
   // Fetch templates for a specific trigger
   const fetchTemplates = async (trigger) => {
     setLoading(true);
     try {
       const response = await axiosInstance.get(
-        `getEmailTemplates/TASK/${trigger}`
+        `getEmailTemplates/ATTENDANCE/${trigger}`
       );
       return response.data;
     } catch (error) {
@@ -85,35 +82,16 @@ const TaskTemplateList = () => {
     }
   };
 
-
-
-  const handleCloseCreate = () => setIsCreateModalOpen(false);
-  const handleCloseUpdate = () => {
-    setIsUpdateModalOpen(false);
-    setSelectedTemplateId(null);
-  };
-
-  // Add this function to handle edit click
+  // Open Edit Modal
   const handleEditClick = (id) => {
     setSelectedTemplateId(id);
     setIsEditModalOpen(true);
   };
 
-  // Add this function to handle edit modal close
+  const handleCloseCreate = () => setIsCreateModalOpen(false);
   const handleCloseEdit = () => {
     setIsEditModalOpen(false);
     setSelectedTemplateId(null);
-  };
-
-  // Add this function to handle successful template update
-  const handleTemplateUpdated = (updatedTemplate) => {
-    setTemplates((prev) =>
-      prev.map((template) =>
-        template.emailTemplateId === updatedTemplate.emailTemplateId
-          ? updatedTemplate
-          : template
-      )
-    );
   };
 
   const handleStatusToggle = async (id, currentStatus) => {
@@ -175,12 +153,22 @@ const TaskTemplateList = () => {
     setIsCreateModalOpen(true);
   };
 
+  // Handle template update from Edit modal
+  const handleTemplateUpdated = (updatedTemplate) => {
+    setTemplates((prev) =>
+      prev.map((template) =>
+        template.emailTemplateId === updatedTemplate.emailTemplateId
+          ? updatedTemplate
+          : template
+      )
+    );
+  };
+
   // Get trigger display name
   const getTriggerDisplayName = (trigger) => {
     const triggerMap = {
-      NEW_TASK: "New Task",
-      UPDATE_TASK: "Update Task",
-      TASK_STATUS_CHANGE: "Task Status Change",
+      ATTENDANCE_CHECK_IN: "Attendance Check-In",
+      ATTENDANCE_CHECK_OUT: "Attendance Check-Out",
     };
     return triggerMap[trigger] || trigger.replace(/_/g, " ");
   };
@@ -195,7 +183,7 @@ const TaskTemplateList = () => {
               <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Task Email Templates
+                  Attendance Email Templates
                 </h1>
               </div>
             </div>
@@ -204,12 +192,6 @@ const TaskTemplateList = () => {
           <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
             {/* Bulk Actions */}
             <div className="flex items-center gap-2">
-              {/* <button
-                onClick={() => toggleAllTriggers(true)}
-                className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Expand All
-              </button> */}
               <button
                 onClick={() => toggleAllTriggers(false)}
                 className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
@@ -218,8 +200,7 @@ const TaskTemplateList = () => {
               </button>
             </div>
 
-{/* 
-            <div className="relative flex-1 sm:max-w-64">
+            {/* <div className="relative flex-1 sm:max-w-64">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg
                   className="w-4 h-4 text-gray-400"
@@ -244,7 +225,6 @@ const TaskTemplateList = () => {
               />
             </div>
 
-  
             <button
               onClick={() => {
                 setSelectedTrigger("");
@@ -494,7 +474,7 @@ const TaskTemplateList = () => {
         isOpen={isCreateModalOpen}
         onClose={handleCloseCreate}
         trigger={selectedTrigger}
-        category="TASK"
+        category="ATTENDANCE"
         onTemplateCreated={(newTemplate) => {
           // Add the new template to the state
           setTemplates((prev) => [...prev, newTemplate]);
@@ -509,16 +489,16 @@ const TaskTemplateList = () => {
         }}
       />
 
+      {/* Edit Template Modal */}
       <EditTemplate
         isOpen={isEditModalOpen}
         onClose={handleCloseEdit}
         templateId={selectedTemplateId}
-        category="TASK" // or "SALES" depending on your context
+        category="ATTENDANCE"
         onTemplateUpdated={handleTemplateUpdated}
       />
-      {/* <UpdateTemplateModal ... /> */}
     </div>
   );
 };
 
-export default TaskTemplateList;
+export default AttendanceTemplateList;

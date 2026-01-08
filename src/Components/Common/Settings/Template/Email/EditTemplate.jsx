@@ -8,6 +8,7 @@ import {
 import PlaceholdersModal from "./PlaceholdersModal";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import RichTextEditor from "../../../../BaseComponet/RichTextEditor";
 
 const EditTemplate = ({
   isOpen,
@@ -24,6 +25,7 @@ const EditTemplate = ({
   const [editorContent, setEditorContent] = useState("");
   const [isFetching, setIsFetching] = useState(false);
   const [originalData, setOriginalData] = useState(null);
+  const [placeholderInsertMode, setPlaceholderInsertMode] = useState("body"); // 'body' or 'subject'
 
   const prevTriggerRef = useRef("");
   const mainModalRef = useRef(null);
@@ -45,6 +47,10 @@ const EditTemplate = ({
       { value: "UPDATE_TASK", label: "Update Task" },
       { value: "TASK_STATUS_CHANGE", label: "Task Status Change" },
     ],
+    ATTENDANCE: [
+      { value: "ATTENDANCE_CHECK_IN", label: "Attendance Check In" },
+      { value: "ATTENDANCE_CHECK_OUT", label: "Attendance Check Out" },
+    ],
   };
 
   // Form state matching API structure
@@ -64,35 +70,6 @@ const EditTemplate = ({
   const [errors, setErrors] = useState({});
   const [isTriggerDisabled, setIsTriggerDisabled] = useState(true);
 
-  // Customize ReactQuill toolbar
-  const modules = {
-    toolbar: [
-      [{ header: [1, 2, 3, 4, 5, 6, false] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      [{ indent: "-1" }, { indent: "+1" }],
-      [{ align: [] }],
-      ["link"],
-      ["clean"],
-    ],
-    clipboard: {
-      matchVisual: false,
-    },
-  };
-
-  const formats = [
-    "header",
-    "bold",
-    "italic",
-    "underline",
-    "strike",
-    "list",
-    "bullet",
-    "indent",
-    "align",
-    "link",
-  ];
-
   // Get triggers for current category
   const getTriggers = () => {
     const triggers = ALL_TRIGGERS[category] || [];
@@ -110,6 +87,29 @@ const EditTemplate = ({
     const trigger = triggers.find((t) => t.value === triggerValue);
     return trigger ? trigger.label : triggerValue.replace(/_/g, " ");
   };
+
+  // Add keyboard event listener for # key
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (
+        e.key === "#" &&
+        e.target.tagName !== "INPUT" &&
+        e.target.tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault();
+        setPlaceholderInsertMode("body"); // Set to body mode
+        setShowPlaceholdersModal(true);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keypress", handleKeyPress);
+    }
+
+    return () => {
+      document.removeEventListener("keypress", handleKeyPress);
+    };
+  }, [isOpen]);
 
   // Fetch template data when modal opens
   useEffect(() => {
@@ -263,17 +263,20 @@ const EditTemplate = ({
   };
 
   const handleVariableInsert = (variableKey) => {
-    const quill = quillRef.current?.getEditor();
-    if (quill) {
-      const selection = quill.getSelection();
-      const position = selection ? selection.index : quill.getLength();
+    // Append the placeholder to the current content
+    const placeholder = `{{${variableKey}}}`;
+    setEditorContent((prev) => prev + placeholder);
+  };
 
-      quill.insertText(position, `{{${variableKey}}}`, "user");
-      quill.setSelection(position + variableKey.length + 4);
-    } else {
-      // Fallback if quill not available
-      setEditorContent((prev) => prev + ` {{${variableKey}}} `);
-    }
+  // Handle inserting placeholder into subject field
+  const handleSubjectVariableInsert = (variableKey) => {
+    const placeholder = `${variableKey}`;
+    const currentSubject = formData.subject || "";
+
+    // For now, just append to the end
+    const newSubject =
+      currentSubject + (currentSubject ? " " : "") + placeholder;
+    handleChange("subject", newSubject);
   };
 
   const validateForm = () => {
@@ -297,8 +300,6 @@ const EditTemplate = ({
     return Object.keys(newErrors).length === 0;
   };
 
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -306,8 +307,6 @@ const EditTemplate = ({
       toast.error("Please fix the form errors before submitting.");
       return;
     }
-
-
 
     setLoading(true);
     try {
@@ -389,6 +388,7 @@ const EditTemplate = ({
     setHasFetchedPlaceholders(false);
     setIsTriggerDisabled(true);
     prevTriggerRef.current = "";
+    setPlaceholderInsertMode("body");
     onClose();
   };
 
@@ -401,6 +401,7 @@ const EditTemplate = ({
   }, [availablePlaceholders]);
 
   // Calculate character count (excluding HTML tags)
+  // Keep this as is - it should work with your RichTextEditor content
   const characterCount = useMemo(() => {
     return formData.emailBody.replace(/<[^>]*>/g, "").length;
   }, [formData.emailBody]);
@@ -443,34 +444,52 @@ const EditTemplate = ({
                       ? getTriggerDisplayName(formData.triggerEvent)
                       : `${category} Category`}
                   </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    {formData.default && (
-                      <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">
-                        Default
-                      </span>
-                    )}
-                
-                  </div>
                 </div>
               </div>
-              <button
-                onClick={handleClose}
-                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+
+              {/* Status Toggle moved to top right */}
+              <div className="flex items-center gap-4">
+                {/* <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg">
+                  <span className="text-sm font-medium">Status:</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.active}
+                      onChange={(e) => handleChange("active", e.target.checked)}
+                      className="sr-only peer"
+                      disabled={formData.default}
+                    />
+                    <div
+                      className={`w-10 h-5 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all ${
+                        formData.default
+                          ? "bg-gray-300 cursor-not-allowed peer-checked:bg-gray-400"
+                          : "bg-gray-300 peer-checked:bg-green-500"
+                      }`}
+                    ></div>
+                    <span className="ml-2 text-sm font-medium">
+                      {formData.active ? "Active" : "Inactive"}
+                    </span>
+                  </label>
+                </div> */}
+                <button
+                  onClick={handleClose}
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -490,16 +509,23 @@ const EditTemplate = ({
             ) : (
               <form onSubmit={handleSubmit}>
                 <div className="space-y-6">
-                  {/* Category and Trigger Display (Read-only) */}
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
-                      {category} Category
-                    </span>
-                    {formData.triggerEvent && (
-                      <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
-                        {getTriggerDisplayName(formData.triggerEvent)}
+                  {/* Category Display (Read-only) */}
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+                        {category} Category
                       </span>
-                    )}
+                      {formData.triggerEvent && (
+                        <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                          {getTriggerDisplayName(formData.triggerEvent)}
+                        </span>
+                      )}
+                      {formData.default && (
+                        <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
+                          Default Template
+                        </span>
+                      )}
+                    </div>
                     {formData.createdAt && (
                       <span className="inline-block px-3 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded-full">
                         Created:{" "}
@@ -508,160 +534,49 @@ const EditTemplate = ({
                     )}
                   </div>
 
-                  {/* Trigger Event (Disabled - Cannot change after creation) */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      Trigger Event
-                    </label>
-                    <div className="relative">
-                      <select
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
-                        value={formData.triggerEvent}
-                        disabled={true}
-                      >
-                        <option value="">
-                          Select {category} Trigger Event
-                        </option>
-                        {getTriggers()
-                          .filter((t) => t.value !== "")
-                          .map((trigger) => (
-                            <option key={trigger.value} value={trigger.value}>
-                              {trigger.label}
-                            </option>
-                          ))}
-                      </select>
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                          />
-                        </svg>
-                      </div>
+                  {/* Template Name and Email Subject in one row */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Template Name */}
+                    <div>
+                      <GlobalInputField
+                        label={
+                          <>
+                            Template Name
+                            <span className="text-red-500 ml-1">*</span>
+                          </>
+                        }
+                        name="templateName"
+                        value={formData.templateName}
+                        onChange={(e) =>
+                          handleChange("templateName", e.target.value)
+                        }
+                        error={errors["templateName"]}
+                        placeholder={`e.g., Standard ${category} ${
+                          formData.triggerEvent
+                            ? getTriggerDisplayName(formData.triggerEvent)
+                            : "Template"
+                        }`}
+                        className="text-sm"
+                      />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Trigger event cannot be changed after template creation
-                    </p>
-                  </div>
 
-                  {/* Template Name */}
-                  <GlobalInputField
-                    label={
-                      <>
-                        Template Name
-                        <span className="text-red-500 ml-1">*</span>
-                      </>
-                    }
-                    name="templateName"
-                    value={formData.templateName}
-                    onChange={(e) =>
-                      handleChange("templateName", e.target.value)
-                    }
-                    error={errors["templateName"]}
-                    placeholder={`e.g., Standard ${category} ${
-                      formData.triggerEvent
-                        ? getTriggerDisplayName(formData.triggerEvent)
-                        : "Template"
-                    }`}
-                    className="text-sm"
-                  />
-
-                  {/* Email Subject */}
-                  <GlobalInputField
-                    label={
-                      <>
-                        Email Subject
-                        <span className="text-red-500 ml-1">*</span>
-                      </>
-                    }
-                    name="subject"
-                    value={formData.subject}
-                    onChange={(e) => handleChange("subject", e.target.value)}
-                    error={errors["subject"]}
-                    placeholder={
-                      category === "TASK"
-                        ? "e.g., Task Update: {{taskTitle}}"
-                        : "e.g., New Proposal: {{proposalNumber}}"
-                    }
-                    className="text-sm"
-                  />
-
-                  {/* Available Placeholders Section */}
-                  {formData.triggerEvent && (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700">
-                            Available Placeholders
-                            {totalPlaceholders > 0 && (
-                              <span className="ml-2 text-xs text-gray-500">
-                                ({totalPlaceholders} available)
-                              </span>
-                            )}
-                          </label>
-                          <p className="text-xs text-gray-500">
-                            Dynamic variables for personalizing emails
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setShowPlaceholdersModal(true)}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2"
-                          disabled={loadingPlaceholders}
-                        >
-                          {loadingPlaceholders ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                              Loading...
-                            </>
-                          ) : (
-                            <>
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
-                                />
-                              </svg>
-                              Browse Placeholders
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Email Body - Rich Text Editor */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        <>
-                          Email Body
-                          <span className="text-red-500 ml-1">*</span>
-                        </>
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-gray-500">
-                          {characterCount} characters
-                        </span>
-                        {totalPlaceholders > 0 && (
+                    {/* Email Subject */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-sm font-semibold text-gray-700">
+                          <>
+                            Email Subject
+                            <span className="text-red-500 ml-1">*</span>
+                          </>
+                        </label>
+                        {formData.triggerEvent && totalPlaceholders > 0 && (
                           <button
                             type="button"
-                            onClick={() => setShowPlaceholdersModal(true)}
-                            className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                            onClick={() => {
+                              setPlaceholderInsertMode("subject");
+                              setShowPlaceholdersModal(true);
+                            }}
+                            className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
                           >
                             <svg
                               className="w-3 h-3"
@@ -676,34 +591,97 @@ const EditTemplate = ({
                                 d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
                               />
                             </svg>
-                            Insert Placeholder
+                            Email Subject Placeholder
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        name="subject"
+                        value={formData.subject}
+                        onChange={(e) =>
+                          handleChange("subject", e.target.value)
+                        }
+                        placeholder={
+                          category === "TASK"
+                            ? "e.g., Task Update: {{taskTitle}}"
+                            : "e.g., New Proposal: {{proposalNumber}}"
+                        }
+                        className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${
+                          errors["subject"]
+                            ? "border-red-500 ring-1 ring-red-500"
+                            : "border-gray-300"
+                        }`}
+                      />
+                      {errors["subject"] && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors["subject"]}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Email Body - Rich Text Editor */}
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-semibold text-gray-700">
+                        <>
+                          Email Body
+                          <span className="text-red-500 ml-1">*</span>
+                        </>
+                      </label>
+
+                      <div className="flex">
+                        <div className="flex items-center gap-3 ml-2">
+                          <span className="text-xs text-gray-500">
+                            {characterCount} characters
+                          </span>
+                        </div>
+                        {formData.triggerEvent && totalPlaceholders > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPlaceholderInsertMode("body");
+                              setShowPlaceholdersModal(true);
+                            }}
+                            className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 ml-2"
+                          >
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
+                              />
+                            </svg>
+                            Email Body Placeholder
                           </button>
                         )}
                       </div>
                     </div>
 
-                    <div
-                      className={`border rounded-lg overflow-hidden ${
-                        errors["emailBody"]
-                          ? "border-red-500 ring-1 ring-red-500"
-                          : "border-gray-300"
-                      }`}
-                    >
-                      <ReactQuill
-                        ref={quillRef}
-                        theme="snow"
-                        value={editorContent}
-                        onChange={setEditorContent}
-                        modules={modules}
-                        formats={formats}
-                        placeholder={
-                          category === "TASK"
-                            ? "Enter your task email content here. Use placeholders like {{taskTitle}}, {{assigneeName}}, {{taskStatus}}, etc."
-                            : "Enter your sales email content here. Use placeholders like {{clientName}}, {{proposalNumber}}, {{amount}}, etc."
-                        }
-                        className="h-48"
-                      />
-                    </div>
+                    {/* Replace this entire div with RichTextEditor */}
+                    <RichTextEditor
+                      value={editorContent}
+                      onChange={(content) => setEditorContent(content)}
+                      placeholder={
+                        category === "TASK"
+                          ? "Enter your task email content here. Use placeholders like {{taskTitle}}, {{assigneeName}}, {{taskStatus}}, etc."
+                          : "Enter your sales email content here. Use placeholders like {{clientName}}, {{proposalNumber}}, {{amount}}, etc."
+                      }
+                      height="300px"
+                      toolbarConfig="email"
+                      label=""
+                      error={errors["emailBody"]}
+                      required={true}
+                      className={errors["emailBody"] ? "border-red-500" : ""}
+                    />
 
                     {errors["emailBody"] && (
                       <p className="text-red-500 text-xs mt-1">
@@ -712,38 +690,7 @@ const EditTemplate = ({
                     )}
                   </div>
 
-                  {/* Status Toggle */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                    <div>
-                      <h3 className="font-medium text-gray-900">
-                        Template Status
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {formData.active
-                          ? "Template is active and available for use"
-                          : "Template is inactive and will not be used"}
-                      </p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.active}
-                        onChange={(e) =>
-                          handleChange("active", e.target.checked)
-                        }
-                        className="sr-only peer"
-                        disabled={formData.default}
-                      />
-                      <div
-                        className={`w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${
-                          formData.default
-                            ? "bg-gray-200 cursor-not-allowed peer-checked:bg-gray-400"
-                            : "bg-gray-200 peer-checked:bg-blue-600"
-                        }`}
-                      ></div>
-                    </label>
-                  </div>
-
+                  {/* Default Template Warning */}
                   {formData.default && (
                     <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                       <div className="flex items-start gap-2">
@@ -772,8 +719,6 @@ const EditTemplate = ({
                       </div>
                     </div>
                   )}
-
-            
                 </div>
               </form>
             )}
@@ -781,53 +726,45 @@ const EditTemplate = ({
 
           {/* Modal Footer */}
           <div className="border-t border-gray-200 bg-gray-50 p-4">
-            <div className="flex items-center justify-between">
-      
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 text-sm font-medium transition-colors"
-                  disabled={loading || isFetching}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={
-                    loading ||
-                    isFetching ||
-                    !formData.triggerEvent 
-                  
-                  }
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      Update Template
-                    </>
-                  )}
-                </button>
-              </div>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 text-sm font-medium transition-colors"
+                disabled={loading || isFetching}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading || isFetching || !formData.triggerEvent}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Update Template
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -836,10 +773,18 @@ const EditTemplate = ({
       {/* Placeholders Modal */}
       <PlaceholdersModal
         isOpen={showPlaceholdersModal}
-        onClose={() => setShowPlaceholdersModal(false)}
+        onClose={() => {
+          setShowPlaceholdersModal(false);
+          setPlaceholderInsertMode("body"); // Reset to default
+        }}
         placeholders={availablePlaceholders}
         triggerEvent={formData.triggerEvent}
-        onInsert={handleVariableInsert}
+        onInsert={
+          placeholderInsertMode === "body"
+            ? handleVariableInsert
+            : handleSubjectVariableInsert
+        }
+        mode={placeholderInsertMode} // Pass the mode for UI indication
       />
     </>
   );
