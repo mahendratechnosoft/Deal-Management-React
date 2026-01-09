@@ -5,6 +5,7 @@ import { useLayout } from "../../Layout/useLayout";
 import ProformaInvoiceDisplay from "./ProformaInvoiceDisplay";
 import CreatePaymentModal from "../Payment/CreatePaymentModal";
 import { useNavigate } from "react-router-dom";
+import SendProformaEmailModal from "../Email/SendProformaEmailModal"; // Import the new component
 
 const formatProformaNumber = (number) => {
   const numberString = String(number || 0);
@@ -244,6 +245,7 @@ const PaymentTabContent = ({ proformaId, currencyType }) => {
 const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
   const [activeTab, setActiveTab] = useState("invoice");
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false); // Add email modal state
   const [paymentRefreshKey, setPaymentRefreshKey] = useState(Date.now());
   const [invoiceData, setInvoiceData] = useState(null);
   const [adminInformation, setAdminInformation] = useState(null);
@@ -338,6 +340,16 @@ const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
     setIsPaymentModalOpen(false);
   };
 
+  // Email modal handlers
+  const handleOpenEmailModal = (e) => {
+    e?.stopPropagation();
+    setIsEmailModalOpen(true);
+  };
+
+  const handleCloseEmailModal = () => {
+    setIsEmailModalOpen(false);
+  };
+
   const handlePaymentSuccess = () => {
     setPaymentRefreshKey(Date.now());
     setActiveTab("payment");
@@ -358,6 +370,31 @@ const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
               {proforma.formatedProformaInvoiceNumber}
             </h3>
             <div className="info-modal-actions">
+              {/* Email Button - Added next to PDF button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenEmailModal();
+                }}
+                className="flex items-center gap-2 px-2 py-2 border border-gray-300 rounded bg-white text-sm font-medium text-green-600 hover:text-green-900 hover:border-green-300"
+                title="Send via Email"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M3 8l7.89-4.78a2 2 0 012.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+                Email
+              </button>
+
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -460,6 +497,18 @@ const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
           </div>
         </div>
       </div>
+
+      {/* Email Modal */}
+      <SendProformaEmailModal
+        isOpen={isEmailModalOpen}
+        onClose={handleCloseEmailModal}
+        proformaId={proforma?.proformaInvoiceId}
+        proformaNumber={proforma?.formatedProformaInvoiceNumber}
+        customerEmail={
+          invoiceData?.proformaInvoiceInfo?.customerInfo?.customerEmail
+        }
+      />
+
       {isPaymentModalOpen && (
         <CreatePaymentModal
           onClose={handleClosePaymentModal}

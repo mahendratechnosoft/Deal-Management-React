@@ -4,6 +4,7 @@ import axiosInstance from "../../BaseComponet/axiosInstance";
 import { useLayout } from "../../Layout/useLayout";
 import ProformaInvoiceDisplay from "../Proforma/ProformaInvoiceDisplay";
 import { formatInvoiceNumber } from "../../BaseComponet/UtilFunctions";
+import SendInvoiceEmailModal from "../Email/SendInvoiceEmailModal";
 
 const InvoiceTabContent = ({
   loading,
@@ -45,7 +46,7 @@ const InvoiceInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
   const [adminInformation, setAdminInformation] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const { role } = useLayout();
-
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   if (!isOpen) {
     return null;
   }
@@ -125,6 +126,14 @@ const InvoiceInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
     };
   }, [invoiceData]);
 
+  // Add these functions
+  const handleOpenEmailModal = () => {
+    setIsEmailModalOpen(true);
+  };
+
+  const handleCloseEmailModal = () => {
+    setIsEmailModalOpen(false);
+  };
   return (
     <>
       <div className="info-modal-backdrop" onClick={onClose}>
@@ -137,6 +146,30 @@ const InvoiceInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
               {proforma.formatedInvoiceNumber}
             </h3>
             <div className="info-modal-actions">
+      
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEmailModalOpen(true);
+                }}
+                className="flex items-center gap-2 px-2 py-2 border border-gray-300 rounded bg-white text-sm font-medium text-green-600 hover:text-green-900 hover:border-green-300"
+                title="Send via Email"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M3 8l7.89-4.78a2 2 0 012.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+                Email
+              </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -201,6 +234,17 @@ const InvoiceInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
           </div>
         </div>
       </div>
+
+      <SendInvoiceEmailModal
+        isOpen={isEmailModalOpen}
+        onClose={handleCloseEmailModal}
+        invoiceId={proforma?.proformaInvoiceId}
+        invoiceNumber={proforma?.formatedInvoiceNumber}
+        customerEmail={
+          invoiceData?.proformaInvoiceInfo?.customerInfo?.customerEmail ||
+          invoiceData?.proformaInvoiceInfo?.email
+        }
+      />
     </>
   );
 };

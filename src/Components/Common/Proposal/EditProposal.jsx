@@ -1242,16 +1242,7 @@ function EditProposal() {
                         error={errors.status}
                       />
 
-                      <FormFileAttachment
-                        label="Attachment"
-                        name="attachment"
-                        fileName={proposalInfo.attachmentFileName}
-                        onChange={handleAttachmentUpload}
-                        onRemove={handleRemoveAttachment}
-                        error={errors.attachmentFile}
-                        background="white"
-                        className="md:col-span-1"
-                      />
+                  
 
                       {/* In your form JSX, find this section: */}
                       <FormFileAttachment
