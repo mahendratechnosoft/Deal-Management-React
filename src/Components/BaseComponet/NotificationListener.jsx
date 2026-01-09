@@ -2,100 +2,137 @@ import { useEffect } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import Mtech_Logo from "../../assets/Images/Mtech_Logo.jpg";
-import {FINAL_KEYWORD_URL} from "../BaseComponet/finalKeyWord"
+import { FINAL_KEYWORD_URL } from "../BaseComponet/finalKeyWord";
 function NotificationListener() {
+  useEffect(() => {
+    if (Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
 
-    useEffect(() => {
-        if (Notification.permission !== "granted") {
-            Notification.requestPermission();
+    const user = JSON.parse(localStorage.getItem("userData"));
+    const employeeId = user?.employeeId;
+    const adminId = user?.adminId;
+    const role = user?.role;
+    const client = new Client({
+      webSocketFactory: () => new SockJS(`${FINAL_KEYWORD_URL}/ws`),
+      reconnectDelay: 5000,
+
+      onConnect: () => {
+        // 👉 EMPLOYEE notifications
+        if (role == "ROLE_EMPLOYEE") {
+          client.subscribe(
+            `/topic/updateTasknotificationsToEmployee/${employeeId}`,
+            (message) => handleStatusUpdateNotification(message)
+          );
+
+          client.subscribe(
+            `/topic/createTasknotifications/${employeeId}`,
+            (message) => handleNotification(message)
+          );
+
+          client.subscribe(
+            `/topic/reminderNotificationToEmployee/${employeeId}`,
+            (message) => handleReminderNotification(message)
+          );
         }
 
-        const user = JSON.parse(localStorage.getItem("userData"));
-        const employeeId = user?.employeeId;
-        const adminId = user?.adminId;
-        const role=user?.role;
-        const client = new Client({
+        // 👉 ADMIN notifications
+        if (role == "ROLE_ADMIN") {
+          client.subscribe(
+            `/topic/updateTasknotificationsToAdmin/${adminId}`,
+            (message) => handleStatusUpdateNotification(message)
+          );
 
-            webSocketFactory: () => new SockJS(`${FINAL_KEYWORD_URL}/ws`),
-            reconnectDelay: 5000,
+          client.subscribe(
+            `/topic/reminderNotificationToAdmin/${adminId}`,
+            (message) => handleReminderNotification(message)
+          );
+        }
+      },
+    });
 
-            onConnect: () => {
-                // 👉 EMPLOYEE notifications
-                if (role=="ROLE_EMPLOYEE") {
-                    client.subscribe(
-                        `/topic/updateTasknotificationsToEmployee/${employeeId}`,
-                        (message) => handleStatusUpdateNotification(message)
-                    );
+    const handleNotification = (message) => {
+      let data;
+      try {
+        data = JSON.parse(message.body);
+      } catch {
+        data = message.body;
+      }
 
-                    client.subscribe(
-                        `/topic/createTasknotifications/${employeeId}`,
-                        (message) => handleNotification(message)
-                    );
-                }
-
-                // 👉 ADMIN notifications
-                if (role=="ROLE_ADMIN") {
-                    client.subscribe(
-                        `/topic/updateTasknotificationsToAdmin/${adminId}`,
-                        (message) => handleStatusUpdateNotification(message)
-                    );
-                }
-            },
-        });
-
-        const handleNotification = (message) => {
-            let data;
-            try {
-                data = JSON.parse(message.body);
-            } catch {
-                data = message.body;
-            }
-
-            const bodyText =
-                typeof data === "string"
-                    ? data
-                    : `Subject: ${data.subject}
+      const bodyText =
+        typeof data === "string"
+          ? data
+          : `Subject: ${data.subject}
                        Priority: ${data.priority}
                        Start: ${data.startDate}
                        End: ${data.endDate}
                        Created by: ${data.createdBy}`;
 
-            if (Notification.permission === "granted") {
-                new Notification("New Task", {
-                    body: bodyText,
-                    icon: Mtech_Logo,
-                });
-            }
-        };
+      if (Notification.permission === "granted") {
+        new Notification("New Task", {
+          body: bodyText,
+          icon: Mtech_Logo,
+        });
+      }
+    };
 
+    const handleStatusUpdateNotification = (message) => {
+      let data;
+      try {
+        data = JSON.parse(message.body);
+      } catch {
+        data = message.body;
+      }
 
-        const handleStatusUpdateNotification = (message) => {
-            let data;
-            try {
-                data = JSON.parse(message.body);
-            } catch {
-                data = message.body;
-            }
-
-            const bodyText =
-                typeof data === "string"
-                    ? data
-                    : `Subject: ${data.subject}
+      const bodyText =
+        typeof data === "string"
+          ? data
+          : `Subject: ${data.subject}
                        Status: ${data.status}`;
 
-            if (Notification.permission === "granted") {
-                new Notification(" Task Status Update", {
-                    body: bodyText,
-                    icon: Mtech_Logo,
-                });
-            }
-        };
+      if (Notification.permission === "granted") {
+        new Notification(" Task Status Update", {
+          body: bodyText,
+          icon: Mtech_Logo,
+        });
+      }
+    };
 
-        client.activate();
-        return () => client.deactivate();
-    }, []);
+    const handleReminderNotification = (message) => {
+      let data;
 
-    return null;
+      try {
+        data = JSON.parse(message.body);
+      } catch (e) {
+        console.error("Invalid reminder notification payload", e);
+        return;
+      }
+
+      const bodyText = `
+        Customer: ${data.customerName || "-"}
+        Module: ${data.relatedModule || "-"}
+        Reference: ${data.reffernceName || "-"}
+        Message: ${data.message || "-"}
+        Created By: ${data.createdBy || "-"}
+  `.trim();
+
+      if (Notification.permission === "granted") {
+        new Notification("🔔 Reminder Alert", {
+          body: bodyText,
+          icon: Mtech_Logo,
+          tag: data.reminderId,
+          requireInteraction: true,
+        });
+      } else {
+        console.warn("Notification permission not granted");
+      }
+    };
+
+    client.activate();
+    return () => client.deactivate();
+  }, []);
+
+  return null;
 }
 
 export default NotificationListener;
