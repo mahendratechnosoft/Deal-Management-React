@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import RichTextEditor from "../../BaseComponet/RichTextEditor";
@@ -34,6 +40,14 @@ const SendProposalEmailModal = ({
   const [pdfBase64, setPdfBase64] = useState("");
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [proposalDataForPdf, setProposalDataForPdf] = useState(null);
+
+  // Refs for cursor position tracking
+  const subjectInputRef = useRef(null);
+  const [subjectCursorPosition, setSubjectCursorPosition] = useState({
+    start: 0,
+    end: 0,
+  });
+  const richTextEditorRef = useRef(null);
 
   // Fetch proposal data for PDF generation
   const fetchProposalDataForPdf = useCallback(async () => {
@@ -331,19 +345,66 @@ const SendProposalEmailModal = ({
     }
   };
 
-  // Handle inserting placeholder into email body
+  // Handle inserting placeholder into email body at cursor position
   const handleVariableInsert = (variableKey) => {
     const placeholder = `${variableKey}`;
-    setEditorContent((prev) => prev + placeholder);
+
+    // Use the exposed method from RichTextEditor to insert at cursor position
+    if (richTextEditorRef.current && richTextEditorRef.current.insertAtCursor) {
+      richTextEditorRef.current.insertAtCursor(placeholder);
+    } else {
+      // Fallback: append at the end
+      setEditorContent((prev) => prev + placeholder);
+    }
   };
 
-  // Handle inserting placeholder into subject field
+  // Handle inserting placeholder into subject field at cursor position
   const handleSubjectVariableInsert = (variableKey) => {
     const placeholder = `${variableKey}`;
     const currentSubject = formData.subject || "";
+
+    // Insert at saved cursor position
+    const { start, end } = subjectCursorPosition;
     const newSubject =
-      currentSubject + (currentSubject ? " " : "") + placeholder;
+      currentSubject.substring(0, start) +
+      placeholder +
+      currentSubject.substring(end);
+
     handleChange("subject", newSubject);
+
+    // Move cursor after inserted placeholder
+    setTimeout(() => {
+      if (subjectInputRef.current) {
+        const newCursorPos = start + placeholder.length;
+        subjectInputRef.current.focus();
+        subjectInputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
+  };
+
+  // Open subject placeholders modal and save cursor position
+  const openSubjectPlaceholdersModal = () => {
+    // Save cursor position from subject input
+    if (subjectInputRef.current) {
+      const start = subjectInputRef.current.selectionStart;
+      const end = subjectInputRef.current.selectionEnd;
+      setSubjectCursorPosition({ start, end });
+    }
+    setPlaceholderInsertMode("subject");
+    setShowPlaceholdersModal(true);
+  };
+
+  // Open body placeholders modal and save cursor position
+  const openBodyPlaceholdersModal = () => {
+    // Save cursor position in rich text editor before opening modal
+    if (
+      richTextEditorRef.current &&
+      richTextEditorRef.current.saveCursorPosition
+    ) {
+      richTextEditorRef.current.saveCursorPosition();
+    }
+    setPlaceholderInsertMode("body");
+    setShowPlaceholdersModal(true);
   };
 
   const validateForm = () => {
@@ -577,10 +638,7 @@ const SendProposalEmailModal = ({
                     {totalPlaceholders > 0 && (
                       <button
                         type="button"
-                        onClick={() => {
-                          setPlaceholderInsertMode("subject");
-                          setShowPlaceholdersModal(true);
-                        }}
+                        onClick={openSubjectPlaceholdersModal}
                         className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
                       >
                         <svg
@@ -601,9 +659,35 @@ const SendProposalEmailModal = ({
                     )}
                   </div>
                   <input
+                    ref={subjectInputRef}
                     type="text"
                     value={formData.subject}
-                    onChange={(e) => handleChange("subject", e.target.value)}
+                    onChange={(e) => {
+                      handleChange("subject", e.target.value);
+                      // Update cursor position on change
+                      setSubjectCursorPosition({
+                        start: e.target.selectionStart,
+                        end: e.target.selectionEnd,
+                      });
+                    }}
+                    onSelect={(e) => {
+                      setSubjectCursorPosition({
+                        start: e.target.selectionStart,
+                        end: e.target.selectionEnd,
+                      });
+                    }}
+                    onKeyUp={(e) => {
+                      setSubjectCursorPosition({
+                        start: e.target.selectionStart,
+                        end: e.target.selectionEnd,
+                      });
+                    }}
+                    onMouseUp={(e) => {
+                      setSubjectCursorPosition({
+                        start: e.target.selectionStart,
+                        end: e.target.selectionEnd,
+                      });
+                    }}
                     placeholder="e.g., Proposal: {{proposalNumber}}"
                     className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${
                       errors.subject
@@ -632,10 +716,7 @@ const SendProposalEmailModal = ({
                       {totalPlaceholders > 0 && (
                         <button
                           type="button"
-                          onClick={() => {
-                            setPlaceholderInsertMode("body");
-                            setShowPlaceholdersModal(true);
-                          }}
+                          onClick={openBodyPlaceholdersModal}
                           className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 ml-2"
                         >
                           <svg
@@ -658,6 +739,7 @@ const SendProposalEmailModal = ({
                   </div>
 
                   <RichTextEditor
+                    ref={richTextEditorRef}
                     value={editorContent}
                     onChange={(content) => setEditorContent(content)}
                     placeholder="Enter your email content here. Use placeholders like {{proposalNumber}}, {{clientName}}, {{amount}}, etc."
