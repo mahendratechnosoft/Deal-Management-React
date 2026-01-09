@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo,  } from "react";
 import axiosInstance from "../../../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import {
@@ -30,6 +30,14 @@ const CreateTemplate = ({
   const mainModalRef = useRef(null);
   const mainContentRef = useRef(null);
   const quillRef = useRef(null);
+
+  const richTextEditorRef = useRef(null);
+
+  const [subjectCursorPosition, setSubjectCursorPosition] = useState({
+    start: 0,
+    end: 0,
+  });
+  const subjectInputRef = useRef(null);
 
   // Centralized trigger configuration for all categories
   const ALL_TRIGGERS = {
@@ -229,28 +237,64 @@ const CreateTemplate = ({
     }
   };
 
-const handleVariableInsert = (variableKey) => {
-  // Since RichTextEditor manages its own content via state,
-  // we'll append the placeholder to the current content
-  const placeholder = `{{${variableKey}}}`;
-  setEditorContent((prev) => prev + placeholder);
+  const handleVariableInsert = (variableKey) => {
+    const placeholder = `${variableKey}`;
 
-  // Focus back on the editor after insertion
-  // You might need to add a ref to RichTextEditor and call focus method
-  // or handle this within the PlaceholdersModal
-};
+    // Use the exposed method from RichTextEditor
+    if (richTextEditorRef.current && richTextEditorRef.current.insertAtCursor) {
+      richTextEditorRef.current.insertAtCursor(placeholder);
+    } else {
+      // Fallback
+      setEditorContent((prev) => prev + placeholder);
+    }
+  };
 
-  // Handle inserting placeholder into subject field
+  const openBodyPlaceholdersModal = () => {
+    // Save cursor position before opening modal
+    if (
+      richTextEditorRef.current &&
+      richTextEditorRef.current.saveCursorPosition
+    ) {
+      richTextEditorRef.current.saveCursorPosition();
+    }
+    setPlaceholderInsertMode("body");
+    setShowPlaceholdersModal(true);
+  };
+
+  // Update handleSubjectVariableInsert to insert at cursor position
   const handleSubjectVariableInsert = (variableKey) => {
     const placeholder = `${variableKey}`;
     const currentSubject = formData.subject || "";
 
-    // If cursor is in subject input, we need a ref to handle that
-    // For now, just append to the end
+    // Insert at saved cursor position
+    const { start, end } = subjectCursorPosition;
     const newSubject =
-      currentSubject + (currentSubject ? " " : "") + placeholder;
+      currentSubject.substring(0, start) +
+      placeholder +
+      currentSubject.substring(end);
+
     handleChange("subject", newSubject);
+
+    // Move cursor after inserted placeholder
+    setTimeout(() => {
+      if (subjectInputRef.current) {
+        const newCursorPos = start + placeholder.length;
+        subjectInputRef.current.focus();
+        subjectInputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
   };
+
+    const openSubjectPlaceholdersModal = () => {
+      // Save cursor position from subject input
+      if (subjectInputRef.current) {
+        const start = subjectInputRef.current.selectionStart;
+        const end = subjectInputRef.current.selectionEnd;
+        setSubjectCursorPosition({ start, end });
+      }
+      setPlaceholderInsertMode("subject");
+      setShowPlaceholdersModal(true);
+    };
 
   const validateForm = () => {
     const newErrors = {};
@@ -494,10 +538,7 @@ const handleVariableInsert = (variableKey) => {
                       {formData.triggerEvent && totalPlaceholders > 0 && (
                         <button
                           type="button"
-                          onClick={() => {
-                            setPlaceholderInsertMode("subject"); // Set to subject mode
-                            setShowPlaceholdersModal(true);
-                          }}
+                          onClick={openSubjectPlaceholdersModal} // Changed to use the new function
                           className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
                         >
                           <svg
@@ -518,10 +559,30 @@ const handleVariableInsert = (variableKey) => {
                       )}
                     </div>
                     <input
+                      ref={subjectInputRef}
                       type="text"
                       name="subject"
                       value={formData.subject}
-                      onChange={(e) => handleChange("subject", e.target.value)}
+                      onChange={(e) => {
+                        handleChange("subject", e.target.value);
+                        // Update cursor position on change
+                        setSubjectCursorPosition({
+                          start: e.target.selectionStart,
+                          end: e.target.selectionEnd,
+                        });
+                      }}
+                      onSelect={(e) => {
+                        setSubjectCursorPosition({
+                          start: e.target.selectionStart,
+                          end: e.target.selectionEnd,
+                        });
+                      }}
+                      onKeyUp={(e) => {
+                        setSubjectCursorPosition({
+                          start: e.target.selectionStart,
+                          end: e.target.selectionEnd,
+                        });
+                      }}
                       placeholder={
                         category === "TASK"
                           ? "e.g., Task Update: {{taskTitle}}"
@@ -561,10 +622,7 @@ const handleVariableInsert = (variableKey) => {
                       {formData.triggerEvent && totalPlaceholders > 0 && (
                         <button
                           type="button"
-                          onClick={() => {
-                            setPlaceholderInsertMode("body");
-                            setShowPlaceholdersModal(true);
-                          }}
+                          onClick={openBodyPlaceholdersModal}
                           className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 ml-2"
                         >
                           <svg
@@ -588,6 +646,7 @@ const handleVariableInsert = (variableKey) => {
 
                   {/* Replace this entire div with RichTextEditor */}
                   <RichTextEditor
+                    ref={richTextEditorRef}
                     value={editorContent}
                     onChange={(content) => setEditorContent(content)}
                     placeholder={
