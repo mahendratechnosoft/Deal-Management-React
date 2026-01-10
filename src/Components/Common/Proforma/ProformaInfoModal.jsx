@@ -6,6 +6,7 @@ import ProformaInvoiceDisplay from "./ProformaInvoiceDisplay";
 import CreatePaymentModal from "../Payment/CreatePaymentModal";
 import { useNavigate } from "react-router-dom";
 import SendProformaEmailModal from "../Email/SendProformaEmailModal"; // Import the new component
+import toast from "react-hot-toast";
 
 const formatProformaNumber = (number) => {
   const numberString = String(number || 0);
@@ -250,6 +251,7 @@ const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
   const [invoiceData, setInvoiceData] = useState(null);
   const [adminInformation, setAdminInformation] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [convertInvoiceLoading, setConvertInvoiceLoading] = useState(false);
   const { role } = useLayout();
 
   if (!isOpen) {
@@ -346,6 +348,23 @@ const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
     setIsEmailModalOpen(true);
   };
 
+  const handleConvertToTaxInvoice = async (proformaInvoiceId) => {
+    setConvertInvoiceLoading(true);
+    try {
+      const result = await axiosInstance.get(
+        `convertProformaToTaxInvoice/${proformaInvoiceId}`
+      );
+      if (result.status !== 200) {
+        toast.error("Failed to convert to tax invoice");
+        proforma.proformaType = "CONVERTED_TAX_INVOICE";
+      }
+    } catch (error) {
+      console.error("Error converting to tax invoice:", error);
+    } finally {
+      setConvertInvoiceLoading(false);
+    }
+  };
+
   const handleCloseEmailModal = () => {
     setIsEmailModalOpen(false);
   };
@@ -370,7 +389,55 @@ const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
               {proforma.formatedProformaInvoiceNumber}
             </h3>
             <div className="info-modal-actions">
-              {/* Email Button - Added next to PDF button */}
+              {proforma.proformaType !== "REIMBURSEMENT" &&
+                (proforma.proformaType === "CONVERTED_TAX_INVOICE" ? (
+                  <span
+                    className="
+                      inline-flex items-center
+                      px-4 py-2
+                      rounded-md
+                      bg-gray-200
+                      text-sm font-semibold text-gray-600
+                      cursor-not-allowed
+                    "
+                    title="Already converted to Tax Invoice"
+                  >
+                    Converted Tax Invoice
+                  </span>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleConvertToTaxInvoice(proforma.proformaInvoiceId);
+                    }}
+                    disabled={convertInvoiceLoading}
+                    title="Convert to Tax Invoice"
+                    className="
+                      inline-flex items-center gap-2
+                      px-4 py-2
+                      rounded-md
+                      bg-green-600
+                      text-sm font-semibold text-white
+                      shadow-sm
+                      transition-all duration-200
+                      hover:bg-green-700
+                      hover:shadow-md
+                      active:scale-95
+                      disabled:bg-green-400
+                      disabled:cursor-not-allowed
+                    "
+                  >
+                    {convertInvoiceLoading ? (
+                      <>
+                        <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Converting...
+                      </>
+                    ) : (
+                      "Convert To Tax Invoice"
+                    )}
+                  </button>
+                ))}
+
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -380,19 +447,19 @@ const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
                 title="Send via Email"
               >
                 <svg
+                  xmlns="http://www.w3.org/2000/svg"
                   className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
                   <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
                     strokeWidth="2"
-                    d="M3 8l7.89-4.78a2 2 0 012.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
                   />
                 </svg>
-                Email
               </button>
 
               <button

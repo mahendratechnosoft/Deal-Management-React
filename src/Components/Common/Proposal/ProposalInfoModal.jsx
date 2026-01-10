@@ -45,7 +45,7 @@ const ProposalInfoModal = ({ isOpen, onClose, proposal, onOpenPdf }) => {
   const { role } = useLayout();
   const navigate = useNavigate();
 
-    const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   if (!isOpen || !proposal) {
     return null;
@@ -237,19 +237,19 @@ const ProposalInfoModal = ({ isOpen, onClose, proposal, onOpenPdf }) => {
                 title="Send via Email"
               >
                 <svg
+                  xmlns="http://www.w3.org/2000/svg"
                   className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
                   <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
                     strokeWidth="2"
-                    d="M3 8l7.89-4.78a2 2 0 012.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
                   />
                 </svg>
-                Email
               </button>
 
               <button
