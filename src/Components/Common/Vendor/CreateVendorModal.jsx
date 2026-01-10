@@ -429,10 +429,25 @@ function CreateVendorModal({ onClose, onSuccess }) {
     if (!vendorSettings || !vendorSettings.prefix) return "";
 
     let prefix = `${vendorSettings.prefix}-`;
+    const dateObj = new Date();
+
     if (vendorSettings.numberFormat === "YEAR") {
-      const dateObj = new Date();
       const year = dateObj.getFullYear();
       prefix = `${prefix}${year}/`;
+    } else if (vendorSettings.numberFormat === "FINANCIAL_YEAR") {
+      const month = dateObj.getMonth();
+      const currentYear = dateObj.getFullYear();
+
+      let fyStart, fyEnd;
+      if (month >= 3) {
+        fyStart = currentYear;
+        fyEnd = currentYear + 1;
+      } else {
+        fyStart = currentYear - 1;
+        fyEnd = currentYear;
+      }
+      const shortEnd = String(fyEnd).slice(-2);
+      prefix = `${prefix}${fyStart}/${shortEnd}/`;
     }
 
     return prefix;

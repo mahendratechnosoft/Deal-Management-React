@@ -615,12 +615,29 @@ function CreateProforma() {
     if (!proformaSettings || !proformaSettings.prefix) return "";
 
     let prefix = `${proformaSettings.prefix}-`;
+
+    const dateObj = proformaInfo.invoiceDate
+      ? new Date(proformaInfo.invoiceDate)
+      : new Date();
+
     if (proformaSettings.numberFormat === "YEAR") {
-      const dateObj = proformaInfo.invoiceDate
-        ? new Date(proformaInfo.invoiceDate)
-        : new Date();
       const year = dateObj.getFullYear();
       prefix = `${prefix}${year}/`;
+    } else if (proformaSettings.numberFormat === "FINANCIAL_YEAR") {
+      const month = dateObj.getMonth();
+      const currentYear = dateObj.getFullYear();
+
+      let fyStart, fyEnd;
+
+      if (month >= 3) {
+        fyStart = currentYear;
+        fyEnd = currentYear + 1;
+      } else {
+        fyStart = currentYear - 1;
+        fyEnd = currentYear;
+      }
+      const shortEnd = String(fyEnd).slice(-2);
+      prefix = `${prefix}${fyStart}/${shortEnd}/`;
     }
 
     return prefix;
