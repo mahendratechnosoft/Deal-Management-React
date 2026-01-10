@@ -67,6 +67,8 @@ function InvoiceList() {
   const { LayoutComponent, role } = useLayout();
 
   const [searchTerm, setSearchTerm] = useState("");
+  // 1. Added status filter state
+  const [statusFilter, setStatusFilter] = useState("");
   const [invoices, setInvoices] = useState([]);
   const [listLoading, setListLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
@@ -87,9 +89,10 @@ function InvoiceList() {
     getIndianFinancialYear()
   );
 
+  // 2. Updated useEffect to watch statusFilter
   useEffect(() => {
-    fetchInvoiceList(0, searchTerm);
-  }, [pageSize, searchTerm]);
+    fetchInvoiceList(0, searchTerm, statusFilter);
+  }, [pageSize, searchTerm, statusFilter]);
 
   useEffect(() => {
     if (showDashboard) {
@@ -113,13 +116,21 @@ function InvoiceList() {
     }
   };
 
-  async function fetchInvoiceList(page = 0, search = "") {
+  // 3. Updated fetch function to include status param
+  async function fetchInvoiceList(page = 0, search = "", status = "") {
     setListLoading(true);
 
     try {
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (search.trim()) params.append("search", search);
+      if (status) params.append("status", status);
+
       let url = `getAllInvoice/${page}/${pageSize}`;
-      if (search.trim()) {
-        url += `?search=${encodeURIComponent(search)}`;
+
+      // Append params if they exist
+      if (Array.from(params).length > 0) {
+        url += `?${params.toString()}`;
       }
 
       const response = await axiosInstance.get(url);
@@ -142,7 +153,7 @@ function InvoiceList() {
   };
 
   const handlePageChange = (newPage) => {
-    fetchInvoiceList(newPage, searchTerm);
+    fetchInvoiceList(newPage, searchTerm, statusFilter);
   };
 
   const handleOpenInfoModal = async (proforma) => {
@@ -150,9 +161,10 @@ function InvoiceList() {
     setIsInfoModalOpen(true);
   };
 
-  const handleCreateProforma = () => {
-    // Assuming you have a create route for invoices or re-using proforma logic
-    navigate("/Invoice/Create");
+  const handleInfoModalClose = () => {
+    setIsInfoModalOpen(false);
+    setSelectedInvoiceForInfo(null);
+    fetchInvoiceList(currentPage, searchTerm, statusFilter);
   };
 
   const handleOpenPdfPreview = async (proformaInvoiceId) => {
@@ -291,6 +303,20 @@ function InvoiceList() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+              {/* 4. Added Dropdown Filter */}
+              <div className="relative">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full sm:w-40 px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white transition-colors duration-200 cursor-pointer"
+                >
+                  <option value="">All Status</option>
+                  <option value="Paid">Paid</option>
+                  <option value="Unpaid">Unpaid</option>
+                  <option value="Partially Paid">Partially Paid</option>
+                </select>
+              </div>
+
               {/* Search Input */}
               <div className="relative flex-1 sm:max-w-64">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -339,7 +365,6 @@ function InvoiceList() {
                     d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                   />
                 </svg>
-                {/* {showDashboard ? "Hide Stats" : "Statistics"} */}
               </button>
             </div>
           </div>
@@ -518,8 +543,8 @@ function InvoiceList() {
                 No invoices found
               </h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm
-                  ? "Try adjusting your search criteria."
+                {searchTerm || statusFilter
+                  ? "Try adjusting your search criteria or filters."
                   : "At Least one invoice need to be paid."}
               </p>
             </div>
@@ -540,7 +565,7 @@ function InvoiceList() {
       {isInfoModalOpen && (
         <InvoiceInfoModal
           isOpen={isInfoModalOpen}
-          onClose={() => setIsInfoModalOpen(false)}
+          onClose={handleInfoModalClose}
           proforma={selectedInvoiceForInfo}
           onOpenPdf={(proformaInvoiceId) => {
             setIsInfoModalOpen(false);
@@ -550,15 +575,17 @@ function InvoiceList() {
       )}
 
       {isPdfModalOpen && (
-        <div className="proposal-pdf-modal-backdrop">
-          <div className="proposal-pdf-modal-content">
-            <div className="proposal-pdf-modal-header">
-              <h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white w-[90%] h-[90vh] rounded-lg flex flex-col overflow-hidden shadow-2xl">
+            {/* --- Modal Header --- */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+              <h3 className="text-xl font-semibold text-gray-800">
                 {invoiceData
                   ? invoiceData.proformaInvoiceInfo.formatedInvoiceNumber
                   : "Loading..."}
               </h3>
-              <div style={{ display: "flex", gap: "10px" }}>
+
+              <div className="flex gap-3">
                 {/* --- Download Button --- */}
                 {!isPdfLoading && invoiceData && (
                   <PDFDownloadLink
@@ -573,42 +600,28 @@ function InvoiceList() {
                       `${invoiceData.proformaInvoiceInfo.formatedInvoiceNumber}-${invoiceData.proformaInvoiceInfo.companyName}.pdf` ||
                       "Invoice.pdf"
                     }
-                    title="Download PDF"
-                    className="download-button-icon-wrapper"
-                    style={{
-                      padding: "0.25rem",
-                      border: "1px solid #ccc",
-                      borderRadius: "4px",
-                      background: "#f9f9f9",
-                      cursor: "pointer",
-                      textDecoration: "none",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      lineHeight: 1,
-                    }}
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 transition-colors"
                   >
                     {({ loading }) =>
                       loading ? (
-                        <span style={{ padding: "0 4px", color: "#333" }}>
-                          ...
-                        </span>
+                        "..."
                       ) : (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth="1.5"
-                          stroke="currentColor"
-                          style={{ width: "20px", height: "16px" }}
-                          className="proposal-download-button-icon"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
-                          />
-                        </svg>
+                        <>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-5 h-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                            />
+                          </svg>
+                        </>
                       )
                     }
                   </PDFDownloadLink>
@@ -617,26 +630,21 @@ function InvoiceList() {
                 {/* --- Close Button --- */}
                 <button
                   onClick={() => setIsPdfModalOpen(false)}
-                  style={{
-                    padding: "0.25rem 0.75rem",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                    background: "#f9f9f9",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                  }}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 transition-colors"
                 >
                   Close
                 </button>
               </div>
             </div>
-            <div className="proposal-pdf-viewer-container">
+
+            {/* --- PDF Viewer Body --- */}
+            <div className="flex-1 w-full overflow-hidden">
               {isPdfLoading || !invoiceData ? (
-                <div style={{ padding: "2rem", textAlign: "center" }}>
+                <div className="flex items-center justify-center h-full text-gray-500">
                   Loading PDF...
                 </div>
               ) : (
-                <PDFViewer width="100%" height="100%">
+                <PDFViewer width="100%" height="100%" className="w-full h-full">
                   <ProformaPDF
                     invoiceData={invoiceData}
                     adminInformation={adminInformation}

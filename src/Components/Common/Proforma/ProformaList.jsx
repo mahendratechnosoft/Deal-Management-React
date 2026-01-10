@@ -257,6 +257,7 @@ function ProformaList() {
       >
         <option value="all">All</option>
         <option value="REIMBURSEMENT">Reimbursement</option>
+        <option value="CONVERTED_TAX_INVOICE">Converted Tax Invoice</option>
 
         {/* Add other proforma types as needed */}
       </select>
@@ -503,8 +504,12 @@ function ProformaList() {
                 <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Proforma #
                 </th>
-                <th className="w-[31%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="w-[20%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   To
+                </th>
+                {/* CENTERED HEADER: Type */}
+                <th className="w-[11%] px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Type
                 </th>
                 <th className="w-[12%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Total
@@ -518,7 +523,8 @@ function ProformaList() {
                 <th className="w-[10%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Due Date
                 </th>
-                <th className="w-[10%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {/* CENTERED HEADER: Status */}
+                <th className="w-[10%] px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
               </tr>
@@ -621,6 +627,26 @@ function ProformaList() {
                       >
                         {proforma.companyName}
                       </td>
+
+                      {/* --- CENTERED TYPE CELL --- */}
+                      <td className="px-4 py-4 text-sm text-gray-900 text-center">
+                        <span
+                          className={`inline-block w-full max-w-[110px] truncate px-3 py-1 rounded text-xs text-center font-semibold uppercase tracking-wide ${
+                            proforma.proformaType === "CONVERTED_TAX_INVOICE"
+                              ? "bg-purple-100 text-purple-600"
+                              : proforma.proformaType === "REIMBURSEMENT"
+                              ? "bg-orange-100 text-orange-600"
+                              : "bg-blue-100 text-blue-600"
+                          }`}
+                        >
+                          {proforma.proformaType === "CONVERTED_TAX_INVOICE"
+                            ? "TAX INVOICE"
+                            : proforma.proformaType === "REIMBURSEMENT"
+                            ? "REIMBURSE"
+                            : "PROFORMA"}
+                        </span>
+                      </td>
+
                       <td className="px-4 py-4 truncate text-sm text-gray-900">
                         {formatCurrency(
                           proforma.totalAmount,
@@ -639,7 +665,9 @@ function ProformaList() {
                       <td className="px-4 py-4 truncate text-sm text-gray-900">
                         {proforma.dueDate}
                       </td>
-                      <td className="px-4 py-4 text-sm text-gray-900">
+
+                      {/* --- CENTERED STATUS CELL --- */}
+                      <td className="px-4 py-4 text-sm text-gray-900 text-center">
                         <span
                           className={`inline-block w-24 truncate px-3 py-1 rounded text-xs text-center font-semibold uppercase tracking-wide ${
                             proforma.status === "Paid"
@@ -794,11 +822,8 @@ function ProformaList() {
 
       {/* PDF Modal */}
       {isPdfModalOpen && (
-        // 1. BACKDROP (Replaces .proposal-pdf-modal-backdrop)
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          {/* 2. CONTENT (Replaces .proposal-pdf-modal-content) */}
           <div className="bg-white w-[90%] h-[90vh] rounded-lg flex flex-col overflow-hidden shadow-2xl">
-            {/* 3. HEADER (Replaces .proposal-pdf-modal-header) */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
               <h3 className="text-xl font-semibold text-gray-800">
                 {selectedProformaData
