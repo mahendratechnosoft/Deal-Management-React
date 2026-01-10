@@ -415,12 +415,29 @@ function CreateProposal() {
     if (!proposalSettings || !proposalSettings.prefix) return "";
 
     let prefix = `${proposalSettings.prefix}-`;
+
+    const dateObj = proposalInfo.proposalDate
+      ? new Date(proposalInfo.proposalDate)
+      : new Date();
+
     if (proposalSettings.numberFormat === "YEAR") {
-      const dateObj = proposalInfo.proposalDate
-        ? new Date(proposalInfo.proposalDate)
-        : new Date();
       const year = dateObj.getFullYear();
       prefix = `${prefix}${year}/`;
+    } else if (proposalSettings.numberFormat === "FINANCIAL_YEAR") {
+      const month = dateObj.getMonth();
+      const currentYear = dateObj.getFullYear();
+
+      let fyStart, fyEnd;
+
+      if (month >= 3) {
+        fyStart = currentYear;
+        fyEnd = currentYear + 1;
+      } else {
+        fyStart = currentYear - 1;
+        fyEnd = currentYear;
+      }
+      const shortEnd = String(fyEnd).slice(-2);
+      prefix = `${prefix}${fyStart}/${shortEnd}/`;
     }
 
     return prefix;
