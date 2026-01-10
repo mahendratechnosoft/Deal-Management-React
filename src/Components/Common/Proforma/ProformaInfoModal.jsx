@@ -253,6 +253,9 @@ const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [convertInvoiceLoading, setConvertInvoiceLoading] = useState(false);
   const { role } = useLayout();
+  const [currentProformaType, setCurrentProformaType] = useState(
+    proforma.proformaType
+  );
 
   if (!isOpen) {
     return null;
@@ -354,12 +357,16 @@ const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
       const result = await axiosInstance.get(
         `convertProformaToTaxInvoice/${proformaInvoiceId}`
       );
-      if (result.status !== 200) {
+      // 3. Update local state on success manually
+      if (result.status === 200) {
+        toast.success("Converted to Tax Invoice successfully");
+        setCurrentProformaType("CONVERTED_TAX_INVOICE");
+      } else {
         toast.error("Failed to convert to tax invoice");
-        proforma.proformaType = "CONVERTED_TAX_INVOICE";
       }
     } catch (error) {
       console.error("Error converting to tax invoice:", error);
+      toast.error(error.response?.data?.message || "Error converting invoice");
     } finally {
       setConvertInvoiceLoading(false);
     }
@@ -389,8 +396,8 @@ const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
               {proforma.formatedProformaInvoiceNumber}
             </h3>
             <div className="info-modal-actions">
-              {proforma.proformaType !== "REIMBURSEMENT" &&
-                (proforma.proformaType === "CONVERTED_TAX_INVOICE" ? (
+              {currentProformaType !== "REIMBURSEMENT" &&
+                (currentProformaType === "CONVERTED_TAX_INVOICE" ? (
                   <span
                     className="
                       inline-flex items-center
