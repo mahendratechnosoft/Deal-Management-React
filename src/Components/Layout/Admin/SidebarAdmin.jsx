@@ -41,6 +41,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
     AMC: "amc",
     Vendor: "vendor",
     Compliance: "compliance",
+    Reminder: "Reminder",
   };
 
   const navigationItems = [
@@ -68,7 +69,32 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-    
+    },
+
+    {
+      name: "Reminder",
+      path: "/Admin/ReminderList",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+          />
+        </svg>
+      ),
     },
 
     {
@@ -89,7 +115,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Proposal",
@@ -109,7 +134,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Proforma",
@@ -129,7 +153,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-    
     },
     {
       name: "Invoice",
@@ -149,7 +172,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Payment",
@@ -169,7 +191,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-  
     },
     {
       name: "AMC",
@@ -195,7 +216,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Vendor",
@@ -215,7 +235,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Item",
@@ -235,7 +254,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Tasks",
@@ -255,8 +273,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-
-
     },
     {
       name: "Timesheet",
@@ -276,7 +292,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-    
     },
     {
       name: "Compliance",
@@ -296,7 +311,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Prospects",
@@ -316,7 +330,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Under Screening",
@@ -336,7 +349,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Selected",
@@ -356,7 +368,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-    
     },
     {
       name: "Shortlisted",
@@ -376,7 +387,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-    
     },
     {
       name: "Quarantined",
@@ -396,7 +406,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-    
     },
     {
       name: "Qualified",
@@ -416,7 +425,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Donor",
@@ -436,7 +444,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-
     },
     {
       name: "FamilyList",
@@ -456,7 +463,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Search Donor",
@@ -476,7 +482,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Semen Enquiry",
@@ -496,7 +501,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-    
     },
     {
       name: "Employee",
@@ -516,7 +520,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Setting",
@@ -542,7 +545,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
           />
         </svg>
       ),
-     
     },
   ];
 

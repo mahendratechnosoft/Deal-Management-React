@@ -136,6 +136,12 @@ const EmailTemplateAttendance = lazy(() =>
 );
 
 
+const ReminderList = lazy(() =>
+  import("../Components/Common/Reminder/ReminderList")
+);
+
+
+
 const AdminRoutes = () => {
   return (
     <RoleBasedRoute allowedRoles={["ROLE_ADMIN"]}>
@@ -186,6 +192,8 @@ const AdminRoutes = () => {
             element={<InvoicePreview />}
           />
           <Route path="TaskList" element={<TaskList />} />
+          <Route path="ReminderList" element={<ReminderList />} />
+
           <Route path="AMC" element={<AmcList />} />
           <Route
             path="VendorContactList/:vendorId"
@@ -195,9 +203,7 @@ const AdminRoutes = () => {
           <Route path="SemenEnquiryList" element={<SemenEnquiryList />} />
           <Route path="EditSemenEnquiry/:id" element={<EditSemenEnquiry />} />
           <Route path="ComplianceList" element={<ComplianceList />} />
-
           {/* ------------Settings--------------- */}
-
           <Route path="Settings" element={<SettingsLayout />}>
             <Route index element={<General />} />
             <Route path="Email" element={<EmailSetting />} />
@@ -223,7 +229,6 @@ const AdminRoutes = () => {
               <Route path="Attendance" element={<EmailTemplateAttendance />} />
             </Route>
           </Route>
-
           {/* ------------Settings END--------------- */}
         </Route>
       </Routes>
