@@ -6,6 +6,7 @@ import ProposalInvoiceDisplay from "./ProposalInvoiceDisplay";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import SendProposalEmailModal from "../Email/SendProposalEmailModal";
+import SalesReminderList from "../Reminder/SalesReminderList";
 
 const ProposalTabContent = ({ loading, proposalData, adminInformation }) => {
   if (loading) {
@@ -36,6 +37,22 @@ const ProposalTabContent = ({ loading, proposalData, adminInformation }) => {
     </div>
   );
 };
+
+// Create a separate tab component for Reminders
+const RemindersTabContent = ({ proposalId }) => {
+  return (
+    <div
+      className="p-4 bg-gray-100 overflow-y-auto"
+      style={{ maxHeight: "calc(80vh - 120px)" }}
+    >
+      <SalesReminderList
+        module="PROPOSAL"
+        referenceId={proposalId}
+      />
+    </div>
+  );
+};
+
 
 const ProposalInfoModal = ({ isOpen, onClose, proposal, onOpenPdf }) => {
   const [activeTab, setActiveTab] = useState("proposal");
@@ -346,6 +363,14 @@ const ProposalInfoModal = ({ isOpen, onClose, proposal, onOpenPdf }) => {
             >
               Proposal
             </button>
+            <button
+              className={`info-modal-tab ${
+                activeTab === "reminders" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("reminders")}
+            >
+              Reminders
+            </button>
           </div>
 
           <div className="info-modal-body p-0">
@@ -355,6 +380,9 @@ const ProposalInfoModal = ({ isOpen, onClose, proposal, onOpenPdf }) => {
                 proposalData={proposalData}
                 adminInformation={adminInformation}
               />
+            )}
+            {activeTab === "reminders" && (
+              <RemindersTabContent proposalId={proposal.proposalId} />
             )}
           </div>
 

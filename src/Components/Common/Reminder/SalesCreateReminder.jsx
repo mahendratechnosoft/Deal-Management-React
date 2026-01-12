@@ -3,7 +3,7 @@ import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import { useLayout } from "../../Layout/useLayout";
 
-function CreateReminder({ onClose, onSuccess }) {
+function SalesCreateReminder({ onClose, onSuccess, module, referenceId }) {
   const { role } = useLayout();
   const [loading, setLoading] = useState(false);
 
@@ -20,12 +20,8 @@ function CreateReminder({ onClose, onSuccess }) {
   };
 
   const [formData, setFormData] = useState({
-    customerName: "",
     message: "",
-    triggerTime: getCurrentDateTime(), // Set to current time initially
-    relatedModule: "",
-    referenceId: "",
-    referenceName: "",
+    triggerTime: getCurrentDateTime(),
     sendEmailToCustomer: false,
     repeatDays: 1,
     recursionLimit: 1, // Default is 1 Time
@@ -34,18 +30,15 @@ function CreateReminder({ onClose, onSuccess }) {
   });
 
   const [errors, setErrors] = useState({});
-  const [leads, setLeads] = useState([]);
-  const [proposals, setProposals] = useState([]);
-  const [customers, setCustomers] = useState([]);
-  const [proformas, setProformas] = useState([]);
-  const [invoices, setInvoices] = useState([]);
 
-  const [loadingLeads, setLoadingLeads] = useState(false);
-  const [loadingProposals, setLoadingProposals] = useState(false);
-  const [loadingCustomers, setLoadingCustomers] = useState(false);
-  const [loadingProformas, setLoadingProformas] = useState(false);
-  const [loadingInvoices, setLoadingInvoices] = useState(false);
+  // Reference details state
+  const [referenceDetails, setReferenceDetails] = useState({
+    customerName: "",
+    referenceName: "",
+  });
+  const [loadingDetails, setLoadingDetails] = useState(true);
 
+  // Employees state
   const [employees, setEmployees] = useState([]);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [loadingEmployees, setLoadingEmployees] = useState(false);
@@ -53,29 +46,7 @@ function CreateReminder({ onClose, onSuccess }) {
   const [employeeSearch, setEmployeeSearch] = useState("");
   const employeeDropdownRef = useRef(null);
 
-  // State for reference dropdown
-  const [showReferenceDropdown, setShowReferenceDropdown] = useState(false);
-  const [referenceSearch, setReferenceSearch] = useState("");
-  const [filteredReferences, setFilteredReferences] = useState([]);
-  const referenceDropdownRef = useRef(null);
-
-  // State for dropdown selections
-  const [selectedRepeatOption, setSelectedRepeatOption] = useState("1");
-  const [selectedLimitOption, setSelectedLimitOption] = useState("1"); // Default is "1" (1 Time)
-  const [showCustomRepeatInput, setShowCustomRepeatInput] = useState(false);
-  const [showCustomLimitInput, setShowCustomLimitInput] = useState(false);
-
-  // Module options as per your requirement
-  const moduleOptions = [
-    { value: "", label: "Select Module" },
-    { value: "LEAD", label: "Lead" },
-    // { value: "CUSTOMER", label: "Customer" },
-    { value: "PROPOSAL", label: "Proposal" },
-    { value: "PROFORMA", label: "Proforma" },
-    { value: "INVOICE", label: "Invoice" },
-  ];
-
-  // Repeat interval options with values in days
+  // Repeat interval options
   const repeatIntervalOptions = [
     { value: "1", label: "1 Day" },
     { value: "7", label: "1 Week" },
@@ -86,29 +57,22 @@ function CreateReminder({ onClose, onSuccess }) {
     { value: "custom", label: "Custom Days" },
   ];
 
-  // Enhanced Recursion limit options with more options
+  // Recursion limit options
   const recursionLimitOptions = [
     { value: "1000", label: "No Limit" },
     { value: "1", label: "1 Time" },
     { value: "2", label: "2 Times" },
     { value: "3", label: "3 Times" },
-    { value: "4", label: "4 Times" },
     { value: "5", label: "5 Times" },
-    { value: "6", label: "6 Times" },
-    { value: "7", label: "7 Times" },
-    { value: "8", label: "8 Times" },
-    { value: "9", label: "9 Times" },
     { value: "10", label: "10 Times" },
-    { value: "12", label: "12 Times" },
-    { value: "15", label: "15 Times" },
-    { value: "20", label: "20 Times" },
-    { value: "25", label: "25 Times" },
-    { value: "30", label: "30 Times" },
-    { value: "40", label: "40 Times" },
-    { value: "50", label: "50 Times" },
-    { value: "100", label: "100 Times" },
     { value: "custom", label: "Custom Limit" },
   ];
+
+  // Selected options for dropdowns
+  const [selectedRepeatOption, setSelectedRepeatOption] = useState("1");
+  const [selectedLimitOption, setSelectedLimitOption] = useState("1");
+  const [showCustomRepeatInput, setShowCustomRepeatInput] = useState(false);
+  const [showCustomLimitInput, setShowCustomLimitInput] = useState(false);
 
   // Fetch employees (only for admin)
   useEffect(() => {
@@ -117,11 +81,14 @@ function CreateReminder({ onClose, onSuccess }) {
     }
   }, [role]);
 
+  // Fetch reference details (customer name, reference name)
   useEffect(() => {
-    // Update showCustomRepeatInput based on selected option
-    setShowCustomRepeatInput(selectedRepeatOption === "custom");
+    fetchReferenceDetails();
+  }, [module, referenceId]);
 
-    // If not custom and not empty, update formData
+  // Update form data when repeat option changes
+  useEffect(() => {
+    setShowCustomRepeatInput(selectedRepeatOption === "custom");
     if (selectedRepeatOption !== "custom" && selectedRepeatOption !== "") {
       setFormData((prev) => ({
         ...prev,
@@ -130,16 +97,14 @@ function CreateReminder({ onClose, onSuccess }) {
     }
   }, [selectedRepeatOption]);
 
+  // Update form data when limit option changes
   useEffect(() => {
-    // Update showCustomLimitInput based on selected option
     setShowCustomLimitInput(selectedLimitOption === "custom");
-
-    // If not custom and not empty, update formData
     if (selectedLimitOption !== "custom" && selectedLimitOption !== "") {
-      // For all options including "No Limit" (0), set the value directly
+      const limitValue = parseInt(selectedLimitOption);
       setFormData((prev) => ({
         ...prev,
-        recursionLimit: parseInt(selectedLimitOption),
+        recursionLimit: limitValue === 1000 ? 0 : limitValue, // 1000 is "No Limit" which maps to 0
       }));
     }
   }, [selectedLimitOption]);
@@ -161,50 +126,14 @@ function CreateReminder({ onClose, onSuccess }) {
     }
   }, [employeeSearch, employees]);
 
-  // Filter references based on search
-  useEffect(() => {
-    if (!formData.relatedModule || getCurrentModuleLoading()) {
-      setFilteredReferences([]);
-      return;
-    }
-
-    if (referenceSearch.trim() === "") {
-      setFilteredReferences(getCurrentModuleData());
-    } else {
-      const searchTerm = referenceSearch.toLowerCase().trim();
-      const filtered = getCurrentModuleData().filter((item) => {
-        const itemText = formatReferenceOption(item).toLowerCase();
-        return itemText.includes(searchTerm);
-      });
-      setFilteredReferences(filtered);
-    }
-  }, [
-    referenceSearch,
-    formData.relatedModule,
-    leads,
-    proposals,
-    customers,
-    proformas,
-    invoices,
-  ]);
-
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Close employee dropdown
       if (
         employeeDropdownRef.current &&
         !employeeDropdownRef.current.contains(event.target)
       ) {
         setShowEmployeeDropdown(false);
-      }
-
-      // Close reference dropdown
-      if (
-        referenceDropdownRef.current &&
-        !referenceDropdownRef.current.contains(event.target)
-      ) {
-        setShowReferenceDropdown(false);
       }
     };
 
@@ -214,6 +143,7 @@ function CreateReminder({ onClose, onSuccess }) {
     };
   }, []);
 
+  // Fetch employees
   const fetchEmployees = async () => {
     setLoadingEmployees(true);
     try {
@@ -235,131 +165,97 @@ function CreateReminder({ onClose, onSuccess }) {
     }
   };
 
-  // Fetch data based on selected module
-  useEffect(() => {
-    if (!formData.relatedModule) {
-      // Clear all data if no module selected
-      setLeads([]);
-      setProposals([]);
-      setCustomers([]);
-      setProformas([]);
-      setInvoices([]);
-      setFilteredReferences([]);
+  // Fetch reference details based on module - UPDATED TO INCLUDE LEAD
+  const fetchReferenceDetails = async () => {
+    if (!module || !referenceId) {
+      setReferenceDetails({
+        customerName: "",
+        referenceName: "",
+      });
+      setLoadingDetails(false);
       return;
     }
 
-    switch (formData.relatedModule) {
-      case "LEAD":
-        fetchLeads();
-        break;
-      case "CUSTOMER":
-        fetchCustomers();
-        break;
-      case "PROPOSAL":
-        fetchProposals();
-        break;
-      case "PROFORMA":
-        fetchProformas();
-        break;
-      case "INVOICE":
-        fetchInvoices();
-        break;
-      default:
-        break;
-    }
-  }, [formData.relatedModule]);
-
-  const fetchLeads = async () => {
-    setLoadingLeads(true);
+    setLoadingDetails(true);
     try {
-      const response = await axiosInstance.get("getLeadNameAndIdWithConverted");
-      if (response.data && Array.isArray(response.data)) {
-        setLeads(response.data);
-        setFilteredReferences(response.data);
+      let endpoint = "";
+
+      // Set endpoint based on module
+      switch (module) {
+        case "LEAD":
+          endpoint = `getLeadById/${referenceId}`;
+          break;
+        case "PROPOSAL":
+          endpoint = `getProposalById/${referenceId}`;
+          break;
+        case "PROFORMA":
+          endpoint = `getProformaInvoiceById/${referenceId}`;
+          break;
+        case "INVOICE":
+          endpoint = `getInvoiceById/${referenceId}`;
+          break;
+        default:
+          throw new Error(`Unsupported module: ${module}`);
+      }
+
+      const response = await axiosInstance.get(endpoint);
+
+      if (response.data) {
+        let customerName = "";
+        let referenceName = "";
+
+        // Extract details based on module structure
+        if (module === "LEAD") {
+          // Handle LEAD data structure
+          const leadData = response.data.lead || response.data;
+          customerName = leadData.clientName || leadData.companyName || "";
+          referenceName = leadData.companyName || leadData.clientName || "";
+        } else if (module === "PROPOSAL" && response.data.proposalInfo) {
+          customerName =
+            response.data.proposalInfo.customerInfo?.companyName ||
+            response.data.proposalInfo.customerInfo?.customerName ||
+            "";
+          referenceName =
+            response.data.proposalInfo.formatedProposalNumber || "";
+        } else if (module === "PROFORMA" && response.data.proformaInvoiceInfo) {
+          customerName =
+            response.data.proformaInvoiceInfo.customerInfo?.companyName || "";
+          referenceName =
+            response.data.proformaInvoiceInfo.formatedProformaInvoiceNumber ||
+            "";
+        } else if (module === "INVOICE" && response.data.invoiceInfo) {
+          customerName =
+            response.data.invoiceInfo.customerInfo?.companyName || "";
+          referenceName = response.data.invoiceInfo.formatedInvoiceNumber || "";
+        }
+
+        setReferenceDetails({
+          customerName,
+          referenceName,
+        });
       }
     } catch (error) {
-      console.error("Error fetching leads:", error);
-      toast.error("Failed to load leads");
+      console.error("Error fetching reference details:", error);
+      toast.error("Failed to load details");
+      setReferenceDetails({
+        customerName: "",
+        referenceName: "",
+      });
     } finally {
-      setLoadingLeads(false);
-    }
-  };
-
-  const fetchCustomers = async () => {
-    setLoadingCustomers(true);
-    try {
-      const response = await axiosInstance.get("getCustomerListWithNameAndId");
-      if (response.data && Array.isArray(response.data)) {
-        setCustomers(response.data);
-        setFilteredReferences(response.data);
-      }
-    } catch (error) {
-      console.error("Error fetching customers:", error);
-      toast.error("Failed to load customers");
-    } finally {
-      setLoadingCustomers(false);
-    }
-  };
-
-  const fetchProposals = async () => {
-    setLoadingProposals(true);
-    try {
-      const response = await axiosInstance.get("getProposalNumberAndId");
-      if (response.data && Array.isArray(response.data)) {
-        setProposals(response.data);
-        setFilteredReferences(response.data);
-      }
-    } catch (error) {
-      console.error("Error fetching proposals:", error);
-      toast.error("Failed to load proposals");
-    } finally {
-      setLoadingProposals(false);
-    }
-  };
-
-  const fetchProformas = async () => {
-    setLoadingProformas(true);
-    try {
-      const response = await axiosInstance.get("getProformaNumberAndId");
-      if (response.data && Array.isArray(response.data)) {
-        setProformas(response.data);
-        setFilteredReferences(response.data);
-      }
-    } catch (error) {
-      console.error("Error fetching proformas:", error);
-      toast.error("Failed to load proformas");
-    } finally {
-      setLoadingProformas(false);
-    }
-  };
-
-  const fetchInvoices = async () => {
-    setLoadingInvoices(true);
-    try {
-      const response = await axiosInstance.get("getInvoiceNumberAndId");
-      if (response.data && Array.isArray(response.data)) {
-        setInvoices(response.data);
-        setFilteredReferences(response.data);
-      }
-    } catch (error) {
-      console.error("Error fetching invoices:", error);
-      toast.error("Failed to load invoices");
-    } finally {
-      setLoadingInvoices(false);
+      setLoadingDetails(false);
     }
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
-    // Special handling for recursionLimit when user types in custom input
+    // Special handling for recursionLimit
     if (name === "recursionLimit") {
       const numValue = value === "" ? 0 : parseInt(value);
       setFormData((prev) => ({
         ...prev,
         [name]: numValue,
       }));
-      // When user types in custom input, set dropdown to "custom"
       setSelectedLimitOption("custom");
     } else {
       setFormData((prev) => ({
@@ -375,75 +271,6 @@ function CreateReminder({ onClose, onSuccess }) {
         [name]: "",
       }));
     }
-
-    // When reference selection changes, update referenceName and customerName
-    if (name === "referenceId" && formData.relatedModule) {
-      let selectedItem = null;
-      let customerNameValue = "";
-      let referenceNameValue = "";
-
-      switch (formData.relatedModule) {
-        case "LEAD":
-          selectedItem = leads.find((lead) => lead.leadId === value);
-          if (selectedItem) {
-            customerNameValue = selectedItem.companyName || "";
-            referenceNameValue = selectedItem.clientName || "";
-          }
-          break;
-        case "CUSTOMER":
-          selectedItem = customers.find((cust) => cust.id === value);
-          if (selectedItem) {
-            customerNameValue = selectedItem.companyName || "";
-            referenceNameValue = selectedItem.companyName || "";
-          }
-          break;
-        case "PROPOSAL":
-          selectedItem = proposals.find((prop) => prop.proposalId === value);
-          if (selectedItem) {
-            customerNameValue = selectedItem.companyName || "";
-            referenceNameValue = selectedItem.formatedProposalNumber || "";
-          }
-          break;
-        case "PROFORMA":
-          selectedItem = proformas.find(
-            (proforma) => proforma.proformaInvoiceId === value
-          );
-          if (selectedItem) {
-            customerNameValue = selectedItem.companyName || "";
-            referenceNameValue =
-              selectedItem.formatedProformaInvoiceNumber || "";
-          }
-          break;
-        case "INVOICE":
-          selectedItem = invoices.find((inv) => inv.invoiceId === value);
-          if (selectedItem) {
-            customerNameValue = selectedItem.companyName || "";
-            referenceNameValue = selectedItem.formatedInvoiceNumber || "";
-          }
-          break;
-        default:
-          break;
-      }
-
-      setFormData((prev) => ({
-        ...prev,
-        referenceId: value,
-        referenceName: referenceNameValue,
-        customerName: customerNameValue,
-      }));
-    }
-
-    // When module changes, reset reference fields
-    if (name === "relatedModule") {
-      setFormData((prev) => ({
-        ...prev,
-        referenceId: "",
-        referenceName: "",
-        customerName: "",
-      }));
-      setShowReferenceDropdown(false);
-      setReferenceSearch("");
-    }
   };
 
   // Handle employee selection
@@ -456,54 +283,9 @@ function CreateReminder({ onClose, onSuccess }) {
     setEmployeeSearch("");
   };
 
-  // Handle employee search input change
+  // Handle employee search
   const handleEmployeeSearchChange = (e) => {
     setEmployeeSearch(e.target.value);
-  };
-
-  // Handle reference selection
-  const handleReferenceSelect = (item) => {
-    let customerNameValue = "";
-    let referenceNameValue = "";
-
-    switch (formData.relatedModule) {
-      case "LEAD":
-        customerNameValue = item.companyName || "";
-        referenceNameValue = item.clientName || "";
-        break;
-      case "CUSTOMER":
-        customerNameValue = item.companyName || "";
-        referenceNameValue = item.companyName || "";
-        break;
-      case "PROPOSAL":
-        customerNameValue = item.companyName || "";
-        referenceNameValue = item.formatedProposalNumber || "";
-        break;
-      case "PROFORMA":
-        customerNameValue = item.companyName || "";
-        referenceNameValue = item.formatedProformaInvoiceNumber || "";
-        break;
-      case "INVOICE":
-        customerNameValue = item.companyName || "";
-        referenceNameValue = item.formatedInvoiceNumber || "";
-        break;
-      default:
-        break;
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      referenceId: getReferenceValue(item),
-      referenceName: referenceNameValue,
-      customerName: customerNameValue,
-    }));
-    setShowReferenceDropdown(false);
-    setReferenceSearch("");
-  };
-
-  // Handle reference search input change
-  const handleReferenceSearchChange = (e) => {
-    setReferenceSearch(e.target.value);
   };
 
   // Handle recurring type toggle
@@ -514,47 +296,34 @@ function CreateReminder({ onClose, onSuccess }) {
     }));
   };
 
-  // Handle repeat interval dropdown change
+  // Handle repeat interval change
   const handleRepeatOptionChange = (e) => {
-    const value = e.target.value;
-    setSelectedRepeatOption(value);
+    setSelectedRepeatOption(e.target.value);
   };
 
-  // Handle recursion limit dropdown change
+  // Handle recursion limit change
   const handleLimitOptionChange = (e) => {
-    const value = e.target.value;
-    setSelectedLimitOption(value);
+    setSelectedLimitOption(e.target.value);
   };
 
   const validateForm = () => {
     const newErrors = {};
 
-    // Message validation - required and max 500 characters
+    // Message validation
     if (!formData.message.trim()) {
       newErrors.message = "Message is required";
     } else if (formData.message.trim().length > 500) {
       newErrors.message = "Message cannot exceed 500 characters";
     }
 
-    // Trigger time validation - check if it's empty or invalid
+    // Trigger time validation
     if (!formData.triggerTime) {
       newErrors.triggerTime = "Trigger time is required";
     } else {
-      // Additional validation: Ensure trigger time is not in the past
       const triggerDateTime = new Date(formData.triggerTime);
       const now = new Date();
       if (triggerDateTime < now) {
         newErrors.triggerTime = "Trigger time cannot be in the past";
-      }
-    }
-
-    // Module validation
-    if (!formData.relatedModule) {
-      newErrors.relatedModule = "Please select a module";
-    } else {
-      // If module is selected, reference must also be selected
-      if (!formData.referenceId) {
-        newErrors.referenceId = `Please select a ${formData.relatedModule.toLowerCase()}`;
       }
     }
 
@@ -575,27 +344,25 @@ function CreateReminder({ onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Clear all errors before validation
     setErrors({});
 
     const isValid = validateForm();
 
     if (!isValid) {
-      // Show a generic error message
       toast.error("Please check the form for errors");
       return;
     }
 
     setLoading(true);
     try {
-      // Prepare payload - Send recursionLimit as is (0 for No Limit, actual numbers for others)
+      // Prepare payload
       const payload = {
-        customerName: formData.customerName.trim(),
+        customerName: referenceDetails.customerName,
         message: formData.message.trim(),
         triggerTime: formData.triggerTime,
-        relatedModule: formData.relatedModule,
-        referenceId: formData.referenceId || null,
-        referenceName: formData.referenceName || "",
+        relatedModule: module,
+        referenceId: referenceId,
+        referenceName: referenceDetails.referenceName,
         sendEmailToCustomer: formData.sendEmailToCustomer,
         repeatDays:
           formData.recurringType === "recurring"
@@ -613,13 +380,11 @@ function CreateReminder({ onClose, onSuccess }) {
         payload.employeeId = formData.employeeId;
       }
 
-      console.log("Creating reminder with payload:", payload);
+      await axiosInstance.post("createReminder", payload);
 
-      const response = await axiosInstance.post("createReminder", payload);
-
-    //   toast.success("Reminder created successfully!");
-      onSuccess(response.data);
-      onClose(); // Close modal on success
+      toast.success("Reminder created successfully!");
+      onSuccess();
+      onClose();
     } catch (error) {
       console.error("Error creating reminder:", error);
       toast.error(error.response?.data?.message || "Failed to create reminder");
@@ -628,105 +393,9 @@ function CreateReminder({ onClose, onSuccess }) {
     }
   };
 
-  // Get min date for trigger time (current time)
+  // Get min date for trigger time
   const getMinTriggerTime = () => {
     return getCurrentDateTime();
-  };
-
-  // Helper function to get loading state for current module
-  const getCurrentModuleLoading = () => {
-    switch (formData.relatedModule) {
-      case "LEAD":
-        return loadingLeads;
-      case "CUSTOMER":
-        return loadingCustomers;
-      case "PROPOSAL":
-        return loadingProposals;
-      case "PROFORMA":
-        return loadingProformas;
-      case "INVOICE":
-        return loadingInvoices;
-      default:
-        return false;
-    }
-  };
-
-  // Helper function to get data for current module
-  const getCurrentModuleData = () => {
-    switch (formData.relatedModule) {
-      case "LEAD":
-        return leads;
-      case "CUSTOMER":
-        return customers;
-      case "PROPOSAL":
-        return proposals;
-      case "PROFORMA":
-        return proformas;
-      case "INVOICE":
-        return invoices;
-      default:
-        return [];
-    }
-  };
-
-  // Helper function to get label for reference dropdown
-  const getReferenceLabel = () => {
-    switch (formData.relatedModule) {
-      case "LEAD":
-        return "Select Lead";
-      case "CUSTOMER":
-        return "Select Customer";
-      case "PROPOSAL":
-        return "Select Proposal";
-      case "PROFORMA":
-        return "Select Proforma";
-      case "INVOICE":
-        return "Select Invoice";
-      default:
-        return "Select";
-    }
-  };
-
-  // Helper function to format reference option label
-  const formatReferenceOption = (item) => {
-    switch (formData.relatedModule) {
-      case "LEAD":
-        return `${item.clientName} - ${item.companyName}`;
-      case "CUSTOMER":
-        return `${item.companyName || item.name} (${item.email || "No email"})`;
-      case "PROPOSAL":
-        return `${
-          item.formatedProposalNumber || `Proposal #${item.proposalNumber}`
-        } - ${item.companyName}`;
-      case "PROFORMA":
-        return `${item.formatedProformaInvoiceNumber || "Proforma"} - ${
-          item.companyName
-        }`;
-      case "INVOICE":
-        return `${item.formatedInvoiceNumber || "Invoice"} - ${
-          item.companyName
-        }`;
-      default:
-        return String(item.name || item.title || `Item #${item.id}`);
-    }
-  };
-
-  // Helper function to get reference value
-  const getReferenceValue = (item) => {
-    switch (formData.relatedModule) {
-      case "LEAD":
-        return item.leadId;
-      case "CUSTOMER":
-        return item.id;
-      case "PROPOSAL":
-        return item.proposalId;
-      case "PROFORMA":
-        return item.proformaInvoiceId;
-      case "INVOICE":
-        return item.invoiceId;
-      default:
-        return item.id;
-    }
   };
 
   // Get selected employee name
@@ -736,26 +405,8 @@ function CreateReminder({ onClose, onSuccess }) {
     return employee ? employee.label : "";
   };
 
-  // Get selected reference name
-  const getSelectedReferenceName = () => {
-    if (!formData.referenceId) return "";
-    const item = getCurrentModuleData().find(
-      (item) => getReferenceValue(item) === formData.referenceId
-    );
-    return item ? formatReferenceOption(item) : "";
-  };
-
   // Character counter for message
   const messageLength = formData.message.length;
-
-  // Reset form when modal opens (optional)
-  useEffect(() => {
-    // Reset form with current time when component mounts
-    setFormData((prev) => ({
-      ...prev,
-      triggerTime: getCurrentDateTime(),
-    }));
-  }, []);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-3 z-50">
@@ -780,9 +431,10 @@ function CreateReminder({ onClose, onSuccess }) {
                 </svg>
               </div>
               <div>
-                <h2 className="text-lg font-bold">Create New Reminder</h2>
+                <h2 className="text-lg font-bold">Create Reminder</h2>
                 <p className="text-blue-100 text-xs">
-                  Set up a reminder for follow-ups
+                  Set reminder for {module.toLowerCase()}:{" "}
+                  {referenceDetails.referenceName}
                 </p>
               </div>
             </div>
@@ -809,7 +461,43 @@ function CreateReminder({ onClose, onSuccess }) {
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-3">
-          <form onSubmit={handleSubmit} id="reminder-form">
+          <form onSubmit={handleSubmit}>
+            {/* Reference Info */}
+            <div className="mb-3 p-3 bg-gray-50 rounded border border-gray-200">
+              <div className="text-xs text-gray-500 mb-1 font-medium">
+                Reference
+              </div>
+              <div className="text-sm">
+                {loadingDetails ? (
+                  <div className="flex items-center">
+                    <div className="h-3 w-20 bg-gray-200 rounded animate-pulse mr-2"></div>
+                    <div className="h-3 w-32 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium">Module:</span>
+                      <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">
+                        {module}
+                      </span>
+                    </div>
+                    {referenceDetails.referenceName && (
+                      <div className="mb-1">
+                        <span className="font-medium">Reference:</span>{" "}
+                        {referenceDetails.referenceName}
+                      </div>
+                    )}
+                    {referenceDetails.customerName && (
+                      <div>
+                        <span className="font-medium">Customer:</span>{" "}
+                        {referenceDetails.customerName}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
             {/* Trigger Time */}
             <div className="mb-3">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -827,15 +515,13 @@ function CreateReminder({ onClose, onSuccess }) {
                     : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                 }`}
               />
-              <p className="mt-1 text-xs text-gray-500">
-                Set the date and time for the reminder
-              </p>
               {errors.triggerTime && (
                 <p className="mt-1 text-xs text-red-600">
                   {errors.triggerTime}
                 </p>
               )}
             </div>
+
             {/* Message */}
             <div className="mb-3">
               <div className="flex justify-between items-center mb-1">
@@ -847,7 +533,7 @@ function CreateReminder({ onClose, onSuccess }) {
                     messageLength > 500 ? "text-red-500" : "text-gray-500"
                   }`}
                 >
-                  {messageLength}/500 characters
+                  {messageLength}/500
                 </span>
               </div>
               <textarea
@@ -861,152 +547,12 @@ function CreateReminder({ onClose, onSuccess }) {
                     ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                     : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                 }`}
-                placeholder="Enter reminder message (max 500 characters)"
+                placeholder="Enter reminder message..."
               />
               {errors.message && (
                 <p className="mt-1 text-xs text-red-600">{errors.message}</p>
               )}
             </div>
-
-            {/* Related Module */}
-            <div className="mb-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Related Module *
-              </label>
-              <select
-                name="relatedModule"
-                value={formData.relatedModule}
-                onChange={handleChange}
-                className={`w-full px-3 py-1.5 border rounded text-sm ${
-                  errors.relatedModule
-                    ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                    : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                }`}
-              >
-                {moduleOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              {errors.relatedModule && (
-                <p className="mt-1 text-xs text-red-600">
-                  {errors.relatedModule}
-                </p>
-              )}
-            </div>
-
-            {/* Reference Selection (conditional) */}
-            {formData.relatedModule && (
-              <div className="mb-3" ref={referenceDropdownRef}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {getReferenceLabel()} *
-                </label>
-                <div className="relative">
-                  {/* Custom dropdown trigger */}
-                  <div
-                    className={`w-full px-3 py-1.5 border rounded text-sm bg-white flex items-center justify-between cursor-pointer ${
-                      errors.referenceId ? "border-red-300" : "border-gray-300"
-                    } ${getCurrentModuleLoading() ? "opacity-50" : ""}`}
-                    onClick={() =>
-                      !getCurrentModuleLoading() &&
-                      setShowReferenceDropdown(!showReferenceDropdown)
-                    }
-                  >
-                    <span
-                      className={
-                        formData.referenceId ? "text-gray-800" : "text-gray-500"
-                      }
-                    >
-                      {formData.referenceId
-                        ? getSelectedReferenceName()
-                        : `Select a ${formData.relatedModule.toLowerCase()}`}
-                    </span>
-                    <svg
-                      className={`w-4 h-4 text-gray-400 transition-transform ${
-                        showReferenceDropdown ? "transform rotate-180" : ""
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
-
-                  {/* Custom dropdown menu - using portal-like positioning */}
-                  {showReferenceDropdown && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-hidden">
-                      {/* Search input */}
-                      <div className="p-2 border-b border-gray-200">
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={referenceSearch}
-                            onChange={handleReferenceSearchChange}
-                            placeholder={`Search ${formData.relatedModule.toLowerCase()}s...`}
-                            className="w-full px-3 py-1.5 pl-9 border border-gray-300 rounded text-sm focus:ring-blue-500 focus:border-blue-500"
-                            autoFocus
-                          />
-                          <svg
-                            className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                            />
-                          </svg>
-                        </div>
-                      </div>
-
-                      {/* Reference list */}
-                      <div className="max-h-48 overflow-y-auto">
-                        {getCurrentModuleLoading() ? (
-                          <div className="py-3 px-3 text-center text-sm text-gray-500">
-                            Loading {formData.relatedModule.toLowerCase()}s...
-                          </div>
-                        ) : filteredReferences.length === 0 ? (
-                          <div className="py-3 px-3 text-center text-sm text-gray-500">
-                            {referenceSearch
-                              ? `No ${formData.relatedModule.toLowerCase()}s found`
-                              : `No ${formData.relatedModule.toLowerCase()}s available`}
-                          </div>
-                        ) : (
-                          filteredReferences.map((item) => (
-                            <div
-                              key={getReferenceValue(item)}
-                              className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 ${
-                                formData.referenceId === getReferenceValue(item)
-                                  ? "bg-blue-50 text-blue-600"
-                                  : "text-gray-700"
-                              }`}
-                              onClick={() => handleReferenceSelect(item)}
-                            >
-                              {formatReferenceOption(item)}
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {errors.referenceId && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {errors.referenceId}
-                  </p>
-                )}
-              </div>
-            )}
 
             {/* Employee Selection (only for admin) */}
             {role === "ROLE_ADMIN" && (
@@ -1015,7 +561,6 @@ function CreateReminder({ onClose, onSuccess }) {
                   Assign to Employee (Optional)
                 </label>
                 <div className="relative">
-                  {/* Custom dropdown trigger */}
                   <div
                     className={`w-full px-3 py-1.5 border border-gray-300 rounded text-sm bg-white flex items-center justify-between cursor-pointer ${
                       loadingEmployees ? "opacity-50" : ""
@@ -1051,10 +596,8 @@ function CreateReminder({ onClose, onSuccess }) {
                     </svg>
                   </div>
 
-                  {/* Custom dropdown menu - using portal-like positioning */}
                   {showEmployeeDropdown && (
                     <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-hidden">
-                      {/* Search input */}
                       <div className="p-2 border-b border-gray-200">
                         <div className="relative">
                           <input
@@ -1081,7 +624,6 @@ function CreateReminder({ onClose, onSuccess }) {
                         </div>
                       </div>
 
-                      {/* Employee list */}
                       <div className="max-h-48 overflow-y-auto">
                         {loadingEmployees ? (
                           <div className="py-3 px-3 text-center text-sm text-gray-500">
@@ -1127,13 +669,10 @@ function CreateReminder({ onClose, onSuccess }) {
                     </div>
                   )}
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  Select an employee to assign this reminder
-                </p>
               </div>
             )}
 
-            {/* Recurring Options - Toggle Style */}
+            {/* Recurring Options */}
             <div className="mb-3 p-3 border border-gray-200 rounded">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Reminder Type
@@ -1162,7 +701,7 @@ function CreateReminder({ onClose, onSuccess }) {
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    <span>One-time Reminder</span>
+                    <span>One-time</span>
                   </div>
                 </button>
 
@@ -1189,7 +728,7 @@ function CreateReminder({ onClose, onSuccess }) {
                         d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                       />
                     </svg>
-                    <span>Recurring Reminder</span>
+                    <span>Recurring</span>
                   </div>
                 </button>
               </div>
@@ -1197,7 +736,7 @@ function CreateReminder({ onClose, onSuccess }) {
               {formData.recurringType === "recurring" && (
                 <div className="mt-3 space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {/* Repeat Interval Dropdown */}
+                    {/* Repeat Interval */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">
                         Repeat Every *
@@ -1214,8 +753,6 @@ function CreateReminder({ onClose, onSuccess }) {
                             </option>
                           ))}
                         </select>
-
-                        {/* Custom days input (only shown when custom is selected) */}
                         {showCustomRepeatInput && (
                           <div className="relative">
                             <input
@@ -1229,7 +766,7 @@ function CreateReminder({ onClose, onSuccess }) {
                                   ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                                   : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                               }`}
-                              placeholder="Enter number of days"
+                              placeholder="Enter days"
                             />
                             <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-500">
                               days
@@ -1244,7 +781,7 @@ function CreateReminder({ onClose, onSuccess }) {
                       </div>
                     </div>
 
-                    {/* Recursion Limit Dropdown */}
+                    {/* Recursion Limit */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">
                         Recursion Limit
@@ -1261,8 +798,6 @@ function CreateReminder({ onClose, onSuccess }) {
                             </option>
                           ))}
                         </select>
-
-                        {/* Custom limit input (only shown when custom is selected) */}
                         {showCustomLimitInput && (
                           <div className="relative">
                             <input
@@ -1277,7 +812,7 @@ function CreateReminder({ onClose, onSuccess }) {
                                   ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                                   : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                               }`}
-                              placeholder="Enter limit (0 for no limit)"
+                              placeholder="Enter limit"
                             />
                             <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-500">
                               times
@@ -1352,7 +887,6 @@ function CreateReminder({ onClose, onSuccess }) {
             >
               Cancel
             </button>
-
             <button
               onClick={handleSubmit}
               disabled={loading}
@@ -1374,4 +908,4 @@ function CreateReminder({ onClose, onSuccess }) {
   );
 }
 
-export default CreateReminder;
+export default SalesCreateReminder;

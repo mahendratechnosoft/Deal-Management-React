@@ -3,6 +3,7 @@ import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import ActivityLog from "./ActivityLog";
 import PreeviewProposalLead from "./PreeviewProposalLead";
+import SalesReminderList from "../Reminder/SalesReminderList";
 
 function PreviewLead({ leadId, onClose, onEdit, onConvert }) {
   const [activeTab, setActiveTab] = useState("profile");
@@ -217,6 +218,18 @@ function PreviewLead({ leadId, onClose, onEdit, onConvert }) {
               onClick={() => setActiveTab("activity")}
             >
               Activity Log
+            </button>
+
+            {/* --- Reminders Tab Button Added --- */}
+            <button
+              className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                activeTab === "reminders"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+              onClick={() => setActiveTab("reminders")}
+            >
+              Reminders
             </button>
           </div>
         </div>
@@ -582,6 +595,14 @@ function PreviewLead({ leadId, onClose, onEdit, onConvert }) {
           {activeTab === "activity" && (
             <div className="h-full">
               <ActivityLog moduleId={leadId} moduleType="lead" />
+            </div>
+          )}
+          {activeTab === "reminders" && (
+            <div
+              className="bg-gray-100 overflow-y-auto"
+              style={{ maxHeight: "calc(80vh - 120px)" }}
+            >
+              <SalesReminderList module="LEAD" referenceId={leadId} />
             </div>
           )}
         </div>

@@ -7,6 +7,7 @@ import CreatePaymentModal from "../Payment/CreatePaymentModal";
 import { useNavigate } from "react-router-dom";
 import SendProformaEmailModal from "../Email/SendProformaEmailModal"; // Import the new component
 import toast from "react-hot-toast";
+import SalesReminderList from "../Reminder/SalesReminderList";
 
 const formatProformaNumber = (number) => {
   const numberString = String(number || 0);
@@ -242,6 +243,18 @@ const PaymentTabContent = ({ proformaId, currencyType }) => {
     </div>
   );
 };
+
+const RemindersTabContent = ({ proformaId }) => {
+  return (
+    <div
+      className="p-4 bg-gray-100 overflow-y-auto"
+      style={{ maxHeight: "calc(80vh - 120px)" }}
+    >
+      <SalesReminderList module="PROFORMA" referenceId={proformaId} />
+    </div>
+  );
+};
+
 
 const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
   const [activeTab, setActiveTab] = useState("invoice");
@@ -549,6 +562,15 @@ const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
             >
               Payment
             </button>
+
+            <button
+              className={`info-modal-tab ${
+                activeTab === "reminders" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("reminders")}
+            >
+              Reminders
+            </button>
           </div>
 
           <div className="info-modal-body">
@@ -567,6 +589,9 @@ const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
                 proformaId={proforma.proformaInvoiceId}
                 currencyType={proforma.currencyType}
               />
+            )}
+            {activeTab === "reminders" && (
+              <RemindersTabContent proformaId={proforma.proformaInvoiceId} />
             )}
           </div>
         </div>
