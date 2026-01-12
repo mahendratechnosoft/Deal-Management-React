@@ -7,6 +7,7 @@ import SendInvoiceEmailModal from "../Email/SendInvoiceEmailModal";
 // 1. Import CreatePaymentModal and useNavigate
 import CreatePaymentModal from "../Payment/CreatePaymentModal";
 import { useNavigate } from "react-router-dom";
+import SalesReminderList from "../Reminder/SalesReminderList";
 
 // --- Helper Functions (Copied from ProformaInfoModal) ---
 const formatDate = (dateString) => {
@@ -240,6 +241,18 @@ const PaymentTabContent = ({ invoiceId, currencyType }) => {
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+
+const RemindersTabContent = ({ invoiceId }) => {
+  return (
+    <div
+      className="p-4 bg-gray-100 overflow-y-auto"
+      style={{ maxHeight: "calc(80vh - 120px)" }}
+    >
+      <SalesReminderList module="INVOICE" referenceId={invoiceId} />
     </div>
   );
 };
@@ -482,6 +495,16 @@ const InvoiceInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
             >
               Payment
             </button>
+
+            {/* --- Reminders Tab Button Added --- */}
+            <button
+              className={`info-modal-tab ${
+                activeTab === "reminders" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("reminders")}
+            >
+              Reminders
+            </button>
           </div>
 
           <div className="info-modal-body">
@@ -501,6 +524,9 @@ const InvoiceInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
                 invoiceId={proforma.proformaInvoiceId}
                 currencyType={proforma.currencyType}
               />
+            )}
+            {activeTab === "reminders" && (
+              <RemindersTabContent invoiceId={proforma.proformaInvoiceId} />
             )}
           </div>
         </div>
