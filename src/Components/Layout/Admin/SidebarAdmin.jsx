@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-
 import { hasPermission } from "../../BaseComponet/permissions";
+
 function Sidebar({ isOpen, toggleSidebar }) {
   const navigate = useNavigate();
   const location = useLocation();
-
   const [userData, setUserData] = useState(null);
+  const [salesOpen, setSalesOpen] = useState(true); // State for sales dropdown
 
   useEffect(() => {
     const storedUserData = localStorage.getItem("userData");
@@ -24,8 +24,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
     Lead: "lead",
     Customer: "customer",
     Proposal: "proposal",
-    Proforma: "proformaInvoice",
-    Invoice: "invoice",
+    Invoices: "proformaInvoice",
+    Tax_Invoices: "invoice",
     Payment: "payment",
     Timesheet: "timeSheet",
     Item: "item",
@@ -44,6 +44,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
     Reminder: "Reminder",
   };
 
+  // Main navigation items (excluding sales items)
   const navigationItems = [
     {
       name: "Lead",
@@ -70,7 +71,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
         </svg>
       ),
     },
-
     {
       name: "Reminder",
       path: "/Admin/ReminderList",
@@ -96,7 +96,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
         </svg>
       ),
     },
-
     {
       name: "Customer",
       path: "/Admin/CustomerList",
@@ -116,82 +115,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
         </svg>
       ),
     },
-    {
-      name: "Proposal",
-      path: "/Admin/Proposal",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-      ),
-    },
-    {
-      name: "Proforma",
-      path: "/Admin/Proforma",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"
-          />
-        </svg>
-      ),
-    },
-    {
-      name: "Invoice",
-      path: "/Admin/Invoice",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 14l-3-3m0 0l3-3m-3 3h6m3 10H5a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v1M9 18h6"
-          />
-        </svg>
-      ),
-    },
-    {
-      name: "Payment",
-      path: "/Admin/Payment",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-          />
-        </svg>
-      ),
-    },
+    // Sales modules moved to salesItems array below
     {
       name: "AMC",
       path: "/Admin/AMC",
@@ -548,8 +472,93 @@ function Sidebar({ isOpen, toggleSidebar }) {
     },
   ];
 
+  // Sales dropdown items (Proposal, Proforma, Invoice, Payment)
+  const salesItems = [
+    {
+      name: "Proposal",
+      path: "/Admin/Proposal",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+      ),
+    },
+    {
+      name: "Invoices",
+      path: "/Admin/Proforma",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"
+          />
+        </svg>
+      ),
+    },
+    {
+      name: "Tax_Invoices",
+      path: "/Admin/Invoice",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 14l-3-3m0 0l3-3m-3 3h6m3 10H5a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v1M9 18h6"
+          />
+        </svg>
+      ),
+    },
+    {
+      name: "Payment",
+      path: "/Admin/Payment",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+          />
+        </svg>
+      ),
+    },
+  ];
+
   const isActive = (path) => {
     return location.pathname.startsWith(path);
+  };
+
+  // Check if any sales item is active
+  const isSalesActive = () => {
+    return salesItems.some((item) => isActive(item.path));
   };
 
   const handleLogout = () => {
@@ -578,6 +587,14 @@ function Sidebar({ isOpen, toggleSidebar }) {
     }
     return hasPermission(moduleKey, "Access");
   };
+
+  // Check if any sales item should be visible based on permissions
+  const hasSalesAccess = () => {
+    return salesItems.some((item) =>
+      checkModuleAccess(item.name, moduleKeyMap[item.name])
+    );
+  };
+
   return (
     <>
       {/* Overlay for mobile */}
@@ -607,7 +624,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
               <div className="flex items-center justify-center">
                 <div className="flex items-center space-x-3">
                   {/* Logo with proper background */}
-
                   {userData?.logo && (
                     <div className="flex items-center justify-center bg-white rounded-lg p-2 shadow-lg">
                       <img
@@ -659,6 +675,168 @@ function Sidebar({ isOpen, toggleSidebar }) {
           {/* Navigation Items */}
           <nav className="flex-1 p-4">
             <div className="space-y-1">
+              {/* Sales Dropdown */}
+              {hasSalesAccess() && (
+                <div className="mb-2">
+                  {/* Sales Dropdown Header */}
+                  <button
+                    onClick={() => isOpen && setSalesOpen(!salesOpen)}
+                    className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${
+                      isSalesActive()
+                        ? "bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg transform scale-105"
+                        : salesOpen
+                        ? "bg-gray-700/70"
+                        : "bg-gray-800/50 hover:bg-gray-700/70 hover:transform hover:scale-105"
+                    } ${
+                      isOpen
+                        ? "px-3 py-2.5 justify-start"
+                        : "px-2 py-2.5 justify-center"
+                    }`}
+                    title={!isOpen ? "Sales" : ""}
+                  >
+                    {/* Background Glow Effect */}
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${
+                        isSalesActive() && "opacity-20"
+                      }`}
+                    ></div>
+
+                    <div
+                      className={`relative z-10 flex items-center ${
+                        isOpen ? "w-full" : "justify-center"
+                      }`}
+                    >
+                      <div
+                        className={`transition-all duration-300 ${
+                          isSalesActive()
+                            ? "text-white scale-105"
+                            : salesOpen
+                            ? "text-white scale-105"
+                            : "text-gray-400 group-hover:text-white group-hover:scale-105"
+                        }`}
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                          />
+                        </svg>
+                      </div>
+
+                      {isOpen && (
+                        <div className="ml-3 flex-1 text-left flex justify-between items-center">
+                          <span
+                            className={`font-medium block text-xs transition-colors duration-300 ${
+                              isSalesActive()
+                                ? "text-white"
+                                : salesOpen
+                                ? "text-white"
+                                : "text-gray-300 group-hover:text-white"
+                            }`}
+                          >
+                            Sales
+                          </span>
+                          <svg
+                            className={`w-4 h-4 transition-transform duration-300 mr-2 ${
+                              salesOpen ? "rotate-180" : ""
+                            } ${
+                              isSalesActive() ? "text-white" : "text-gray-400"
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Active Indicator - Show when any sales item is active */}
+                    {isSalesActive() && (
+                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                      </div>
+                    )}
+                  </button>
+
+                  {/* Sales Dropdown Items */}
+                  {isOpen && salesOpen && (
+                    <div className="ml-6 mt-1 space-y-1 pl-3 border-l border-gray-700/50">
+                      {salesItems
+                        .filter((item) =>
+                          checkModuleAccess(item.name, moduleKeyMap[item.name])
+                        )
+                        .map((item) => (
+                          <button
+                            key={item.name}
+                            onClick={() => {
+                              navigate(item.path);
+                              if (window.innerWidth < 1024) {
+                                toggleSidebar();
+                              }
+                            }}
+                            className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${
+                              isActive(item.path)
+                                ? "bg-gradient-to-r from-blue-500/20 to-cyan-500/20 shadow-lg"
+                                : "bg-gray-800/30 hover:bg-gray-700/50"
+                            } px-3 py-2.5 justify-start`}
+                          >
+                            {/* Background Glow Effect */}
+                            <div
+                              className={`absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${
+                                isActive(item.path) && "opacity-20"
+                              }`}
+                            ></div>
+
+                            <div className="relative z-10 flex items-center w-full">
+                              <div
+                                className={`transition-all duration-300 ${
+                                  isActive(item.path)
+                                    ? "text-white scale-105"
+                                    : "text-gray-400 group-hover:text-white group-hover:scale-105"
+                                }`}
+                              >
+                                {item.icon}
+                              </div>
+
+                              <div className="ml-3 flex-1 text-left">
+                                <span
+                                  className={`font-medium block text-xs transition-colors duration-300 ${
+                                    isActive(item.path)
+                                      ? "text-white"
+                                      : "text-gray-300 group-hover:text-white"
+                                  }`}
+                                >
+                                  {item.name}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Active Indicator */}
+                            {isActive(item.path) && (
+                              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
               {navigationItems
                 .filter((item) =>
                   checkModuleAccess(item.name, moduleKeyMap[item.name])

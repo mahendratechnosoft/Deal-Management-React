@@ -118,6 +118,9 @@ const ProformaInvoiceDisplay = ({
   adminInformation,
   calculation,
   isInvoice = false,
+
+  hideActionButtons = false,
+  isPublicView = false,
 }) => {
   if (!invoiceData || !adminInformation || !calculation) {
     return null;
