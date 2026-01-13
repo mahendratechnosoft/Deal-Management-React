@@ -117,7 +117,7 @@ function CreateProforma() {
   const [isPaymentModeLoading, setIsPaymentModeLoading] = useState(false);
   const [selectedPaymentModes, setSelectedPaymentModes] = useState([]);
   const [selectedPaymentModesPaid, setSelectedPaymentModesPaid] = useState([]);
-  
+
   const [documentType, setDocumentType] = useState("PROFORMA");
 
   const relatedOptions = [
@@ -1515,7 +1515,6 @@ function CreateProforma() {
 
           <div className="p-2 bg-gray-50 border-b border-gray-200">
             {/* Back button */}
-          
 
             {/* Header row */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -1539,7 +1538,7 @@ function CreateProforma() {
               <div className="flex flex-col sm:flex-row items-center gap-4">
                 {/* Toggle switch */}
                 <div className="flex items-center bg-gray-50 rounded-lg p-1 border border-gray-300">
-                  {["PROFORMA", "REIMBURSEMENT", "TAXINVOICE"].map((type) => (
+                  {["PROFORMA", "REIMBURSEMENT", "TAX_INVOICE"].map((type) => (
                     <button
                       key={type}
                       type="button"
