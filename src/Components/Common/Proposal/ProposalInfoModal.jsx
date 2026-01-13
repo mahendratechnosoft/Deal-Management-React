@@ -233,147 +233,177 @@ const ProposalInfoModal = ({ isOpen, onClose, proposal, onOpenPdf }) => {
   };
   return (
     <>
-      <div className="info-modal-backdrop" onClick={onClose}>
+      <div className="info-modal-backdrop " onClick={onClose}>
         <div
-          className="info-modal-content"
+          className="info-modal-content rounded-t-xl"
           onClick={(e) => e.stopPropagation()}
         >
           {/* --- Modal Header --- */}
-          <div className="info-modal-header">
-            <h3 className="info-modal-title">
-              {proposal.formatedProposalNumber}
-            </h3>
+          {/* --- Modal Header --- */}
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-4 py-3 rounded-t-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-white/20 rounded flex items-center justify-center">
+                  <svg
+                    className="w-4 h-4 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">
+                    Proposal Details
+                  </h2>
+                  <p className="text-blue-100 text-xs">
+                    {proposal.formatedProposalNumber}
+                  </p>
+                </div>
+              </div>
 
-            <div className="info-modal-actions">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleOpenEmailModal();
-                }}
-                className="flex items-center gap-2 px-2 py-2 border border-gray-300 rounded bg-white text-sm font-medium text-green-600 hover:text-green-900 hover:border-green-300"
-                title="Send via Email"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenEmailModal();
+                  }}
+                  className="flex items-center gap-2 px-2 py-2 border border-white/30 rounded bg-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors"
+                  title="Send via Email"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    strokeWidth="2"
-                    d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
-                  />
-                </svg>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const publicUrl = `${window.location.origin}/Proposal/Preview/${proposal.proposalId}`;
-                  window.open(publicUrl, "_blank", "noopener,noreferrer");
-                }}
-                className="flex items-center gap-2 px-2 py-2 border border-gray-300 rounded bg-white text-sm font-medium text-purple-600 hover:text-purple-900 hover:border-purple-300"
-                title="Open Public View"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const publicUrl = `${window.location.origin}/Proposal/Preview/${proposal.proposalId}`;
+                    window.open(publicUrl, "_blank", "noopener,noreferrer");
+                  }}
+                  className="flex items-center gap-2 px-2 py-2 border border-white/30 rounded bg-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors"
+                  title="Open Public View"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                  />
-                </svg>
-               
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onOpenPdf && proposal?.proposalId) {
-                    onOpenPdf(proposal.proposalId);
-                  }
-                }}
-                className="flex items-center gap-2 px-2 py-2 border border-gray-300 rounded bg-white text-sm font-medium text-red-600 hover:text-red-900"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onOpenPdf && proposal?.proposalId) {
+                      onOpenPdf(proposal.proposalId);
+                    }
+                  }}
+                  className="flex items-center gap-2 px-2 py-2 border border-white/30 rounded bg-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors"
+                  title="Generate PDF"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  ></path>
-                </svg>
-                PDF
-              </button>
-              {/* Convert to Proforma */}
-              <button
-                title="Convert to Proforma"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleConvertToProforma(proposal.proposalId);
-                }}
-                className="px-2 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200 text-sm font-medium flex items-center gap-2"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    ></path>
+                  </svg>
+                  PDF
+                </button>
+                {/* Convert to Proforma */}
+                <button
+                  title="Convert to Proforma"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleConvertToProforma(proposal.proposalId);
+                  }}
+                  className="px-2 py-2 bg-white/20 text-white border border-white/30 rounded hover:bg-white/30 transition-colors duration-200 text-sm font-medium flex items-center gap-2"
                 >
-                  <path
-                    d="M22 5.15V8.85C22 11.1 21.1 12 18.85 12H16.15C13.9 12 13 11.1 13 8.85V5.15C13 2.9 13.9 2 16.15 2H18.85C21.1 2 22 2.9 22 5.15Z"
-                    strokeWidth="2.0"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M11 15.15V18.85C11 21.1 10.1 22 7.85 22H5.15C2.9 22 2 21.1 2 18.85V15.15C2 12.9 2.9 12 5.15 12H7.85C10.1 12 11 12.9 11 15.15Z"
-                    strokeWidth="2.0"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M22 15C22 18.87 18.87 22 15 22L16.05 20.25"
-                    strokeWidth="2.0"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M2 9C2 5.13 5.13 2 9 2L7.95 3.75"
-                    strokeWidth="2.0"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                Convert-To-Proforma
-              </button>
-              <button
-                type="button"
-                className="info-modal-close-btn"
-                onClick={onClose}
-              >
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M22 5.15V8.85C22 11.1 21.1 12 18.85 12H16.15C13.9 12 13 11.1 13 8.85V5.15C13 2.9 13.9 2 16.15 2H18.85C21.1 2 22 2.9 22 5.15Z"
+                      strokeWidth="2.0"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M11 15.15V18.85C11 21.1 10.1 22 7.85 22H5.15C2.9 22 2 21.1 2 18.85V15.15C2 12.9 2.9 12 5.15 12H7.85C10.1 12 11 12.9 11 15.15Z"
+                      strokeWidth="2.0"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M22 15C22 18.87 18.87 22 15 22L16.05 20.25"
+                      strokeWidth="2.0"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M2 9C2 5.13 5.13 2 9 2L7.95 3.75"
+                      strokeWidth="2.0"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Convert-To-Proforma
+                </button>
+                <button
+                  type="button"
+                  className="p-1.5 hover:bg-white/20 rounded transition"
+                  onClick={onClose}
+                >
+                  <svg
+                    className="w-4 h-4 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 

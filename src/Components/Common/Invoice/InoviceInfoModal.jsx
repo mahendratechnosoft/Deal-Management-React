@@ -383,126 +383,155 @@ const InvoiceInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
           className="info-modal-content"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="info-modal-header">
-            <h3 className="info-modal-title">
-              {proforma.formatedInvoiceNumber}
-            </h3>
-            <div className="info-modal-actions">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsEmailModalOpen(true);
-                }}
-                className="flex items-center gap-2 px-2 py-2 border border-gray-300 rounded bg-white text-sm font-medium text-green-600 hover:text-green-900 hover:border-green-300"
-                title="Send via Email"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    strokeWidth="2"
-                    d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
-                  />
-                </svg>
-              </button>
+          {/* --- Modal Header --- */}
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-4 py-3 rounded-t-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-white/20 rounded flex items-center justify-center">
+                  <svg
+                    className="w-4 h-4 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">
+                    Tax Invoice Details
+                  </h2>
+                  <p className="text-blue-100 text-xs">
+                    {proforma.formatedInvoiceNumber}
+                  </p>
+                </div>
+              </div>
 
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // For invoice, use Invoice/Preview URL
-                  const publicUrl = `${window.location.origin}/Invoice/Preview/${proforma.proformaInvoiceId}`;
-                  window.open(publicUrl, "_blank", "noopener,noreferrer");
-                }}
-                className="flex items-center gap-2 px-2 py-2 border border-gray-300 rounded bg-white text-sm font-medium text-purple-600 hover:text-purple-900 hover:border-purple-300"
-                title="Open Public View"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEmailModalOpen(true);
+                  }}
+                  className="flex items-center gap-2 px-2 py-2 border border-white/30 rounded bg-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors"
+                  title="Send via Email"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+                    />
+                  </svg>
+                </button>
 
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onOpenPdf && proforma?.proformaInvoiceId) {
-                    onOpenPdf(proforma.proformaInvoiceId);
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const publicUrl = `${window.location.origin}/Invoice/Preview/${proforma.proformaInvoiceId}`;
+                    window.open(publicUrl, "_blank", "noopener,noreferrer");
+                  }}
+                  className="flex items-center gap-2 px-2 py-2 border border-white/30 rounded bg-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors"
+                  title="Open Public View"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
+                  </svg>
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onOpenPdf && proforma?.proformaInvoiceId) {
+                      onOpenPdf(proforma.proformaInvoiceId);
+                    }
+                  }}
+                  className="flex items-center gap-2 px-2 py-2 border border-white/30 rounded bg-white/10 text-sm font-medium text-white hover:bg-white/20 transition-colors"
+                  title="Generate PDF"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    ></path>
+                  </svg>
+                  PDF
+                </button>
+
+                <button
+                  type="button"
+                  className="px-2 py-2 bg-white/20 text-white border border-white/30 rounded hover:bg-white/30 transition-colors duration-200 text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isLoading || isFullyPaid}
+                  onClick={handleOpenPaymentModal}
+                  title={
+                    isFullyPaid
+                      ? "Payment is already complete."
+                      : "Add a new payment"
                   }
-                }}
-                className="flex items-center gap-2 px-2 py-2 border border-gray-300 rounded bg-white text-sm font-medium text-red-600 hover:text-red-900"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  ></path>
-                </svg>
-                PDF
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                  </svg>
+                  Payment
+                </button>
 
-              {/* --- Payment Button Added --- */}
-              <button
-                type="button"
-                className="px-2 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200 text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={isLoading || isFullyPaid}
-                onClick={handleOpenPaymentModal}
-                title={
-                  isFullyPaid
-                    ? "Payment is already complete."
-                    : "Add a new payment"
-                }
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="w-5 h-5"
+                <button
+                  type="button"
+                  className="p-1.5 hover:bg-white/20 rounded transition"
+                  onClick={onClose}
                 >
-                  <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-                </svg>
-                Payment
-              </button>
-
-              <button
-                type="button"
-                className="info-modal-close-btn"
-                onClick={onClose}
-              >
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    className="w-4 h-4 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
-
           <div className="info-modal-tabs">
             <button
               className={`info-modal-tab ${
