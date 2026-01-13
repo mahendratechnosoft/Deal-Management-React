@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { hasPermission } from "../../BaseComponet/permissions";
+
 function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [userData, setUserData] = useState(null);
+  const [salesOpen, setSalesOpen] = useState(true); // State for sales dropdown
 
   useEffect(() => {
     const storedUserData = localStorage.getItem("userData");
@@ -16,6 +18,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
       }
     }
   }, []);
+
   const moduleKeyMap = {
     Lead: "lead",
     Customer: "customer",
@@ -37,6 +40,87 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
     Compliance: "compliance",
   };
 
+  // Sales dropdown items
+  const salesItems = [
+    {
+      name: "Proposal",
+      path: "/Employee/Proposal",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+      ),
+    },
+    {
+      name: "Proforma",
+      path: "/Employee/Proforma",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"
+          />
+        </svg>
+      ),
+    },
+    {
+      name: "Invoice",
+      path: "/Employee/Invoice",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 14l-3-3m0 0l3-3m-3 3h6m3 10H5a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v1M9 18h6"
+          />
+        </svg>
+      ),
+    },
+    {
+      name: "Payment",
+      path: "/Employee/Payment",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+          />
+        </svg>
+      ),
+    },
+  ];
+
+  // Main navigation items
   const navigationItems = [
     {
       name: "Lead",
@@ -62,9 +146,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-     
     },
-
     {
       name: "Customer",
       path: "/Employee/CustomerList",
@@ -83,91 +165,8 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-  
     },
-
-    {
-      name: "Proposal",
-      path: "/Employee/Proposal",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-      ),
-     
-    },
-    {
-      name: "Proforma",
-      path: "/Employee/Proforma",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"
-          />
-        </svg>
-      ),
-
-    },
-    {
-      name: "Invoice",
-      path: "/Employee/Invoice",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 14l-3-3m0 0l3-3m-3 3h6m3 10H5a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v1M9 18h6"
-          />
-        </svg>
-      ),
- 
-    },
-
-    {
-      name: "Payment",
-      path: "/Employee/Payment",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-          />
-        </svg>
-      ),
-     
-    },
-
+    // AMC and other items after sales
     {
       name: "AMC",
       path: "/Employee/AMC",
@@ -192,9 +191,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-
     },
-
     {
       name: "Vendor",
       path: "/Employee/VendorList",
@@ -213,7 +210,6 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-    
     },
     {
       name: "Item",
@@ -233,7 +229,6 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Tasks",
@@ -253,8 +248,6 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-
-      
     },
     {
       name: "Timesheet",
@@ -274,9 +267,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-
     },
-
     {
       name: "Compliance",
       path: "/Employee/ComplianceList",
@@ -295,7 +286,6 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Under Screening",
@@ -315,7 +305,6 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-   
     },
     {
       name: "Selected",
@@ -335,7 +324,6 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Shortlisted",
@@ -355,7 +343,6 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-    
     },
     {
       name: "Quarantined",
@@ -375,7 +362,6 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-  
     },
     {
       name: "Qualified",
@@ -395,7 +381,6 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-
     },
     {
       name: "Donor",
@@ -415,7 +400,6 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-     
     },
     {
       name: "FamilyList",
@@ -435,7 +419,6 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-  
     },
     {
       name: "Search Donor",
@@ -455,7 +438,6 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-  
     },
     {
       name: "Semen Enquiry",
@@ -475,25 +457,20 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           />
         </svg>
       ),
-    
     },
   ];
 
-  const activeItem = navigationItems
-    .filter((item) => location.pathname.startsWith(item.path))
-    .sort((a, b) => b.path.length - a.path.length)[0]; // Sort by length descending, take first
-
   const isActive = (path) => {
-    // Only return true if this path matches the calculated 'activeItem'
-    return activeItem && activeItem.path === path;
+    return location.pathname.startsWith(path);
+  };
+
+  // Check if any sales item is active
+  const isSalesActive = () => {
+    return salesItems.some((item) => isActive(item.path));
   };
 
   const handleLogout = () => {
-    // Add your logout logic here
     console.log("Logging out...");
-    // Example: clear localStorage, redirect to login, etc.
-    // localStorage.removeItem('token');
-    // navigate('/login');
   };
 
   const checkModuleAccess = (moduleName, moduleKey) => {
@@ -516,6 +493,13 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
       return donorHasAccess || specificModuleHasAccess;
     }
     return hasPermission(moduleKey, "Access");
+  };
+
+  // Check if any sales item should be visible based on permissions
+  const hasSalesAccess = () => {
+    return salesItems.some((item) =>
+      checkModuleAccess(item.name, moduleKeyMap[item.name])
+    );
   };
 
   return (
@@ -599,9 +583,299 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
           {/* Navigation Items */}
           <nav className="flex-1 p-4">
             <div className="space-y-1">
+              {/* Lead Item */}
+              {checkModuleAccess("Lead", moduleKeyMap["Lead"]) && (
+                <button
+                  onClick={() => {
+                    navigate("/Employee/LeadList");
+                    if (window.innerWidth < 1024) {
+                      toggleSidebar();
+                    }
+                  }}
+                  className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${
+                    isActive("/Employee/LeadList")
+                      ? "bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg transform scale-105"
+                      : "bg-gray-800/50 hover:bg-gray-700/70 hover:transform hover:scale-105"
+                  } ${
+                    isOpen
+                      ? "px-3 py-2.5 justify-start"
+                      : "px-2 py-2.5 justify-center"
+                  }`}
+                  title={!isOpen ? "Lead" : ""}
+                >
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${
+                      isActive("/Employee/LeadList") && "opacity-20"
+                    }`}
+                  ></div>
+                  <div
+                    className={`relative z-10 flex items-center ${
+                      isOpen ? "w-full" : "justify-center"
+                    }`}
+                  >
+                    <div
+                      className={`transition-all duration-300 ${
+                        isActive("/Employee/LeadList")
+                          ? "text-white scale-105"
+                          : "text-gray-400 group-hover:text-white group-hover:scale-105"
+                      }`}
+                    >
+                      {
+                        navigationItems.find((item) => item.name === "Lead")
+                          ?.icon
+                      }
+                    </div>
+                    {isOpen && (
+                      <div className="ml-3 flex-1 text-left">
+                        <span
+                          className={`font-medium block text-xs transition-colors duration-300 ${
+                            isActive("/Employee/LeadList")
+                              ? "text-white"
+                              : "text-gray-300 group-hover:text-white"
+                          }`}
+                        >
+                          Lead
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {isActive("/Employee/LeadList") && (
+                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                      <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                    </div>
+                  )}
+                </button>
+              )}
+
+              {/* Customer Item */}
+              {checkModuleAccess("Customer", moduleKeyMap["Customer"]) && (
+                <button
+                  onClick={() => {
+                    navigate("/Employee/CustomerList");
+                    if (window.innerWidth < 1024) {
+                      toggleSidebar();
+                    }
+                  }}
+                  className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${
+                    isActive("/Employee/CustomerList")
+                      ? "bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg transform scale-105"
+                      : "bg-gray-800/50 hover:bg-gray-700/70 hover:transform hover:scale-105"
+                  } ${
+                    isOpen
+                      ? "px-3 py-2.5 justify-start"
+                      : "px-2 py-2.5 justify-center"
+                  }`}
+                  title={!isOpen ? "Customer" : ""}
+                >
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${
+                      isActive("/Employee/CustomerList") && "opacity-20"
+                    }`}
+                  ></div>
+                  <div
+                    className={`relative z-10 flex items-center ${
+                      isOpen ? "w-full" : "justify-center"
+                    }`}
+                  >
+                    <div
+                      className={`transition-all duration-300 ${
+                        isActive("/Employee/CustomerList")
+                          ? "text-white scale-105"
+                          : "text-gray-400 group-hover:text-white group-hover:scale-105"
+                      }`}
+                    >
+                      {
+                        navigationItems.find((item) => item.name === "Customer")
+                          ?.icon
+                      }
+                    </div>
+                    {isOpen && (
+                      <div className="ml-3 flex-1 text-left">
+                        <span
+                          className={`font-medium block text-xs transition-colors duration-300 ${
+                            isActive("/Employee/CustomerList")
+                              ? "text-white"
+                              : "text-gray-300 group-hover:text-white"
+                          }`}
+                        >
+                          Customer
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {isActive("/Employee/CustomerList") && (
+                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                      <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                    </div>
+                  )}
+                </button>
+              )}
+
+              {/* Sales Dropdown - Right after Customer */}
+              {hasSalesAccess() && (
+                <div className="mb-2">
+                  {/* Sales Dropdown Header */}
+                  <button
+                    onClick={() => isOpen && setSalesOpen(!salesOpen)}
+                    className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${
+                      isSalesActive()
+                        ? "bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg transform scale-105"
+                        : salesOpen
+                        ? "bg-gray-700/70"
+                        : "bg-gray-800/50 hover:bg-gray-700/70 hover:transform hover:scale-105"
+                    } ${
+                      isOpen
+                        ? "px-3 py-2.5 justify-start"
+                        : "px-2 py-2.5 justify-center"
+                    }`}
+                    title={!isOpen ? "Sales" : ""}
+                  >
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${
+                        isSalesActive() && "opacity-20"
+                      }`}
+                    ></div>
+
+                    <div
+                      className={`relative z-10 flex items-center ${
+                        isOpen ? "w-full" : "justify-center"
+                      }`}
+                    >
+                      <div
+                        className={`transition-all duration-300 ${
+                          isSalesActive()
+                            ? "text-white scale-105"
+                            : salesOpen
+                            ? "text-white scale-105"
+                            : "text-gray-400 group-hover:text-white group-hover:scale-105"
+                        }`}
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                          />
+                        </svg>
+                      </div>
+
+                      {isOpen && (
+                        <div className="ml-3 flex-1 text-left flex justify-between items-center">
+                          <span
+                            className={`font-medium block text-xs transition-colors duration-300 ${
+                              isSalesActive()
+                                ? "text-white"
+                                : salesOpen
+                                ? "text-white"
+                                : "text-gray-300 group-hover:text-white"
+                            }`}
+                          >
+                            Sales
+                          </span>
+                          <svg
+                            className={`w-4 h-4 transition-transform duration-300 mr-2 ${
+                              salesOpen ? "rotate-180" : ""
+                            } ${
+                              isSalesActive() ? "text-white" : "text-gray-400"
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+
+                    {isSalesActive() && (
+                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                      </div>
+                    )}
+                  </button>
+
+                  {/* Sales Dropdown Items */}
+                  {isOpen && salesOpen && (
+                    <div className="ml-6 mt-1 space-y-1 pl-3 border-l border-gray-700/50">
+                      {salesItems
+                        .filter((item) =>
+                          checkModuleAccess(item.name, moduleKeyMap[item.name])
+                        )
+                        .map((item) => (
+                          <button
+                            key={item.name}
+                            onClick={() => {
+                              navigate(item.path);
+                              if (window.innerWidth < 1024) {
+                                toggleSidebar();
+                              }
+                            }}
+                            className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${
+                              isActive(item.path)
+                                ? "bg-gradient-to-r from-blue-500/20 to-cyan-500/20 shadow-lg"
+                                : "bg-gray-800/30 hover:bg-gray-700/50"
+                            } px-3 py-2.5 justify-start`}
+                          >
+                            <div
+                              className={`absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${
+                                isActive(item.path) && "opacity-20"
+                              }`}
+                            ></div>
+
+                            <div className="relative z-10 flex items-center w-full">
+                              <div
+                                className={`transition-all duration-300 ${
+                                  isActive(item.path)
+                                    ? "text-white scale-105"
+                                    : "text-gray-400 group-hover:text-white group-hover:scale-105"
+                                }`}
+                              >
+                                {item.icon}
+                              </div>
+
+                              <div className="ml-3 flex-1 text-left">
+                                <span
+                                  className={`font-medium block text-xs transition-colors duration-300 ${
+                                    isActive(item.path)
+                                      ? "text-white"
+                                      : "text-gray-300 group-hover:text-white"
+                                  }`}
+                                >
+                                  {item.name}
+                                </span>
+                              </div>
+                            </div>
+
+                            {isActive(item.path) && (
+                              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Rest of navigation items (AMC onwards) */}
               {navigationItems
-                .filter((item) =>
-                  checkModuleAccess(item.name, moduleKeyMap[item.name])
+                .filter(
+                  (item) =>
+                    !["Lead", "Customer"].includes(item.name) &&
+                    checkModuleAccess(item.name, moduleKeyMap[item.name])
                 )
                 .map((item) => (
                   <button
@@ -623,11 +897,8 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
                     }`}
                     title={!isOpen ? item.name : ""}
                   >
-                    {/* Background Glow Effect */}
                     <div
-                      className={`absolute inset-0 bg-gradient-to-r ${
-                        item.color
-                      } opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${
+                      className={`absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${
                         isActive(item.path) && "opacity-20"
                       }`}
                     ></div>
@@ -662,7 +933,6 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
                       )}
                     </div>
 
-                    {/* Active Indicator */}
                     {isActive(item.path) && (
                       <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
                         <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
@@ -691,7 +961,6 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
               }`}
               title={!isOpen ? "Logout" : ""}
             >
-              {/* Background Glow Effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
 
               <div
