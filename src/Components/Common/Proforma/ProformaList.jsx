@@ -256,6 +256,8 @@ function ProformaList() {
         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white appearance-none pr-10"
       >
         <option value="all">All</option>
+        <option value="PROFORMA">Proforma</option>
+
         <option value="REIMBURSEMENT">Reimbursement</option>
         <option value="CONVERTED_TAX_INVOICE">Converted Tax Invoice</option>
 
@@ -406,10 +408,10 @@ function ProformaList() {
                 <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">
-                    Proforma Invoices
+                     Invoices
                   </h1>
                   <p className="text-gray-600 text-sm mt-1">
-                    Manage and track all your proforma invoices in one place
+                    Manage and track all your invoices in one place
                   </p>
                 </div>
               </div>
@@ -489,7 +491,7 @@ function ProformaList() {
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  Create Proforma
+                  Create 
                 </button>
               )}
             </div>

@@ -140,6 +140,9 @@ const ReminderList = lazy(() =>
   import("../Components/Common/Reminder/ReminderList")
 );
 
+const EmailTemplateLeads = lazy(() =>
+  import("../Components/Common/Settings/Template/Email/LeadTemplateList")
+);
 
 
 const AdminRoutes = () => {
@@ -227,6 +230,7 @@ const AdminRoutes = () => {
               <Route path="Task" element={<EmailTemplateTask />} />
               <Route path="Sales" element={<EmailTemplateSales />} />
               <Route path="Attendance" element={<EmailTemplateAttendance />} />
+              <Route path="Leads" element={<EmailTemplateLeads />} />
             </Route>
           </Route>
           {/* ------------Settings END--------------- */}

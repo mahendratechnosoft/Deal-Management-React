@@ -3,9 +3,9 @@ import axiosInstance from "../../../../BaseComponet/axiosInstance";
 import { showDeleteConfirmation } from "../../../../BaseComponet/alertUtils";
 import toast from "react-hot-toast";
 import CreateTemplate from "./CreateTemplate";
-import EditTemplate from "./EditTemplate"; // Import EditTemplate
+import EditTemplate from "./EditTemplate";
 
-const SalesTemplateList = () => {
+const LeadTemplateList = () => {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -13,27 +13,19 @@ const SalesTemplateList = () => {
 
   // Modal States
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Changed from isUpdateModalOpen
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
   const [selectedTrigger, setSelectedTrigger] = useState("");
 
-  // Available triggers for SALES
-  const triggers = [
-    "PROPOSAL_SEND",
-    "PROFORMA_SEND",
-    "PROFORMA_DUE_REMINDER",
-    "PROFORMA_OVERDUE_ALERT",
-    "INVOICE_SEND",
-    // "PAYMENT_RECORDED",
-  ];
-
+  // Available triggers for LEAD (customize based on your requirements)
+const triggers = ["LEAD"];
 
   // Fetch templates for a specific trigger
   const fetchTemplates = async (trigger) => {
     setLoading(true);
     try {
       const response = await axiosInstance.get(
-        `getEmailTemplates/SALES/${trigger}`
+        `getEmailTemplates/LEAD/${trigger}`
       );
       return response.data;
     } catch (error) {
@@ -175,12 +167,8 @@ const SalesTemplateList = () => {
   // Get trigger display name
   const getTriggerDisplayName = (trigger) => {
     const triggerMap = {
-      PROPOSAL_SEND: "Proposal Send",
-      PROFORMA_SEND: "Proforma Send",
-      PROFORMA_DUE_REMINDER: "Proforma Due Reminder",
-      PROFORMA_OVERDUE_ALERT: "Proforma Overdue Alert",
-      INVOICE_SEND: "Invoice Send",
-      PAYMENT_RECORDED: "Payment Recorded",
+      LEAD: "Lead Created",
+  
     };
     return triggerMap[trigger] || trigger.replace(/_/g, " ");
   };
@@ -195,7 +183,7 @@ const SalesTemplateList = () => {
               <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Sales Email Templates
+                  Lead Email Templates
                 </h1>
               </div>
             </div>
@@ -204,12 +192,6 @@ const SalesTemplateList = () => {
           <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
             {/* Bulk Actions */}
             <div className="flex items-center gap-2">
-              {/* <button
-                onClick={() => toggleAllTriggers(true)}
-                className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Expand All
-              </button> */}
               <button
                 onClick={() => toggleAllTriggers(false)}
                 className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
@@ -218,6 +200,7 @@ const SalesTemplateList = () => {
               </button>
             </div>
 
+            {/* Commented out features - same as other components */}
             {/* <div className="relative flex-1 sm:max-w-64">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg
@@ -363,7 +346,6 @@ const SalesTemplateList = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Subject
                             </th>
-
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Actions
                             </th>
@@ -392,14 +374,13 @@ const SalesTemplateList = () => {
                                 )}
                               </td>
                               <td
-                                className="px-6 py-4 text-sm text-gray-500 "
+                                className="px-6 py-4 text-sm text-gray-500"
                                 title={template.subject}
                               >
                                 <div className="font-medium truncate max-w-[250px]">
                                   {template.subject}
                                 </div>
                               </td>
-
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <div className="flex items-center gap-3">
                                   {!template.default && (
@@ -492,7 +473,7 @@ const SalesTemplateList = () => {
         isOpen={isCreateModalOpen}
         onClose={handleCloseCreate}
         trigger={selectedTrigger}
-        category="SALES"
+        category="LEAD"
         onTemplateCreated={(newTemplate) => {
           // Add the new template to the state
           setTemplates((prev) => [...prev, newTemplate]);
@@ -512,11 +493,11 @@ const SalesTemplateList = () => {
         isOpen={isEditModalOpen}
         onClose={handleCloseEdit}
         templateId={selectedTemplateId}
-        category="SALES"
+        category="LEAD"
         onTemplateUpdated={handleTemplateUpdated}
       />
     </div>
   );
 };
 
-export default SalesTemplateList;
+export default LeadTemplateList;

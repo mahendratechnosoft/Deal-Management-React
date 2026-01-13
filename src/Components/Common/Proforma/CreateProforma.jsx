@@ -117,6 +117,8 @@ function CreateProforma() {
   const [isPaymentModeLoading, setIsPaymentModeLoading] = useState(false);
   const [selectedPaymentModes, setSelectedPaymentModes] = useState([]);
   const [selectedPaymentModesPaid, setSelectedPaymentModesPaid] = useState([]);
+  
+  const [documentType, setDocumentType] = useState("PROFORMA");
 
   const relatedOptions = [
     { value: "lead", label: "Lead" },
@@ -202,6 +204,13 @@ function CreateProforma() {
 
     return address;
   };
+
+  useEffect(() => {
+    if (documentType === "REIMBURSEMENT") {
+      // Automatically apply "No Tax" for REIMBURSEMENT
+      handleTaxTypeChange(taxOptions.find((o) => o.value === "No Tax"));
+    }
+  }, [documentType]);
 
   useEffect(() => {
     if (!prefill?.customerId) return;
@@ -1258,6 +1267,7 @@ function CreateProforma() {
     const payload = {
       proformaInvoiceInfo: {
         ...proformaInfo,
+        proformaType: documentType,
         discount: Number(proformaInfo.discount),
         totalAmount: Number(total),
         proformaInvoiceDate: formattedInvoiceDate,
@@ -1499,34 +1509,71 @@ function CreateProforma() {
                   d="M15 19l-7-7 7-7"
                 />
               </svg>
-              Back to Proforma Invoices
+              Back to Invoices
             </button>
           </div>
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                Create New Proforma Invoice
-              </h1>
-              <p className="text-gray-600 text-sm">
-                Add a new proforma invoice to your records
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-4 py-2 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 text-sm font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="createProformaForm"
-                disabled={loading || isRecipientLoading}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200 text-sm font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Creating..." : "Create Proforma"}
-              </button>
+
+          <div className="p-2 bg-gray-50 border-b border-gray-200">
+            {/* Back button */}
+          
+
+            {/* Header row */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              {/* Left: Title */}
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">
+                  Create New{" "}
+                  {documentType === "PROFORMA"
+                    ? "Proforma"
+                    : documentType === "REIMBURSEMENT"
+                    ? "Reimbursement"
+                    : "Tax"}{" "}
+                  Invoice
+                </h1>
+                <p className="text-gray-600 text-sm">
+                  Add a new {documentType.toLowerCase()} to your records
+                </p>
+              </div>
+
+              {/* Right: Toggle and buttons */}
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                {/* Toggle switch */}
+                <div className="flex items-center bg-gray-50 rounded-lg p-1 border border-gray-300">
+                  {["PROFORMA", "REIMBURSEMENT", "TAXINVOICE"].map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setDocumentType(type)}
+                      className={`px-3 py-1.5 text-xs font-medium rounded transition-all duration-200 ${
+                        documentType === type
+                          ? "bg-white text-blue-600 shadow-sm border border-blue-200"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Buttons */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="px-4 py-2 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 text-sm font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    form="createProformaForm"
+                    disabled={loading || isRecipientLoading}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200 text-sm font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? "Creating..." : "Create"}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1653,7 +1700,7 @@ function CreateProforma() {
                       </div>
                     </div>
 
-                    <FormSelect
+                    {/* <FormSelect
                       label="Proforma Type"
                       name="proformaType"
                       value={proformaTypeOptions.find(
@@ -1664,10 +1711,10 @@ function CreateProforma() {
                       }
                       options={proformaTypeOptions}
                       className="w-48"
-                    />
+                    /> */}
 
                     {/* profroma type */}
-                    {proformaInfo.proformaType === "REIMBURSEMENT" && (
+                    {documentType === "REIMBURSEMENT" && (
                       <div className="md:col-span-2">
                         <div className="relative">
                           <label
