@@ -506,7 +506,12 @@ const ProformaInvoiceDisplay = ({
             {/* Amount Due - Use calculation.amountDue from props */}
             <div className="flex justify-between text-sm text-red-600 font-medium pt-2">
               <span>Amount Due</span>
-              <span>{formatCurrency(calculation.amountDue, currency)}</span>
+              <span>
+                {formatCurrency(
+                  total - (Number(calculation.amountPaid) || 0),
+                  currency
+                )}
+              </span>
             </div>
           </div>
         </div>

@@ -259,7 +259,7 @@ function ProformaList() {
         <option value="PROFORMA">Proforma</option>
 
         <option value="REIMBURSEMENT">Reimbursement</option>
-        <option value="CONVERTED_TAX_INVOICE">Converted Tax Invoice</option>
+        <option value="TAX_INVOICE">Converted Tax Invoice</option>
 
         {/* Add other proforma types as needed */}
       </select>
@@ -407,9 +407,7 @@ function ProformaList() {
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
-                     Invoices
-                  </h1>
+                  <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
                   <p className="text-gray-600 text-sm mt-1">
                     Manage and track all your invoices in one place
                   </p>
@@ -491,7 +489,7 @@ function ProformaList() {
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  Create 
+                  Create
                 </button>
               )}
             </div>
@@ -634,14 +632,14 @@ function ProformaList() {
                       <td className="px-4 py-4 text-sm text-gray-900 text-center">
                         <span
                           className={`inline-block w-full max-w-[110px] truncate px-3 py-1 rounded text-xs text-center font-semibold uppercase tracking-wide ${
-                            proforma.proformaType === "CONVERTED_TAX_INVOICE"
+                            proforma.proformaType === "TAX_INVOICE"
                               ? "bg-purple-100 text-purple-600"
                               : proforma.proformaType === "REIMBURSEMENT"
                               ? "bg-orange-100 text-orange-600"
                               : "bg-blue-100 text-blue-600"
                           }`}
                         >
-                          {proforma.proformaType === "CONVERTED_TAX_INVOICE"
+                          {proforma.proformaType === "TAX_INVOICE"
                             ? "TAX INVOICE"
                             : proforma.proformaType === "REIMBURSEMENT"
                             ? "REIMBURSE"
