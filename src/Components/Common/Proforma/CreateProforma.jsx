@@ -1590,7 +1590,12 @@ function CreateProforma() {
                 {/* --- Left Column: Proforma Details --- */}
                 <div className="space-y-6">
                   <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                    Proforma Details
+                    {documentType === "PROFORMA"
+                      ? "Proforma"
+                      : documentType === "REIMBURSEMENT"
+                      ? "Reimbursement"
+                      : "Tax"}{" "}
+                     Details
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormNumberInputWithPrefix
