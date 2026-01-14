@@ -1366,19 +1366,21 @@ function EditProforma() {
                   d="M15 19l-7-7 7-7"
                 />
               </svg>
-              Back to Proforma Invoices
+              Back to Invoices
             </button>
           </div>
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                Edit Proforma Invoice
-              </h1>
-              <p className="text-gray-600 text-sm">
-                Update existing proforma details
-              </p>
+              <h1 className="text-xl font-bold text-gray-900">Edit Invoice</h1>
+              <p className="text-gray-600 text-sm">Update existing details</p>
             </div>
+
             <div className="flex items-center gap-2">
+              <div className="flex items-center">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Type: {proformaInfo.proformaType || "INVOICE"}
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={handleCancel}
@@ -1393,7 +1395,7 @@ function EditProforma() {
                   disabled={loading}
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200 text-sm font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? "Updating..." : "Update Proforma"}
+                  {loading ? "Updating..." : "Update"}
                 </button>
               )}
             </div>
@@ -1608,7 +1610,7 @@ function EditProforma() {
                       </div>
 
                       {/* proforma payment mode paid */}
-                      <FormSelect
+                      {/* <FormSelect
                         label="Proforma Type"
                         name="proformaType"
                         value={proformaTypeOptions.find(
@@ -1619,7 +1621,7 @@ function EditProforma() {
                         }
                         options={proformaTypeOptions}
                         className="w-48"
-                      />
+                      /> */}
 
                       {/* profroma type */}
                       {proformaInfo.proformaType === "REIMBURSEMENT" && (
