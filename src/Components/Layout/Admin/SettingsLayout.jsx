@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { hasPermission } from "../../BaseComponet/permissions";
+import ExpensesCategoryList from "../../Common/Settings/ExpensesCategory/ExpensesCategoryList";
 
 // --- Icons (updated Email Template icon) ---
 const GeneralIcon = () => (
@@ -220,6 +221,12 @@ const SettingsLayout = () => {
     {
       title: "Dynamic Form",
       path: "/Admin/Settings/Form",
+      icon: <DynamicFormIcon />,
+    },
+
+    {
+      title: "Expenses Category",
+      path: "/Admin/Settings/ExpensesCategoryList",
       icon: <DynamicFormIcon />,
     },
   ];

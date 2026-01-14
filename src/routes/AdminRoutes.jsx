@@ -144,6 +144,10 @@ const EmailTemplateLeads = lazy(() =>
   import("../Components/Common/Settings/Template/Email/LeadTemplateList")
 );
 
+const ExpensesCategoryList = lazy(() =>
+  import("../Components/Common/Settings/ExpensesCategory/ExpensesCategoryList")
+);
+
 
 const AdminRoutes = () => {
   return (
@@ -211,7 +215,6 @@ const AdminRoutes = () => {
             <Route index element={<General />} />
             <Route path="Email" element={<EmailSetting />} />
             <Route path="Department" element={<Department />} />
-
             <Route
               path="Department/:departmentId/Roles"
               element={<RoleListCompo />}
@@ -223,15 +226,18 @@ const AdminRoutes = () => {
               <Route path="Invoice" element={<InvoiceSetting />} />
               <Route path="Vendor" element={<VendorSetting />} />
             </Route>
-
             <Route path="Form" element={<DynamicFormBase />} />
-
             <Route path="EmailTemplate">
               <Route path="Task" element={<EmailTemplateTask />} />
               <Route path="Sales" element={<EmailTemplateSales />} />
               <Route path="Attendance" element={<EmailTemplateAttendance />} />
               <Route path="Leads" element={<EmailTemplateLeads />} />
             </Route>
+
+            <Route
+              path="ExpensesCategoryList"
+              element={<ExpensesCategoryList />}
+            />
           </Route>
           {/* ------------Settings END--------------- */}
         </Route>
