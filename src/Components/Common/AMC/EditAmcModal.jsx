@@ -24,7 +24,7 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const navigate = useNavigate();
-    const { LayoutComponent,role } = useLayout();
+  const { LayoutComponent, role } = useLayout();
   // Modal states
   const [showAmcHistoryModal, setShowAmcHistoryModal] = useState(false);
   const [showDomainHistoryModal, setShowDomainHistoryModal] = useState(false);
@@ -529,15 +529,13 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
     try {
       // You need to get the role from somewhere - adjust this based on your auth system
 
-
       let adminInformation = null;
       if (role === "ROLE_ADMIN") {
         const adminResponse = await axiosInstance.get(`/admin/getAdminInfo`);
         adminInformation = adminResponse.data;
       } else if (role === "ROLE_EMPLOYEE") {
         const employeeResponse = await axiosInstance.get(
-          `/employee/getEmployeeInfo`
-          `/employee/getEmployeeInfo`
+          `/employee/getEmployeeInfo``/employee/getEmployeeInfo`
         );
         adminInformation = employeeResponse.data.admin;
       }
@@ -1096,8 +1094,18 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                             <button
                                               onClick={(e) => {
                                                 e.stopPropagation();
+                                                let link = "";
                                                 if (!isDeleted) {
-                                                  navigate("/Proforma/Create", {
+                                                  if (role === "ROLE_ADMIN") {
+                                                    link =
+                                                      "/Admin/Proforma/Create";
+                                                  } else if (
+                                                    role === "ROLE_EMPLOYEE"
+                                                  ) {
+                                                    link =
+                                                      "/Employee/Proforma/Create";
+                                                  }
+                                                  navigate(link, {
                                                     state: {
                                                       source: "AMC",
                                                       amcId: amc.amcId,
@@ -1453,7 +1461,17 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                               onClick={(e) => {
                                                 e.stopPropagation();
                                                 if (!isDeleted) {
-                                                  navigate("/Proforma/Create", {
+                                                  let link = "";
+                                                  if (role === "ROLE_ADMIN") {
+                                                    link =
+                                                      "/Admin/Proforma/Create";
+                                                  } else if (
+                                                    role === "ROLE_EMPLOYEE"
+                                                  ) {
+                                                    link =
+                                                      "/Employee/Proforma/Create";
+                                                  }
+                                                  navigate(link, {
                                                     state: {
                                                       source: "DOMAIN",
                                                       amcId: amc.amcId,
@@ -1659,11 +1677,11 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                   const isPastDue = dueDateStatus.isPastDue;
                                   const isNearDue =
                                     dueDateStatus.status === "near-due";
-                                        const isDeleted = gsuite.deleted;
+                                  const isDeleted = gsuite.deleted;
                                   const isPaidByCustomer =
                                     gsuite.paidBy !== "ADMIN"; // Check if paid by customer
                                   const showProformaBtn =
-                                    !isDeleted && !isPaidByCustomer; 
+                                    !isDeleted && !isPaidByCustomer;
                                   return (
                                     <tr
                                       key={gsuite.acmGsuitHistoryId}
@@ -1895,7 +1913,17 @@ function EditAmcModal({ amc, onClose, onSuccess }) {
                                               <button
                                                 onClick={(e) => {
                                                   e.stopPropagation();
-                                                  navigate("/Proforma/Create", {
+                                                  let link = "";
+                                                  if (role === "ROLE_ADMIN") {
+                                                    link =
+                                                      "/Admin/Proforma/Create";
+                                                  } else if (
+                                                    role === "ROLE_EMPLOYEE"
+                                                  ) {
+                                                    link =
+                                                      "/Employee/Proforma/Create";
+                                                  }
+                                                  navigate(link, {
                                                     state: {
                                                       source: "GSUITE",
                                                       amcId: amc.amcId,
