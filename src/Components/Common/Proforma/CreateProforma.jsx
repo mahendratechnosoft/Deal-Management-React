@@ -66,6 +66,7 @@ function CreateProforma() {
     paymentProfileIds: [],
     paidPaymentProfileIds: "",
     proformaType: "INVOICE",
+    serviceType: "",
   });
 
   const [isSameAsBilling, setIsSameAsBilling] = useState(true);
@@ -117,13 +118,13 @@ function CreateProforma() {
   const [isPaymentModeLoading, setIsPaymentModeLoading] = useState(false);
   const [selectedPaymentModes, setSelectedPaymentModes] = useState([]);
   const [selectedPaymentModesPaid, setSelectedPaymentModesPaid] = useState([]);
+  const [serviceTypeOptions, setServiceTypeOptions] = useState([
+    { label: "No Service", value: "" },
+  ]);
+  const [isServiceTypeLoading, setIsServiceTypeLoading] = useState(false);
 
   const [documentType, setDocumentType] = useState("PROFORMA");
 
-  const relatedOptions = [
-    { value: "lead", label: "Lead" },
-    { value: "customer", label: "Customer" },
-  ];
   const taxOptions = [
     { value: "No Tax", label: "No Tax", defaultRate: 0 },
     { value: "SGST", label: "SGST", defaultRate: 9 },
@@ -132,11 +133,6 @@ function CreateProforma() {
     { value: "GST", label: "GST", defaultRate: 18 },
     { value: "IGST", label: "IGST", defaultRate: 18 },
     { value: "Custom", label: "Custom", defaultRate: "" },
-  ];
-  const statusOptions = [
-    { value: "UNPAID", label: "Unpaid" },
-    { value: "PARTIALLY_PAID", label: "Partially Paid" },
-    { value: "PAID", label: "Paid" },
   ];
   const currencyOptions = [
     { value: "INR", label: "INR" },
@@ -647,10 +643,20 @@ function CreateProforma() {
       }
       const shortEnd = String(fyEnd).slice(-2);
       prefix = `${prefix}${fyStart}/${shortEnd}/`;
+    } else if (proformaSettings.numberFormat === "FY_SERVICE") {
+      const month = dateObj.getMonth();
+      const year = dateObj.getFullYear();
+
+      const fyStart = month >= 3 ? year : year - 1;
+      const fyEnd = month >= 3 ? year + 1 : year;
+
+      prefix = `${prefix}${String(fyStart).slice(-2)}/${String(fyEnd).slice(
+        -2
+      )}${proformaInfo.serviceType ? `/${proformaInfo.serviceType}` : ""}/`;
     }
 
     return prefix;
-  }, [proformaSettings, proformaInfo.invoiceDate]);
+  }, [proformaSettings, proformaInfo.invoiceDate, proformaInfo.serviceType]);
 
   // --- Event Handlers ---
 
@@ -1088,6 +1094,28 @@ function CreateProforma() {
       toast.error(`Failed to load ${proformaInfo.relatedTo} list.`);
     } finally {
       setIsRelatedIdLoading(false);
+    }
+  };
+
+  const loadServiceTypeOptions = async () => {
+    setIsServiceTypeLoading(true);
+    try {
+      const response = await axiosInstance.get("getAllInvoiceServices");
+
+      const mappedOptions = response.data.map((ser) => ({
+        label: ser.serviceCode,
+        value: ser.serviceCode,
+      }));
+
+      setServiceTypeOptions([
+        { label: "No Service", value: "" },
+        ...mappedOptions,
+      ]);
+    } catch (error) {
+      console.error("Failed to load service type options:", error);
+      toast.error("Failed to load service type options.");
+    } finally {
+      setIsServiceTypeLoading(false);
     }
   };
 
@@ -1595,7 +1623,7 @@ function CreateProforma() {
                       : documentType === "REIMBURSEMENT"
                       ? "Reimbursement"
                       : "Tax"}{" "}
-                     Details
+                    Details
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormNumberInputWithPrefix
@@ -1608,6 +1636,21 @@ function CreateProforma() {
                       error={errors.proformaInvoiceNumber}
                       minDigits={6}
                     />
+                    {proformaSettings?.numberFormat === "FY_SERVICE" && (
+                      <FormSelect
+                        label="Service"
+                        name="serviceType"
+                        value={serviceTypeOptions.find(
+                          (o) => o.value === proformaInfo.serviceType
+                        )}
+                        onChange={(opt) =>
+                          handleSelectChange("serviceType", opt)
+                        }
+                        options={serviceTypeOptions}
+                        onMenuOpen={loadServiceTypeOptions}
+                        isLoading={isServiceTypeLoading}
+                      />
+                    )}
                     <FormInput
                       label="Invoice Date"
                       name="invoiceDate"

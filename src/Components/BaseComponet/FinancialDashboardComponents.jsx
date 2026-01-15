@@ -73,6 +73,9 @@ export const DashboardWrapper = ({
   dateRange,
   setDateRange,
   isLoading,
+  serviceFilter,
+  onServiceFilterChange,
+  serviceFilterOptions = [],
 }) => {
   // Validation Logic inside the wrapper so you don't repeat it
   const handleStartDateChange = (e) => {
@@ -118,6 +121,19 @@ export const DashboardWrapper = ({
             </svg>
             {title}
           </h2>
+          {onServiceFilterChange && (
+            <select
+              value={serviceFilter}
+              onChange={(e) => onServiceFilterChange(e.target.value)}
+              className="px-2 py-1 text-xs border border-gray-300 rounded-md bg-white ms-auto"
+            >
+              {serviceFilterOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          )}
 
           <div className="flex items-center bg-white rounded-md border border-gray-300 px-2 py-1 gap-2">
             <span className="text-[10px] text-gray-400 font-medium uppercase">

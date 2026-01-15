@@ -255,7 +255,6 @@ const RemindersTabContent = ({ proformaId }) => {
   );
 };
 
-
 const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
   const [activeTab, setActiveTab] = useState("invoice");
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -373,7 +372,7 @@ const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
       // 3. Update local state on success manually
       if (result.status === 200) {
         toast.success("Converted to Tax Invoice successfully");
-        setCurrentProformaType("CONVERTED_TAX_INVOICE");
+        setCurrentProformaType("TAX_INVOICE");
       } else {
         toast.error("Failed to convert to tax invoice");
       }
@@ -435,7 +434,7 @@ const ProformaInfoModal = ({ isOpen, onClose, proforma, onOpenPdf }) => {
 
               <div className="flex items-center gap-2">
                 {currentProformaType !== "REIMBURSEMENT" &&
-                  (currentProformaType === "CONVERTED_TAX_INVOICE" ? (
+                  (currentProformaType === "TAX_INVOICE" ? (
                     <span
                       className="
               inline-flex items-center

@@ -111,6 +111,10 @@ function ProformaList() {
   const [dashboardDateRange, setDashboardDateRange] = useState(
     getIndianFinancialYear()
   );
+  const [serviceTypeFilter, setServiceTypeFilter] = useState("");
+  const [serviceFilterOptions, setServiceFilterOptions] = useState([
+    { label: "All Services", value: "" },
+  ]);
 
   useEffect(() => {
     fetchProformaList(0, searchTerm, proformaTypeFilter);
@@ -119,21 +123,50 @@ function ProformaList() {
   useEffect(() => {
     if (showDashboard) {
       fetchDashboardSummary();
+      loadServiceTypeOptions();
     }
-  }, [showDashboard, dashboardDateRange]);
+  }, [showDashboard, dashboardDateRange, serviceTypeFilter]);
 
   const fetchDashboardSummary = async () => {
     setDashboardLoading(true);
     try {
-      const response = await axiosInstance.get(
-        `getProformaInvoiceSummary?startDate=${dashboardDateRange.startDate}&endDate=${dashboardDateRange.endDate}`
-      );
+      const response = await axiosInstance.get("getProformaInvoiceSummary", {
+        params: {
+          startDate: dashboardDateRange.startDate,
+          endDate: dashboardDateRange.endDate,
+          serviceType: serviceTypeFilter || undefined,
+        },
+      });
+
       if (response.data && response.data.body) {
         setDashboardData(response.data.body);
       }
     } catch (error) {
-      console.error("Dashboard error", error);
       toast.error("Failed to load statistics");
+    } finally {
+      setDashboardLoading(false);
+    }
+  };
+
+  const loadServiceTypeOptions = async () => {
+    setDashboardLoading(true);
+    try {
+      const response = await axiosInstance.get("getAllInvoiceServices");
+
+      const mappedOptions = response.data.map((ser) => ({
+        label: ser.serviceCode,
+        value: ser.serviceCode,
+      }));
+
+      setServiceFilterOptions([
+        { label: "All Services", value: "" },
+        ...mappedOptions,
+
+        { label: "Other", value: "OTHER" },
+      ]);
+    } catch (error) {
+      console.error("Failed to load service type options:", error);
+      toast.error("Failed to load service type options.");
     } finally {
       setDashboardLoading(false);
     }
@@ -289,6 +322,9 @@ function ProformaList() {
           setDateRange={setDashboardDateRange}
           isLoading={dashboardLoading}
           title="Proforma Financial Overview"
+          serviceFilter={serviceTypeFilter}
+          onServiceFilterChange={setServiceTypeFilter}
+          serviceFilterOptions={serviceFilterOptions}
         >
           {dashboardData && (
             <>
@@ -540,7 +576,10 @@ function ProformaList() {
                       className="hover:bg-gray-50 transition-colors duration-150 group cursor-pointer"
                       onClick={() => handleOpenInfoModal(proforma)}
                     >
-                      <td className="px-4 py-1 truncate text-sm text-gray-900 font-bold relative">
+                      <td
+                        className="px-4 py-1 truncate text-sm text-gray-900 font-bold relative"
+                        title={proforma.formatedProformaInvoiceNumber}
+                      >
                         {proforma.formatedProformaInvoiceNumber}
                         <div className="flex items-center gap-3 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                           <button
