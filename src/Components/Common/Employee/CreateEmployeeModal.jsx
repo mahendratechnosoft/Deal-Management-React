@@ -176,6 +176,18 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
     complianceDelete: false,
     complianceEdit: false,
     complianceViewAll: false,
+
+    expenseAccess: false,
+    expenseCreate: false,
+    expenseDelete: false,
+    expenseEdit: false,
+    expenseViewAll: false,
+
+    reminderAccess: false,
+    reminderCreate: false,
+    reminderDelete: false,
+    reminderEdit: false,
+    reminderViewAll: false,
   });
 
   // =======================================COUNTrY STATE CITY DROPDOWN START__>===================================
@@ -514,6 +526,19 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
         complianceCreate: role.complianceCreate,
         complianceDelete: role.complianceDelete,
         complianceEdit: role.complianceEdit,
+
+        expenseAccess: role.expenseAccess,
+        expenseViewAll: role.expenseViewAll,
+        expenseCreate: role.expenseCreate,
+        expenseDelete: role.expenseDelete,
+        expenseEdit: role.expenseEdit,
+
+        // Reminder
+        reminderAccess: role.reminderAccess,
+        reminderViewAll: role.reminderViewAll,
+        reminderCreate: role.reminderCreate,
+        reminderDelete: role.reminderDelete,
+        reminderEdit: role.reminderEdit,
       }));
       setRoleOptions(options);
     } catch (error) {
@@ -608,6 +633,18 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
       complianceDelete: false,
       complianceEdit: false,
       complianceViewAll: false,
+
+      expenseAccess: false,
+      expenseCreate: false,
+      expenseDelete: false,
+      expenseEdit: false,
+      expenseViewAll: false,
+
+      reminderAccess: false,
+      reminderCreate: false,
+      reminderDelete: false,
+      reminderEdit: false,
+      reminderViewAll: false,
     });
 
     if (errors.departmentId) {
@@ -713,6 +750,20 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
           complianceCreate: selectedRole.complianceCreate || false,
           complianceDelete: selectedRole.complianceDelete || false,
           complianceEdit: selectedRole.complianceEdit || false,
+
+          // Expense
+          expenseAccess: selectedRole.expenseAccess || false,
+          expenseViewAll: selectedRole.expenseViewAll || false,
+          expenseCreate: selectedRole.expenseCreate || false,
+          expenseDelete: selectedRole.expenseDelete || false,
+          expenseEdit: selectedRole.expenseEdit || false,
+
+          // Reminder
+          reminderAccess: selectedRole.reminderAccess || false,
+          reminderViewAll: selectedRole.reminderViewAll || false,
+          reminderCreate: selectedRole.reminderCreate || false,
+          reminderDelete: selectedRole.reminderDelete || false,
+          reminderEdit: selectedRole.reminderEdit || false,
         });
 
         // Show success message
@@ -802,6 +853,18 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
         complianceDelete: false,
         complianceEdit: false,
         complianceViewAll: false,
+
+        expenseAccess: false,
+        expenseCreate: false,
+        expenseDelete: false,
+        expenseEdit: false,
+        expenseViewAll: false,
+
+        reminderAccess: false,
+        reminderCreate: false,
+        reminderDelete: false,
+        reminderEdit: false,
+        reminderViewAll: false,
       });
 
       toast.success("Permissions reset");
@@ -1748,6 +1811,36 @@ function CreateEmployeeModal({ onClose, onSuccess }) {
                             { label: "Create", field: "complianceCreate" },
                             { label: "Edit", field: "complianceEdit" },
                             { label: "Delete", field: "complianceDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
+
+                      {hasModulePermission("expense") && (
+                        <ModuleAccessGroup
+                          title="Expense Permissions"
+                          permissions={[
+                            { label: "Access", field: "expenseAccess" },
+                            { label: "View All", field: "expenseViewAll" },
+                            { label: "Create", field: "expenseCreate" },
+                            { label: "Edit", field: "expenseEdit" },
+                            { label: "Delete", field: "expenseDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
+
+                      {hasModulePermission("reminder") && (
+                        <ModuleAccessGroup
+                          title="Reminder Permissions"
+                          permissions={[
+                            { label: "Access", field: "reminderAccess" },
+                            { label: "View All", field: "reminderViewAll" },
+                            { label: "Create", field: "reminderCreate" },
+                            { label: "Edit", field: "reminderEdit" },
+                            { label: "Delete", field: "reminderDelete" },
                           ]}
                           getAccess={getAccess}
                           handleAccessChange={handleAccessChange}

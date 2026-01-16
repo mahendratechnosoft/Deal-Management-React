@@ -1,6 +1,7 @@
 import React, { lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 
+
 const RoleBasedRoute = lazy(() =>
   import("../Components/BaseComponet/RoleBasedRoute")
 );
@@ -148,6 +149,11 @@ const ExpensesCategoryList = lazy(() =>
   import("../Components/Common/Settings/ExpensesCategory/ExpensesCategoryList")
 );
 
+const ExpensesList = lazy(() =>
+  import("../Components/Common/Expenses/ExpensesList")
+);
+
+
 
 const AdminRoutes = () => {
   return (
@@ -210,6 +216,8 @@ const AdminRoutes = () => {
           <Route path="SemenEnquiryList" element={<SemenEnquiryList />} />
           <Route path="EditSemenEnquiry/:id" element={<EditSemenEnquiry />} />
           <Route path="ComplianceList" element={<ComplianceList />} />
+          <Route path="ExpensesList" element={<ExpensesList />} />
+
           {/* ------------Settings--------------- */}
           <Route path="Settings" element={<SettingsLayout />}>
             <Route index element={<General />} />

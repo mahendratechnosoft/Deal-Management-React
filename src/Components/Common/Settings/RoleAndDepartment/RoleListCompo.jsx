@@ -65,12 +65,14 @@ const AccessToggle = ({ field, label, isChecked, onChange }) => {
           className="sr-only"
         />
         <div
-          className={`block w-10 h-6 rounded-full transition-colors ${isChecked ? "bg-blue-600" : "bg-gray-300"
-            }`}
+          className={`block w-10 h-6 rounded-full transition-colors ${
+            isChecked ? "bg-blue-600" : "bg-gray-300"
+          }`}
         ></div>
         <div
-          className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${isChecked ? "translate-x-4" : "translate-x-0"
-            }`}
+          className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${
+            isChecked ? "translate-x-4" : "translate-x-0"
+          }`}
         ></div>
       </div>
       <span className="ml-2 text-sm text-gray-700">{label}</span>
@@ -232,6 +234,18 @@ function RoleListCompo() {
     complianceDelete: false,
     complianceEdit: false,
     complianceViewAll: false,
+
+    expenseAccess: false,
+    expenseCreate: false,
+    expenseDelete: false,
+    expenseEdit: false,
+    expenseViewAll: false,
+
+    reminderAccess: false,
+    reminderCreate: false,
+    reminderDelete: false,
+    reminderEdit: false,
+    reminderViewAll: false,
   });
 
   // Module Access State for Update Modal
@@ -313,6 +327,18 @@ function RoleListCompo() {
     complianceDelete: false,
     complianceEdit: false,
     complianceViewAll: false,
+
+    expenseAccess: false,
+    expenseCreate: false,
+    expenseDelete: false,
+    expenseEdit: false,
+    expenseViewAll: false,
+
+    reminderAccess: false,
+    reminderCreate: false,
+    reminderDelete: false,
+    reminderEdit: false,
+    reminderViewAll: false,
   });
 
   useEffect(() => {
@@ -437,6 +463,18 @@ function RoleListCompo() {
       complianceDelete: false,
       complianceEdit: false,
       complianceViewAll: false,
+
+      expenseAccess: false,
+      expenseCreate: false,
+      expenseDelete: false,
+      expenseEdit: false,
+      expenseViewAll: false,
+
+      reminderAccess: false,
+      reminderCreate: false,
+      reminderDelete: false,
+      reminderEdit: false,
+      reminderViewAll: false,
     });
   };
 
@@ -560,6 +598,20 @@ function RoleListCompo() {
         complianceCreate: role.complianceCreate || false,
         complianceDelete: role.complianceDelete || false,
         complianceEdit: role.complianceEdit || false,
+
+        // Expense
+        expenseAccess: role.expenseAccess || false,
+        expenseViewAll: role.expenseViewAll || false,
+        expenseCreate: role.expenseCreate || false,
+        expenseDelete: role.expenseDelete || false,
+        expenseEdit: role.expenseEdit || false,
+
+        // Reminder
+        reminderAccess: role.reminderAccess || false,
+        reminderViewAll: role.reminderViewAll || false,
+        reminderCreate: role.reminderCreate || false,
+        reminderDelete: role.reminderDelete || false,
+        reminderEdit: role.reminderEdit || false,
       });
     }
 
@@ -1008,7 +1060,6 @@ function RoleListCompo() {
                             handleAccessChange={handleAccessChange}
                           />
                         )}
-
                         {hasModulePermission("customer") && (
                           <ModuleAccessGroup
                             title="Customer Permissions"
@@ -1023,7 +1074,6 @@ function RoleListCompo() {
                             handleAccessChange={handleAccessChange}
                           />
                         )}
-
                         {hasModulePermission("proposal") && (
                           <ModuleAccessGroup
                             title="Proposal Permissions"
@@ -1064,7 +1114,6 @@ function RoleListCompo() {
                             handleAccessChange={handleAccessChange}
                           />
                         )}
-
                         {hasModulePermission("invoice") && (
                           <ModuleAccessGroup
                             title="Invoice Permissions"
@@ -1121,7 +1170,6 @@ function RoleListCompo() {
                             handleAccessChange={handleAccessChange}
                           />
                         )}
-
                         {hasModulePermission("task") && (
                           <ModuleAccessGroup
                             title="Task Permissions"
@@ -1136,7 +1184,6 @@ function RoleListCompo() {
                             handleAccessChange={handleAccessChange}
                           />
                         )}
-
                         {hasModulePermission("amc") && (
                           <ModuleAccessGroup
                             title="AMC Permissions"
@@ -1151,7 +1198,6 @@ function RoleListCompo() {
                             handleAccessChange={handleAccessChange}
                           />
                         )}
-
                         {hasModulePermission("vendor") && (
                           <ModuleAccessGroup
                             title="Vendor Permissions"
@@ -1166,7 +1212,6 @@ function RoleListCompo() {
                             handleAccessChange={handleAccessChange}
                           />
                         )}
-
                         {hasModulePermission("compliance") && (
                           <ModuleAccessGroup
                             title="Compliance Permissions"
@@ -1181,7 +1226,35 @@ function RoleListCompo() {
                             handleAccessChange={handleAccessChange}
                           />
                         )}
-                 
+                        {hasModulePermission("expense") && (
+                          <ModuleAccessGroup
+                            title="Expense Permissions"
+                            permissions={[
+                              { label: "Access", field: "expenseAccess" },
+                              { label: "View All", field: "expenseViewAll" },
+                              { label: "Create", field: "expenseCreate" },
+                              { label: "Edit", field: "expenseEdit" },
+                              { label: "Delete", field: "expenseDelete" },
+                            ]}
+                            getAccess={getAccess}
+                            handleAccessChange={handleAccessChange}
+                          />
+                        )}
+
+                        {hasModulePermission("reminder") && (
+                          <ModuleAccessGroup
+                            title="Reminder Permissions"
+                            permissions={[
+                              { label: "Access", field: "reminderAccess" },
+                              { label: "View All", field: "reminderViewAll" },
+                              { label: "Create", field: "reminderCreate" },
+                              { label: "Edit", field: "reminderEdit" },
+                              { label: "Delete", field: "reminderDelete" },
+                            ]}
+                            getAccess={getAccess}
+                            handleAccessChange={handleAccessChange}
+                          />
+                        )}
                       </>
                     )}
                     {hasPermission("donor", "Access") && (
@@ -1523,6 +1596,36 @@ function RoleListCompo() {
                               { label: "Create", field: "complianceCreate" },
                               { label: "Edit", field: "complianceEdit" },
                               { label: "Delete", field: "complianceDelete" },
+                            ]}
+                            getAccess={getUpdateAccess}
+                            handleAccessChange={handleUpdateAccessChange}
+                          />
+                        )}
+
+                        {hasModulePermission("expense") && (
+                          <ModuleAccessGroup
+                            title="Expense Permissions"
+                            permissions={[
+                              { label: "Access", field: "expenseAccess" },
+                              { label: "View All", field: "expenseViewAll" },
+                              { label: "Create", field: "expenseCreate" },
+                              { label: "Edit", field: "expenseEdit" },
+                              { label: "Delete", field: "expenseDelete" },
+                            ]}
+                            getAccess={getUpdateAccess}
+                            handleAccessChange={handleUpdateAccessChange}
+                          />
+                        )}
+
+                        {hasModulePermission("reminder") && (
+                          <ModuleAccessGroup
+                            title="Reminder Permissions"
+                            permissions={[
+                              { label: "Access", field: "reminderAccess" },
+                              { label: "View All", field: "reminderViewAll" },
+                              { label: "Create", field: "reminderCreate" },
+                              { label: "Edit", field: "reminderEdit" },
+                              { label: "Delete", field: "reminderDelete" },
                             ]}
                             getAccess={getUpdateAccess}
                             handleAccessChange={handleUpdateAccessChange}

@@ -121,6 +121,18 @@ function EditAdmin() {
     complianceDelete: false,
     complianceEdit: false,
     complianceViewAll: false,
+
+    expenseAccess: false,
+    expenseCreate: false,
+    expenseDelete: false,
+    expenseEdit: false,
+    expenseViewAll: false,
+
+    reminderAccess: false,
+    reminderCreate: false,
+    reminderDelete: false,
+    reminderEdit: false,
+    reminderViewAll: false,
   });
 
   const [errors, setErrors] = useState({});
@@ -186,6 +198,10 @@ function EditAdmin() {
             customerComplianceEdit: accessData.customerComplianceEdit || false,
 
             complianceAccess: accessData.complianceAccess || false,
+
+            expenseAccess: accessData.expenseAccess || false,
+            reminderViewAll: accessData.reminderViewAll || false,
+
           });
         }
       } catch (error) {
@@ -263,7 +279,9 @@ function EditAdmin() {
       customerComplianceDelete: false,
       customerComplianceEdit: false,
 
-      complianceAccess:false,
+      complianceAccess: false,
+      expenseAccess: false,
+      reminderAccess: false,
     }));
     toast.success("All permissions cleared");
   };
@@ -295,7 +313,9 @@ function EditAdmin() {
       customerComplianceDelete: true,
       customerComplianceEdit: true,
 
-      complianceAccess:true,
+      complianceAccess: true,
+      expenseAccess: true,
+      reminderAccess: true,
     }));
     toast.success("All permissions granted");
   };
@@ -402,6 +422,16 @@ function EditAdmin() {
           complianceDelete: true,
           complianceEdit: true,
           complianceViewAll: true,
+
+          expenseCreate: true,
+          expenseDelete: true,
+          expenseEdit: true,
+          expenseViewAll: true,
+
+          reminderAccess: true,
+          reminderCreate: true,
+          reminderDelete: true,
+          reminderEdit: true,
         },
       };
 
@@ -672,17 +702,14 @@ function EditAdmin() {
                         </label>
                       </div>
 
-                           <ModuleAccessToggle
-                              title="Contact Person Login"
-                              field="canContactPersonLogin"
-                              isChecked={getAccess("canContactPersonLogin")}
-                              onChange={(isChecked) =>
-                                handleAccessChange(
-                                  "canContactPersonLogin",
-                                  isChecked
-                                )
-                              }
-                            />
+                      <ModuleAccessToggle
+                        title="Contact Person Login"
+                        field="canContactPersonLogin"
+                        isChecked={getAccess("canContactPersonLogin")}
+                        onChange={(isChecked) =>
+                          handleAccessChange("canContactPersonLogin", isChecked)
+                        }
+                      />
 
                       {/* Customer Login Sub-permissions - Conditionally shown */}
                       {getAccess("canCustomerLogin") && (
@@ -704,8 +731,6 @@ function EditAdmin() {
                             Customer Login Permissions
                           </h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                       
-
                             <ModuleAccessToggle
                               title="Compliance Access"
                               field="customerComplianceAccess"
@@ -955,6 +980,24 @@ function EditAdmin() {
                       isChecked={getAccess("complianceAccess")}
                       onChange={(isChecked) =>
                         handleAccessChange("complianceAccess", isChecked)
+                      }
+                    />
+                    <ModuleAccessToggle
+                      title="Expense "
+                      field="expenseAccess"
+                      isChecked={getAccess("expenseAccess")}
+                      onChange={(isChecked) =>
+                        handleAccessChange("expenseAccess", isChecked)
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <ModuleAccessToggle
+                      title="Reminder "
+                      field="reminderAccess"
+                      isChecked={getAccess("reminderAccess")}
+                      onChange={(isChecked) =>
+                        handleAccessChange("reminderAccess", isChecked)
                       }
                     />
                   </div>
