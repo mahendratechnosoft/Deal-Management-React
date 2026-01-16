@@ -317,11 +317,12 @@ function CreateExpenseModal({ onClose, onSuccess }) {
   }, [formData.taxType]);
 
   // Update paid amount when status changes
+  // Update paid amount when status changes
   useEffect(() => {
     if (formData.status === "PAID") {
       setFormData((prev) => ({
         ...prev,
-        paidAmount: payableAmount, // Changed from totalAmount to payableAmount
+        paidAmount: Math.round(totalAmount * 100) / 100, // Round to 2 decimals
       }));
     } else if (formData.status === "UNPAID") {
       setFormData((prev) => ({
@@ -330,7 +331,7 @@ function CreateExpenseModal({ onClose, onSuccess }) {
         paymentProfileId: "",
       }));
     }
-  }, [formData.status, payableAmount]); // Changed dependency to payableAmount
+  }, [formData.status, totalAmount]);
 
   // Update tab errors when errors change
   useEffect(() => {
@@ -495,7 +496,7 @@ function CreateExpenseModal({ onClose, onSuccess }) {
   };
 
   // Handle form field changes
-  // Handle form field changes
+  // In the handleChange function (around line 583-616), update the status handling:
   const handleChange = (field, value) => {
     // Special handling for status field
     if (field === "status") {
@@ -514,8 +515,24 @@ function CreateExpenseModal({ onClose, onSuccess }) {
           paidAmount: 0,
           paymentProfileId: "",
         }));
+      } else if (value === "PARTIALLY_PAID") {
+        // When status changed to PARTIALLY_PAID, check if coming from PAID
+        if (formData.status === "PAID") {
+          // Coming from PAID, reset paidAmount to 0
+          setFormData((prev) => ({
+            ...prev,
+            [field]: value,
+            paidAmount: 0,
+          }));
+        } else {
+          // Coming from UNPAID or other status
+          setFormData((prev) => ({
+            ...prev,
+            [field]: value,
+          }));
+        }
       } else {
-        // For PARTIALLY_PAID or other statuses
+        // For other statuses
         setFormData((prev) => ({
           ...prev,
           [field]: value,
@@ -572,59 +589,17 @@ function CreateExpenseModal({ onClose, onSuccess }) {
 
   // Handle number input changes
   const handleNumberChange = (field, value) => {
-    // Special handling for paidAmount
-    if (field === "paidAmount") {
-      const numericValue = value === "" ? 0 : Number(value);
-
-      // Validate against payableAmount
-      if (numericValue > payableAmount) {
-        // Auto-correct to max amount
-        value = payableAmount;
-      }
-
-      // Check if paid amount equals payable amount
-      if (Number(value) >= payableAmount) {
-        // Auto-change status to PAID
-        setFormData((prev) => ({
-          ...prev,
-          paidAmount: payableAmount,
-          status: "PAID",
-        }));
-      }
-      // If paid amount is > 0 but less than payable amount
-      else if (Number(value) > 0) {
-        // Ensure status is PARTIALLY_PAID
-        if (formData.status !== "PARTIALLY_PAID") {
-          setFormData((prev) => ({
-            ...prev,
-            paidAmount: Number(value),
-            status: "PARTIALLY_PAID",
-          }));
-        } else {
-          handleChange(field, Number(value));
-        }
-      }
-      // If paid amount is 0
-      else {
-        handleChange(field, Number(value));
-      }
-
-      // Clear any errors
-      if (errors.paidAmount) {
-        setErrors((prev) => ({
-          ...prev,
-          paidAmount: "",
-        }));
-      }
-      return;
-    }
-
-    // Original logic for other fields
+    // Ensure value is a valid number or empty string
     if (value === "" || (!isNaN(value) && Number(value) >= 0)) {
-      handleChange(field, value === "" ? "" : Number(value));
+      // Round to 2 decimal places for paid amount
+      if (field === "paidAmount" && value !== "") {
+        const roundedValue = Math.round(Number(value) * 100) / 100;
+        handleChange(field, roundedValue);
+      } else {
+        handleChange(field, value === "" ? "" : Number(value));
+      }
     }
   };
-
   // Check if field is required
   const isFieldRequired = (field) => {
     return requiredFields[field];
@@ -664,12 +639,6 @@ function CreateExpenseModal({ onClose, onSuccess }) {
     if (!formData.vendorId) newErrors.vendorId = "Vendor is required";
     if (!formData.expenseCategoryId)
       newErrors.expenseCategoryId = "Category is required";
-
-    if (formData.expenseType === "GOODS" && !formData.hsnSac) {
-      newErrors.hsnSac = "HSN Code is required for Goods";
-    } else if (formData.expenseType === "SERVICES" && !formData.hsnSac) {
-      newErrors.hsnSac = "SAC Code is required for Services";
-    }
 
     // Customer & Dates validation
     if (!formData.expenseDate)
@@ -720,20 +689,24 @@ function CreateExpenseModal({ onClose, onSuccess }) {
       default:
         break;
     }
-
+    
     // Payment Status validation
     if (formData.status === "PARTIALLY_PAID") {
       if (!formData.paymentProfileId) {
         newErrors.paymentProfileId =
           "Payment mode is required for partial payment";
       }
-      if (!formData.paidAmount || formData.paidAmount <= 0) {
+
+      // Round to 2 decimals for comparison
+      const roundedPaidAmount = Math.round(formData.paidAmount * 100) / 100;
+      const roundedTotalAmount = Math.round(totalAmount * 100) / 100;
+
+      if (!formData.paidAmount || roundedPaidAmount <= 0) {
         newErrors.paidAmount = "Paid amount must be greater than 0";
       }
-      if (formData.paidAmount >= payableAmount) {
-        // Changed from totalAmount to payableAmount
+      if (roundedPaidAmount >= roundedTotalAmount) {
         newErrors.paidAmount =
-          "Paid amount cannot exceed or equal payable amount"; // Updated message
+          "Paid amount must be less than total amount for partial payment";
       }
     }
 
@@ -936,10 +909,7 @@ function CreateExpenseModal({ onClose, onSuccess }) {
 
         <GlobalInputField
           label={
-            <>
-              {formData.expenseType === "GOODS" ? "HSN Code" : "SAC Code"}
-              <span className="text-red-500 ml-1">*</span>
-            </>
+            <>{formData.expenseType === "GOODS" ? "HSN Code" : "SAC Code"}</>
           }
           name="hsnSac"
           value={formData.hsnSac}
@@ -953,20 +923,6 @@ function CreateExpenseModal({ onClose, onSuccess }) {
           className="text-sm"
           ref={(el) => (errorFieldRefs.current.hsnSac = el)}
         />
-
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="billable"
-            name="billable"
-            checked={formData.billable}
-            onChange={(e) => handleChange("billable", e.target.checked)}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-          />
-          <label htmlFor="billable" className="text-sm text-gray-700">
-            Mark as Billable
-          </label>
-        </div>
 
         <GlobalInputField
           label={
@@ -1045,15 +1001,10 @@ function CreateExpenseModal({ onClose, onSuccess }) {
         {formData.status === "PAID" && (
           <>
             <GlobalInputField
-              label={
-                <>
-                  Paid Amount
-                  <span className="text-red-500 ml-1">*</span>
-                </>
-              }
+              label="Paid Amount"
               name="paidAmount"
               type="number"
-              value={formData.paidAmount}
+              value={formData.paidAmount.toFixed(2)}
               disabled
               readOnly
               className="text-sm"
@@ -1064,7 +1015,6 @@ function CreateExpenseModal({ onClose, onSuccess }) {
                   ? "$"
                   : "€"
               }
-              helperText={`Payable amount: ${formatCurrency(payableAmount)}`}
             />
 
             <GlobalSelectField
@@ -1103,7 +1053,7 @@ function CreateExpenseModal({ onClose, onSuccess }) {
               }
               name="paidAmount"
               type="number"
-              value={formData.paidAmount}
+              value={formData.paidAmount.toFixed(2)}
               onChange={(e) => handleNumberChange("paidAmount", e.target.value)}
               error={errors.paidAmount}
               min="0"
@@ -1171,21 +1121,39 @@ function CreateExpenseModal({ onClose, onSuccess }) {
           />
         )}
 
-        <GlobalSelectField
-          label="Customer (Optional)"
-          name="customerId"
-          value={formData.customerId}
-          onChange={handleCustomerChange} // Use the new handler
-          options={[
-            { value: "", label: "Select customer" },
-            ...customers.map((customer) => ({
-              value: customer.value,
-              label: customer.label,
-            })),
-          ]}
-          loading={loadingCustomers}
-          className="text-sm"
-        />
+        <div className="flex flex-col gap-2">
+          {/* Customer Dropdown */}
+          <GlobalSelectField
+            label="Customer (Optional)"
+            name="customerId"
+            value={formData.customerId}
+            onChange={handleCustomerChange}
+            options={[
+              { value: "", label: "Select customer" },
+              ...customers.map((customer) => ({
+                value: customer.value,
+                label: customer.label,
+              })),
+            ]}
+            loading={loadingCustomers}
+            className="text-sm"
+          />
+
+          {/* Billable Checkbox */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="billable"
+              name="billable"
+              checked={formData.billable}
+              onChange={(e) => handleChange("billable", e.target.checked)}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="billable" className="text-sm text-gray-700">
+              Mark as Billable
+            </label>
+          </div>
+        </div>
       </div>
     </div>
   );

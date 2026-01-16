@@ -350,7 +350,7 @@ function ExpensesList() {
                     VENDOR
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    CATEGORY
+                    STATUS
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     AMOUNT
@@ -395,7 +395,6 @@ function ExpensesList() {
                               </div>
                               {/* Edit button - hidden by default, shown on hover */}
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-2">
-                               
                                 <button
                                   onClick={() => handleEdit(expense.expenseId)}
                                   className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
@@ -454,12 +453,25 @@ function ExpensesList() {
                         {/* Category with truncation */}
                         <td className="px-4 py-3">
                           <div className="max-w-[150px]">
-                            <div
-                              className="text-sm text-gray-900 truncate"
-                              title={expense.expenseCategoryName || "N/A"}
+                            <span
+                              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                                !expense.status
+                                  ? "bg-gray-100 text-gray-800"
+                                  : expense.status === "PAID"
+                                  ? "bg-green-100 text-green-800"
+                                  : expense.status === "PARTIALLY_PAID"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
                             >
-                              {expense.expenseCategoryName || "N/A"}
-                            </div>
+                              {!expense.status
+                                ? "N/A"
+                                : expense.status === "PAID"
+                                ? "Paid"
+                                : expense.status === "PARTIALLY_PAID"
+                                ? "Partially Paid"
+                                : "Unpaid"}
+                            </span>
                           </div>
                         </td>
 

@@ -435,7 +435,7 @@ function FinancialsTaxSection({
             {tdsApplicable && (
               <div className="p-4 space-y-4">
                 <GlobalInputField
-                  label="TDS Rate"
+                  label="TDS Rate (%)"
                   name="tdsPercentage"
                   type="number"
                   value={formData.tdsPercentage}

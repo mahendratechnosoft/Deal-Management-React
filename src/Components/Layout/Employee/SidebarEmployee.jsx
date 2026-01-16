@@ -125,8 +125,8 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
   // Purchase dropdown items (Reminder, Expenses)
   const purchaseItems = [
     {
-      name: "Reminder",
-      path: "/Employee/ReminderList",
+      name: "Vendor",
+      path: "/Employee/VendorList",
       icon: (
         <svg
           className="w-5 h-5"
@@ -138,7 +138,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
           />
         </svg>
       ),
@@ -236,9 +236,10 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
         </svg>
       ),
     },
+
     {
-      name: "Vendor",
-      path: "/Employee/VendorList",
+      name: "Reminder",
+      path: "/Employee/ReminderList",
       icon: (
         <svg
           className="w-5 h-5"
@@ -250,11 +251,12 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
           />
         </svg>
       ),
     },
+
     {
       name: "Item",
       path: "/Employee/Itemlist",
@@ -1091,7 +1093,7 @@ function SidebarEmployee({ isOpen, toggleSidebar, onSwitchToLogin }) {
               {navigationItems
                 .filter(
                   (item) =>
-                    !["Lead", "Customer", "Reminder", "Expenses"].includes(
+                    !["Lead", "Customer", "Vendor", "Expenses"].includes(
                       item.name
                     ) && checkModuleAccess(item.name, moduleKeyMap[item.name])
                 )

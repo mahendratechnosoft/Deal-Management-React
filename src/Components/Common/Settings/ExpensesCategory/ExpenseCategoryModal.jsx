@@ -18,7 +18,7 @@ const ExpenseCategoryModal = ({
   const [categoryGroups, setCategoryGroups] = useState([]);
   const [selectOptions, setSelectOptions] = useState([]);
   const [isCreatingNewGroup, setIsCreatingNewGroup] = useState(false);
-
+  const [fetchCategoryGroupsLoading, setfetchCategoryGroupsLoading] = useState(false);
   const [formData, setFormData] = useState({
     categoryName: "",
     description: "",
@@ -50,6 +50,7 @@ const colors = {
 };
   // Fetch category groups for dropdown
   const fetchCategoryGroups = async () => {
+    setfetchCategoryGroupsLoading(true);
     try {
       const response = await axiosInstance.get("getAllGroupsExpenseCategory");
       const groups = response.data || [];
@@ -68,6 +69,9 @@ const colors = {
       console.error("Error fetching category groups:", error);
       toast.error("Failed to load category groups");
     }
+    finally{
+      setfetchCategoryGroupsLoading(false);
+    };
   };
 
   // Check if category already exists in the group
@@ -560,22 +564,13 @@ const handleSubmit = async (e) => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Category Group <span className="text-red-500">*</span>
-                  {/* {isCreatingNewGroup && (
-                    <span className="ml-2 text-xs text-green-600 font-medium">
-                      New group will be created
-                    </span>
-                  )} */}
-                  {mode === "create" && !isCreatingNewGroup && (
-                    <span className="text-xs text-gray-500 ml-1">
-                      ({getFilteredOptions().length} available groups)
-                    </span>
-                  )}
+                  
                 </label>
 
                 <CreatableSelect
                   isClearable
-                  isDisabled={loading || selectOptions.length === 0}
-                  isLoading={selectOptions.length === 0}
+                  isDisabled={fetchCategoryGroupsLoading}
+                  isLoading={fetchCategoryGroupsLoading}
                   options={getFilteredOptions()}
                   value={
                     formData.categoryGroup
@@ -629,11 +624,7 @@ const handleSubmit = async (e) => {
                   </div>
                 )}
 
-                {selectOptions.length === 0 && !isCreatingNewGroup && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Loading groups...
-                  </p>
-                )}
+                
                 {errors.categoryGroup && (
                   <p className="text-red-500 text-xs mt-1">
                     {errors.categoryGroup}
@@ -710,8 +701,6 @@ const handleSubmit = async (e) => {
                   disabled={loading}
                 />
               </div>
-
-         
             </div>
           </form>
         </div>

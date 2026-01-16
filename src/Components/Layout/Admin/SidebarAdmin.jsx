@@ -164,8 +164,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
   // Purchase dropdown items (Reminder, Expenses)
   const purchaseItems = [
     {
-      name: "Reminder",
-      path: "/Admin/ReminderList",
+      name: "Vendor",
+      path: "/Admin/VendorList",
       icon: (
         <svg
           className="w-5 h-5"
@@ -177,7 +177,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
           />
         </svg>
       ),
@@ -275,9 +275,11 @@ function Sidebar({ isOpen, toggleSidebar }) {
         </svg>
       ),
     },
+
+
     {
-      name: "Vendor",
-      path: "/Admin/VendorList",
+      name: "Reminder",
+      path: "/Admin/ReminderList",
       icon: (
         <svg
           className="w-5 h-5"
@@ -289,7 +291,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
           />
         </svg>
       ),
@@ -1156,7 +1158,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
               {navigationItems
                 .filter(
                   (item) =>
-                    !["Lead", "Reminder", "Customer", "Expenses"].includes(
+                    !["Lead", "Vendor", "Customer", "Expenses"].includes(
                       item.name
                     ) && checkModuleAccess(item.name, moduleKeyMap[item.name])
                 )
