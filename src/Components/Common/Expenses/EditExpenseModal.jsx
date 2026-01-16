@@ -85,6 +85,9 @@ function EditExpenseModal({ expenseId, onClose, onSuccess }) {
     receiptAttachment: "",
     attachmentFileName: "",
     attachmentFileType: "",
+
+    employeeId: null,
+    createdAt: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -199,6 +202,9 @@ function EditExpenseModal({ expenseId, onClose, onSuccess }) {
         receiptAttachment: expense.receiptAttachment || "",
         attachmentFileName: expense.attachmentFileName || "",
         attachmentFileType: expense.attachmentFileType || "",
+
+        employeeId: expense.employeeId || null,
+        createdAt: expense.createdAt || "",
       };
 
       setFormData(mappedData);
@@ -374,7 +380,7 @@ function EditExpenseModal({ expenseId, onClose, onSuccess }) {
     if (formData.status === "PAID") {
       setFormData((prev) => ({
         ...prev,
-        paidAmount: totalAmount,
+        paidAmount: payableAmount, // Changed from totalAmount to payableAmount
       }));
     } else if (formData.status === "UNPAID") {
       setFormData((prev) => ({
@@ -383,7 +389,7 @@ function EditExpenseModal({ expenseId, onClose, onSuccess }) {
         paymentProfileId: "",
       }));
     }
-  }, [formData.status, totalAmount]);
+  }, [formData.status, payableAmount]);
 
   // Update tab errors when errors change
   useEffect(() => {
@@ -394,6 +400,16 @@ function EditExpenseModal({ expenseId, onClose, onSuccess }) {
     });
     setTabErrors(newTabErrors);
   }, [errors]);
+
+  // Clear paidAmount error when payableAmount changes
+  useEffect(() => {
+    if (errors.paidAmount && errors.paidAmount.includes("cannot exceed")) {
+      setErrors((prev) => ({
+        ...prev,
+        paidAmount: "",
+      }));
+    }
+  }, [payableAmount]);
 
   // Fetch vendor options
   const fetchVendors = async () => {
@@ -548,7 +564,57 @@ function EditExpenseModal({ expenseId, onClose, onSuccess }) {
   };
 
   // Handle number input changes
+
+  // Handle number input changes
   const handleNumberChange = (field, value) => {
+    // Special handling for paidAmount
+    if (field === "paidAmount") {
+      const numericValue = value === "" ? 0 : Number(value);
+
+      // Validate against payableAmount
+      if (numericValue > payableAmount) {
+        // Auto-correct to max amount
+        value = payableAmount;
+      }
+
+      // Check if paid amount equals payable amount
+      if (Number(value) >= payableAmount) {
+        // Auto-change status to PAID
+        setFormData((prev) => ({
+          ...prev,
+          paidAmount: payableAmount,
+          status: "PAID",
+        }));
+      }
+      // If paid amount is > 0 but less than payable amount
+      else if (Number(value) > 0) {
+        // Ensure status is PARTIALLY_PAID
+        if (formData.status !== "PARTIALLY_PAID") {
+          setFormData((prev) => ({
+            ...prev,
+            paidAmount: Number(value),
+            status: "PARTIALLY_PAID",
+          }));
+        } else {
+          handleChange(field, Number(value));
+        }
+      }
+      // If paid amount is 0
+      else {
+        handleChange(field, Number(value));
+      }
+
+      // Clear any errors
+      if (errors.paidAmount) {
+        setErrors((prev) => ({
+          ...prev,
+          paidAmount: "",
+        }));
+      }
+      return;
+    }
+
+    // Original logic for other fields
     if (value === "" || (!isNaN(value) && Number(value) >= 0)) {
       handleChange(field, value === "" ? "" : Number(value));
     }
@@ -620,10 +686,6 @@ function EditExpenseModal({ expenseId, onClose, onSuccess }) {
       if (!formData.paidAmount || formData.paidAmount <= 0) {
         newErrors.paidAmount = "Paid amount must be greater than 0";
       }
-      if (formData.paidAmount >= totalAmount) {
-        newErrors.paidAmount =
-          "Paid amount must be less than total amount for partial payment";
-      }
     }
 
     if (formData.status === "PAID" && !formData.paymentProfileId) {
@@ -688,11 +750,14 @@ function EditExpenseModal({ expenseId, onClose, onSuccess }) {
         receiptAttachment: formData.receiptAttachment || null,
         attachmentFileName: formData.attachmentFileName || null,
         attachmentFileType: formData.attachmentFileType || null,
+
+        employeeId: formData.employeeId,
+        createdAt: formData.createdAt,
       };
 
       console.log("Updating expense with payload:", payload);
       const response = await axiosInstance.put("updateExpense", payload);
-      toast.success("Expense updated successfully!");
+      //   toast.success("Expense updated successfully!");
       onSuccess(response.data);
       onClose();
     } catch (error) {
@@ -973,9 +1038,9 @@ function EditExpenseModal({ expenseId, onClose, onSuccess }) {
               type="number"
               value={formData.paidAmount}
               onChange={(e) => handleNumberChange("paidAmount", e.target.value)}
-              error={errors.paidAmount}
+              error={errors.paidAmount} // This will show the error below the input
               min="0"
-              max={totalAmount}
+              max={payableAmount}
               step="0.01"
               className="text-sm"
               prefix={
@@ -985,9 +1050,9 @@ function EditExpenseModal({ expenseId, onClose, onSuccess }) {
                   ? "$"
                   : "€"
               }
+              helperText={`Maximum: ${formatCurrency(payableAmount)}`}
               ref={(el) => (errorFieldRefs.current.paidAmount = el)}
             />
-
             <GlobalSelectField
               label={
                 <>

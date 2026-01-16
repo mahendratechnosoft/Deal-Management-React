@@ -321,7 +321,7 @@ function CreateExpenseModal({ onClose, onSuccess }) {
     if (formData.status === "PAID") {
       setFormData((prev) => ({
         ...prev,
-        paidAmount: totalAmount,
+        paidAmount: payableAmount, // Changed from totalAmount to payableAmount
       }));
     } else if (formData.status === "UNPAID") {
       setFormData((prev) => ({
@@ -330,7 +330,7 @@ function CreateExpenseModal({ onClose, onSuccess }) {
         paymentProfileId: "",
       }));
     }
-  }, [formData.status, totalAmount]);
+  }, [formData.status, payableAmount]); // Changed dependency to payableAmount
 
   // Update tab errors when errors change
   useEffect(() => {
@@ -495,11 +495,39 @@ function CreateExpenseModal({ onClose, onSuccess }) {
   };
 
   // Handle form field changes
+  // Handle form field changes
   const handleChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    // Special handling for status field
+    if (field === "status") {
+      if (value === "PAID") {
+        // When status changed to PAID, set paidAmount to payableAmount
+        setFormData((prev) => ({
+          ...prev,
+          [field]: value,
+          paidAmount: payableAmount,
+        }));
+      } else if (value === "UNPAID") {
+        // When status changed to UNPAID, reset paidAmount and paymentProfileId
+        setFormData((prev) => ({
+          ...prev,
+          [field]: value,
+          paidAmount: 0,
+          paymentProfileId: "",
+        }));
+      } else {
+        // For PARTIALLY_PAID or other statuses
+        setFormData((prev) => ({
+          ...prev,
+          [field]: value,
+        }));
+      }
+    } else {
+      // For all other fields
+      setFormData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    }
 
     // Clear error for this field if exists
     if (errors[field]) {
@@ -544,7 +572,54 @@ function CreateExpenseModal({ onClose, onSuccess }) {
 
   // Handle number input changes
   const handleNumberChange = (field, value) => {
-    // Ensure value is a valid number or empty string
+    // Special handling for paidAmount
+    if (field === "paidAmount") {
+      const numericValue = value === "" ? 0 : Number(value);
+
+      // Validate against payableAmount
+      if (numericValue > payableAmount) {
+        // Auto-correct to max amount
+        value = payableAmount;
+      }
+
+      // Check if paid amount equals payable amount
+      if (Number(value) >= payableAmount) {
+        // Auto-change status to PAID
+        setFormData((prev) => ({
+          ...prev,
+          paidAmount: payableAmount,
+          status: "PAID",
+        }));
+      }
+      // If paid amount is > 0 but less than payable amount
+      else if (Number(value) > 0) {
+        // Ensure status is PARTIALLY_PAID
+        if (formData.status !== "PARTIALLY_PAID") {
+          setFormData((prev) => ({
+            ...prev,
+            paidAmount: Number(value),
+            status: "PARTIALLY_PAID",
+          }));
+        } else {
+          handleChange(field, Number(value));
+        }
+      }
+      // If paid amount is 0
+      else {
+        handleChange(field, Number(value));
+      }
+
+      // Clear any errors
+      if (errors.paidAmount) {
+        setErrors((prev) => ({
+          ...prev,
+          paidAmount: "",
+        }));
+      }
+      return;
+    }
+
+    // Original logic for other fields
     if (value === "" || (!isNaN(value) && Number(value) >= 0)) {
       handleChange(field, value === "" ? "" : Number(value));
     }
@@ -655,9 +730,10 @@ function CreateExpenseModal({ onClose, onSuccess }) {
       if (!formData.paidAmount || formData.paidAmount <= 0) {
         newErrors.paidAmount = "Paid amount must be greater than 0";
       }
-      if (formData.paidAmount >= totalAmount) {
+      if (formData.paidAmount >= payableAmount) {
+        // Changed from totalAmount to payableAmount
         newErrors.paidAmount =
-          "Paid amount must be less than total amount for partial payment";
+          "Paid amount cannot exceed or equal payable amount"; // Updated message
       }
     }
 
@@ -969,7 +1045,12 @@ function CreateExpenseModal({ onClose, onSuccess }) {
         {formData.status === "PAID" && (
           <>
             <GlobalInputField
-              label="Paid Amount"
+              label={
+                <>
+                  Paid Amount
+                  <span className="text-red-500 ml-1">*</span>
+                </>
+              }
               name="paidAmount"
               type="number"
               value={formData.paidAmount}
@@ -983,6 +1064,7 @@ function CreateExpenseModal({ onClose, onSuccess }) {
                   ? "$"
                   : "€"
               }
+              helperText={`Payable amount: ${formatCurrency(payableAmount)}`}
             />
 
             <GlobalSelectField

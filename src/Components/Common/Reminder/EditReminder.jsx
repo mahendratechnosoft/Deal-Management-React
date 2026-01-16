@@ -48,6 +48,7 @@ function EditReminder({ reminderId, onClose, onSuccess }) {
     recurringType: "once", // 'once' or 'recurring'
     currentCount: 0,
     createdBy: "",
+    createdAt:"",
     recurring: false,
     sent: false,
   });
@@ -225,6 +226,7 @@ function EditReminder({ reminderId, onClose, onSuccess }) {
         createdBy: data.createdBy || "",
         recurring: data.recurring || false,
         sent: data.sent || false,
+        createdAt: data.createdAt || "",
       });
 
       // If module is set, fetch corresponding data
@@ -602,6 +604,8 @@ function EditReminder({ reminderId, onClose, onSuccess }) {
         createdBy: formData.createdBy || "",
         recurring: formData.recurringType === "recurring",
         sent: formData.sent || false,
+
+        createdAt: formData.createdAt || "",
       };
 
       // Add employeeId only for admin
