@@ -80,6 +80,14 @@ const EmployeeLayout = lazy(() =>
   import("../Components/Layout/EmployeeLayout")
 );
 
+
+const ReminderList = lazy(() =>
+  import("../Components/Common/Reminder/ReminderList")
+);
+const ExpensesList = lazy(() =>
+  import("../Components/Common/Expenses/ExpensesList")
+);
+
 const EmployeeRoutes = () => {
   return (
     <RoleBasedRoute allowedRoles={["ROLE_EMPLOYEE"]}>
@@ -102,7 +110,6 @@ const EmployeeRoutes = () => {
             element={<DonorMatchingFilter />}
           />
           <Route path="EditFamily/:familyInfoId" element={<EditFamily />} />
-
           <Route path="Proposal" element={<ProposalList />} />
           <Route path="Proposal/Create" element={<CreateProposal />} />
           <Route path="Proposal/Edit/:proposalId" element={<EditProposal />} />
@@ -133,6 +140,9 @@ const EmployeeRoutes = () => {
           <Route path="SemenEnquiryList" element={<SemenEnquiryList />} />
           <Route path="EditSemenEnquiry/:id" element={<EditSemenEnquiry />} />
           <Route path="ComplianceList" element={<ComplianceList />} />
+
+          <Route path="ExpensesList" element={<ExpensesList />} />
+          <Route path="ReminderList" element={<ReminderList />} />
         </Route>
       </Routes>
     </RoleBasedRoute>

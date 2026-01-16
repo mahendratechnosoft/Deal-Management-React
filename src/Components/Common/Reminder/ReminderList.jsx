@@ -330,6 +330,8 @@ function ReminderList() {
               >
                 Reset
               </button>
+
+               {hasPermission("reminder", "Edit") && (
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="px-2 py-1 h-7 bg-blue-600 hover:bg-blue-700
@@ -351,6 +353,8 @@ function ReminderList() {
                 </svg>
                 Create
               </button>
+
+               )}
             </div>
           </div>
         </div>
@@ -431,7 +435,7 @@ function ReminderList() {
                             </svg>
                           </button>
 
-                          {/* {hasPermission("reminder", "Delete") && ( */}
+                          {hasPermission("reminder", "Delete") && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -457,7 +461,7 @@ function ReminderList() {
                               />
                             </svg>
                           </button>
-                          {/* )} */}
+                        )} 
                         </div>
                       </td>
 

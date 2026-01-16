@@ -6,8 +6,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [userData, setUserData] = useState(null);
-  const [salesOpen, setSalesOpen] = useState(true); // State for sales dropdown
-
+  const [salesOpen, setSalesOpen] = useState(false); // State for sales dropdown
+  const [purchaseOpen, setPurchaseOpen] = useState(false);
   useEffect(() => {
     const storedUserData = localStorage.getItem("userData");
     if (storedUserData) {
@@ -41,7 +41,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
     AMC: "amc",
     Vendor: "vendor",
     Compliance: "compliance",
-    Reminder: "Reminder",
+    Reminder: "reminder",
+    Expenses: "expense",
   };
 
   const isActive = (path) => {
@@ -160,6 +161,47 @@ function Sidebar({ isOpen, toggleSidebar }) {
     },
   ];
 
+  // Purchase dropdown items (Reminder, Expenses)
+  const purchaseItems = [
+    {
+      name: "Reminder",
+      path: "/Admin/ReminderList",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+          />
+        </svg>
+      ),
+    },
+    {
+      name: "Expenses",
+      path: "/Admin/ExpensesList",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      ),
+    },
+  ];
   // Main navigation items - organized in the correct order
   const navigationItems = [
     {
@@ -187,31 +229,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
         </svg>
       ),
     },
-    {
-      name: "Reminder",
-      path: "/Admin/ReminderList",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-          />
-        </svg>
-      ),
-    },
+
     {
       name: "Customer",
       path: "/Admin/CustomerList",
@@ -595,6 +613,17 @@ function Sidebar({ isOpen, toggleSidebar }) {
     );
   };
 
+  // Check if any purchase item is active
+  const isPurchaseActive = () => {
+    return purchaseItems.some((item) => isActive(item.path));
+  };
+
+  // Check if any purchase item should be visible based on permissions
+  const hasPurchaseAccess = () => {
+    return purchaseItems.some((item) =>
+      checkModuleAccess(item.name, moduleKeyMap[item.name])
+    );
+  };
   return (
     <>
       {/* Overlay for mobile */}
@@ -732,70 +761,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
                     )}
                   </div>
                   {isActive("/Admin/LeadList") && (
-                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                      <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                    </div>
-                  )}
-                </button>
-              )}
-
-              {/* Reminder Item */}
-              {checkModuleAccess("Reminder", moduleKeyMap["Reminder"]) && (
-                <button
-                  onClick={() => {
-                    navigate("/Admin/ReminderList");
-                    if (window.innerWidth < 1024) {
-                      toggleSidebar();
-                    }
-                  }}
-                  className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${
-                    isActive("/Admin/ReminderList")
-                      ? "bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg transform scale-105"
-                      : "bg-gray-800/50 hover:bg-gray-700/70 hover:transform hover:scale-105"
-                  } ${
-                    isOpen
-                      ? "px-3 py-2.5 justify-start"
-                      : "px-2 py-2.5 justify-center"
-                  }`}
-                  title={!isOpen ? "Reminder" : ""}
-                >
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${
-                      isActive("/Admin/ReminderList") && "opacity-20"
-                    }`}
-                  ></div>
-                  <div
-                    className={`relative z-10 flex items-center ${
-                      isOpen ? "w-full" : "justify-center"
-                    }`}
-                  >
-                    <div
-                      className={`transition-all duration-300 ${
-                        isActive("/Admin/ReminderList")
-                          ? "text-white scale-105"
-                          : "text-gray-400 group-hover:text-white group-hover:scale-105"
-                      }`}
-                    >
-                      {
-                        navigationItems.find((item) => item.name === "Reminder")
-                          ?.icon
-                      }
-                    </div>
-                    {isOpen && (
-                      <div className="ml-3 flex-1 text-left">
-                        <span
-                          className={`font-medium block text-xs transition-colors duration-300 ${
-                            isActive("/Admin/ReminderList")
-                              ? "text-white"
-                              : "text-gray-300 group-hover:text-white"
-                          }`}
-                        >
-                          Reminder
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  {isActive("/Admin/ReminderList") && (
                     <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
                       <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                     </div>
@@ -1026,12 +991,174 @@ function Sidebar({ isOpen, toggleSidebar }) {
                 </div>
               )}
 
+              {/* Purchase Dropdown - Below Sales */}
+              {hasPurchaseAccess() && (
+                <div className="mb-2">
+                  {/* Purchase Dropdown Header */}
+                  <button
+                    onClick={() => isOpen && setPurchaseOpen(!purchaseOpen)}
+                    className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${
+                      isPurchaseActive()
+                        ? "bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg transform scale-105" // Changed to blue-cyan
+                        : purchaseOpen
+                        ? "bg-gray-700/70"
+                        : "bg-gray-800/50 hover:bg-gray-700/70 hover:transform hover:scale-105"
+                    } ${
+                      isOpen
+                        ? "px-3 py-2.5 justify-start"
+                        : "px-2 py-2.5 justify-center"
+                    }`}
+                    title={!isOpen ? "Purchase" : ""}
+                  >
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${
+                        isPurchaseActive() && "opacity-20"
+                      }`}
+                    ></div>
+
+                    <div
+                      className={`relative z-10 flex items-center ${
+                        isOpen ? "w-full" : "justify-center"
+                      }`}
+                    >
+                      <div
+                        className={`transition-all duration-300 ${
+                          isPurchaseActive()
+                            ? "text-white scale-105"
+                            : purchaseOpen
+                            ? "text-white scale-105"
+                            : "text-gray-400 group-hover:text-white group-hover:scale-105"
+                        }`}
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                          />
+                        </svg>
+                      </div>
+
+                      {isOpen && (
+                        <div className="ml-3 flex-1 text-left flex justify-between items-center">
+                          <span
+                            className={`font-medium block text-xs transition-colors duration-300 ${
+                              isPurchaseActive()
+                                ? "text-white"
+                                : purchaseOpen
+                                ? "text-white"
+                                : "text-gray-300 group-hover:text-white"
+                            }`}
+                          >
+                            Purchase
+                          </span>
+                          <svg
+                            className={`w-4 h-4 transition-transform duration-300 mr-2 ${
+                              purchaseOpen ? "rotate-180" : ""
+                            } ${
+                              isPurchaseActive()
+                                ? "text-white"
+                                : "text-gray-400"
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+
+                    {isPurchaseActive() && (
+                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                      </div>
+                    )}
+                  </button>
+
+                  {/* Purchase Dropdown Items */}
+                  {isOpen && purchaseOpen && (
+                    <div className="ml-6 mt-1 space-y-1 pl-3 border-l border-gray-700/50">
+                      {purchaseItems
+                        .filter((item) =>
+                          checkModuleAccess(item.name, moduleKeyMap[item.name])
+                        )
+                        .map((item) => (
+                          <button
+                            key={item.name}
+                            onClick={() => {
+                              navigate(item.path);
+                              if (window.innerWidth < 1024) {
+                                toggleSidebar();
+                              }
+                            }}
+                            className={`w-full flex items-center rounded-xl transition-all duration-300 group relative overflow-hidden ${
+                              isActive(item.path)
+                                ? "bg-gradient-to-r from-blue-500/20 to-cyan-500/20 shadow-lg" // Changed to blue-cyan
+                                : "bg-gray-800/30 hover:bg-gray-700/50"
+                            } px-3 py-2.5 justify-start`}
+                          >
+                            <div
+                              className={`absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${
+                                isActive(item.path) && "opacity-20"
+                              }`}
+                            ></div>
+
+                            <div className="relative z-10 flex items-center w-full">
+                              <div
+                                className={`transition-all duration-300 ${
+                                  isActive(item.path)
+                                    ? "text-white scale-105"
+                                    : "text-gray-400 group-hover:text-white group-hover:scale-105"
+                                }`}
+                              >
+                                {item.icon}
+                              </div>
+
+                              <div className="ml-3 flex-1 text-left">
+                                <span
+                                  className={`font-medium block text-xs transition-colors duration-300 ${
+                                    isActive(item.path)
+                                      ? "text-white"
+                                      : "text-gray-300 group-hover:text-white"
+                                  }`}
+                                >
+                                  {item.name}
+                                </span>
+                              </div>
+                            </div>
+
+                            {isActive(item.path) && (
+                              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Rest of navigation items (AMC onwards) */}
               {navigationItems
                 .filter(
                   (item) =>
-                    !["Lead", "Reminder", "Customer"].includes(item.name) &&
-                    checkModuleAccess(item.name, moduleKeyMap[item.name])
+                    !["Lead", "Reminder", "Customer", "Expenses"].includes(
+                      item.name
+                    ) && checkModuleAccess(item.name, moduleKeyMap[item.name])
                 )
                 .map((item) => (
                   <button

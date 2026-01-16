@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import toast from "react-hot-toast";
 import { useLayout } from "../../Layout/useLayout";
+import { hasPermission } from "../../BaseComponet/permissions";
 
 function EditReminder({ reminderId, onClose, onSuccess }) {
   const { role } = useLayout();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-
+ const canEdit = hasPermission("reminder", "Edit");
   // Get current date and time for initial trigger time
   const getCurrentDateTime = () => {
     const now = new Date();
@@ -1225,24 +1226,48 @@ function EditReminder({ reminderId, onClose, onSuccess }) {
               Cancel
             </button>
 
-            <button
-              onClick={handleSubmit}
-              disabled={loading || isSent}
-              className={`px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
-                isSent ? "bg-gray-400 hover:bg-gray-400" : ""
-              }`}
-            >
-              {loading ? (
-                <>
-                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block mr-1.5"></div>
-                  Updating...
-                </>
-              ) : isSent ? (
-                "Cannot Edit Sent Reminder"
-              ) : (
-                "Update Reminder"
-              )}
-            </button>
+            {canEdit ? (
+              <button
+                onClick={handleSubmit}
+                disabled={loading || isSent}
+                className={`px-3 py-1.5 rounded text-xs font-medium flex items-center gap-1.5
+      ${
+        isSent
+          ? "bg-gray-400 text-white cursor-not-allowed"
+          : "bg-blue-600 text-white hover:bg-blue-700"
+      }
+      disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {loading ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Updating...
+                  </>
+                ) : isSent ? (
+                  "Cannot Edit Sent Reminder"
+                ) : (
+                  "Update Reminder"
+                )}
+              </button>
+            ) : (
+              /* NO EDIT PERMISSION */
+              <div className="px-3 py-1.5 bg-gray-100 text-gray-500 rounded text-xs font-medium flex items-center gap-1.5 cursor-not-allowed">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 15v2m0 0v2m0-2h2m-2 0H9m3-6a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                No Edit Permission
+              </div>
+            )}
           </div>
         </div>
       </div>

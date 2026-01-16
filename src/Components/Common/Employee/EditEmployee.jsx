@@ -406,6 +406,20 @@ function EditEmployee() {
         complianceCreate: selectedRole.complianceCreate || false,
         complianceDelete: selectedRole.complianceDelete || false,
         complianceEdit: selectedRole.complianceEdit || false,
+
+        // Expense
+        expenseAccess: selectedRole.expenseAccess || false,
+        expenseViewAll: selectedRole.expenseViewAll || false,
+        expenseCreate: selectedRole.expenseCreate || false,
+        expenseDelete: selectedRole.expenseDelete || false,
+        expenseEdit: selectedRole.expenseEdit || false,
+
+        // Reminder
+        reminderAccess: selectedRole.reminderAccess || false,
+        reminderViewAll: selectedRole.reminderViewAll || false,
+        reminderCreate: selectedRole.reminderCreate || false,
+        reminderDelete: selectedRole.reminderDelete || false,
+        reminderEdit: selectedRole.reminderEdit || false,
       });
     }
 
@@ -492,6 +506,18 @@ function EditEmployee() {
           complianceDelete: false,
           complianceEdit: false,
           complianceViewAll: false,
+
+          expenseAccess: false,
+          expenseCreate: false,
+          expenseDelete: false,
+          expenseEdit: false,
+          expenseViewAll: false,
+
+          reminderAccess: false,
+          reminderCreate: false,
+          reminderDelete: false,
+          reminderEdit: false,
+          reminderViewAll: false,
         };
       }
       return {
@@ -577,6 +603,18 @@ function EditEmployee() {
       complianceDelete: false,
       complianceEdit: false,
       complianceViewAll: false,
+
+      expenseAccess: false,
+      expenseCreate: false,
+      expenseDelete: false,
+      expenseEdit: false,
+      expenseViewAll: false,
+
+      reminderAccess: false,
+      reminderCreate: false,
+      reminderDelete: false,
+      reminderEdit: false,
+      reminderViewAll: false,
     });
     toast.success("All permissions cleared");
   };
@@ -656,6 +694,18 @@ function EditEmployee() {
       complianceDelete: true,
       complianceEdit: true,
       complianceViewAll: true,
+
+      expenseAccess: false,
+      expenseCreate: false,
+      expenseDelete: false,
+      expenseEdit: false,
+      expenseViewAll: false,
+
+      reminderAccess: false,
+      reminderCreate: false,
+      reminderDelete: false,
+      reminderEdit: false,
+      reminderViewAll: false,
     });
     toast.success("All permissions granted");
   };
@@ -1408,6 +1458,38 @@ function EditEmployee() {
                             { label: "Create", field: "complianceCreate" },
                             { label: "Edit", field: "complianceEdit" },
                             { label: "Delete", field: "complianceDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
+
+                      {/* Expense */}
+                      {hasModulePermission("expense") && (
+                        <ModuleAccessGroup
+                          title="Expense Permissions"
+                          permissions={[
+                            { label: "Access", field: "expenseAccess" },
+                            { label: "View All", field: "expenseViewAll" },
+                            { label: "Create", field: "expenseCreate" },
+                            { label: "Edit", field: "expenseEdit" },
+                            { label: "Delete", field: "expenseDelete" },
+                          ]}
+                          getAccess={getAccess}
+                          handleAccessChange={handleAccessChange}
+                        />
+                      )}
+
+                      {/* Reminder */}
+                      {hasModulePermission("reminder") && (
+                        <ModuleAccessGroup
+                          title="Reminder Permissions"
+                          permissions={[
+                            { label: "Access", field: "reminderAccess" },
+                            { label: "View All", field: "reminderViewAll" },
+                            { label: "Create", field: "reminderCreate" },
+                            { label: "Edit", field: "reminderEdit" },
+                            { label: "Delete", field: "reminderDelete" },
                           ]}
                           getAccess={getAccess}
                           handleAccessChange={handleAccessChange}
