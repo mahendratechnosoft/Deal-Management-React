@@ -377,15 +377,13 @@ const ExpensesCategoryList = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span
-                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getTypeColor(
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ml-4 ${getTypeColor(
                       type
                     )}`}
                   >
                     {getTypeDisplayName(type)}
                   </span>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {getTypeDisplayName(type)}
-                  </h3>
+               
                 </div>
                 <button
                   onClick={() => toggleSection(type)}
@@ -436,9 +434,7 @@ const ExpensesCategoryList = () => {
                               <span className="font-medium text-gray-900">
                                 {groupName}
                               </span>
-                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                                {filteredCategories.length} categories
-                              </span>
+                             
                             </div>
                             <div className="flex items-center gap-3">
                               <svg
@@ -477,12 +473,12 @@ const ExpensesCategoryList = () => {
                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Description
                                       </th>
-                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Created
                                       </th>
                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Status
-                                      </th>
+                                      </th> */}
                                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Actions
                                       </th>
@@ -502,9 +498,9 @@ const ExpensesCategoryList = () => {
                                             <div className="text-sm font-medium text-gray-900">
                                               {category.categoryName}
                                             </div>
-                                            <div className="text-xs text-gray-500">
+                                            {/* <div className="text-xs text-gray-500">
                                               {category.categoryGroup}
-                                            </div>
+                                            </div> */}
                                           </td>
                                           <td className="px-6 py-4">
                                             <div
@@ -514,7 +510,7 @@ const ExpensesCategoryList = () => {
                                               {category.description || "-"}
                                             </div>
                                           </td>
-                                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                          {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {new Date(
                                               category.createdAt
                                             ).toLocaleDateString("en-US", {
@@ -522,8 +518,8 @@ const ExpensesCategoryList = () => {
                                               month: "short",
                                               day: "numeric",
                                             })}
-                                          </td>
-                                          <td className="px-6 py-4 whitespace-nowrap">
+                                          </td> */}
+                                          {/* <td className="px-6 py-4 whitespace-nowrap">
                                             <button
                                               onClick={() =>
                                                 handleStatusToggle(
@@ -541,7 +537,7 @@ const ExpensesCategoryList = () => {
                                                 ? "Active"
                                                 : "Inactive"}
                                             </button>
-                                          </td>
+                                          </td> */}
                                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             <div className="flex items-center gap-3">
                                               <button
